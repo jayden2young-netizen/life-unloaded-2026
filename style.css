@@ -19,6 +19,7 @@
     @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
     @keyframes rise{from{opacity:0;transform:translateY(20px) scale(.985)}to{opacity:1;transform:none}}
     @keyframes pulse{50%{opacity:.45}}
+    @keyframes resourceFlash{0%{border-color:var(--line);transform:translateY(0)}35%{border-color:var(--accent);transform:translateY(-2px);background:rgba(216,255,103,.09)}100%{border-color:var(--line);transform:translateY(0)}}
     .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px;min-height:42px}
     .topbar .title{font-weight:720;letter-spacing:-.02em}
     .iconbtn{width:42px;height:42px;border-radius:14px;background:var(--panel);display:grid;place-items:center;color:var(--muted);border:1px solid var(--line)}
@@ -65,10 +66,11 @@
     .fate-card{position:relative;overflow:hidden;min-height:145px;display:flex;flex-direction:column;justify-content:space-between;animation:rise .35s ease both}
     .fate-card:before{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-90px;top:-100px;background:radial-gradient(circle,rgba(189,167,255,.22),transparent 65%);pointer-events:none}
     .fate-type{font-size:11px;color:var(--rare);letter-spacing:.1em;font-weight:750}.fate-title{font-size:20px;font-weight:760;margin:10px 0 8px}.fate-text{font-size:13px;line-height:1.6;color:var(--muted)}
+    .omen-card{min-height:118px;display:grid;grid-template-columns:44px 1fr 18px;align-items:center;gap:13px}.omen-card:before{right:-110px;top:-120px}.omen-icon{font-size:30px;line-height:1;text-align:center}.omen-text{font-size:15px;line-height:1.7;color:#d2d2d0}
     .game-header{position:sticky;z-index:9;top:0;margin:calc(-1 * var(--safe-top)) -18px 16px;padding:var(--safe-top) 18px 11px;background:rgba(11,12,14,.85);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(38,42,49,.72)}
     .age{font-size:28px;font-weight:780;letter-spacing:-.05em}.role{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:290px}
     .resource-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:12px}
-    .res{min-width:0;padding:9px 5px;border-radius:12px;background:var(--panel);border:1px solid var(--line);text-align:center}.res span{display:block;font-size:clamp(11px,3vw,12px);color:var(--dim);white-space:nowrap}.res b{display:block;margin-top:3px;font-size:clamp(14px,4vw,16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .res{min-width:0;padding:9px 5px;border-radius:12px;background:var(--panel);border:1px solid var(--line);text-align:center}.res.pulse{animation:resourceFlash .55s ease both}.res span{display:block;font-size:clamp(11px,3vw,12px);color:var(--dim);white-space:nowrap}.res b{display:block;margin-top:3px;font-size:clamp(14px,4vw,16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .event-card{min-height:330px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow);animation:rise .28s ease both}
     .event-icon{font-size:32px;line-height:1;margin-bottom:18px;filter:saturate(.92)}.event-title{font-size:25px;line-height:1.18;font-weight:770;letter-spacing:-.035em;margin-bottom:12px}.event-body{font-size:15px;line-height:1.82;color:#c7c9ce;white-space:pre-line}.event-foot{margin-top:24px;font-size:11px;color:var(--dim);display:flex;justify-content:space-between;gap:10px}
     .choices{display:grid;gap:9px;margin-top:14px}.choice{min-height:54px;text-align:left;padding:14px 16px;border-radius:15px;background:var(--panel2);border:1px solid var(--line);font-weight:640;line-height:1.4}.choice:active{transform:scale(.99);background:#20242a}.choice.locked{opacity:.4}.choice small{display:block;color:var(--dim);margin-top:4px;font-weight:500}
