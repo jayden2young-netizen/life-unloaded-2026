@@ -1,512 +1,295 @@
-(async () => {
+(async()=>{
   'use strict';
 
-  const APP_KEY = 'life-unloaded-2026-v1';
-  const V2_BACKUP_KEY = 'life-unloaded-2026-v2-backup';
-  const CORRUPT_KEY = 'life-unloaded-2026-corrupt-backup';
-  const VERSION = '3.1.0';
-  const SCHEMA_VERSION = 3;
-  const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
-  const app = document.getElementById('app');
-  const stageDrawAges = [6, 12, 18, 23, 30, 40, 55, 68];
-  const categoryTargets = {mainline:.45,stage:.25,social:.15,familyEcho:.10,blackSwan:.05};
-  const occupations = {
+  const APP_KEY='life-unloaded-2026-v1';
+  const V31_BACKUP_KEY='life-unloaded-2026-v3.1-backup';
+  const CORRUPT_KEY='life-unloaded-2026-corrupt-backup';
+  const VERSION='3.2.0';
+  const SCHEMA_VERSION=4;
+  const DEBUG=new URLSearchParams(location.search).get('debug')==='1';
+  const app=document.getElementById('app');
+  const CARD_AGES=[18,30,50];
+  const STAGE_QUOTAS={infancy:0,childhood:1,adolescence:2,youth:2,adult:3,midlife:3,preRetire:2,elder:2};
+  const STAGE_NAMES={infancy:'幼年',childhood:'童年',adolescence:'青春期',youth:'青年',adult:'成家立业',midlife:'中年',preRetire:'退休前后',elder:'晚年'};
+  const occupations={
     tier1:['互联网运营','医院行政','金融后台员工','物业工程师','平台司机','国企职员','软件外包工程师','自由设计师'],
     tier2:['制造业技术员','社区合同工','医院护士','银行柜员','物流调度员','民办教师','个体餐饮经营者','软件实施工程师'],
     county:['县中教师','事业单位职员','建材店经营者','保险业务员','货运司机','电商客服','乡镇卫生院护士','个体商户'],
     town:['种植户','养殖户','建筑劳务人员','农机维修工','快递站经营者','乡村教师','流动摊贩','外出务工人员']
   };
 
-  let DATA;
-  let INDEX;
-  let state;
-  let saveTimer = null;
-  let inputLocked = false;
-  let simulationMode = false;
-  let lastCandidateWeights = [];
+  let DATA,INDEX,state;
+  let saveTimer=null,autoTimer=null,inputLocked=false,simulationMode=false;
 
-  const clamp = (n,a,b) => Math.max(a,Math.min(b,Number.isFinite(n)?n:a));
-  const deepCopy = value => JSON.parse(JSON.stringify(value));
-  const esc = value => String(value ?? '').replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[ch]));
-  const money = value => {
-    let n = Math.round(Number(value)||0); const sign=n<0?'-':''; n=Math.abs(n);
-    if(n>=100000000) return `${sign}${(n/100000000).toFixed(n>=1000000000?0:1)}亿`;
-    if(n>=10000) return `${sign}${(n/10000).toFixed(n>=100000?0:1)}万`;
-    return sign+n.toLocaleString('zh-CN');
+  const clamp=(n,a,b)=>Math.max(a,Math.min(b,Number.isFinite(Number(n))?Number(n):a));
+  const copy=value=>JSON.parse(JSON.stringify(value));
+  const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+  const hashSeed=text=>{let h=2166136261>>>0;for(const ch of String(text)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+  const stable=(seed,key,max=100)=>hashSeed(`${seed}:${key}`)%max;
+  const rng=()=>{let s=state.run.rngState>>>0;s=(Math.imul(1664525,s)+1013904223)>>>0;state.run.rngState=s;return s/4294967296};
+  const chance=p=>rng()<p;
+  const pick=arr=>arr[Math.floor(rng()*arr.length)];
+  const weightedPick=(items,weightOf=x=>x.weight??1)=>{
+    if(!items.length)return null;
+    const list=items.map(item=>({item,weight:Math.max(0,Number(weightOf(item))||0)}));
+    const sum=list.reduce((n,x)=>n+x.weight,0);if(!sum)return items[0];let roll=rng()*sum;
+    for(const entry of list){roll-=entry.weight;if(roll<=0)return entry.item}return items.at(-1);
   };
-  const hashSeed = text => {let h=2166136261>>>0;for(let i=0;i<String(text).length;i++){h^=String(text).charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
-  const stableNumber = (seed,key,max=100) => hashSeed(`${seed}:${key}`)%max;
-  const rng = () => {let s=state.run.rngState>>>0;s=(Math.imul(1664525,s)+1013904223)>>>0;state.run.rngState=s;return s/4294967296};
-  const chance = p => rng()<p;
-  const pick = arr => arr[Math.floor(rng()*arr.length)];
-  const weightedPick = (items,weightOf=x=>x.weight??1) => {
-    const weighted=items.map(item=>({item,weight:Math.max(0,Number(weightOf(item))||0)}));
-    const sum=weighted.reduce((n,x)=>n+x.weight,0);if(!sum)return items[0];let roll=rng()*sum;
-    for(const entry of weighted){roll-=entry.weight;if(roll<=0)return entry.item}return items[items.length-1];
-  };
-  const makeSeed = () => {
-    const bytes=new Uint32Array(2);crypto.getRandomValues(bytes);
-    return `CN26-${bytes[0].toString(36).slice(-4).toUpperCase().padStart(4,'0')}-${bytes[1].toString(36).slice(-4).toUpperCase().padStart(4,'0')}`;
-  };
-  const countMap = ids => ids.reduce((out,id)=>(out[id]=(out[id]||0)+1,out),{});
+  const money=value=>{let n=Math.round(Number(value)||0),sign=n<0?'-':'';n=Math.abs(n);if(n>=1e8)return`${sign}${(n/1e8).toFixed(n>=1e9?0:1)}亿`;if(n>=1e4)return`${sign}${(n/1e4).toFixed(n>=1e5?0:1)}万`;return sign+n.toLocaleString('zh-CN')};
+  const makeSeed=()=>{const b=new Uint32Array(2);crypto.getRandomValues(b);return`CN26-${b[0].toString(36).slice(-4).toUpperCase()}-${b[1].toString(36).slice(-4).toUpperCase()}`};
+  const increment=(map,key,amount=1)=>map[key]=(map[key]||0)+amount;
+  const contentKey=item=>`${item.id}@r${item.contentRevision||DATA.contentRevision}`;
 
-  function defaultMeta(){
-    return {
-      schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,histories:[],codex:[],settings:{haptic:true,reducedMotion:false},stats:{runs:0,deaths:0,best:0},
-      seenContent:{events:{},cards:{},chains:{},families:{},mainlines:{},endings:{}},recentLives:[],lastRun:null
-    };
-  }
-
-  function normalizeMeta(meta={}){
-    const fresh=defaultMeta();const seen=meta.seenContent||{};
-    return {
-      ...fresh,...meta,schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,
-      settings:{...fresh.settings,...(meta.settings||{})},stats:{...fresh.stats,...(meta.stats||{})},
-      seenContent:{events:{...(seen.events||{})},cards:{...(seen.cards||{})},chains:{...(seen.chains||{})},families:{...(seen.families||{})},mainlines:{...(seen.mainlines||{})},endings:{...(seen.endings||{})}},
-      histories:Array.isArray(meta.histories)?meta.histories.slice(0,30):[],codex:Array.isArray(meta.codex)?meta.codex:[],recentLives:Array.isArray(meta.recentLives)?meta.recentLives.slice(0,5):[]
-    };
-  }
+  function defaultMeta(){return{schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,histories:[],codex:[],settings:{haptic:true,reducedMotion:false,speed:1},stats:{runs:0,best:0},seenContent:{events:{},cards:{},families:{},endings:{}},recentLives:[]}}
+  function normalizeMeta(meta={}){const fresh=defaultMeta(),seen=meta.seenContent||{};return{...fresh,...meta,schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,settings:{...fresh.settings,...(meta.settings||{})},stats:{...fresh.stats,...(meta.stats||{})},seenContent:{events:{...(seen.events||{})},cards:{...(seen.cards||{})},families:{...(seen.families||{})},endings:{...(seen.endings||{})}},histories:Array.isArray(meta.histories)?meta.histories.slice(0,30):[],recentLives:Array.isArray(meta.recentLives)?meta.recentLives.slice(0,5):[]}}
 
   function buildIndex(){
-    const allEvents=[...DATA.events,...DATA.eventChains.flatMap(chain=>chain.nodes.map(node=>({...node,chainId:chain.id})))];
-    const byStage={};for(const stage of Object.keys(DATA.stages))byStage[stage]=[];
-    for(const event of allEvents)for(const stage of event.stage||[])if(byStage[stage])byStage[stage].push(event);
-    return {
-      allEvents,byStage,event:new Map(allEvents.map(e=>[e.id,e])),family:new Map(DATA.familyArchetypes.map(x=>[x.id,x])),
-      chain:new Map(DATA.eventChains.map(x=>[x.id,x])),conflict:new Map(DATA.mainConflicts.map(x=>[x.id,x])),
-      cards:new Map(Object.values(DATA.cards).flat().map(x=>[x.id,x])),ending:new Map(DATA.endingTitles.map(x=>[x.id,x]))
-    };
+    const kinds={beat:[],decision:[],echo:[],blackSwan:[]},byStage={};
+    for(const stage of Object.keys(DATA.stages))byStage[stage]={beat:[],decision:[],echo:[],blackSwan:[]};
+    for(const event of DATA.events){(kinds[event.kind]||kinds.beat).push(event);for(const stage of event.stage||[])if(byStage[stage])byStage[stage][event.kind]?.push(event)}
+    return{kinds,byStage,event:new Map(DATA.events.map(x=>[x.id,x])),family:new Map(DATA.familyArchetypes.map(x=>[x.id,x])),cards:new Map(Object.values(DATA.cards).flat().map(x=>[x.id,x])),ending:new Map(DATA.endingTitles.map(x=>[x.id,x])),conflict:new Map((DATA.mainConflicts||[]).map(x=>[x.id,x]))};
   }
+  function stageForAge(age){return Object.entries(DATA.stages).find(([,range])=>age>=range[0]&&age<=range[1])?.[0]||'elder'}
+  function genderName(g){return g==='female'?'女性':'男性'}
+  function haptic(pattern=10){if(!simulationMode&&state.meta.settings.haptic&&navigator.vibrate)navigator.vibrate(pattern)}
 
-  function stageForAge(age){
-    return Object.entries(DATA.stages).find(([,range])=>age>=range[0]&&age<=range[1])?.[0]||'elder';
+  function seededDNA(seed,birth,archetype){
+    const mods=archetype?.dnaMods||{};const value=(key,base=50)=>clamp(base+stable(seed,key,71)-35+(mods[key]||0),0,100);
+    const siblings=stable(seed,'siblings',100)<38?0:1+stable(seed,'siblings-count',3);
+    return{familyClass:archetype?.familyClass||'working',siblingCount:siblings,onlyChild:siblings===0,parentControl:value('control'),emotionalExpression:value('emotionalExpression'),educationExpectation:value('educationExpectation'),genderTraditionalism:value('genderTraditionalism'),careBurden:value('careBurden'),cashflow:value('cashflow'),housing:value('housing'),hiddenDebt:value('hiddenDebt'),healthBaseline:value('healthBaseline',58),information:value('information'),riskTolerance:value('riskTolerance'),digitalLiteracy:value('digitalLiteracy'),fraudRisk:value('fraudRisk'),openness:value('openness'),medicalAccess:clamp(birth.location.mods?.medical||50,0,100)};
   }
-  function stageName(stage){return {infancy:'幼年',childhood:'童年',adolescence:'青春期',youth:'青年',adult:'结构形成',midlife:'中年清算',preRetire:'身份松动',elder:'余生'}[stage]||stage}
-  function genderName(gender){return gender==='female'?'女性':'男性'}
+  function chooseConflicts(seed){const pool=[...(DATA.mainConflicts||[])].sort((a,b)=>stable(seed,b.id)-stable(seed,a.id));return pool.slice(0,2).map(x=>x.id)}
 
-  function seededDNA(seed,birth,gender,archetype){
-    const n=(key,base=50,spread=45)=>clamp(base+stableNumber(seed,key,spread*2+1)-spread,0,100);
-    const mods=archetype?.dnaMods||{};const siblingCount=stableNumber(seed,'siblings',100)<38?0:1+stableNumber(seed,'sibling-count',3);
-    const value=(key,base=50)=>clamp(n(key,base)+(mods[key]||0),0,100);
-    return {
-      familyClass:archetype?.familyClass||'working',onlyChild:siblingCount===0,siblingCount,
-      familyRole:siblingCount===0?'唯一的家庭项目':['长子女','中间的孩子','最小的孩子'][stableNumber(seed,'family-role',3)],
-      parentControl:value('control'),emotionalExpression:value('emotionalExpression'),educationExpectation:value('educationExpectation'),
-      genderTraditionalism:value('genderTraditionalism'),familyRiskTolerance:value('riskTolerance'),careBurden:value('careBurden'),cashflow:value('cashflow'),
-      housing:value('housing'),hiddenDebt:value('hiddenDebt'),migration:value('migration'),healthBaseline:value('healthBaseline',58),selfEsteem:value('selfEsteem'),
-      attachment:['secure','anxious','avoidant','mixed'][stableNumber(seed,'attachment',4)],information:value('information'),stabilityNeed:value('stabilityNeed'),
-      riskTolerance:value('riskTolerance'),organizationDependence:value('organizationDependence'),digitalLiteracy:value('digitalLiteracy'),fraudRisk:value('fraudRisk'),
-      internalNewsTrust:value('internalNewsTrust'),openness:value('openness'),medicalAccess:clamp((birth?.location?.mods?.medical||50)+(mods.medicalAccess||0),0,100)
-    };
-  }
-
-  function defaultDesires(seed,dna,attrs={}){
-    const get=(key,base)=>clamp(base+stableNumber(seed,`desire-${key}`,31)-15,12,88);
-    return {
-      love:get('love',52),familyBelonging:get('family',55),wealth:get('wealth',50)+(attrs.ambition||1)*2,stability:clamp(get('stability',dna.stabilityNeed),0,100),
-      freedom:clamp(get('freedom',58)-dna.parentControl*.15,0,100),achievement:get('achievement',52)+(attrs.ambition||1)*2,recognition:get('recognition',50),
-      exploration:clamp(get('exploration',dna.openness),0,100),care:clamp(get('care',dna.careBurden),0,100),peace:get('peace',52),body:get('body',45),status:get('status',48),security:get('security',58)
-    };
-  }
-
-  function chooseConflicts(seed,dna,desireValues){
-    const scored=DATA.mainConflicts.map(conflict=>({conflict,score:conflict.desireKeys.reduce((n,key)=>n+Math.abs((desireValues[key]||50)-50),0)+stableNumber(seed,conflict.id,45)}));
-    scored.sort((a,b)=>b.score-a.score);return scored.slice(0,2+(stableNumber(seed,'conflict-count',100)>62?1:0)).map(x=>x.conflict.id);
-  }
-
-  function selectChainsForRun(run,meta){
-    const wanted=3;const previous=new Set(meta.recentLives[0]?.chains||[]);const earlyStages=new Set(['infancy','childhood','adolescence']);
-    const candidates=DATA.eventChains.map(chain=>{
-      let weight=chain.weight||10;
-      if(chain.mainConflicts?.some(id=>run.mainConflicts.includes(id)))weight*=2.2;
-      if(chain.genderAffinity===run.gender)weight*=1.35;
-      if(chain.familyArchetypes?.includes(run.birth.family.archetype.id))weight*=1.5;
-      if(previous.has(contentKey(chain)))weight*=.2;
-      const seen=meta.seenContent.chains[contentKey(chain)]||0;weight*=seen===0?1.8:seen===1?.7:.35;
-      return {chain,weight};
-    });
-    const selected=[];const early=candidates.filter(x=>earlyStages.has(x.chain.nodes[0]?.stage?.[0]));
-    while(selected.length<2&&early.length){const chosen=weightedPick(early,x=>x.weight);selected.push(chosen.chain.id);early.splice(early.indexOf(chosen),1);const allIndex=candidates.indexOf(chosen);if(allIndex>=0)candidates.splice(allIndex,1)}
-    while(selected.length<wanted&&candidates.length){const chosen=weightedPick(candidates,x=>x.weight);selected.push(chosen.chain.id);candidates.splice(candidates.indexOf(chosen),1)}
-    return selected;
-  }
-
-  function createRun(seed=makeSeed(),meta=state.meta){
-    const run={seed,rngState:hashSeed(seed),schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,phase:'birth',age:0};
-    state.run=run;
+  function createRun(seed=makeSeed()){
+    const run={seed,rngState:hashSeed(seed),schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,contentRevision:3,phase:'birth',age:0};state.run=run;
     run.gender=chance(.5)?'female':'male';
-    run.world={year:2026,tags:[]};const worldPool=[...DATA.worldTags];while(run.world.tags.length<3){const tag=weightedPick(worldPool);run.world.tags.push(tag);worldPool.splice(worldPool.indexOf(tag),1)}
-    const location=weightedPick(DATA.locations);const recentFamily=new Set(meta.recentLives.map(x=>x.family));
-    const family=weightedPick(DATA.familyArchetypes,archetype=>{
-      let weight=archetype.weight||1;if(archetype.locationAffinity?.includes(location.id))weight*=1.8;if(recentFamily.has(archetype.id))weight*=.25;
-      const seen=meta.seenContent.families[archetype.id]||0;return weight*(seen===0?2:seen===1?.7:.3);
-    });
-    const secret=weightedPick(DATA.familySecrets.filter(x=>x.age<99||chance(.15)));
-    run.birth={location,family:{archetype:family,familyClass:family.familyClass,father:pick(occupations[location.id]),mother:pick(occupations[location.id]),secret,house:['租住房','按揭商品房','老城区住房','自建房','单位住房'][Math.floor(rng()*5)]}};
-    run.lifeDNA=seededDNA(seed,run.birth,run.gender,family);
+    const location=weightedPick(DATA.locations);const recentFamilies=new Set(state.meta.recentLives.map(x=>x.family));
+    const family=weightedPick(DATA.familyArchetypes,item=>(item.weight||1)*(recentFamilies.has(item.id)?.25:1));
+    const secret=weightedPick(DATA.familySecrets);
+    run.birth={location,family:{archetype:family,father:pick(occupations[location.id]),mother:pick(occupations[location.id]),secret,house:['租住房','按揭商品房','老城区住房','自建房','单位住房'][stable(seed,'house',5)]}};
+    run.lifeDNA=seededDNA(seed,run.birth,family);run.mainConflicts=chooseConflicts(seed);
     run.attrs={intellect:1,physique:1,looks:1,stability:1,social:1,ambition:1};run.points=20;
-    run.desires=defaultDesires(seed,run.lifeDNA,run.attrs);run.mainConflicts=chooseConflicts(seed,run.lifeDNA,run.desires);
-    run.res={cash:Math.round((run.lifeDNA.cashflow-50)*900),assets:run.lifeDNA.housing>70?420000:run.lifeDNA.housing>48?120000:20000,debt:run.lifeDNA.hiddenDebt>72?90000:0,health:clamp(65+run.lifeDNA.healthBaseline*.2,45,92),spirit:72,relation:60};
-    run.hidden={information:run.lifeDNA.information/10,risk:run.lifeDNA.riskTolerance/20,adapt:run.lifeDNA.digitalLiteracy/20,selfEsteem:run.lifeDNA.selfEsteem,stress:20,healthHabit:20,careBurden:run.lifeDNA.careBurden/5,digitalLiteracy:run.lifeDNA.digitalLiteracy,fraudRisk:run.lifeDNA.fraudRisk,genderPressure:run.lifeDNA.genderTraditionalism/5,organizationDependence:run.lifeDNA.organizationDependence};
-    run.flags={};run.cards=[];run.stageDrawn=[];run.adversityDraws=0;run.pending=[];run.timeline=[];run.endingEvidence=[];run.usedEvents=[];run.eventCounts={};run.exclusiveUsed={};run.cooldowns={};run.themeHistory=[];run.stakesHistory=[];run.stakesCounts={small:0,medium:0,major:0};run.categoryCounts={mainline:0,stage:0,social:0,familyEcho:0,blackSwan:0};run.toneStreak={good:0,bad:0};run.needsBalance=null;run.contentRevision=DATA.contentRevision||2;run.resourcePulse=[];
-    run.currentEvent=null;run.currentResult=null;run.eventCount=0;run.education='尚未分流';run.career='尚未进入社会';run.relationshipStatus='单身';run.relationships=[];run.children=0;run.ending=null;
-    run.activeChains=selectChainsForRun(run,meta);run.chainProgress=Object.fromEntries(run.activeChains.map(id=>[id,{step:0,status:'active'}]));
-    return run;
+    run.res={cash:Math.round((run.lifeDNA.cashflow-50)*700),assets:run.lifeDNA.housing>70?420000:run.lifeDNA.housing>48?120000:20000,debt:run.lifeDNA.hiddenDebt>72?90000:0,health:clamp(62+run.lifeDNA.healthBaseline*.25,45,92),spirit:72,relation:60};
+    run.lifeFacts={education:'未入学',jobStatus:'none',career:'尚未进入社会',city:location.id,housing:'family',relationship:'single',children:0,debt:run.res.debt?1:0,skills:0,digitalExperience:0,workExperience:0,savings:0,boundaries:0,careDuty:0};
+    run.memories=[];run.relationships={};run.pressures={money:0,family:0,career:0,body:0,loneliness:0};run.scheduledEchoes=[];run.opportunities=[];
+    run.cards=[];run.cardAges=[];run.adversityDraws=0;run.timeline=[];run.usedEvents=[];run.usedDecisions=[];run.usedEchoes=[];run.seenThisYear=[];
+    run.stageDecisionCounts={};run.decisionCount=0;run.targetDecisions=12+stable(seed,'decision-target',7);run.lastDecisionAge=-9;
+    run.yearQueue=[];run.yearStarted=false;run.currentDecision=null;run.currentResult=null;run.paused=false;run.speed=state.meta.settings.speed||1;run.badStreak=0;run.echoCount=0;
+    const baseLife=64+stable(seed,'lifespan',31);const bodyBonus=Math.round((run.lifeDNA.healthBaseline-50)/10)+(run.attrs.physique-1);run.deathAge=clamp(baseLife+bodyBonus,42,101);
+    run.ending=null;return run;
   }
 
   function migrateRun(old){
-    if(!old||typeof old!=='object')return null;const seed=old.seed||`MIGRATED-${Date.now()}`;
-    const location=DATA.locations.find(x=>x.id===old.birth?.location?.id)||DATA.locations[stableNumber(seed,'location',DATA.locations.length)];
-    const family=DATA.familyArchetypes.find(x=>x.id===old.birth?.family?.archetype?.id)||DATA.familyArchetypes[stableNumber(seed,'archetype',DATA.familyArchetypes.length)];
-    const gender=old.gender|| (stableNumber(seed,'gender',2)?'female':'male');
-    const birth={location,family:{archetype:family,familyClass:family.familyClass,father:old.birth?.family?.father||occupations[location.id][0],mother:old.birth?.family?.mother||occupations[location.id][1],secret:DATA.familySecrets.find(x=>x.id===old.birth?.family?.secret?.id)||DATA.familySecrets[stableNumber(seed,'secret',DATA.familySecrets.length)],house:old.birth?.family?.house||'普通住房'}};
-    const dna=old.lifeDNA||seededDNA(seed,birth,gender,family);const attrs={intellect:1,physique:1,looks:1,stability:1,social:1,ambition:1,...(old.attrs||{})};
-    const desireValues={...defaultDesires(seed,dna,attrs),...(old.desires||{})};const oldPhase=old.phase;
-    const phase=['birthReveal','birth'].includes(oldPhase)?'birth':oldPhase==='attributes'?'attributes':oldPhase==='ended'?'ended':'playing';
-    const run={
-      ...old,schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,seed,rngState:Number(old.rngState)||hashSeed(seed),phase,gender,birth,lifeDNA:dna,attrs,desires:desireValues,
-      mainConflicts:Array.isArray(old.mainConflicts)?old.mainConflicts:chooseConflicts(seed,dna,desireValues),
-      res:{cash:0,assets:0,debt:0,health:75,spirit:70,relation:60,...(old.res||{})},hidden:{information:0,risk:0,adapt:0,selfEsteem:dna.selfEsteem,stress:20,healthHabit:20,careBurden:dna.careBurden/5,digitalLiteracy:dna.digitalLiteracy,fraudRisk:dna.fraudRisk,genderPressure:dna.genderTraditionalism/5,organizationDependence:dna.organizationDependence,...(old.hidden||{})},
-      flags:{...(old.flags||{})},cards:(old.cards||[]).map(card=>typeof card==='string'?card:card.id).filter(id=>INDEX.cards.has(id)),stageDrawn:old.stageDrawn||[],adversityDraws:old.adversityDraws||0,pending:[],timeline:(Array.isArray(old.timeline)?old.timeline:[]).filter(x=>!x.tags?.includes('card')).map(x=>({...x,text:String(x.text||'').replace(/ · (家庭版|自我版|城市版|时代版)/g,'')})),endingEvidence:(old.endingEvidence||[]).filter(x=>!x.tags?.includes('card')).map(x=>({...x,title:String(x.title||'').replace(/ · (家庭版|自我版|城市版|时代版|起点|第一次代价|路线分岔|长期结算|多年回响)/g,'')})),usedEvents:[],eventCounts:{},exclusiveUsed:{},cooldowns:{},themeHistory:[],stakesHistory:[],stakesCounts:{small:0,medium:0,major:0},categoryCounts:{mainline:0,stage:0,social:0,familyEcho:0,blackSwan:0},toneStreak:{good:0,bad:0},needsBalance:null,currentEvent:null,currentResult:null,eventCount:old.eventCount||0,contentRevision:DATA.contentRevision||2,resourcePulse:[],
-      education:old.education||'尚未分流',career:old.career||'尚未进入社会',relationshipStatus:old.flags?.married?'已婚':old.flags?.partner?'稳定关系':'单身',relationships:old.relationships||[],children:old.children??(old.flags?.child?1:0),ending:old.ending||null
-    };
-    run.activeChains=Array.isArray(old.activeChains)?old.activeChains:DATA.eventChains.slice(0,3).map((_,i)=>DATA.eventChains[(stableNumber(seed,`chain-${i}`,DATA.eventChains.length)+i)%DATA.eventChains.length].id);
-    run.chainProgress=old.chainProgress||Object.fromEntries(run.activeChains.map(id=>[id,{step:0,status:'active'}]));
-    if(phase==='card')run.drawOptions=(old.drawOptions||[]).map(card=>INDEX.cards.get(typeof card==='string'?card:card.id)).filter(Boolean);
-    return run;
+    if(!old||typeof old!=='object')return null;if(old.schemaVersion===SCHEMA_VERSION){old.yearStarted=Boolean(old.yearStarted&&old.yearQueue?.length);return old}
+    const seed=old.seed||`MIGRATED-${Date.now()}`;const savedMeta=state?.meta||defaultMeta();const holder=state;state={meta:savedMeta,run:null};const fresh=createRun(seed);state=holder;
+    fresh.age=clamp(old.age||0,0,105);fresh.gender=old.gender||fresh.gender;fresh.attrs={...fresh.attrs,...(old.attrs||{})};fresh.res={...fresh.res,...(old.res||{})};
+    const location=DATA.locations.find(x=>x.id===old.birth?.location?.id);const family=DATA.familyArchetypes.find(x=>x.id===old.birth?.family?.archetype?.id);
+    if(location)fresh.birth.location=location;if(family)fresh.birth.family.archetype=family;
+    fresh.birth.family.father=old.birth?.family?.father||fresh.birth.family.father;fresh.birth.family.mother=old.birth?.family?.mother||fresh.birth.family.mother;fresh.birth.family.house=old.birth?.family?.house||fresh.birth.family.house;
+    fresh.lifeDNA={...fresh.lifeDNA,...(old.lifeDNA||{})};fresh.mainConflicts=old.mainConflicts||fresh.mainConflicts;
+    fresh.cards=(old.cards||[]).map(x=>typeof x==='string'?x:x.id).filter(id=>INDEX.cards.has(id));fresh.cardAges=old.stageDrawn||[];
+    fresh.timeline=(old.timeline||[]).slice(-120).map(x=>({age:x.age??fresh.age,icon:'•',text:String(x.text||'').replace(/：.*$/,'').slice(0,32),kind:'legacy'}));
+    fresh.phase=old.phase==='ended'?'ended':old.phase==='birth'||old.phase==='attributes'?old.phase:'playing';fresh.ending=old.ending||null;fresh.points=old.points??fresh.points;
+    milestoneFacts(fresh);return fresh;
   }
 
   function loadState(){
-    const base={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};let raw=null;
-    try{raw=localStorage.getItem(APP_KEY)}catch(error){base.recovery={error:String(error),raw:''};return base}
-    if(!raw)return base;
-    try{
-      const parsed=JSON.parse(raw);const wasV2=(parsed.schemaVersion||parsed.meta?.schemaVersion||2)<3;
-      if(wasV2&&!localStorage.getItem(V2_BACKUP_KEY))localStorage.setItem(V2_BACKUP_KEY,raw);
-      base.meta=normalizeMeta(parsed.meta||{});base.run=migrateRun(parsed.run);return base;
-    }catch(error){
-      try{localStorage.setItem(CORRUPT_KEY,raw)}catch(ignore){}
-      base.recovery={error:String(error),raw};return base;
-    }
+    const base={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};let raw='';
+    try{raw=localStorage.getItem(APP_KEY)||''}catch(error){base.recovery={error:String(error),raw};return base}if(!raw)return base;
+    try{const parsed=JSON.parse(raw);base.meta=normalizeMeta(parsed.meta||{});state=base;if((parsed.schemaVersion||parsed.run?.schemaVersion||3)<4&&!localStorage.getItem(V31_BACKUP_KEY))localStorage.setItem(V31_BACKUP_KEY,raw);base.run=migrateRun(parsed.run);return base}
+    catch(error){try{localStorage.setItem(CORRUPT_KEY,raw)}catch{}base.recovery={error:String(error),raw};return base}
   }
+  function persist(){if(simulationMode||state.recovery)return;try{localStorage.setItem(APP_KEY,JSON.stringify({schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,meta:state.meta,run:state.run}))}catch{showToast('存档空间不足，请先导出档案')}}
+  function save(immediate=false){if(simulationMode)return;if(saveTimer)clearTimeout(saveTimer);if(immediate)persist();else saveTimer=setTimeout(()=>{saveTimer=null;persist()},120)}
 
-  function persist(){
-    if(simulationMode||state.recovery)return;try{localStorage.setItem(APP_KEY,JSON.stringify({schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,meta:state.meta,run:state.run}))}catch(error){showToast('存档空间不足，请先导出档案')}
+  function factsMeet(facts={},run=state.run){
+    if(facts.childrenMin!==undefined&&Number(run.lifeFacts.children||0)<facts.childrenMin)return false;
+    if(facts.relationshipAny&&!facts.relationshipAny.includes(run.lifeFacts.relationship))return false;
+    if(facts.jobAny&&!facts.jobAny.includes(run.lifeFacts.jobStatus))return false;return true;
   }
-  function save(immediate=false){if(simulationMode)return;if(saveTimer)clearTimeout(saveTimer);if(immediate)persist();else saveTimer=setTimeout(()=>{saveTimer=null;persist()},90)}
-  function haptic(pattern=12){if(!simulationMode&&state.meta.settings.haptic&&navigator.vibrate)navigator.vibrate(pattern)}
-  function showToast(text){if(simulationMode)return;state.toast=text;render();setTimeout(()=>{if(state.toast===text){state.toast=null;render()}},1600)}
-  function go(view){state.view=view;state.overlay=null;if(!simulationMode)window.scrollTo(0,0);render()}
-  function addTimeline(text,age=state.run.age,tags=[]){state.run.timeline.push({age,text,tags});if(state.run.timeline.length>80)state.run.timeline.shift()}
-  function increment(map,key,amount=1){map[key]=(map[key]||0)+amount}
-  function contentKey(item){return `${item.id}@r${item.contentRevision||DATA.contentRevision||1}`}
-
-  function ruleValue(actual,rule){
-    if(rule&&typeof rule==='object')return (rule.min===undefined||actual>=rule.min)&&(rule.max===undefined||actual<=rule.max);
-    return actual>=Number(rule||0);
+  function eligible(event,run=state.run){
+    if(run.age<event.ageMin||run.age>event.ageMax)return false;if(run.usedEvents.includes(event.id))return false;
+    const req=event.requirements||{};if(req.facts&&!factsMeet(req.facts,run))return false;
+    if(req.memoriesAny?.length&&!req.memoriesAny.some(key=>run.memories.some(m=>m.key===key)))return false;
+    if(event.gender?.length&&!event.gender.includes(run.gender))return false;return true;
   }
-  function meets(req={},run=state.run){
-    if(!req)return true;const flags=run.flags||{};
-    if(req.flagsAll?.some(x=>!flags[x]))return false;if(req.flagsAny?.length&&!req.flagsAny.some(x=>flags[x]))return false;if(req.flagsNone?.some(x=>flags[x]))return false;
-    if(req.attributes&&Object.entries(req.attributes).some(([k,v])=>!ruleValue(run.attrs[k]||0,v)))return false;
-    if(req.attributesAny&&Object.entries(req.attributesAny).length&&!Object.entries(req.attributesAny).some(([k,v])=>ruleValue(run.attrs[k]||0,v)))return false;
-    if(req.hidden&&Object.entries(req.hidden).some(([k,v])=>!ruleValue(run.hidden[k]||0,v)))return false;
-    if(req.desires&&Object.entries(req.desires).some(([k,v])=>!ruleValue(run.desires[k]||0,v)))return false;
-    if(req.dna&&Object.entries(req.dna).some(([k,v])=>!ruleValue(run.lifeDNA[k]||0,v)))return false;
-    if(req.cardsAll?.some(id=>!run.cards.includes(id)))return false;if(req.cardsAny?.length&&!req.cardsAny.some(id=>run.cards.includes(id)))return false;
-    if(req.relationship&&run.relationshipStatus!==req.relationship)return false;if(req.career&&run.career!==req.career)return false;if(req.education&&run.education!==req.education)return false;
-    if(req.children!==undefined&&!ruleValue(run.children,req.children))return false;return true;
-  }
-
-  function eventEligible(event){
-    const run=state.run;if(run.age<event.ageMin||(!event.chainId&&run.age>event.ageMax))return false;if(event.gender?.length&&!event.gender.includes(run.gender))return false;
-    if(event.stakes==='major'&&run.stakesHistory?.slice(-2).every(x=>x==='major')&&run.stakesHistory.length>=2)return false;
-    if(event.locations?.length&&!event.locations.includes(run.birth.location.id))return false;if(event.familyArchetypes?.length&&!event.familyArchetypes.includes(run.birth.family.archetype.id))return false;
-    if(event.familyClasses?.length&&!event.familyClasses.includes(run.lifeDNA.familyClass))return false;if(!meets(event.requirements,run))return false;
-    if((run.eventCounts[event.id]||0)>=(event.maxPerLife||1))return false;if(event.exclusiveGroup&&run.exclusiveUsed[event.exclusiveGroup])return false;
-    if((run.cooldowns[event.id]||0)>run.eventCount)return false;
-    if(event.chainId){const progress=run.chainProgress[event.chainId];if(!progress||progress.status!=='active'||progress.step!==(event.chainStep||0))return false}
-    return event.choices?.some(choice=>meets(choice.requirements,run));
-  }
-
-  function desireThemeFactor(event){
-    const map={career:['achievement','stability'],relationship:['love','security'],family:['familyBelonging','care'],care:['care','familyBelonging'],money:['wealth','security'],house:['security','stability'],digital:['exploration','recognition'],identity:['freedom','peace'],health:['peace','body'],adult_gray:['body','love'],gender:['freedom','recognition'],city:['exploration','freedom'],education:['achievement','recognition'],elder:['peace','security']};
-    const keys=event.themes?.flatMap(theme=>map[theme]||[])||[];if(!keys.length)return 1;const average=keys.reduce((n,k)=>n+(state.run.desires[k]||50),0)/keys.length;return .75+average/125;
-  }
-
   function eventWeight(event){
-    const run=state.run;let weight=event.weight||10;
-    if(event.genderAffinity)weight*=event.genderAffinity===run.gender?1.5:.86;
-    if(event.familyArchetypes?.includes(run.birth.family.archetype.id))weight*=1.7;
-    if(event.mainConflicts?.some(id=>run.mainConflicts.includes(id)))weight*=2.05;
-    const lifeTurns=Math.max(1,run.eventCount);const smallRate=(run.stakesCounts?.small||0)/lifeTurns;const majorRate=(run.stakesCounts?.major||0)/lifeTurns;
-    if(event.stakes==='small'&&smallRate<.25)weight*=1.65;if(event.stakes==='major'&&majorRate>.17)weight*=.45;
-    weight*=desireThemeFactor(event);
-    for(const tag of run.world.tags)if(event.worldTagMods?.[tag.id])weight*=event.worldTagMods[tag.id];
-    const seen=state.meta.seenContent.events[contentKey(event)]||0;weight*=seen===0?2.5:seen===1?.5:.15;
-    const previous=state.meta.recentLives[0];if(!event.chainId&&previous?.events?.includes(contentKey(event)))return 0;
-    const recent=run.themeHistory.slice(-2);if(recent.length===2&&event.themes?.some(t=>recent.every(x=>x===t)))weight*=.12;else if(event.themes?.some(t=>recent.includes(t)))weight*=.55;
-    const category=event.category||'stage';const total=Math.max(1,run.eventCount);const actual=(run.categoryCounts[category]||0)/total;const target=categoryTargets[category]??.25;weight*=clamp(1+(target-actual)*2.4,.45,2.2);
-    if(event.chainId){const progress=run.chainProgress[event.chainId];const node=INDEX.chain.get(event.chainId)?.nodes[progress?.step||0];weight*=run.age>(node?.ageMax||run.age)?8:3.4}
-    if(run.needsBalance==='good'&&event.category==='familyEcho')weight*=2.4;if(run.needsBalance==='bad'&&event.category==='blackSwan')weight*=.08;
-    return Math.max(0,weight);
+    const seen=state.meta.seenContent.events[contentKey(event)]||0;let weight=(event.weight||10)*(seen===0?2.2:seen===1?.65:.25);
+    if(state.meta.recentLives[0]?.events?.includes(contentKey(event)))weight*=.2;
+    if(event.theme===state.run.timeline.at(-1)?.theme)weight*=.45;
+    if(event.kind==='echo')weight*=1+state.run.memories.length*.04;
+    if(cardMechanics().includes('network')&&event.theme==='relationship')weight*=1.2;
+    if(cardMechanics().includes('digital')&&event.theme==='digital')weight*=1.2;
+    return weight;
+  }
+  function selectFrom(kind){const pool=(INDEX.byStage[stageForAge(state.run.age)]?.[kind]||INDEX.kinds[kind]).filter(event=>eligible(event));return weightedPick(pool,eventWeight)}
+
+  function cardMechanics(){return state.run.cards.map(id=>INDEX.cards.get(id)?.mechanic).filter(Boolean)}
+  function applyCardShield(event,effects){
+    const mechanics=cardMechanics(),used=state.run.cardUses||(state.run.cardUses={});
+    const use=(mechanic,condition,fn)=>{const card=state.run.cards.find(id=>INDEX.cards.get(id)?.mechanic===mechanic&&!used[id]);if(card&&condition){fn();used[card]=true;state.run.opportunities.push(INDEX.cards.get(card).displayName)}};
+    use('healthUp',event.theme==='health'&&Number(effects.resources?.health)<0,()=>effects.resources.health=Math.ceil(effects.resources.health/2));
+    use('save',(event.theme==='money'||event.theme==='house')&&Number(effects.resources?.cash)<0,()=>effects.resources.cash=Math.ceil(effects.resources.cash/2));
+    use('evidence',['career','money','digital'].includes(event.theme),()=>{effects.resources={...(effects.resources||{}),spirit:(effects.resources?.spirit||0)+2}});
+    use('network',['relationship','family','care'].includes(event.theme),()=>{effects.resources={...(effects.resources||{}),relation:(effects.resources?.relation||0)+2}});
+  }
+  function applyEffects(raw={},event={theme:'ordinary'}){
+    const effects=copy(raw);applyCardShield(event,effects);const run=state.run,changed=[];
+    for(const[key,value]of Object.entries(effects.resources||{})){run.res[key]=clamp((run.res[key]||0)+Number(value),key==='cash'?-999999999:0,key==='cash'||key==='assets'||key==='debt'?999999999:100);changed.push(key)}
+    for(const[key,value]of Object.entries(effects.lifeFacts||{})){if(typeof value==='number'&&typeof run.lifeFacts[key]==='number')run.lifeFacts[key]+=value;else run.lifeFacts[key]=value}
+    for(const[key,value]of Object.entries(effects.pressures||{}))run.pressures[key]=clamp((run.pressures[key]||0)+Number(value),0,100);
+    return changed;
+  }
+  function addTimeline(event,text=event.text,kind=event.kind){
+    const run=state.run;run.timeline.push({age:run.age,icon:event.icon||'•',text,kind,theme:event.theme,id:event.id});if(run.timeline.length>180)run.timeline.shift();
+    if(kind==='echo')run.echoCount++;
+    run.usedEvents.push(event.id);increment(state.meta.seenContent.events,contentKey(event));
+  }
+  function milestoneFacts(run=state.run){
+    const age=run.age;if(age>=7)run.lifeFacts.education='小学';if(age>=13)run.lifeFacts.education='初中';if(age>=16)run.lifeFacts.education=run.attrs.intellect>=5?'普通高中':'职校或高中';
+    if(age>=19)run.lifeFacts.education=run.attrs.intellect>=6?'大学在读':run.attrs.intellect>=4?'大专或职校毕业':'中学毕业';
+    if(age>=23&&run.lifeFacts.jobStatus==='none'){run.lifeFacts.jobStatus='employed';run.lifeFacts.career=pick(occupations[run.birth.location.id])}
+    if(age>=60&&run.lifeFacts.jobStatus==='employed'&&run.attrs.stability>=5)run.lifeFacts.jobStatus='retired';
   }
 
-  function materializeEvent(event){
-    const variant=event.variants?.[state.run.gender]||{};const choices=event.choices.map((choice,i)=>({...choice,...(variant.choices?.[i]||{})}));return {...event,...variant,choices};
+  function revealNext(){
+    const run=state.run;if(run.phase!=='playing'||run.paused)return;
+    if(!run.yearQueue.length){finishYear();return}
+    const event=run.yearQueue.shift();applyEffects(event.effects||{},event);addTimeline(event);run.seenThisYear.push(event.id);
+    if(['health','money','career'].includes(event.theme)&&event.tone!=='light')run.badStreak++;else run.badStreak=Math.max(0,run.badStreak-1);
+    save();render();scheduleAuto(run.yearQueue.length?420:720);
   }
+  function beginYear(){
+    const run=state.run;if(run.age>run.deathAge||run.age>105){finishLife();return}run.yearStarted=true;milestoneFacts(run);run.seenThisYear=[];
+    const dueCard=CARD_AGES.find(age=>run.age>=age&&!run.cardAges.includes(age));if(dueCard!==undefined){startCardDraw('stage',dueCard);return}
+    if(run.badStreak>=3&&run.age>=18&&run.adversityDraws<1){run.adversityDraws++;startCardDraw('adversity',run.age);return}
+    const stage=stageForAge(run.age);const possibleEcho=(INDEX.byStage[stage]?.echo||[]).filter(e=>eligible(e));let primary=null;
+    if(possibleEcho.length&&chance(.18))primary=weightedPick(possibleEcho,eventWeight);else primary=selectFrom('beat');
+    if(!primary){primary={id:`quiet_${run.age}`,kind:'beat',icon:'·',text:'这一年没有大事，日子照常往前。',theme:'ordinary',effects:{},contentRevision:3}}
+    run.yearQueue=[primary];
+    if(chance(.35)){let second=selectFrom('beat');if(possibleEcho.length&&chance(.28))second=weightedPick(possibleEcho.filter(x=>x.id!==primary.id),eventWeight)||second;if(second&&second.id!==primary.id)run.yearQueue.push(second)}
+    if(chance(.008)){const swan=selectFrom('blackSwan');if(swan)run.yearQueue[run.yearQueue.length-1]=swan}
+    revealNext();
+  }
+  function shouldOfferDecision(){
+    const run=state.run,stage=stageForAge(run.age),quota=STAGE_QUOTAS[stage]||0,count=run.stageDecisionCounts[stage]||0;if(count>=quota||run.decisionCount>=run.targetDecisions)return false;
+    const range=DATA.stages[stage],remaining=Math.max(0,range[1]-run.age),need=quota-count;if(run.age-run.lastDecisionAge<2&&remaining>need)return false;
+    if(remaining<=need)return true;return chance(Math.min(.55,(need/(remaining+1))*1.45));
+  }
+  function offerDecision(){
+    const run=state.run,event=selectFrom('decision');if(!event)return false;run.phase='decision';run.currentDecision=event;run.paused=false;clearAuto();save();render();return true;
+  }
+  function finishYear(){
+    const run=state.run;if(run.phase!=='playing')return;if(shouldOfferDecision()&&offerDecision())return;
+    if(run.age>=60&&run.res.health<20&&chance(.12)){run.deathAge=run.age;finishLife();return}
+    run.yearStarted=false;run.age++;save();render();scheduleAuto(760);
+  }
+  function advanceLife(force=false){
+    const run=state.run;if(!run||run.phase!=='playing'||(run.paused&&!force))return;
+    if(run.yearStarted)revealNext();else beginYear();
+  }
+  function clearAuto(){if(autoTimer){clearTimeout(autoTimer);autoTimer=null}}
+  function scheduleAuto(ms=800){clearAuto();if(simulationMode)return;const run=state.run;if(!run||state.view!=='game'||run.phase!=='playing'||run.paused)return;autoTimer=setTimeout(()=>{autoTimer=null;advanceLife()},Math.max(100,ms/(run.speed||1)))}
 
-  function fallbackEvent(kind='neutral'){
-    const positive=kind==='good';const complication=kind==='bad';
-    return {id:`fallback_${kind}_${state.run.eventCount}`,title:positive?'那通电话有人接了':complication?'顺利开始收维护费':'普通得没有上热搜的一阵子',icon:positive?'🫶':complication?'🧾':'🌤️',stage:[stageForAge(state.run.age)],ageMin:state.run.age,ageMax:state.run.age,gender:['male','female'],requirements:{},weight:1,category:'familyEcho',themes:['identity'],mainConflicts:[],cooldown:0,maxPerLife:1,text:positive?'连续几天都不顺之后，有人问你要不要先吃饭。':complication?'事情终于顺起来，随之而来的是续费、保养和更多消息。':'没有搬家、升职或住院。天气一般，饭也按时吃了。',choices:[
-      {text:positive?'先去把那顿饭吃了':'照旧把今天过完',resultText:positive?'饭是热的，对方没有追问你为什么狼狈。':'这一天没有成为故事，第二天照常来了。',requirements:{},effects:{resources:{spirit:positive?10:4,health:positive?5:2,relation:3},desires:{peace:5}}},
-      {text:'给那个旧号码发一句“在吗”',resultText:'对方过了二十分钟回复：刚看见。',requirements:{},effects:{resources:{relation:7,spirit:4},relationships:[{id:'old_friend',delta:8}]}},
-      {text:'把账单和体检预约放进日历',resultText:'没有奇迹发生，下个月少了两件忘记的事。',requirements:{},effects:{resources:{cash:-1200,health:6},hidden:{risk:-2,healthHabit:5}}}
-    ]};
+  function chooseDecision(index){
+    const run=state.run,event=run.currentDecision,choice=event?.choices?.[index];if(!choice||inputLocked)return;inputLocked=true;
+    const changed=applyEffects(choice.effects||{},event);run.memories.push({key:choice.memoryKey,decisionId:event.id,age:run.age,choice:choice.text,result:choice.resultText,echoText:event.echoText});
+    run.usedDecisions.push(event.id);run.decisionCount++;increment(run.stageDecisionCounts,stageForAge(run.age));run.lastDecisionAge=run.age;
+    run.currentResult={text:choice.resultText,hints:choice.consequenceHints||[],changed};run.phase='result';addTimeline(event,`${choice.text}。${choice.resultText}`,'decision');
+    run.badStreak=(choice.consequenceHints||[]).some(x=>/↓|风险|压力|债务/.test(x))?run.badStreak+1:Math.max(0,run.badStreak-1);haptic(18);save();render();setTimeout(()=>inputLocked=false,220);
   }
-
-  function dueCardDraw(){
-    const run=state.run;const adversity=run.badStreak>=3&&run.adversityDraws<2&&chance(.48);if(adversity)return {kind:'adversity',age:run.age};
-    const age=stageDrawAges.find(value=>run.age>=value&&!run.stageDrawn.includes(value));return age===undefined?null:{kind:'stage',age};
-  }
+  function continueAfterResult(){const run=state.run;if(run.phase!=='result')return;run.currentDecision=null;run.currentResult=null;run.phase='playing';run.yearStarted=false;run.age++;save();render();scheduleAuto(500)}
 
   function cardOptions(kind){
-    const pool=[...DATA.cards[kind]];const previous=state.meta.recentLives[0]?.cards||[];const result=[];
-    while(result.length<3&&pool.length){
-      const choice=weightedPick(pool,card=>{const seen=state.meta.seenContent.cards[contentKey(card)]||0;let weight=seen===0?3:seen===1?.7:.25;if(previous.includes(contentKey(card)))weight*=.15;if(card.condition?.locations&&!card.condition.locations.includes(state.run.birth.location.id))weight*=.1;return weight});
-      result.push(choice);pool.splice(pool.indexOf(choice),1);
-    }
-    return result;
+    const recent=new Set(state.meta.recentLives.flatMap(x=>x.cards||[])),owned=new Set(state.run.cards);const pool=[...DATA.cards[kind]].filter(card=>!owned.has(card.id)),result=[];
+    while(result.length<3&&pool.length){const chosen=weightedPick(pool,card=>{const seen=state.meta.seenContent.cards[contentKey(card)]||0;return(seen===0?3:seen===1?.7:.25)*(recent.has(contentKey(card))?.25:1)});result.push(chosen);pool.splice(pool.indexOf(chosen),1)}return result;
   }
-
-  function startCardDraw(kind,age=state.run.age){state.run.phase='card';state.run.drawKind=kind;state.run.drawAt=age;state.run.drawOptions=cardOptions(kind);state.view='card';save();render()}
-
-  function selectEvent(){
-    const run=state.run;if(run.phase==='ended')return;
-    if(shouldEndLife())return finishRun();
-    const secret=run.birth.family.secret;if(secret.age<=run.age&&!run.flags[`secret_${secret.id}`]){
-      run.flags[`secret_${secret.id}`]=true;run.currentEvent={id:`reveal_${secret.id}`,title:'旧账从抽屉里掉了出来',icon:'🔒',stage:[stageForAge(run.age)],ageMin:run.age,ageMax:run.age,category:'familyEcho',themes:['family'],mainConflicts:['care_self'],maxPerLife:1,text:secret.text,choices:[{text:'把账本摊开，先问这笔钱去了哪里',resultText:'家里沉默了一会儿，终于有人把年份和金额说清楚。',requirements:{},effects:secret.effects}]};run.currentResult=null;save();render();return;
-    }
-    const due=run.pending.find(item=>item.age<=run.age);if(due){run.pending=run.pending.filter(x=>x!==due);run.currentEvent=due.event;run.currentResult=null;save();render();return}
-    const draw=dueCardDraw();if(draw)return startCardDraw(draw.kind,draw.age);
-    const activeChainNodes=run.activeChains.map(id=>{const progress=run.chainProgress[id];return progress?.status==='active'?INDEX.chain.get(id)?.nodes[progress.step]:null}).filter(Boolean).map(node=>({...node,chainId:node.chainId||run.activeChains.find(id=>INDEX.chain.get(id)?.nodes.includes(node))}));
-    if(run.forceChainResolution){
-      const forced=activeChainNodes.filter(event=>run.age>=event.ageMin&&eventEligible(event)).sort((a,b)=>(b.chainStep||0)-(a.chainStep||0))[0];
-      if(forced){run.currentEvent=materializeEvent(forced);run.currentResult=null;run.phase='playing';if(!run.usedEvents.includes(forced.id)){run.usedEvents.push(forced.id);increment(state.meta.seenContent.events,contentKey(forced))}save();render();return}
-    }
-    let candidates=[...(INDEX.byStage[stageForAge(run.age)]||[]),...activeChainNodes].filter((event,index,array)=>array.findIndex(x=>x.id===event.id)===index).filter(eventEligible);
-    if(run.needsBalance==='good')candidates=[fallbackEvent('good'),...candidates];else if(run.needsBalance==='bad')candidates=[fallbackEvent('bad'),...candidates];
-    if(!candidates.length)candidates=[fallbackEvent('neutral')];
-    const weighted=candidates.map(event=>({event,weight:event.id.startsWith('fallback_')?(run.needsBalance?60:1):eventWeight(event)})).filter(x=>x.weight>0);
-    lastCandidateWeights=weighted.sort((a,b)=>b.weight-a.weight).slice(0,30).map(x=>({id:x.event.id,title:x.event.title,weight:Number(x.weight.toFixed(2))}));
-    const selected=weighted.length?weightedPick(weighted,x=>x.weight).event:fallbackEvent('neutral');run.currentEvent=materializeEvent(selected);run.currentResult=null;run.phase='playing';
-    if(run.needsBalance)run.needsBalance=null;
-    if(!run.usedEvents.includes(selected.id)){run.usedEvents.push(selected.id);increment(state.meta.seenContent.events,contentKey(selected))}
-    save();render();
-  }
-
-  function applyEffects(effects={}){
-    const run=state.run;const deltas=[];const labels={cash:'现金',assets:'资产',debt:'负债',health:'健康',spirit:'精神',relation:'关系'};
-    for(const [key,value] of Object.entries(effects.resources||{})){run.res[key]=(run.res[key]||0)+Number(value||0);if(['health','spirit','relation'].includes(key))run.res[key]=clamp(run.res[key],0,100);if(['cash','assets','debt'].includes(key))run.res[key]=clamp(run.res[key],-999999999,999999999);deltas.push({key,k:labels[key]||key,v:value})}
-    for(const [key,value] of Object.entries(effects.attributes||{})){run.attrs[key]=clamp((run.attrs[key]||1)+Number(value||0),1,10);deltas.push({k:DATA.attributes[key]?.name||key,v:value})}
-    for(const [key,value] of Object.entries(effects.hidden||{})){run.hidden[key]=clamp((run.hidden[key]||0)+Number(value||0),-100,100);deltas.push({k:key,v:value,hidden:true})}
-    for(const [key,value] of Object.entries(effects.desires||{})){run.desires[key]=clamp((run.desires[key]||50)+Number(value||0),0,100);deltas.push({k:DATA.desires[key]?.name||key,v:value,hidden:true})}
-    for(const flag of effects.flagsAdd||[])run.flags[flag]=true;for(const flag of effects.flagsRemove||[])delete run.flags[flag];
-    for(const relation of effects.relationships||[]){let person=run.relationships.find(x=>x.id===relation.id);if(!person){person={id:relation.id,name:relation.id==='old_friend'?'多年旧友':'人生中的一个人',closeness:0};run.relationships.push(person)}person.closeness=clamp(person.closeness+(relation.delta||0),-100,100)}
-    if(effects.career)run.career=effects.career;if(effects.education)run.education=effects.education;if(effects.relationshipStatus)run.relationshipStatus=effects.relationshipStatus;if(effects.children!==undefined)run.children=Math.max(0,run.children+effects.children);
-    for(const cardId of effects.cardsAdd||[])if(INDEX.cards.has(cardId)&&!run.cards.includes(cardId))run.cards.push(cardId);
-    for(const scheduled of effects.schedule||[])run.pending.push({age:run.age+(scheduled.delay||1),event:scheduled.event});return deltas;
-  }
-
+  function startCardDraw(kind,age){const run=state.run;run.phase='card';run.drawKind=kind;run.drawAt=age;run.drawOptions=cardOptions(kind);clearAuto();state.view='card';save();render()}
   function chooseCard(id){
-    const run=state.run;if(inputLocked)return;const card=run.drawOptions?.find(x=>x.id===id);if(!card)return;inputLocked=true;
-    run.cards.push(card.id);increment(state.meta.seenContent.cards,contentKey(card));applyEffects(card.effects);
-    if(run.drawKind==='stage')run.stageDrawn.push(run.drawAt);if(run.drawKind==='adversity'){run.adversityDraws++;run.badStreak=0}
-    run.phase='playing';run.drawOptions=null;run.drawKind=null;state.view='game';haptic([20,35,20]);save();inputLocked=false;selectEvent();
+    const run=state.run,card=run.drawOptions?.find(x=>x.id===id);if(!card||inputLocked)return;inputLocked=true;run.cards.push(id);increment(state.meta.seenContent.cards,contentKey(card));
+    if(run.drawKind==='stage')run.cardAges.push(run.drawAt);applyEffects(card.effects||{}, {theme:'card'});run.opportunities.push(card.displayName);
+    run.drawOptions=[];run.phase='playing';state.view='game';haptic([10,30,12]);save();render();scheduleAuto(650);setTimeout(()=>inputLocked=false,220);
   }
 
-  function chooseEvent(index){
-    const run=state.run;if(inputLocked||run.currentResult)return;const event=run.currentEvent;const choice=event?.choices?.[index];if(!choice)return;if(!meets(choice.requirements,run)){showToast('当前条件不足');return}
-    inputLocked=true;const deltas=applyEffects(choice.effects||{});increment(run.eventCounts,event.id);if(event.exclusiveGroup)run.exclusiveUsed[event.exclusiveGroup]=true;if(event.cooldown)run.cooldowns[event.id]=run.eventCount+event.cooldown;
-    const category=event.category||'stage';increment(run.categoryCounts,category);const stakes=event.stakes||'medium';increment(run.stakesCounts,stakes);run.stakesHistory.push(stakes);run.stakesHistory=run.stakesHistory.slice(-3);run.eventCount++;run.themeHistory.push(event.themes?.[0]||'ordinary');run.themeHistory=run.themeHistory.slice(-6);
-    const positives=deltas.filter(x=>!x.hidden&&x.v>0).length,negatives=deltas.filter(x=>!x.hidden&&x.v<0).length;const tone=negatives>positives?'bad':positives>negatives?'good':'mixed';
-    run.toneStreak.good=tone==='good'?run.toneStreak.good+1:0;run.toneStreak.bad=tone==='bad'?run.toneStreak.bad+1:0;run.badStreak=run.toneStreak.bad;
-    if(run.toneStreak.bad>=4)run.needsBalance='good';if(run.toneStreak.good>=4)run.needsBalance='bad';
-    if(event.chainId){const progress=run.chainProgress[event.chainId];if(progress){progress.step++;const chain=INDEX.chain.get(event.chainId);if(progress.step>=chain.nodes.length){progress.status='completed';increment(state.meta.seenContent.chains,contentKey(chain));addTimeline('一件拖了很多年的事终于有了结果。',run.age,['chain'])}}}
-    if(Object.values(run.chainProgress).filter(x=>x.status==='completed').length>=2)run.forceChainResolution=false;
-    for(const theme of event.themes||[]){const codex=DATA.codex[Math.abs(hashSeed(theme))%DATA.codex.length];if(codex&&!state.meta.codex.includes(codex.id))state.meta.codex.push(codex.id)}
-    const result=choice.resultText||'事情继续向前。';run.resourcePulse=deltas.filter(x=>!x.hidden&&['cash','health','spirit','relation'].includes(x.key)).map(x=>x.key);run.currentResult={text:result,deltas};addTimeline(`${event.title}：${result}`,run.age,event.endingTags||event.themes||[]);
-    run.endingEvidence.push({age:run.age,title:event.title,result,tags:event.endingTags||event.themes||[],weight:event.chainId?5:event.mainConflicts?.some(id=>run.mainConflicts.includes(id))?4:2});
-    haptic(10);save();inputLocked=false;render();
+  function startPlaying(){state.run.phase='playing';state.view='game';save();render();scheduleAuto(500)}
+  function endingTitle(run){
+    const preferred=DATA.endingTitles.filter(x=>x.themes?.some(theme=>run.timeline.some(t=>t.theme===theme)));return weightedPick(preferred.length?preferred:DATA.endingTitles)?.title||'这一生按时结束';
+  }
+  function finishLife(){
+    const run=state.run;if(run.phase==='ended')return;clearAuto();run.phase='ended';run.age=Math.min(run.age,run.deathAge);
+    const net=run.res.assets+run.res.cash-run.res.debt,score=clamp(Math.round(run.res.health*.22+run.res.spirit*.22+run.res.relation*.22+clamp(net/20000,0,22)+run.memories.length*.6),1,99);
+    const facts=run.memories.slice(-5).map(m=>({age:m.age,title:m.choice,result:m.result}));while(facts.length<3&&run.timeline.length){const t=run.timeline[Math.max(0,run.timeline.length-1-facts.length*3)];facts.unshift({age:t.age,title:t.text,result:'这件事留在了你的时间线上。'})}
+    const conflict=INDEX.conflict.get(run.mainConflicts[0])?.name||'留下还是离开';const first=facts[0],last=facts.at(-1);
+    const review=`你从${run.birth.location.name}的${run.birth.family.archetype.name}出发。${first?`${first.age}岁时，你选择了“${first.title}”。`:''}${last&&last!==first?`${last.age}岁，生活又因“${last.title}”换了方向。`:''}你活了${run.age}岁，留下${run.memories.length}次真正由自己作出的决定。最后拥有的不是标准答案，而是一条只有这些经历才能拼出的路。`;
+    run.ending={age:run.age,title:endingTitle(run),score,net,review,mainConflict:conflict,facts,gained:[run.lifeFacts.skills?'能带走的技能':'几段仍有回应的关系',run.cards.length?'几次命运留下的余地':'对日常的耐心'],lost:[run.pressures.body>20?'一部分没有休息够的身体':'一些没有兑现的计划',run.pressures.money>20?'被账单占用的自由':'无法同时走完的岔路']};
+    increment(state.meta.stats,'runs');state.meta.stats.best=Math.max(state.meta.stats.best||0,score);increment(state.meta.seenContent.endings,run.ending.title);
+    const life={title:run.ending.title,age:run.age,score,net,gender:run.gender,family:run.birth.family.archetype.id,events:run.usedEvents.map(id=>contentKey(INDEX.event.get(id)||{id,contentRevision:3})),cards:run.cards.map(id=>contentKey(INDEX.cards.get(id))),decisions:run.decisionCount};
+    state.meta.histories.unshift({...life,familyName:run.birth.family.archetype.name});state.meta.histories=state.meta.histories.slice(0,30);state.meta.recentLives.unshift(life);state.meta.recentLives=state.meta.recentLives.slice(0,5);state.view='ending';save(true);render();
   }
 
-  function driftDesires(){
-    const run=state.run;const stage=stageForAge(run.age);const shifts={infancy:{security:1,familyBelonging:1},childhood:{recognition:1,exploration:1},adolescence:{freedom:2,recognition:1,body:1},youth:{achievement:1,love:1,exploration:1},adult:{stability:1,security:1,care:1},midlife:{peace:2,health:1,recognition:-1},preRetire:{peace:2,status:-1,care:1},elder:{peace:2,exploration:1,status:-2}}[stage]||{};
-    for(const [key,value] of Object.entries(shifts))if(run.desires[key]!==undefined)run.desires[key]=clamp(run.desires[key]+value,0,100);
-    if(run.hidden.stress>55)run.desires.peace=clamp(run.desires.peace+2,0,100);if(run.relationshipStatus==='单身'&&run.age>35)run.desires.love=clamp(run.desires.love+(chance(.5)?1:-1),0,100);
-  }
+  function roleLine(){const run=state.run;if(run.age<7)return'被家里照顾';if(run.age<19)return run.lifeFacts.education;if(run.lifeFacts.jobStatus==='retired')return'退休生活';if(run.lifeFacts.jobStatus==='unemployed')return'正在找下一份工作';if(run.lifeFacts.jobStatus==='gig')return'灵活就业';return run.lifeFacts.career||'普通上班族'}
+  function go(view){clearAuto();state.view=view;state.overlay=null;window.scrollTo(0,0);render();if(view==='game')scheduleAuto(450)}
+  function showToast(text){if(simulationMode)return;state.toast=text;render();setTimeout(()=>{if(state.toast===text){state.toast=null;render()}},1500)}
 
-  function continueAfterResult(){
-    const run=state.run;if(!run.currentResult)return;run.currentEvent=null;run.currentResult=null;run.resourcePulse=[];
-    const stage=stageForAge(run.age);const step=stage==='infancy'||stage==='childhood'||stage==='adolescence'?1:stage==='youth'?1+Math.floor(rng()*2):stage==='adult'||stage==='midlife'?2+Math.floor(rng()*2):stage==='preRetire'?2+Math.floor(rng()*2):3+Math.floor(rng()*2);
-    run.age+=step;
-    const employed=run.career!=='尚未进入社会';const income=employed?(run.flags.manager?52000:run.flags.public_job?32000:run.flags.business?chance(.58)?48000:-18000:26000):run.age<20?0:14000;
-    const locationCost={tier1:22000,tier2:14500,county:8500,town:6200}[run.birth.location.id];const careCost=run.children*5000+Math.max(0,run.hidden.careBurden)*120;
-    run.res.cash=clamp(run.res.cash+income-locationCost-careCost,-999999999,999999999);if(run.res.cash<0){run.res.debt=clamp(run.res.debt+Math.abs(run.res.cash),0,999999999);run.res.cash=0;run.hidden.risk=clamp(run.hidden.risk+2,-100,100);run.res.spirit=clamp(run.res.spirit-4,0,100)}
-    const ageWear=run.age>70?4:run.age>55?2:run.age>35?1:0;const habit=Math.max(-1,(run.hidden.healthHabit-35)/35);run.res.health=clamp(run.res.health-ageWear+habit,0,100);run.hidden.stress=clamp(run.hidden.stress+(employed?1:0)-(run.desires.peace>70?1:0),0,100);if(run.hidden.stress>60)run.res.spirit=clamp(run.res.spirit-2,0,100);
-    for(const key of Object.keys(run.cooldowns))if(run.cooldowns[key]<=run.eventCount)delete run.cooldowns[key];driftDesires();save();selectEvent();
-  }
-
-  function annualMortalityRisk(run){
-    const age=run.age;let base=age<40?.00015:age<55?.0015:age<65?.005:age<75?.016:age<85?.045:age<95?.11:age<103?.22:.42;
-    const healthFactor=clamp((105-run.res.health)/55,.55,2.3);const stressFactor=1+Math.max(0,run.hidden.stress-50)/90;const careFactor=run.relationships.some(x=>x.closeness>45)||run.res.relation>68?.82:1.08;return clamp(base*healthFactor*stressFactor*careFactor,0,.72);
-  }
-  function shouldEndLife(){
-    const run=state.run;if(run.res.health<=0||run.age>=108)return true;if(run.age<18)return false;const risk=annualMortalityRisk(run);const fatal=chance(1-Math.pow(1-risk,Math.max(1,run.age>65?3:1)));
-    if(fatal&&Object.values(run.chainProgress).filter(x=>x.status==='completed').length<2){run.forceChainResolution=true;return false}return fatal;
-  }
-
-  function endingFacts(run){
-    const evidence=[...run.endingEvidence].sort((a,b)=>b.weight-a.weight);const chosen=[];const ages=new Set();
-    for(const item of evidence){const bucket=Math.floor(item.age/15);if(!ages.has(bucket)||chosen.length<2){chosen.push(item);ages.add(bucket)}if(chosen.length===3)break}
-    while(chosen.length<3)chosen.push({age:chosen.length?run.age:0,title:chosen.length?'你继续生活':'你的出发点',result:chosen.length?`你在${stageName(stageForAge(run.age))}仍保留选择。`:`你出生在${run.birth.location.name}的${run.birth.family.archetype.name}。`,tags:['life'],weight:1});
-    return chosen;
-  }
-
-  function chooseEndingTitle(run){
-    const tags=new Set(run.endingEvidence.flatMap(x=>x.tags||[]));const previous=state.meta.recentLives[0]?.ending;
-    return weightedPick(DATA.endingTitles,title=>{let weight=title.weight||10;if(title.themes?.some(t=>tags.has(t)))weight*=2.2;const seen=state.meta.seenContent.endings[title.id]||0;weight*=seen===0?2.5:seen===1?.55:.18;if(previous===title.id)weight*=.1;return weight});
-  }
-
-  function finishRun(){
-    const run=state.run;if(run.phase==='ended')return;run.phase='ended';const net=run.res.assets+run.res.cash-run.res.debt;const facts=endingFacts(run);const title=chooseEndingTitle(run);
-    const familyIndex=DATA.familyArchetypes.findIndex(x=>x.id===run.birth.family.archetype.id);const conflictIndex=DATA.mainConflicts.findIndex(x=>x.id===run.mainConflicts[0]);
-    const f=DATA.endingFragments;const review=[f.origins[Math.abs(familyIndex)%f.origins.length],f.conflicts[Math.abs(conflictIndex)%f.conflicts.length],f.turns[stableNumber(run.seed,'ending-turn',f.turns.length)],f.gains[stableNumber(run.seed,'ending-gain',f.gains.length)],f.losses[stableNumber(run.seed,'ending-loss',f.losses.length)],f.judgments[Number(title.id.split('_')[1])%f.judgments.length]].join('');
-    const score=Math.round(clamp(net/45000+run.res.health*.2+run.res.spirit*.2+run.res.relation*.18+run.hidden.selfEsteem*.08-run.hidden.stress*.08,0,100));
-    const completedChains=Object.entries(run.chainProgress).filter(([,p])=>p.status==='completed').map(([id])=>id);const mainConflict=INDEX.conflict.get(run.mainConflicts[0]);
-    const gained=[run.relationships.some(x=>x.closeness>40)?'仍能联系的关系':null,run.res.assets>run.res.debt?'可使用的资产':null,run.hidden.healthHabit>35?'与身体合作的习惯':null,run.desires.freedom>65?'为自己做决定的能力':null].filter(Boolean).slice(0,3);
-    const lost=[run.res.health<55?'一部分健康':null,run.res.debt>run.res.cash?'长期现金流':null,run.res.relation<45?'部分重要关系':null,run.hidden.stress>60?'大量安静时间':null].filter(Boolean).slice(0,3);
-    run.ending={id:title.id,title:title.title,age:run.age,score,net,review,facts,gained:gained.length?gained:['一些没有被记录的可能'],lost:lost.length?lost:['部分原本可以属于你的时间'],mainConflict:mainConflict?.name||'生活与自我之间的长期谈判',completedChains};
-    increment(state.meta.seenContent.endings,title.id);increment(state.meta.seenContent.families,run.birth.family.archetype.id);for(const id of run.mainConflicts)increment(state.meta.seenContent.mainlines,id);
-    const history={seed:run.seed,age:run.age,gender:run.gender,family:run.birth.family.archetype.name,title:title.title,score,net,location:run.birth.location.name,date:new Date().toISOString(),facts:facts.map(x=>x.title)};
-    state.meta.histories.unshift(history);state.meta.histories=state.meta.histories.slice(0,30);state.meta.stats.runs++;state.meta.stats.best=Math.max(state.meta.stats.best,score);if(run.res.health<=0)state.meta.stats.deaths++;
-    state.meta.recentLives.unshift({seed:run.seed,events:run.usedEvents.map(id=>contentKey(INDEX.event.get(id)||{id})),cards:run.cards.map(id=>contentKey(INDEX.cards.get(id)||{id})),chains:completedChains.map(id=>contentKey(INDEX.chain.get(id)||{id})),family:run.birth.family.archetype.id,mainlines:[...run.mainConflicts],ending:title.id});state.meta.recentLives=state.meta.recentLives.slice(0,5);
-    save(true);go('ending');
-  }
-
-  function roleLine(){
-    const run=state.run;if(run.age<7)return '在家长大';if(run.age<13)return '小学生';if(run.age<19)return '中学生';if(run.age<25&&run.education!=='尚未分流')return run.education;
-    if(run.flags.public_job)return '公共岗位从业者';if(run.flags.manager)return '组织协调责任人';if(run.flags.business)return '自雇经营者';if(run.age>=60&&run.flags.retired)return '退休居民';return run.career;
-  }
-
-  function render(){
-    if(simulationMode)return;let html='';
-    if(state.recovery)html=recoveryView();else if(state.view==='home')html=homeView();else if(state.view==='birth')html=birthView();else if(state.view==='attributes')html=attributesView();else if(state.view==='card')html=cardView();else if(state.view==='game')html=gameView();else if(state.view==='ending')html=endingView();else if(state.view==='archive')html=archiveView();else if(state.view==='codex')html=codexView();else if(state.view==='settings')html=settingsView();
-    app.innerHTML=html+(state.overlay?overlayView():'')+(state.toast?`<div class="toast">${esc(state.toast)}</div>`:'');bind();
-  }
-
-  function homeView(){
-    const cont=state.run&&state.run.phase!=='ended';return `<main class="screen center"><div class="version">v${VERSION}</div><div class="eyebrow">🎲 2026 · 中国人生模拟</div><h1>人生尚未加载</h1><p class="hero-sub">出生无法选择。加点可以。世界不保证公平，只保证继续运行。</p><div class="mt stack"><button class="btn primary" data-act="new">🎲 开始新人生</button>${cont?`<button class="btn" data-act="continue">继续：${state.run.age}岁 · ${esc(state.run.birth.location.name)}</button>`:''}</div><div class="menu-list"><button class="menu-item" data-nav="archive"><strong>🗂️ 人生档案</strong><span class="chev">›</span></button><button class="menu-item" data-nav="codex"><strong>📖 社会图鉴</strong><span class="muted">${state.meta.codex.length}/${DATA.codex.length}</span></button><button class="menu-item" data-nav="settings"><strong>⚙️ 设置</strong><span class="chev">›</span></button></div>${DEBUG?debugPanel():''}<div class="mt tiny">离线运行 · 无音乐 · 无广告 · 无账号 · 自动存档</div></main>`;
-  }
-
-  function birthView(){
-    const run=state.run,b=run.birth,dna=run.lifeDNA;return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">👶 投胎结果</div><span></span></div><div class="eyebrow">你出生了</div><div class="birth-place">${esc(b.location.name)} · ${genderName(run.gender)}</div><p class="mt-sm">${esc(b.location.note)}</p><section class="card hero mt"><div class="eyebrow">家庭画像</div><h2 style="margin-top:8px">${esc(b.family.archetype.name)}</h2><p>${esc(b.family.archetype.note)}</p><dl class="spec-list"><div class="spec"><dt>兄弟姐妹</dt><dd>${dna.onlyChild?'独生':`${dna.siblingCount}人`}</dd></div><div class="spec"><dt>父亲</dt><dd>${esc(b.family.father)}</dd></div><div class="spec"><dt>母亲</dt><dd>${esc(b.family.mother)}</dd></div><div class="spec"><dt>住房</dt><dd>${esc(b.family.house)}</dd></div></dl></section><div class="bottom-actions"><button class="btn primary" data-act="toAttrs">🎛️ 分配你的天赋</button></div></main>`;
-  }
-
-  function attributesView(){
-    const run=state.run;return `<main class="screen attributes-screen"><div class="topbar"><button class="iconbtn" data-nav="birth">‹</button><div class="title">🎛️ 出生加点</div><span></span></div><div class="remain row"><div><div class="eyebrow">可分配点数</div><div class="big-number">${run.points}</div></div><span class="pill">每项上限 8</span></div><section class="card">${Object.entries(DATA.attributes).map(([key,a])=>`<div class="attr-row"><div><div class="attr-name"><span class="attr-emoji">${a.icon}</span><span>${esc(a.name)}</span></div><div class="attr-desc">${esc(a.desc)}</div></div><div class="stepper"><button data-step="${key}" data-delta="-1">−</button><b>${run.attrs[key]}</b><button data-step="${key}" data-delta="1">＋</button></div></div>`).join('')}</section><div class="mt tiny">点数都要花完。高分不保证日子轻松。</div><div class="bottom-actions attributes-actions"><button class="btn ghost" data-act="randomAttrs">🎲 随机分配</button><button class="btn primary" data-act="confirmAttrs" ${run.points?'disabled':''}>确认出生</button></div></main>`;
-  }
-
-  function cardView(){
-    const run=state.run;const title=run.drawKind==='adversity'?'坏日子漏出三条缝':run.drawAt?`${run.drawAt}岁 · 有三种预兆`:'命运递来三句含糊的话';
-    return `<main class="screen"><div class="topbar"><span></span><div class="title">${esc(title)}</div><span></span></div><p>选一句顺眼的。它不会马上解释自己。</p><div class="stack mt">${run.drawOptions.map((card,i)=>`<button class="card fate-card omen-card" style="animation-delay:${i*.06}s;text-align:left" data-card="${card.id}"><div class="omen-icon">${card.omenIcon||'◌'}</div><div class="fate-text omen-text">${esc(card.omenText||'有件小事会在以后替你留一条路。')}</div><span class="chev">›</span></button>`).join('')}</div></main>`;
-  }
-
+  function homeView(){const active=state.run&&state.run.phase!=='ended';return`<main class="screen center"><span class="version">v${VERSION}</span><div><div class="eyebrow">🎲 2026 · 中国人生模拟</div><h1>人生尚未加载</h1><p class="hero-sub">一年一年往前滚。真正的岔路，才轮到你选。</p></div><div class="mt stack">${active?'<button class="btn primary" data-act="continue">继续这一生</button>':'<button class="btn primary" data-act="new">🎲 开始新人生</button>'}<div class="menu-list"><button class="menu-item" data-nav="archive"><strong>🗂️ 人生档案</strong><span>›</span></button><button class="menu-item" data-nav="codex"><strong>📖 社会图鉴</strong><span>›</span></button><button class="menu-item" data-nav="settings"><strong>⚙️ 设置</strong><span>›</span></button></div></div><p class="tiny">离线运行 · 无音乐 · 无广告 · 自动存档</p></main>`}
+  function birthView(){const run=state.run,f=run.birth.family;return`<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">出生信息</div><span></span></div><section class="card hero"><div class="eyebrow">${genderName(run.gender)} · ${esc(run.birth.location.name)}</div><div class="birth-place">${esc(f.archetype.name)}</div><p>${esc(f.archetype.note)}</p></section><dl class="spec-list"><div class="spec"><dt>父亲</dt><dd>${esc(f.father)}</dd></div><div class="spec"><dt>母亲</dt><dd>${esc(f.mother)}</dd></div><div class="spec"><dt>兄弟姐妹</dt><dd>${run.lifeDNA.siblingCount?`${run.lifeDNA.siblingCount}人`:'独生'}</dd></div><div class="spec"><dt>住房</dt><dd>${esc(f.house)}</dd></div></dl><div class="bottom-actions"><button class="btn primary" data-act="toAttrs">分配初始属性</button></div></main>`}
+  function attributesView(){const run=state.run;return`<main class="screen attributes-screen"><div class="topbar"><button class="iconbtn" data-nav="birth">‹</button><div class="title">出生加点</div><span></span></div><div class="remain row"><div><div class="eyebrow">剩余点数</div><div class="big-number">${run.points}</div></div><span class="pill">每项上限 8</span></div><section class="card">${Object.entries(DATA.attributes).map(([key,a])=>`<div class="attr-row"><div><div class="attr-name"><span class="attr-emoji">${a.icon}</span>${esc(a.name)}</div><div class="attr-desc">${esc(a.desc)}</div></div><div class="stepper"><button data-step="${key}" data-delta="-1">−</button><b>${run.attrs[key]}</b><button data-step="${key}" data-delta="1">＋</button></div></div>`).join('')}</section><div class="bottom-actions attributes-actions"><button class="btn ghost" data-act="randomAttrs">随机分配</button><button class="btn primary" data-act="confirmAttrs" ${run.points?'disabled':''}>确认出生</button></div></main>`}
+  function cardView(){const run=state.run;const title=run.drawKind==='innate'?'选一张先天牌':run.drawKind==='adversity'?'坏日子留下一张牌':`${run.drawAt}岁 · 学会一件事`;return`<main class="screen"><div class="topbar"><span></span><div class="title">${title}</div><span></span></div><p>牌面说清用途，具体哪一天生效仍由人生决定。</p><div class="stack mt">${run.drawOptions.map((card,i)=>`<button class="card fate-card clear-card" style="animation-delay:${i*.05}s" data-card="${card.id}"><div class="omen-icon">${card.omenIcon}</div><div><div class="fate-title">《${esc(card.displayName)}》</div><div class="fate-text">${esc(card.effectHint)}</div></div><span class="chev">›</span></button>`).join('')}</div></main>`}
+  function resourceHeader(){const run=state.run;return`<header class="game-header"><div class="row"><div class="grow"><div class="age">${run.age}岁</div><div class="role">${esc(run.birth.location.name)} · ${esc(roleLine())}</div></div><button class="iconbtn" data-act="status">☰</button></div><div class="resource-strip"><div class="res"><span>现金</span><b>${money(run.res.cash)}</b></div><div class="res"><span>健康</span><b>${Math.round(run.res.health)}</b></div><div class="res"><span>精神</span><b>${Math.round(run.res.spirit)}</b></div><div class="res"><span>关系</span><b>${Math.round(run.res.relation)}</b></div></div></header>`}
+  function streamRows(){const rows=state.run.timeline.slice(-9);return rows.length?rows.map((item,i)=>`<div class="stream-row ${item.kind==='decision'?'chosen':''}" style="animation-delay:${Math.min(i,7)*.02}s"><span class="stream-age">${item.age}岁</span><span class="stream-icon">${item.icon}</span><p>${esc(item.text)}</p></div>`).join(''):'<div class="stream-empty">人生刚开始加载。</div>'}
   function gameView(){
-    const run=state.run,event=run.currentEvent;if(!event){setTimeout(selectEvent,0);return '<main class="loading-screen"><div><div class="loading-mark">◌</div><p>正在寻找下一段人生……</p></div></main>'}
-    const pulse=key=>run.currentResult&&run.resourcePulse?.includes(key)?' pulse':'';
-    return `<main class="screen"><header class="game-header"><div class="row"><div class="grow"><div class="age">${run.age}岁</div><div class="role">${esc(run.birth.location.name)} · ${esc(roleLine())}</div></div><button class="iconbtn" data-act="status">☰</button></div><div class="resource-strip"><div class="res${pulse('cash')}"><span>现金</span><b>${money(run.res.cash)}</b></div><div class="res${pulse('health')}"><span>健康</span><b>${Math.round(run.res.health)}</b></div><div class="res${pulse('spirit')}"><span>精神</span><b>${Math.round(run.res.spirit)}</b></div><div class="res${pulse('relation')}"><span>关系</span><b>${Math.round(run.res.relation)}</b></div></div></header><section class="card event-card ${run.currentResult?'result-card':''}">${run.currentResult?`<div><div class="eyebrow">事情就这样发生了</div><div class="event-title">${esc(event.title)}</div><div class="result-text">${esc(run.currentResult.text)}</div></div>`:`<div><div class="event-icon">${event.icon}</div><div class="event-title">${esc(event.title)}</div><div class="event-body">${esc(event.text)}</div></div>`}</section>${run.currentResult?`<div class="choices"><button class="btn primary" data-act="afterResult">继续</button></div>`:`<div class="choices">${event.choices.map((choice,i)=>{const locked=!meets(choice.requirements,run);return `<button class="choice ${locked?'locked':''}" data-choice="${i}" ${locked?'disabled':''}>${esc(choice.text)}${locked?'<small>现在做不了</small>':''}</button>`}).join('')}</div>`}</main>`;
+    const run=state.run;let panel='';
+    if(run.phase==='decision'&&run.currentDecision){const e=run.currentDecision;panel=`<section class="card decision-card"><div class="decision-emoji">${e.icon}</div><h2>${esc(e.prompt)}</h2><div class="choices">${e.choices.map((c,i)=>`<button class="choice" data-choice="${i}">${esc(c.text)}</button>`).join('')}</div></section>`}
+    else if(run.phase==='result'&&run.currentResult){panel=`<section class="card result-card compact-result"><div class="eyebrow">事情发生了</div><p>${esc(run.currentResult.text)}</p><div class="delta-list">${run.currentResult.hints.map(h=>`<span class="delta">${esc(h)}</span>`).join('')}</div><button class="btn primary mt-sm" data-act="afterResult">继续人生</button></section>`}
+    else panel=`<div class="stream-controls"><button class="btn small" data-act="togglePause">${run.paused?'继续':'暂停'}</button><button class="btn small" data-act="toggleSpeed">${run.speed}×</button><span>${run.decisionCount}次选择</span></div>`;
+    return`<main class="screen stream-screen">${resourceHeader()}<section class="life-stream" data-act="fastForward">${streamRows()}${run.phase==='playing'&&!run.paused?'<div class="stream-cursor"><i></i> 人生继续</div>':''}</section>${panel}</main>`;
   }
-
-  function endingView(){
-    const run=state.run,e=run.ending;const darkLines=e.completedChains.map(id=>INDEX.chain.get(id)?.title).filter(Boolean);return `<main class="screen"><div class="eyebrow ending-kicker">本次人生服务已结束</div><div class="lifespan">你活了 <b>${e.age}</b> 岁</div><div class="score-ring" style="--score:${e.score}"><div><b>${e.score}</b><span>人生综合值</span></div></div><div class="ending-title">《${esc(e.title)}》</div><p class="ending-review">${esc(e.review)}</p><section class="card mt"><div class="section-title first">一生最核心的矛盾</div><p>${esc(e.mainConflict)}</p>${darkLines.length?`<div class="section-title">人生暗线</div><div class="taglist left">${darkLines.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</div>`:''}<div class="stat-grid mt-sm"><div class="stat-box"><span>最终净值</span><b>${money(e.net)}</b></div><div class="stat-box"><span>经历节点</span><b>${run.eventCount}</b></div><div class="stat-box"><span>健康</span><b>${Math.round(run.res.health)}</b></div><div class="stat-box"><span>关系</span><b>${Math.round(run.res.relation)}</b></div></div></section><div class="two-col mt"><section class="card soft"><div class="section-title first">得到的东西</div>${e.gained.map(x=>`<p class="fact">＋ ${esc(x)}</p>`).join('')}</section><section class="card soft"><div class="section-title first">失去的东西</div>${e.lost.map(x=>`<p class="fact">－ ${esc(x)}</p>`).join('')}</section></div><div class="section-title">这一生绕不过的几件事</div><section class="card timeline">${e.facts.map(x=>`<div class="time-item"><span class="time-age">${x.age}岁</span><div><strong>${esc(x.title)}</strong><p class="tiny">${esc(x.result)}</p></div></div>`).join('')}</section><div class="mt stack"><button class="btn primary" data-act="new">再投一次</button><button class="btn ghost" data-nav="archive">查看人生档案</button></div></main>`;
+  function endingView(){const run=state.run,e=run.ending;return`<main class="screen"><div class="eyebrow ending-kicker">这一生滚到了最后</div><div class="lifespan">你活了 <b>${e.age}</b> 岁</div><div class="score-ring" style="--score:${e.score}"><div><b>${e.score}</b><span>人生综合值</span></div></div><div class="ending-title">《${esc(e.title)}》</div><p class="ending-review">${esc(e.review)}</p><section class="card mt"><div class="section-title first">一生最核心的矛盾</div><p>${esc(e.mainConflict)}</p><div class="stat-grid mt-sm"><div class="stat-box"><span>最终净值</span><b>${money(e.net)}</b></div><div class="stat-box"><span>亲手选择</span><b>${run.decisionCount}</b></div><div class="stat-box"><span>活过的事件</span><b>${run.timeline.length}</b></div><div class="stat-box"><span>旧事回响</span><b>${run.echoCount}</b></div></div></section><div class="two-col mt"><section class="card soft"><div class="section-title first">得到的东西</div>${e.gained.map(x=>`<p class="fact">＋ ${esc(x)}</p>`).join('')}</section><section class="card soft"><div class="section-title first">失去的东西</div>${e.lost.map(x=>`<p class="fact">－ ${esc(x)}</p>`).join('')}</section></div><div class="section-title">这一生绕不过的几件事</div><section class="card timeline">${e.facts.map(x=>`<div class="time-item"><span class="time-age">${x.age}岁</span><div><strong>${esc(x.title)}</strong><p class="tiny">${esc(x.result)}</p></div></div>`).join('')}</section><div class="stack mt"><button class="btn primary" data-act="new">再投一次</button><button class="btn ghost" data-nav="archive">查看人生档案</button></div></main>`}
+  function archiveView(){const h=state.meta.histories;return`<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">人生档案</div><span class="pill">${h.length}次</span></div><section class="card">${h.length?h.map(x=>`<div class="archive-item"><div class="row"><div><div class="archive-title">《${esc(x.title)}》</div><div class="archive-meta">${esc(x.familyName||x.family)} · ${x.age}岁 · ${x.decisions||0}次选择</div></div><span class="pill">${x.score}</span></div></div>`).join(''):'<p>还没有走完的人生。</p>'}</section></main>`}
+  function codexView(){const unlocked=DATA.codex.filter(x=>state.meta.codex.includes(x.id));return`<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">社会图鉴</div><span class="pill">${unlocked.length}/${DATA.codex.length}</span></div><section class="card">${unlocked.length?unlocked.map(x=>`<div class="codex-item"><h3>${esc(x.name)}</h3><p>${esc(x.text)}</p></div>`).join(''):'<p>真正遇见过的内容才会出现在这里。</p>'}</section></main>`}
+  function settingsView(){return`<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">设置</div><span></span></div><section class="card"><button class="menu-item" data-act="toggleHaptic"><strong>轻触反馈</strong><span class="switch ${state.meta.settings.haptic?'on':''}"><i></i></span></button><button class="menu-item" data-act="export"><strong>导出存档</strong><span>›</span></button><button class="menu-item" data-act="reset"><strong class="danger-text">清除全部数据</strong><span>›</span></button></section></main>`}
+  function overlayView(){if(state.overlay!=='status')return'';const run=state.run;return`<div class="drawer-wrap" data-act="closeOverlay"><div class="drawer" onclick="event.stopPropagation()"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${genderName(run.gender)}</div><h2>${esc(run.birth.family.archetype.name)}</h2></div><button class="iconbtn" data-act="closeOverlay">×</button></div><p>${esc(run.birth.family.archetype.note)}</p><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>学历</dt><dd>${esc(run.lifeFacts.education)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(roleLine())}</dd></div><div class="spec"><dt>婚恋</dt><dd>${run.lifeFacts.relationship==='partnered'?'有稳定伴侣':'单身'}</dd></div><div class="spec"><dt>子女</dt><dd>${run.lifeFacts.children||0}</dd></div></dl><div class="section-title">资产负债</div><div class="stat-grid"><div class="stat-box"><span>现金</span><b>${money(run.res.cash)}</b></div><div class="stat-box"><span>资产</span><b>${money(run.res.assets)}</b></div><div class="stat-box"><span>负债</span><b>${money(run.res.debt)}</b></div><div class="stat-box"><span>净值</span><b>${money(run.res.assets+run.res.cash-run.res.debt)}</b></div></div><button class="btn ghost mt" data-nav="home">暂停并返回首页</button></div></div>`}
+  function recoveryView(){return`<main class="screen center"><div class="eyebrow">存档恢复</div><h1>存档没有安全加载</h1><p>原始内容已经保留。你可以先导出，再清除损坏数据。</p><section class="card mt"><p class="tiny">${esc(state.recovery.error)}</p></section><div class="stack mt"><button class="btn primary" data-act="exportCorrupt">导出损坏存档</button><button class="btn danger" data-act="clearCorrupt">清除并重新开始</button></div></main>`}
+  function debugPanel(){return`<section class="debug-panel mt"><div class="eyebrow">DEBUG ONLY</div><div class="row mt-sm"><span>年度400 · 选择100 · 回响80</span><button class="btn small" data-act="debugFinish">走完当前局</button></div></section>`}
+  function render(){
+    clearAuto();let html;if(state.recovery)html=recoveryView();else html=({home:homeView,birth:birthView,attributes:attributesView,card:cardView,game:gameView,ending:endingView,archive:archiveView,codex:codexView,settings:settingsView}[state.view]||homeView)();
+    if(DEBUG&&state.view==='home')html=html.replace('</main>',debugPanel()+'</main>');app.innerHTML=html+overlayView()+(state.toast?`<div class="toast">${esc(state.toast)}</div>`:'');bind();if(state.view==='game'&&state.run?.phase==='playing')scheduleAuto(500);
   }
-
-  function archiveView(){const histories=state.meta.histories;return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">🗂️ 人生档案</div><span class="pill">${histories.length}次</span></div><section class="card"><div class="stat-grid"><div class="stat-box"><span>完成次数</span><b>${state.meta.stats.runs}</b></div><div class="stat-box"><span>最高综合值</span><b>${state.meta.stats.best}</b></div></div></section><div class="section-title">最近的人生</div><section class="card">${histories.length?histories.map(h=>`<div class="archive-item"><div class="row"><div><div class="archive-title">《${esc(h.title)}》</div><div class="archive-meta">${esc(h.gender==='female'?'女性':'男性')} · ${esc(h.family||h.location)} · ${h.age}岁 · ${money(h.net)}</div></div><span class="pill">${h.score}</span></div></div>`).join(''):'<p>还没有完成的人生。</p>'}</section></main>`}
-  function codexView(){const unlocked=DATA.codex.filter(item=>state.meta.codex.includes(item.id));return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">📖 社会图鉴</div><span class="pill">${unlocked.length}/${DATA.codex.length}</span></div><p>真正遇见过的事，才会在这里留下词条。</p><section class="card mt">${unlocked.length?unlocked.map(item=>`<div class="codex-item"><h3>${esc(item.name)}</h3><p>${esc(item.text)}</p></div>`).join(''):'<p>现在还是空的。先去过一段人生。</p>'}</section></main>`}
-  function settingsView(){return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">⚙️ 设置</div><span></span></div><section class="card"><button class="menu-item" data-act="toggleHaptic"><strong>轻触反馈</strong><span class="switch ${state.meta.settings.haptic?'on':''}"><i></i></span></button><button class="menu-item" data-act="export"><strong>导出存档</strong><span class="chev">›</span></button><button class="menu-item" data-act="reset"><strong class="danger-text">清除全部数据</strong><span class="chev">›</span></button></section><div class="mt tiny">数据仅保存在当前浏览器。首次迁移 v2 时会保留一份原始备份。</div></main>`}
-
-  function overlayView(){
-    if(state.overlay!=='status')return '';const run=state.run;const healthFact=run.res.health<35?'已有需要持续处理的健康问题':run.res.health<60?'身体开始频繁提醒你休息':'暂无明确的长期健康问题';
-    return `<div class="drawer-wrap" data-act="closeOverlay"><div class="drawer" onclick="event.stopPropagation()"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${genderName(run.gender)}</div><h2>${esc(run.birth.family.archetype.name)}</h2></div><button class="iconbtn" data-act="closeOverlay">×</button></div><p>${esc(run.birth.family.archetype.note)}</p><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>学历</dt><dd>${esc(run.education)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(run.career)}</dd></div><div class="spec"><dt>婚恋</dt><dd>${esc(run.relationshipStatus)}</dd></div><div class="spec"><dt>子女</dt><dd>${run.children?`${run.children}人`:'无'}</dd></div><div class="spec"><dt>健康</dt><dd>${esc(healthFact)}</dd></div></dl><div class="section-title">资产负债</div><div class="stat-grid"><div class="stat-box"><span>现金</span><b>${money(run.res.cash)}</b></div><div class="stat-box"><span>资产</span><b>${money(run.res.assets)}</b></div><div class="stat-box"><span>负债</span><b>${money(run.res.debt)}</b></div><div class="stat-box"><span>净值</span><b>${money(run.res.assets+run.res.cash-run.res.debt)}</b></div></div><button class="btn ghost mt" data-nav="home">暂停并返回首页</button></div></div>`;
-  }
-
-  function recoveryView(){return `<main class="screen center"><div class="eyebrow">存档恢复</div><h1>旧存档没有安全加载</h1><p>页面已停止继续写入，原始内容已保留。你可以先导出，再清除损坏存档并重新开始。</p><section class="card mt"><p class="tiny">${esc(state.recovery.error)}</p></section><div class="stack mt"><button class="btn primary" data-act="exportCorrupt">导出损坏存档</button><button class="btn danger" data-act="clearCorrupt">清除并重新开始</button><button class="btn ghost" data-act="retryLoad">重新尝试加载</button></div></main>`}
-  function debugPanel(){return `<section class="debug-panel mt"><div class="eyebrow">DEBUG ONLY</div><div class="row mt-sm"><span>事件 ${DATA.events.length} · 链节点 ${DATA.eventChains.reduce((n,c)=>n+c.nodes.length,0)}</span><button class="btn small" data-act="debugFinish">走完当前局</button></div><pre id="debug-output">使用 window.__LIFE_DEBUG__ 查看隐藏状态和候选权重。</pre></section>`}
 
   function stepAttr(key,delta){const run=state.run;if(delta>0&&run.points>0&&run.attrs[key]<8){run.attrs[key]++;run.points--}else if(delta<0&&run.attrs[key]>1){run.attrs[key]--;run.points++}haptic(6);save();render()}
-  function randomAttrs(){const run=state.run;for(const key of Object.keys(run.attrs))run.attrs[key]=1;run.points=20;while(run.points>0){const keys=Object.keys(run.attrs).filter(key=>run.attrs[key]<8);run.attrs[pick(keys)]++;run.points--}run.desires=defaultDesires(run.seed,run.lifeDNA,run.attrs);save();render()}
-  function beginNewRun(){if(state.run&&state.run.phase!=='ended'&&!confirm('当前人生尚未结束。确定重新投胎？'))return;createRun();state.view='birth';save(true);render()}
-
-  function exportText(text,name){const blob=new Blob([text],{type:'application/json'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=name;link.click();URL.revokeObjectURL(url)}
+  function randomAttrs(){const run=state.run;for(const key of Object.keys(run.attrs))run.attrs[key]=1;run.points=20;while(run.points){const keys=Object.keys(run.attrs).filter(key=>run.attrs[key]<8);run.attrs[pick(keys)]++;run.points--}save();render()}
+  function beginNew(){if(state.run&&state.run.phase!=='ended'&&!confirm('当前人生还没结束。确定重新开始？'))return;createRun();state.view='birth';save(true);render()}
+  function exportText(text,name){const blob=new Blob([text],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
   function action(name){
-    if(name==='new')beginNewRun();else if(name==='continue'){const run=state.run;if(run.phase==='birth')go('birth');else if(run.phase==='attributes')go('attributes');else if(run.phase==='card')go('card');else{go('game');if(!run.currentEvent)selectEvent()}}
-    else if(name==='toAttrs'){state.run.phase='attributes';go('attributes');save()}
-    else if(name==='randomAttrs')randomAttrs();else if(name==='confirmAttrs'){if(state.run.points)return;state.run.phase='card';state.run.drawKind='innate';state.run.drawAt=0;state.run.drawOptions=cardOptions('innate');go('card');save()}
-    else if(name==='status'){state.overlay='status';render()}else if(name==='closeOverlay'){state.overlay=null;render()}else if(name==='afterResult')continueAfterResult();
-    else if(name==='toggleHaptic'){state.meta.settings.haptic=!state.meta.settings.haptic;save();haptic(20);render()}
-    else if(name==='export')exportText(JSON.stringify({schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,meta:state.meta,run:state.run},null,2),'人生尚未加载-v3-存档.json');
-    else if(name==='reset'){if(confirm('清除全部人生档案、图鉴与存档？此操作不可撤销。')){localStorage.removeItem(APP_KEY);state={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};render()}}
-    else if(name==='exportCorrupt')exportText(state.recovery.raw||'','人生尚未加载-损坏存档.json');else if(name==='clearCorrupt'){if(confirm('确认清除当前损坏存档？已保存的 v2 备份不会删除。')){localStorage.removeItem(APP_KEY);state={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};render()}}
-    else if(name==='retryLoad'){state=loadState();render()}else if(name==='debugFinish'){const report=autoFinishCurrent();const output=document.getElementById('debug-output');if(output)output.textContent=JSON.stringify(report,null,2)}
+    const run=state.run;
+    if(name==='new')beginNew();else if(name==='continue'){if(run.phase==='birth')go('birth');else if(run.phase==='attributes')go('attributes');else if(run.phase==='card')go('card');else if(run.phase==='ended')go('ending');else go('game')}
+    else if(name==='toAttrs'){run.phase='attributes';go('attributes');save()}else if(name==='randomAttrs')randomAttrs();
+    else if(name==='confirmAttrs'){if(run.points)return;run.deathAge=clamp(run.deathAge+run.attrs.physique-1,42,105);startCardDraw('innate',0)}else if(name==='afterResult')continueAfterResult();
+    else if(name==='togglePause'){run.paused=!run.paused;save();render()}else if(name==='toggleSpeed'){run.speed=run.speed===1?2:1;state.meta.settings.speed=run.speed;save();render()}
+    else if(name==='fastForward'){if(run.phase==='playing'){run.paused=false;advanceLife(true)}}else if(name==='status'){run.paused=true;state.overlay='status';render()}else if(name==='closeOverlay'){state.overlay=null;render()}
+    else if(name==='toggleHaptic'){state.meta.settings.haptic=!state.meta.settings.haptic;save();render()}else if(name==='export')exportText(JSON.stringify({schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,meta:state.meta,run:state.run},null,2),'人生尚未加载-v3.2-存档.json');
+    else if(name==='reset'&&confirm('清除全部人生档案和存档？')){localStorage.removeItem(APP_KEY);state={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};render()}
+    else if(name==='exportCorrupt')exportText(state.recovery.raw||'','人生尚未加载-损坏存档.json');else if(name==='clearCorrupt'&&confirm('确认清除损坏存档？')){localStorage.removeItem(APP_KEY);state={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};render()}
+    else if(name==='debugFinish'){const report=autoFinishCurrent();showToast(`完成：${report?.age||0}岁，${report?.decisions||0}次选择`)}
   }
+  function bind(){app.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>go(el.dataset.nav));app.querySelectorAll('[data-act]').forEach(el=>el.onclick=event=>{if(el.dataset.act==='fastForward'&&event.target.closest('button'))return;action(el.dataset.act)});app.querySelectorAll('[data-step]').forEach(el=>el.onclick=()=>stepAttr(el.dataset.step,Number(el.dataset.delta)));app.querySelectorAll('[data-card]').forEach(el=>el.onclick=()=>chooseCard(el.dataset.card));app.querySelectorAll('[data-choice]').forEach(el=>el.onclick=()=>chooseDecision(Number(el.dataset.choice)))}
 
-  function bind(){
-    app.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>go(el.dataset.nav));app.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>action(el.dataset.act));
-    app.querySelectorAll('[data-step]').forEach(el=>el.onclick=()=>stepAttr(el.dataset.step,Number(el.dataset.delta)));app.querySelectorAll('[data-card]').forEach(el=>el.onclick=()=>chooseCard(el.dataset.card));app.querySelectorAll('[data-choice]').forEach(el=>el.onclick=()=>chooseEvent(Number(el.dataset.choice)));
-  }
-
-  function renderGameToText(){
-    const run=state.run;return JSON.stringify({view:state.view,version:VERSION,run:run?{phase:run.phase,age:run.age,gender:run.gender,location:run.birth?.location?.id,family:run.birth?.family?.archetype?.id,resources:run.res,mainConflicts:run.mainConflicts,currentEvent:run.currentEvent?{id:run.currentEvent.id,title:run.currentEvent.title,choices:run.currentEvent.choices.map((choice,index)=>({index,text:choice.text,locked:!meets(choice.requirements,run)}))}:null,ending:run.ending?{title:run.ending.title,age:run.ending.age,facts:run.ending.facts.length}:null}:null});
-  }
-  window.render_game_to_text=renderGameToText;window.advanceTime=()=>{render();return renderGameToText()};
-
-  function simulateLives(count=5){
-    const original=state;const originalSimulation=simulationMode;simulationMode=true;const reports=[];const simMeta=defaultMeta();
-    try{
-      for(let i=0;i<count;i++){
-        state={view:'home',meta:simMeta,run:null,overlay:null,toast:null,recovery:null};createRun(`SIM3-${String(i+1).padStart(2,'0')}-${(0xabc123+i*7919).toString(36).toUpperCase()}`,simMeta);randomAttrs();state.run.phase='card';state.run.drawKind='innate';state.run.drawAt=0;state.run.drawOptions=cardOptions('innate');chooseCard(state.run.drawOptions[0].id);
-        let guard=0,lockedChoices=0,ageBackwards=false,lastAge=state.run.age;
-        while(state.run.phase!=='ended'&&guard++<220){
-          const run=state.run;if(run.age<lastAge)ageBackwards=true;lastAge=run.age;
-          if(run.phase==='card'){chooseCard(run.drawOptions[0].id);continue}
-          if(run.currentResult){continueAfterResult();continue}
-          if(!run.currentEvent){selectEvent();continue}
-          const available=run.currentEvent.choices.map((choice,index)=>meets(choice.requirements,run)?index:-1).filter(index=>index>=0);if(!available.length){lockedChoices++;break}chooseEvent(available[Math.floor(rng()*available.length)]);
-        }
-        const run=state.run;const duplicateCount=run.usedEvents.length-new Set(run.usedEvents).size;reports.push({seed:run.seed,gender:run.gender,family:run.birth.family.archetype.name,mainlines:run.mainConflicts.map(id=>INDEX.conflict.get(id)?.name),age:run.age,events:run.eventCount,cards:run.cards.length,completedChains:Object.values(run.chainProgress).filter(x=>x.status==='completed').length,chainStates:Object.fromEntries(Object.entries(run.chainProgress).map(([id,value])=>[id,{step:value.step,status:value.status}])),ending:run.ending?.title||null,endingFacts:run.ending?.facts?.length||0,guard,lockedChoices,ageBackwards,duplicates:duplicateCount,nan:Object.values(run.res).some(Number.isNaN),cashOverflow:Math.abs(run.res.cash)>999999999});
-      }
-      const pairs=[];for(let i=0;i<simMeta.recentLives.length;i++)for(let j=i+1;j<simMeta.recentLives.length;j++){const a=new Set(simMeta.recentLives[i].events),b=new Set(simMeta.recentLives[j].events);const intersection=[...a].filter(x=>b.has(x)).length;const union=new Set([...a,...b]).size;pairs.push(union?intersection/union:0)}
-      return {runs:reports,averagePairwiseEventOverlap:pairs.length?Number((pairs.reduce((n,x)=>n+x,0)/pairs.length).toFixed(3)):0};
-    }finally{state=original;simulationMode=originalSimulation;render()}
-  }
+  function renderGameToText(){const run=state.run;return JSON.stringify({view:state.view,version:VERSION,run:run?{phase:run.phase,age:run.age,resources:run.res,visibleTimeline:run.timeline.slice(-6).map(x=>({age:x.age,text:x.text})),decision:run.currentDecision?{prompt:run.currentDecision.prompt,choices:run.currentDecision.choices.map((x,index)=>({index,text:x.text}))}:null,cards:run.phase==='card'?run.drawOptions.map(x=>({id:x.id,name:x.displayName,effect:x.effectHint})):null,decisionCount:run.decisionCount,ending:run.ending?{title:run.ending.title,age:run.ending.age,facts:run.ending.facts.length}:null}:null})}
+  window.render_game_to_text=renderGameToText;
+  window.advanceTime=ms=>{const steps=Math.max(1,Math.floor(Number(ms||800)/800));for(let i=0;i<steps;i++)if(state.run?.phase==='playing')advanceLife(true);return renderGameToText()};
 
   function autoFinishCurrent(){
-    if(!state.run)return null;let guard=0;const previousSimulation=simulationMode;simulationMode=true;
-    try{
-      while(state.run.phase!=='ended'&&guard++<220){const run=state.run;if(run.phase==='card'){chooseCard(run.drawOptions[0].id);continue}if(run.currentResult){continueAfterResult();continue}if(!run.currentEvent){selectEvent();continue}const available=run.currentEvent.choices.map((choice,index)=>meets(choice.requirements,run)?index:-1).filter(index=>index>=0);if(!available.length)throw new Error(`事件 ${run.currentEvent.id} 没有可用选项`);chooseEvent(available[Math.floor(rng()*available.length)])}
-      return state.run.ending;
-    }finally{simulationMode=previousSimulation;render()}
+    if(!state.run)return null;const before=simulationMode;simulationMode=true;clearAuto();let guard=0;
+    try{while(state.run.phase!=='ended'&&guard++<700){const run=state.run;if(run.phase==='birth'){run.phase='attributes';continue}if(run.phase==='attributes'){randomAttrs();startCardDraw('innate',0);continue}if(run.phase==='card'){chooseCard(run.drawOptions[0].id);inputLocked=false;continue}if(run.phase==='decision'){chooseDecision(Math.floor(rng()*run.currentDecision.choices.length));inputLocked=false;continue}if(run.phase==='result'){continueAfterResult();continue}advanceLife(true)}return{age:state.run.age,decisions:state.run.decisionCount,events:state.run.timeline.length,ending:state.run.ending?.title,guard}}
+    finally{simulationMode=before;render()}
   }
 
   try{
-    app.innerHTML='<main class="loading-screen"><div><div class="loading-mark">◌</div><h2>正在加载人生数据库</h2><p>第一次见面需要多读一些命运。</p></div></main>';
+    app.innerHTML='<main class="loading-screen"><div><div class="loading-mark">◌</div><h2>正在加载人生数据库</h2><p>一年一年，马上开始。</p></div></main>';
     const response=await fetch(`./data.json?v=${VERSION}`,{cache:'no-store'});if(!response.ok)throw new Error(`人生数据库加载失败（HTTP ${response.status}）`);DATA=await response.json();if(DATA.schemaVersion!==SCHEMA_VERSION)throw new Error(`数据版本不兼容：需要 ${SCHEMA_VERSION}，实际 ${DATA.schemaVersion}`);
     INDEX=buildIndex();state=loadState();render();window.__LIFE_BOOTED__=true;
-    if(DEBUG)window.__LIFE_DEBUG__={snapshot:()=>deepCopy(state.run),weights:()=>deepCopy(lastCandidateWeights),forceAge:age=>{if(state.run){state.run.age=clamp(Number(age),0,108);state.run.currentEvent=null;selectEvent()}},forceGender:gender=>{if(state.run&&['male','female'].includes(gender)){state.run.gender=gender;render()}},forceFamily:id=>{const family=INDEX.family.get(id);if(state.run&&family){state.run.birth.family.archetype=family;state.run.birth.family.familyClass=family.familyClass;render()}},simulateLives,autoFinishCurrent};
-  }catch(error){
-    console.error(error);app.innerHTML=`<main class="boot-fallback"><div><div class="boot-label">启动失败</div><h1>人生数据库没有加载成功</h1><p>${esc(error.message||error)}</p></div><div class="boot-card"><p>请确认 index.html、style.css、game.js 与 data.json 位于同一目录。</p><button class="btn primary mt" onclick="location.reload()">重新加载</button></div></main>`;
-  }
+    if(DEBUG)window.__LIFE_DEBUG__={snapshot:()=>copy(state.run),advance:()=>advanceLife(true),autoFinishCurrent,forceAge:age=>{if(state.run){state.run.age=clamp(age,0,105);milestoneFacts();render()}},counts:()=>Object.fromEntries(Object.entries(INDEX.kinds).map(([k,v])=>[k,v.length]))};
+  }catch(error){console.error(error);app.innerHTML=`<main class="boot-fallback"><div><div class="boot-label">启动失败</div><h1>人生数据库没有加载成功</h1><p>${esc(error.message||error)}</p></div><div class="boot-card"><p>请确认 index.html、style.css、game.js 与 data.json 位于同一目录。</p><button class="btn primary mt" onclick="location.reload()">重新加载</button></div></main>`}
 
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)save(true)});window.addEventListener('pagehide',()=>save(true));
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.run){state.run.paused=true;clearAuto();save(true)}});window.addEventListener('pagehide',()=>save(true));
 })();
