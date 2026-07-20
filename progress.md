@@ -26,3 +26,12 @@ Original prompt: Implement the approved 《人生尚未加载 · 2026》v3.0 人
 - 2026-07-21: Added content revision 2 novelty keys, v3.0-to-v3.1 display cleanup, and fixed migration to retain the saved family archetype ID.
 - 2026-07-21: Static v3.1 validation passed: 560 nodes, 97.3% unique choice signatures (maximum repeat 3), exact 30/55/15 stakes mix, exact 60/25/10/5 tone mix, 28 institutional-satire nodes, and 42 transformed trend nodes.
 - 2026-07-21: Ran one core life only. It reached a 77-year ending after 44 events with three real ending facts and three completed hidden chains. Checked 390×844 and 375×812 layouts with no element or document horizontal overflow and no browser console errors. No batch simulation was run.
+
+## v3.2.0 涌现人生
+
+- 2026-07-21: Saved and pushed `legacy/v3.1.0`, then created `codex/v3.2-emergent-life` from the merged v3.1 release.
+- 2026-07-21: Replaced the event-by-event questionnaire loop with an annual timeline: one guaranteed short event per year, a 35% secondary-event chance, and stage-allocated decision pauses.
+- 2026-07-21: Added schema 4 run state for `lifeFacts`, `memories`, `relationships`, `pressures`, `scheduledEchoes`, and `opportunities`, plus v3.1 migration into the current annual flow.
+- 2026-07-21: Re-authored the content as 400 annual beats, 100 independent decisions, 80 fact-gated echoes, and 20 black swans. Curated cards were reduced to 24 innate, 36 stage, and 12 adversity cards with clear player-facing uses.
+- 2026-07-21: Static validation passed: 600 total nodes, 72 cards, 50 annual beats in each age stage, 100 unique choice sets, and 40.7% low-intensity annual content.
+- 2026-07-21: One browser life reached a 102-year ending with 146 timeline events, 13 decisions, and five old-choice echoes. The 390×844 and 375×812 checks had no horizontal overflow, and the browser console had no errors. No batch simulation was run.
