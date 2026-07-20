@@ -15,3 +15,14 @@ Original prompt: Implement the approved 《人生尚未加载 · 2026》v3.0 人
 
 - Commit the completed local branch, then publish/open/merge the PR and verify the GitHub Pages root if repository write permission is available.
 - Manual narrative and balance playtesting is intentionally left to the user, per the latest instruction.
+
+## v3.1.0 少解释，多生活
+
+- 2026-07-21: Synced the merged v3.0.0 release, pushed `legacy/v3.0.0`, and opened `codex/v3.1-narrative-polish` from current `origin/main`.
+- 2026-07-21: v3.1 scope is deliberately content-and-disclosure focused: rewrite the existing 320 events, 240 chain nodes, and 124 card omens; do not add bulk content or redesign the black mobile UI.
+- 2026-07-21: Validation is limited to static content checks, one playable core flow, and the two requested iPhone portrait sizes. Narrative feel remains a manual playtest decision.
+- 2026-07-21: Rewrote all 320 base-event presentations and 240 chain nodes with independent scene titles, age-banded voice, concrete props/actions, one event Emoji, stakes, tone, and hidden culture-review tags. Removed the four `XX版` angles and all generic chain beat labels.
+- 2026-07-21: Added 124 opaque card omens and removed card names/types/mechanics, mainline labels, conflict/desire/card state, chain markers, and numeric result deltas from the normal pre-ending UI.
+- 2026-07-21: Added content revision 2 novelty keys, v3.0-to-v3.1 display cleanup, and fixed migration to retain the saved family archetype ID.
+- 2026-07-21: Static v3.1 validation passed: 560 nodes, 97.3% unique choice signatures (maximum repeat 3), exact 30/55/15 stakes mix, exact 60/25/10/5 tone mix, 28 institutional-satire nodes, and 42 transformed trend nodes.
+- 2026-07-21: Ran one core life only. It reached a 77-year ending after 44 events with three real ending facts and three completed hidden chains. Checked 390×844 and 375×812 layouts with no element or document horizontal overflow and no browser console errors. No batch simulation was run.
