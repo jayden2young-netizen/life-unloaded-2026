@@ -1,0 +1,2716 @@
+{
+  "schemaVersion": 2,
+  "gameVersion": "2.0.0",
+  "WORLD_TAGS": [
+    {
+      "id": "slow",
+      "name": "缓慢收缩",
+      "desc": "收入增长变慢，稳定岗位竞争加剧。",
+      "mods": {
+        "job": -1,
+        "public": 2,
+        "spirit": -1
+      }
+    },
+    {
+      "id": "ai",
+      "name": "AI狂热",
+      "desc": "所有组织都开始谈AI，少数组织真的知道自己在谈什么。",
+      "mods": {
+        "ai": 3,
+        "job": -1,
+        "info": 1
+      }
+    },
+    {
+      "id": "county",
+      "name": "县域直播年",
+      "desc": "县城和乡镇的电商、内容与供应链机会增加。",
+      "mods": {
+        "county": 3,
+        "content": 2
+      }
+    },
+    {
+      "id": "house",
+      "name": "房产复苏幻觉",
+      "desc": "账面价格频繁变化，成交量保持沉默。",
+      "mods": {
+        "house": 3,
+        "risk": 1
+      }
+    },
+    {
+      "id": "public",
+      "name": "公共岗位大迁徙",
+      "desc": "“稳定”重新成为一种高溢价商品。",
+      "mods": {
+        "public": 3,
+        "competition": 2
+      }
+    },
+    {
+      "id": "emotion",
+      "name": "情绪消费繁荣",
+      "desc": "现实消费降级，精神消费坚挺。",
+      "mods": {
+        "content": 2,
+        "spirit": 1
+      }
+    },
+    {
+      "id": "weather",
+      "name": "极端天气常态化",
+      "desc": "天气预报逐渐像风险提示书。",
+      "mods": {
+        "health": -1,
+        "risk": 2
+      }
+    },
+    {
+      "id": "care",
+      "name": "照护经济上升",
+      "desc": "老人变多，孩子更贵，夹在中间的人更忙。",
+      "mods": {
+        "care": 3,
+        "cost": 1
+      }
+    },
+    {
+      "id": "factory",
+      "name": "制造业回流",
+      "desc": "工厂更智能了，招聘条件也更精确了。",
+      "mods": {
+        "factory": 3,
+        "ai": 1
+      }
+    },
+    {
+      "id": "content",
+      "name": "人人都是媒体",
+      "desc": "表达门槛降低，获得注意力的门槛升高。",
+      "mods": {
+        "content": 3,
+        "spirit": -1
+      }
+    },
+    {
+      "id": "health",
+      "name": "健康资产化",
+      "desc": "健康管理从习惯变成了一项持续付费服务。",
+      "mods": {
+        "health": 1,
+        "cost": 1
+      }
+    },
+    {
+      "id": "side",
+      "name": "副业全民化",
+      "desc": "一份工作难以提供安全感，两份工作难以提供睡眠。",
+      "mods": {
+        "side": 3,
+        "spirit": -1
+      }
+    }
+  ],
+  "LOCATIONS": [
+    {
+      "id": "tier1",
+      "name": "一线城市",
+      "weight": 15,
+      "mods": {
+        "education": 2,
+        "cost": 3,
+        "info": 2,
+        "pressure": 3
+      },
+      "note": "机会密度很高，生活也按机会密度收费。"
+    },
+    {
+      "id": "tier2",
+      "name": "二线城市",
+      "weight": 30,
+      "mods": {
+        "education": 1,
+        "cost": 1,
+        "public": 2,
+        "house": 2
+      },
+      "note": "看起来什么都有，只是每一项都需要排队。"
+    },
+    {
+      "id": "county",
+      "name": "县城",
+      "weight": 30,
+      "mods": {
+        "network": 3,
+        "public": 3,
+        "cost": -1,
+        "privacy": -2
+      },
+      "note": "办事更近，边界更远。"
+    },
+    {
+      "id": "town",
+      "name": "乡镇",
+      "weight": 25,
+      "mods": {
+        "education": -2,
+        "land": 3,
+        "labor": 2,
+        "variance": 3
+      },
+      "note": "资源更薄，人生的振幅更大。"
+    }
+  ],
+  "OCCUPATIONS": {
+    "tier1": [
+      "互联网产品经理",
+      "金融后台员工",
+      "商场招商主管",
+      "网约车司机",
+      "医院行政",
+      "国企职员",
+      "社区工作者",
+      "个体餐饮经营者",
+      "物业维修工",
+      "自由设计师"
+    ],
+    "tier2": [
+      "制造业技术员",
+      "社区合同工",
+      "国企基层管理",
+      "民办学校教师",
+      "地产渠道经理",
+      "医院护士",
+      "小生意经营者",
+      "物流调度员",
+      "银行柜员",
+      "软件外包工程师"
+    ],
+    "county": [
+      "县中教师",
+      "事业单位职员",
+      "建材店老板",
+      "工程项目跟单",
+      "乡镇卫生院护士",
+      "保险业务员",
+      "货运司机",
+      "电商客服",
+      "个体商户",
+      "外出务工人员"
+    ],
+    "town": [
+      "种植户",
+      "养殖户",
+      "乡镇商户",
+      "建筑劳务人员",
+      "村干部助理",
+      "外出务工人员",
+      "农机维修工",
+      "快递站经营者",
+      "乡村教师",
+      "流动摊贩"
+    ]
+  },
+  "ECONOMIES": [
+    "困难",
+    "紧张",
+    "普通",
+    "普通",
+    "普通",
+    "宽裕",
+    "账面富足"
+  ],
+  "RELATIONS": [
+    "稳定亲密",
+    "功能正常",
+    "功能正常",
+    "表面稳定",
+    "长期冲突",
+    "隔代抚养",
+    "情感疏离"
+  ],
+  "HOUSES": {
+    "tier1": [
+      "无房租住",
+      "老破小",
+      "高杠杆商品房",
+      "单位住房",
+      "城中村自建房",
+      "多套老房"
+    ],
+    "tier2": [
+      "普通按揭房",
+      "老家自建房",
+      "单位住房",
+      "老破小",
+      "高杠杆改善房",
+      "无房租住"
+    ],
+    "county": [
+      "自建房",
+      "普通商品房",
+      "临街商住混合",
+      "单位住房",
+      "待拆迁住房",
+      "无房租住"
+    ],
+    "town": [
+      "自建房",
+      "老宅",
+      "临街铺面加住房",
+      "待征地住房",
+      "无房借住",
+      "新建小楼"
+    ]
+  },
+  "BURDENS": [
+    "无明显负担",
+    "房贷剩余27年",
+    "亲属借款尚未归还",
+    "老人长期照护",
+    "生意债务",
+    "二胎计划",
+    "替亲戚担保",
+    "医疗支出压力"
+  ],
+  "SECRETS": [
+    {
+      "id": "hiddenDebt",
+      "name": "一笔没有写在家庭账本上的债务",
+      "age": 31,
+      "effect": {
+        "cash": -50000,
+        "debt": 120000,
+        "relation": -8,
+        "spirit": -8
+      },
+      "text": "那笔“已经处理好了”的债务，带着利息重新出现。"
+    },
+    {
+      "id": "land",
+      "name": "老家可能征地",
+      "age": 36,
+      "effect": {
+        "assets": 280000,
+        "cash": 40000,
+        "relation": 4
+      },
+      "text": "老家的地终于进入补偿流程。亲戚群第一次如此团结，也第一次如此精确。"
+    },
+    {
+      "id": "house",
+      "name": "一套长期未被提及的房",
+      "age": 43,
+      "effect": {
+        "assets": 520000,
+        "relation": -4
+      },
+      "text": "家里确实还有一套房。问题是，另外三位亲戚也认为它属于自己。"
+    },
+    {
+      "id": "health",
+      "name": "家族遗传健康风险",
+      "age": 39,
+      "effect": {
+        "health": -22,
+        "cash": -38000,
+        "spirit": -7
+      },
+      "text": "体检报告里出现了一个你小时候听过、但没人认真解释过的词。"
+    },
+    {
+      "id": "contact",
+      "name": "某位亲戚认识关键人物",
+      "age": 25,
+      "effect": {
+        "info": 2,
+        "relation": -3
+      },
+      "text": "家里终于动用了一次关系。事情办成了，你也第一次看清了代价。"
+    },
+    {
+      "id": "marriage",
+      "name": "父母婚姻处于延迟爆炸状态",
+      "age": 17,
+      "effect": {
+        "relation": -16,
+        "spirit": -12
+      },
+      "text": "父母宣布分开。他们都说是为了让你不受影响。"
+    },
+    {
+      "id": "business",
+      "name": "一门冷门但成熟的家族生意",
+      "age": 27,
+      "effect": {
+        "info": 2,
+        "assets": 90000
+      },
+      "text": "那门你一直嫌土的生意，开始稳定地产生现金流。"
+    },
+    {
+      "id": "guarantee",
+      "name": "父母曾替亲戚担保",
+      "age": 34,
+      "effect": {
+        "debt": 180000,
+        "assets": -90000,
+        "relation": -10
+      },
+      "text": "担保人终于成为了真正意义上的“自己人”。"
+    },
+    {
+      "id": "overseas",
+      "name": "有一位多年不联系的海外亲属",
+      "age": 23,
+      "effect": {
+        "info": 2,
+        "cash": 15000
+      },
+      "text": "多年不联系的亲属突然出现，给你一扇门，也给你一张账单。"
+    },
+    {
+      "id": "none",
+      "name": "没有秘密，只有尚未发生的事情",
+      "age": 99,
+      "effect": {},
+      "text": ""
+    }
+  ],
+  "ATTRS": {
+    "intellect": {
+      "name": "智力",
+      "desc": "学习、判断、识别信息差"
+    },
+    "physique": {
+      "name": "体质",
+      "desc": "健康、恢复与长期透支"
+    },
+    "looks": {
+      "name": "外貌",
+      "desc": "第一印象、婚恋与被凝视"
+    },
+    "stability": {
+      "name": "情绪稳定",
+      "desc": "抵抗内耗与冲动"
+    },
+    "social": {
+      "name": "社交",
+      "desc": "人脉、合作与人情债"
+    },
+    "ambition": {
+      "name": "野心",
+      "desc": "上限、迁移与风险敞口"
+    }
+  },
+  "FATE_CARDS": [
+    {
+      "id": "early",
+      "title": "早熟",
+      "type": "先天偏差",
+      "text": "你更早看懂家庭处境。童年精神损耗增加，成年信息差提高。",
+      "effects": {
+        "info": 2,
+        "spirit": -6,
+        "self": 1
+      }
+    },
+    {
+      "id": "stable",
+      "title": "情绪隔离",
+      "type": "防御机制",
+      "text": "家庭冲突伤害降低，但你更难建立真正亲密的关系。",
+      "effects": {
+        "stability": 1,
+        "relation": -4
+      }
+    },
+    {
+      "id": "relative",
+      "title": "长得像家里最有钱的亲戚",
+      "type": "关系漏洞",
+      "text": "该亲戚对你的初始好感大幅提高。成年后可能向你提出一个要求。",
+      "effects": {
+        "cash": 8000,
+        "relation": 6,
+        "risk": 1
+      }
+    },
+    {
+      "id": "internet",
+      "title": "电子原住民",
+      "type": "时代适配",
+      "text": "更早接触互联网，信息能力提高；注意力从此按标签页分配。",
+      "effects": {
+        "info": 2,
+        "intellect": 1,
+        "spirit": -4
+      }
+    },
+    {
+      "id": "tough",
+      "title": "耐耗材质",
+      "type": "身体特性",
+      "text": "短期透支伤害降低，但你会更晚发现自己已经透支。",
+      "effects": {
+        "physique": 1,
+        "health": 8,
+        "risk": 1
+      }
+    },
+    {
+      "id": "pretty",
+      "title": "容易被记住的脸",
+      "type": "社交增益",
+      "text": "第一印象更好。部分机会与麻烦会同时更早找到你。",
+      "effects": {
+        "looks": 1,
+        "social": 1,
+        "risk": 1
+      }
+    },
+    {
+      "id": "family",
+      "title": "家里有人",
+      "type": "制度捷径",
+      "text": "第一次遭遇重大门槛时可直接跳过。使用后家庭控制力提高。",
+      "effects": {
+        "flag": "familyPass",
+        "relation": 4
+      }
+    },
+    {
+      "id": "misfit",
+      "title": "时代错位",
+      "type": "稀有偏差",
+      "text": "你拥有非常适合十年前市场的能力。偶尔，它会突然重新值钱。",
+      "effects": {
+        "intellect": 1,
+        "adapt": -1,
+        "flag": "misfit"
+      }
+    },
+    {
+      "id": "kind",
+      "title": "未被记录的善意",
+      "type": "命运牌",
+      "text": "你曾经无意帮助过一个人。未来某次绝境中，对方会记得。",
+      "effects": {
+        "flag": "kindness"
+      }
+    },
+    {
+      "id": "countyStar",
+      "title": "县城顶流",
+      "type": "地域天赋",
+      "text": "熟人社会中社交大幅增强；进入大城市后，你的自信需要重新定价。",
+      "effects": {
+        "social": 2,
+        "info": -1
+      }
+    },
+    {
+      "id": "focus",
+      "title": "单线程大脑",
+      "type": "认知特征",
+      "text": "深度工作能力更强，同时更难应付同时发生的生活。",
+      "effects": {
+        "intellect": 2,
+        "social": -1
+      }
+    },
+    {
+      "id": "ordinary",
+      "title": "普通得恰到好处",
+      "type": "稀有平衡",
+      "text": "你很少成为最先被注意的人，也很少成为最先被放弃的人。",
+      "effects": {
+        "stability": 1,
+        "risk": -1
+      }
+    }
+  ],
+  "STAGE_CARDS": [
+    {
+      "id": "aiUser",
+      "title": "会写提示词",
+      "type": "技能牌",
+      "text": "工作效率提高。组织会逐步把提高后的效率视为常态。",
+      "effects": {
+        "info": 1,
+        "adapt": 1,
+        "spirit": -2,
+        "flag": "aiUser"
+      }
+    },
+    {
+      "id": "sleep",
+      "title": "稳定睡眠",
+      "type": "健康资产",
+      "text": "这是一项比多数理财产品更可靠的长期资产。",
+      "effects": {
+        "health": 10,
+        "spirit": 8
+      }
+    },
+    {
+      "id": "publicWriting",
+      "title": "公文语感",
+      "type": "技能牌",
+      "text": "你开始理解“原则同意”与“同意”之间的距离。",
+      "effects": {
+        "info": 1,
+        "public": 2
+      }
+    },
+    {
+      "id": "sideSkill",
+      "title": "可出售的副业技能",
+      "type": "技能牌",
+      "text": "你的空闲时间终于有了价格，也因此不再完全属于你。",
+      "effects": {
+        "cash": 12000,
+        "spirit": -4,
+        "flag": "sideSkill"
+      }
+    },
+    {
+      "id": "exit",
+      "title": "及时退出",
+      "type": "判断牌",
+      "text": "一次错误路线的退出成本降低。你仍会怀疑自己是不是太容易放弃。",
+      "effects": {
+        "self": 2,
+        "risk": -1,
+        "flag": "exit"
+      }
+    },
+    {
+      "id": "network",
+      "title": "一个靠谱的朋友",
+      "type": "关系牌",
+      "text": "关键时刻提供一次不带利息的帮助。",
+      "effects": {
+        "relation": 10,
+        "flag": "friend"
+      }
+    },
+    {
+      "id": "mortgage",
+      "title": "长期负债耐受",
+      "type": "状态牌",
+      "text": "高额固定支出造成的精神伤害下降，自由度也下降。",
+      "effects": {
+        "stability": 1,
+        "risk": 2
+      }
+    },
+    {
+      "id": "fitness",
+      "title": "开始运动",
+      "type": "习惯牌",
+      "text": "它没有立刻改变人生，只是让你更有力气面对没改变的人生。",
+      "effects": {
+        "health": 12,
+        "spirit": 4
+      }
+    },
+    {
+      "id": "attention",
+      "title": "注意力防火墙",
+      "type": "技能牌",
+      "text": "你能在信息洪水里保留一块干燥区域。",
+      "effects": {
+        "intellect": 1,
+        "spirit": 5,
+        "info": 1
+      }
+    },
+    {
+      "id": "luckDebt",
+      "title": "向未来借运",
+      "type": "命运牌",
+      "text": "立刻获得一笔机会。未来会用你意想不到的方式结算。",
+      "effects": {
+        "cash": 30000,
+        "risk": 3,
+        "flag": "luckDebt"
+      }
+    },
+    {
+      "id": "numb",
+      "title": "麻木也是护甲",
+      "type": "补偿牌",
+      "text": "坏消息伤害下降，好消息带来的快乐也下降。",
+      "effects": {
+        "stability": 2,
+        "spirit": -4,
+        "flag": "numb"
+      }
+    },
+    {
+      "id": "careSkill",
+      "title": "照护能力",
+      "type": "关系技能",
+      "text": "你能更有效地照顾家人，但大家会更习惯把照护交给你。",
+      "effects": {
+        "relation": 8,
+        "spirit": -5,
+        "flag": "careSkill"
+      }
+    }
+  ],
+  "CODEX": {
+    "ai": {
+      "title": "AI提效",
+      "text": "把原来由三个人完成的工作交给一个人和三个账号。"
+    },
+    "optimize": {
+      "title": "优化",
+      "text": "一种强调组织进步、避免提及具体离职人员的表达方式。"
+    },
+    "flexible": {
+      "title": "灵活就业",
+      "text": "劳动时间更加灵活。收入、保障与风险也更加灵活。"
+    },
+    "house": {
+      "title": "账面财富",
+      "text": "一种需要买家配合，才能转换成实际购买力的财富。"
+    },
+    "public": {
+      "title": "稳定溢价",
+      "text": "当不确定性增加，人们愿意用更多时间换取不变。"
+    },
+    "relation": {
+      "title": "人情债",
+      "text": "没有利率、没有期限、但几乎从不真正免除的债务。"
+    },
+    "emotion": {
+      "title": "情绪价值",
+      "text": "当实际资源不足时，一种仍可被要求提供的资源。"
+    },
+    "education": {
+      "title": "学历门槛",
+      "text": "它不保证你能进去，但经常保证一部分人不能进去。"
+    },
+    "side": {
+      "title": "副业",
+      "text": "第二份疲惫，以第一份工作的安全感不足为启动资金。"
+    },
+    "marriage": {
+      "title": "婚恋审计",
+      "text": "两个人尝试把感情、房产、父母与未来现金流装进同一张表。"
+    },
+    "health": {
+      "title": "健康资产",
+      "text": "年轻时看不见，失去后每一项都单独计价。"
+    },
+    "county": {
+      "title": "熟人浓度",
+      "text": "资源与隐私沿同一条关系网络流动。"
+    },
+    "content": {
+      "title": "注意力市场",
+      "text": "人人都能表达之后，稀缺的就不再是表达。"
+    },
+    "care": {
+      "title": "照护责任",
+      "text": "通常由最有能力承担的人承担，直到他不再有能力。"
+    },
+    "risk": {
+      "title": "风险敞口",
+      "text": "生活中那些没有出事时像选择，出事后像命运的部分。"
+    }
+  },
+  "ENDINGS": [
+    {
+      "id": "cashflow",
+      "title": "体面地活成了现金流",
+      "line": "你把多数问题按月偿还，也把多数愿望按年推迟。",
+      "test": {
+        "__fn__": "r=>r.res.assets-r.res.debt>1200000&&r.hidden.risk>=5"
+      }
+    },
+    {
+      "id": "unformatted",
+      "title": "被时代优化，但未被格式化",
+      "line": "系统放弃了你的岗位，没有完全定义你的人。",
+      "test": {
+        "__fn__": "r=>r.flags.optimized&&r.res.spirit>35"
+      }
+    },
+    {
+      "id": "sleep",
+      "title": "你没有成功，但你睡得很好",
+      "line": "很多人替你惋惜。你在他们惋惜时已经睡着了。",
+      "test": {
+        "__fn__": "r=>r.res.assets-r.res.debt<500000&&r.res.health>65&&r.res.spirit>65"
+      }
+    },
+    {
+      "id": "countyServer",
+      "title": "县城服务器永不关机",
+      "line": "你知道每件事找谁，也知道每个人不愿被谁知道。",
+      "test": {
+        "__fn__": "r=>r.birth.location.id==='county'&&r.attrs.social>=6&&r.res.relation>65"
+      }
+    },
+    {
+      "id": "mortgage",
+      "title": "房贷幸存者",
+      "line": "你最终拥有了房子，也拥有了对固定日期的生理反应。",
+      "test": {
+        "__fn__": "r=>r.flags.boughtHouse&&r.res.debt<50000"
+      }
+    },
+    {
+      "id": "aiWorker",
+      "title": "AI原生熟练工",
+      "line": "你没有被机器取代。你负责照看机器取代剩下的人。",
+      "test": {
+        "__fn__": "r=>r.flags.aiUser&&r.hidden.adapt>=5"
+      }
+    },
+    {
+      "id": "familyLegend",
+      "title": "家庭群里的传奇人物",
+      "line": "你的每个决定都有亲戚转述版，且都比事实更有教育意义。",
+      "test": {
+        "__fn__": "r=>r.res.relation>78&&r.attrs.social>=6"
+      }
+    },
+    {
+      "id": "escape",
+      "title": "成功逃离后开始怀念",
+      "line": "你离开了熟悉的地方，又用余生把它重新叙述成故乡。",
+      "test": {
+        "__fn__": "r=>r.flags.migrated&&['county','town'].includes(r.birth.location.id)"
+      }
+    },
+    {
+      "id": "threeHomes",
+      "title": "拥有三套房和一种慢性病",
+      "line": "你证明了资产配置与身体配置并不共享同一套风险模型。",
+      "test": {
+        "__fn__": "r=>r.res.assets>2000000&&r.res.health<45"
+      }
+    },
+    {
+      "id": "story",
+      "title": "没有留下资产，留下了一个很好笑的故事",
+      "line": "账本没有记住你，朋友记住了。",
+      "test": {
+        "__fn__": "r=>r.res.assets-r.res.debt<100000&&r.res.relation>72"
+      }
+    },
+    {
+      "id": "unknown",
+      "title": "系统无法判断你是否幸福",
+      "line": "你的数据彼此矛盾，像大多数真实的人生。",
+      "test": {
+        "__fn__": "r=>true"
+      }
+    }
+  ],
+  "EVENTS": [
+    {
+      "id": "toy",
+      "title": "一件不合时宜的礼物",
+      "ages": [
+        5,
+        8
+      ],
+      "locations": null,
+      "text": "父母问你生日想要什么。家里最近并不宽裕，但他们努力让语气听起来像预算充足。",
+      "choices": [
+        {
+          "text": "要一件真正喜欢的东西",
+          "result": "你第一次发现，愿望会直接出现在父母的表情里。",
+          "effects": {
+            "spirit": 5,
+            "cash": -1200,
+            "relation": 2
+          }
+        },
+        {
+          "text": "说什么都可以",
+          "result": "父母松了一口气。你学会了把需求描述成不重要。",
+          "effects": {
+            "spirit": -2,
+            "relation": 3,
+            "self": -1
+          }
+        },
+        {
+          "text": "问家里是不是没钱",
+          "result": "空气安静了几秒。你获得了一小块不属于儿童的信息。",
+          "effects": {
+            "info": 1,
+            "spirit": -4
+          }
+        }
+      ],
+      "icon": "🎁",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "relation"
+      ]
+    },
+    {
+      "id": "schoolGate",
+      "title": "校门口的车型",
+      "ages": [
+        7,
+        11
+      ],
+      "locations": null,
+      "text": "放学时，你开始注意到同学被什么车接走。老师没有教这个，但全班很快都学会了。",
+      "choices": [
+        {
+          "text": "回家问父母为什么我们没有",
+          "result": "父母解释了收入、房贷和“以后会好的”。你只记住了最后一句。",
+          "effects": {
+            "info": 1,
+            "spirit": -3,
+            "relation": -1
+          }
+        },
+        {
+          "text": "假装没有注意到",
+          "result": "你成功地把一个问题存进了身体。",
+          "effects": {
+            "stability": 1,
+            "self": -1
+          }
+        },
+        {
+          "text": "开始研究所有车型",
+          "result": "你获得了一项暂时无用的识别能力。多年后，它可能成为谈资，也可能成为职业。",
+          "effects": {
+            "intellect": 1,
+            "info": 1
+          }
+        }
+      ],
+      "icon": "🚗",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "education"
+      ]
+    },
+    {
+      "id": "classRole",
+      "title": "班干部竞选",
+      "ages": [
+        8,
+        13
+      ],
+      "locations": null,
+      "text": "老师说这是锻炼能力。家长群说这是综合素质。你只是想知道下课还能不能出去玩。",
+      "choices": [
+        {
+          "text": "认真竞选",
+          "result": "你学会了在没有预算的情况下管理同龄人。",
+          "effects": {
+            "social": 1,
+            "spirit": -2,
+            "info": 1
+          }
+        },
+        {
+          "text": "让别人去做",
+          "result": "你保住了课间，也错过了第一批组织经验。",
+          "effects": {
+            "spirit": 4
+          }
+        },
+        {
+          "text": "帮候选人写演讲稿",
+          "result": "别人获得职位，你获得了一种更隐蔽的能力。",
+          "effects": {
+            "intellect": 1,
+            "info": 1
+          }
+        }
+      ],
+      "icon": "📋",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "education"
+      ]
+    },
+    {
+      "id": "tutoring",
+      "title": "周末补习班",
+      "ages": [
+        9,
+        15
+      ],
+      "locations": null,
+      "text": "周末被重新定义为“弯道超车时间”。问题是，所有人都在同一个弯道。",
+      "choices": [
+        {
+          "text": "服从安排",
+          "result": "成绩提高了一点，自由时间消失了一大块。",
+          "effects": {
+            "education": 2,
+            "spirit": -6,
+            "relation": 1
+          }
+        },
+        {
+          "text": "只选一门最弱的",
+          "result": "你第一次参与自己的资源配置。效果不惊人，但可持续。",
+          "effects": {
+            "education": 1,
+            "self": 1,
+            "spirit": -2
+          }
+        },
+        {
+          "text": "坚决拒绝",
+          "result": "父母认为你缺乏危机感。你认为他们缺乏周末。",
+          "effects": {
+            "spirit": 5,
+            "relation": -6,
+            "ambition": -1
+          }
+        }
+      ],
+      "icon": "✏️",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "education"
+      ]
+    },
+    {
+      "id": "phone",
+      "title": "第一部智能手机",
+      "ages": [
+        11,
+        15
+      ],
+      "locations": null,
+      "text": "你得到第一部智能手机。世界从此可以在凌晨两点继续发生。",
+      "choices": [
+        {
+          "text": "研究论坛与教程",
+          "result": "你比同龄人更早接触到更大的世界，也更早接触到世界的噪音。",
+          "effects": {
+            "info": 2,
+            "intellect": 1,
+            "spirit": -3
+          }
+        },
+        {
+          "text": "经营一个内容账号",
+          "result": "粉丝不多，但你第一次看到陌生人对你的反应。",
+          "effects": {
+            "social": 1,
+            "info": 1,
+            "flag": "earlyContent"
+          }
+        },
+        {
+          "text": "主要用来聊天和刷视频",
+          "result": "你获得了同龄人的共同语言，也失去了一部分完整注意力。",
+          "effects": {
+            "relation": 3,
+            "spirit": -2,
+            "intellect": -1
+          }
+        }
+      ],
+      "icon": "📱",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "content"
+      ]
+    },
+    {
+      "id": "divorce",
+      "title": "家庭会议",
+      "ages": [
+        15,
+        18
+      ],
+      "locations": null,
+      "text": "父母说有一件事要告诉你。他们反复强调“不是你的错”，仿佛你曾经拥有审批权。",
+      "choices": [
+        {
+          "text": "追问所有细节",
+          "result": "你知道了太多，也终于停止在最坏的空白里猜测。",
+          "effects": {
+            "info": 2,
+            "spirit": -9,
+            "relation": -7
+          }
+        },
+        {
+          "text": "说我没事",
+          "result": "所有人都接受了这个方便的结论。",
+          "effects": {
+            "stability": 1,
+            "spirit": -7,
+            "self": -1
+          }
+        },
+        {
+          "text": "要求他们先解决你的生活安排",
+          "result": "你第一次在家庭混乱中保护了自己的具体利益。",
+          "effects": {
+            "self": 2,
+            "relation": -4,
+            "spirit": -3
+          }
+        }
+      ],
+      "icon": "🏠",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.birth.family.relation.includes('冲突')||r.flags.familyCrack"
+      },
+      "tags": [
+        "relation"
+      ]
+    },
+    {
+      "id": "gaokao",
+      "title": "高考分流",
+      "ages": [
+        17,
+        19
+      ],
+      "locations": null,
+      "text": "分数出来了。亲戚开始从不同角度证明，他们早就看懂了你的潜力。",
+      "choices": [
+        {
+          "text": "优先选学校层级",
+          "result": "你进入了更响亮的校门，也可能进入一个并不适合的专业。",
+          "effects": {
+            "education": 3,
+            "cash": -26000,
+            "adapt": -1,
+            "flag": "college"
+          }
+        },
+        {
+          "text": "优先选自己能学下去的专业",
+          "result": "别人说你浪费分数。几年后，你至少还愿意打开课本。",
+          "effects": {
+            "education": 2,
+            "self": 2,
+            "flag": "college"
+          }
+        },
+        {
+          "text": "复读一年",
+          "require": {
+            "__fn__": "r=>r.res.spirit>35&&r.res.cash>10000"
+          },
+          "result": "你把一年押给一个更好的入口。时间开始第一次有了明确价格。",
+          "effects": {
+            "__fn__": "r=>({spirit:-10,cash:-18000,education:chance(.55)?3:0,age:1,flag:'repeat'})"
+          }
+        },
+        {
+          "text": "直接进入社会",
+          "result": "你比同龄人更早拿工资，也更早发现工资并不等于选择权。",
+          "effects": {
+            "cash": 18000,
+            "education": -1,
+            "info": 1,
+            "flag": "earlyWork"
+          }
+        }
+      ],
+      "icon": "🧾",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "education"
+      ]
+    },
+    {
+      "id": "major",
+      "title": "专业选择后的第一年",
+      "ages": [
+        18,
+        22
+      ],
+      "locations": null,
+      "text": "你逐渐发现，专业介绍页描述的是一个行业，课程表描述的是另一个。",
+      "choices": [
+        {
+          "text": "继续学，先拿到学历",
+          "result": "你学会了完成不完全相信的事情。",
+          "effects": {
+            "education": 2,
+            "stability": 1,
+            "spirit": -4
+          }
+        },
+        {
+          "text": "自学一项更能就业的技能",
+          "result": "白天修学分，晚上修未来。你的睡眠成为第一个被削减的成本。",
+          "effects": {
+            "info": 2,
+            "adapt": 2,
+            "health": -4,
+            "spirit": -5
+          }
+        },
+        {
+          "text": "转专业或转轨",
+          "require": {
+            "__fn__": "r=>r.hidden.self>=1||r.attrs.ambition>=5"
+          },
+          "result": "你支付了退出成本，但避免了更贵的坚持。",
+          "effects": {
+            "self": 2,
+            "cash": -8000,
+            "education": 1,
+            "adapt": 1
+          }
+        }
+      ],
+      "icon": "🎓",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.flags.college"
+      },
+      "tags": [
+        "education"
+      ]
+    },
+    {
+      "id": "factoryStart",
+      "title": "第一次正式上班",
+      "ages": [
+        18,
+        24
+      ],
+      "locations": [
+        "county",
+        "town"
+      ],
+      "text": "你进入一份讲究准时、产量和服从的工作。主管说年轻人最重要的是沉淀。流水线也这么认为。",
+      "choices": [
+        {
+          "text": "认真做，争取成为骨干",
+          "result": "你成为效率最高的那批人，并被安排处理更多低效率的人。",
+          "effects": {
+            "cash": 26000,
+            "health": -7,
+            "spirit": -7,
+            "adapt": 1,
+            "flag": "coreWorker"
+          }
+        },
+        {
+          "text": "边工作边准备离开",
+          "result": "你的表现保持在不会被开除、也不会被记住的位置。",
+          "effects": {
+            "cash": 17000,
+            "info": 2,
+            "spirit": -3,
+            "flag": "exitPrep"
+          }
+        },
+        {
+          "text": "跟着亲戚做生意",
+          "result": "你从工资风险切换到了现金流风险。",
+          "effects": {
+            "cash": 12000,
+            "risk": 2,
+            "social": 1,
+            "flag": "business"
+          }
+        }
+      ],
+      "icon": "🏭",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.flags.earlyWork||!r.flags.college"
+      },
+      "tags": [
+        "flexible"
+      ]
+    },
+    {
+      "id": "intern",
+      "title": "第一份实习",
+      "ages": [
+        20,
+        24
+      ],
+      "locations": null,
+      "text": "岗位写着“参与核心项目”。你参与的方式主要是整理会议纪要和猜测所有人的真实意思。",
+      "choices": [
+        {
+          "text": "把所有杂活做好",
+          "result": "你被评价为可靠。可靠很快成为了更多杂活的分配依据。",
+          "effects": {
+            "cash": 6000,
+            "info": 1,
+            "spirit": -4,
+            "social": 1
+          }
+        },
+        {
+          "text": "主动争取真正的项目",
+          "result": "你拿到了一块不完整的工作，以及一段能写进简历的完整描述。",
+          "effects": {
+            "adapt": 2,
+            "ambition": 1,
+            "spirit": -5
+          }
+        },
+        {
+          "text": "准时下班，不做无薪表演",
+          "result": "你保住了时间，也被判断为“边界感较强”。",
+          "effects": {
+            "spirit": 5,
+            "relation": -2,
+            "self": 1
+          }
+        }
+      ],
+      "icon": "🪪",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.flags.college"
+      },
+      "tags": [
+        "optimize"
+      ]
+    },
+    {
+      "id": "grad",
+      "title": "毕业季",
+      "ages": [
+        21,
+        25
+      ],
+      "locations": null,
+      "text": "招聘软件每天都在刷新。岗位数量很多，真正能投的岗位像被一层透明玻璃隔开。",
+      "choices": [
+        {
+          "text": "广撒网投递",
+          "result": "你投出了三百份简历，获得了十二次已读和一份工作。",
+          "effects": {
+            "cash": 18000,
+            "spirit": -8,
+            "flag": "employed"
+          }
+        },
+        {
+          "text": "考公考编",
+          "result": "你进入了一场没有观众但有百万参赛者的耐力赛。",
+          "effects": {
+            "__fn__": "r=>({public:2,cash:-12000,spirit:-10,flag:chance(.38)?'publicJob':'examFail'})"
+          }
+        },
+        {
+          "text": "先做自由职业",
+          "result": "你拥有了自由安排工作的权利，客户拥有了自由安排你时间的权利。",
+          "effects": {
+            "cash": 10000,
+            "risk": 2,
+            "info": 1,
+            "flag": "freelance"
+          },
+          "tags": [
+            "flexible"
+          ]
+        },
+        {
+          "text": "回家缓一缓",
+          "result": "你暂时不需要支付房租，也开始支付无形的解释成本。",
+          "effects": {
+            "cash": 4000,
+            "spirit": 4,
+            "relation": -4,
+            "flag": "homeGap"
+          }
+        }
+      ],
+      "icon": "📨",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "education",
+        "public",
+        "flexible"
+      ]
+    },
+    {
+      "id": "aiTraining",
+      "title": "AI培训计划",
+      "ages": [
+        22,
+        40
+      ],
+      "locations": null,
+      "text": "公司要求全员学习AI工具，并宣布不会因此裁员。公告的第二段开始讨论组织效率。",
+      "choices": [
+        {
+          "text": "认真学会并搭建工作流",
+          "result": "你的效率提高了60%。公司据此认为岗位只需要0.6个人。",
+          "effects": {
+            "adapt": 2,
+            "info": 2,
+            "spirit": -5,
+            "flag": "aiUser"
+          },
+          "tags": [
+            "ai"
+          ]
+        },
+        {
+          "text": "表面学习，保留手工流程",
+          "result": "短期内没有人发现。直到有人要求你演示“最佳实践”。",
+          "effects": {
+            "stability": 1,
+            "risk": 1
+          }
+        },
+        {
+          "text": "用AI代替自己参加培训",
+          "result": "AI替你总结了会议，也替你承诺了一个半年项目。",
+          "effects": {
+            "info": 1,
+            "spirit": -8,
+            "cash": 5000,
+            "flag": "aiPromise"
+          },
+          "tags": [
+            "ai"
+          ]
+        }
+      ],
+      "icon": "◈",
+      "weight": 2,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "ai",
+        "optimize"
+      ]
+    },
+    {
+      "id": "rent",
+      "title": "第一次独立租房",
+      "ages": [
+        21,
+        29
+      ],
+      "locations": null,
+      "text": "你终于有了自己的空间。它的面积足够放下一张床、一张桌子和对未来的谨慎期待。",
+      "choices": [
+        {
+          "text": "住得近一点，贵一点",
+          "result": "通勤缩短，现金流变薄。你第一次用钱购买时间。",
+          "effects": {
+            "cash": -18000,
+            "spirit": 7,
+            "health": 3,
+            "flag": "renting"
+          }
+        },
+        {
+          "text": "住远一点，省一点",
+          "result": "你每月省下一笔钱，每天把一部分人生交给通勤。",
+          "effects": {
+            "cash": -8000,
+            "spirit": -5,
+            "health": -3,
+            "flag": "renting"
+          }
+        },
+        {
+          "text": "继续和父母住",
+          "result": "你降低了成本，也继续生活在家庭系统的默认设置里。",
+          "effects": {
+            "cash": 5000,
+            "relation": -3,
+            "spirit": -2
+          }
+        }
+      ],
+      "icon": "🔑",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "house"
+      ]
+    },
+    {
+      "id": "oldClassmate",
+      "title": "多年不联系的同学",
+      "ages": [
+        23,
+        38
+      ],
+      "locations": null,
+      "text": "一个多年没联系的同学突然发来消息：“最近怎么样？”这五个字可能价值无限，也可能正好价值五万元。",
+      "choices": [
+        {
+          "text": "认真回复",
+          "result": "对方没有借钱，只是想问你们公司还招不招人。关系重新上线。",
+          "effects": {
+            "relation": 6,
+            "info": 1
+          }
+        },
+        {
+          "text": "先看朋友圈",
+          "result": "你完成了风险评估，对方也完成了对你的风险评估。",
+          "effects": {
+            "info": 1,
+            "spirit": -1
+          }
+        },
+        {
+          "text": "装没看见",
+          "result": "你规避了一个未知风险，也关闭了一个未知机会。",
+          "effects": {
+            "risk": -1,
+            "relation": -2
+          }
+        }
+      ],
+      "icon": "💬",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "relation"
+      ]
+    },
+    {
+      "id": "promotion",
+      "title": "一次看似重要的晋升",
+      "ages": [
+        25,
+        42
+      ],
+      "locations": null,
+      "text": "上级说你已经是团队事实上的核心，现在只是把责任和头衔对齐。薪资调整会在后续统一考虑。",
+      "choices": [
+        {
+          "text": "接受头衔",
+          "result": "你获得了管理权限，以及解释为什么没有预算的责任。",
+          "effects": {
+            "cash": 9000,
+            "spirit": -10,
+            "social": 1,
+            "flag": "manager"
+          }
+        },
+        {
+          "text": "先谈薪资与权限",
+          "require": {
+            "__fn__": "r=>r.attrs.social>=5||r.hidden.info>=3"
+          },
+          "result": "会议第一次出现了具体数字。你没有赢得全部，但阻止了责任免费升级。",
+          "effects": {
+            "cash": 26000,
+            "spirit": -4,
+            "info": 1
+          }
+        },
+        {
+          "text": "拒绝这次“成长”",
+          "result": "你被评价为职业规划清晰，也被移出了部分未来规划。",
+          "effects": {
+            "spirit": 5,
+            "risk": 1,
+            "self": 1
+          }
+        }
+      ],
+      "icon": "⬆",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "optimize"
+      ]
+    },
+    {
+      "id": "optimization",
+      "title": "组织优化",
+      "ages": [
+        26,
+        48
+      ],
+      "locations": null,
+      "text": "公司宣布进入下一阶段。你的名字出现在一个没有标题的表格里。",
+      "choices": [
+        {
+          "text": "拿补偿离开",
+          "result": "你获得了一笔足够喘气、但不足以重建安全感的钱。",
+          "effects": {
+            "cash": 65000,
+            "spirit": -12,
+            "risk": 2,
+            "flag": "optimized"
+          }
+        },
+        {
+          "text": "争取内部转岗",
+          "require": {
+            "__fn__": "r=>r.hidden.info>=3||r.attrs.social>=6"
+          },
+          "result": "你留在了组织里，岗位换了，原来的工作也没有完全消失。",
+          "effects": {
+            "cash": 8000,
+            "spirit": -8,
+            "adapt": 1
+          }
+        },
+        {
+          "text": "提前启动副业",
+          "require": {
+            "__fn__": "r=>r.flags.sideSkill||r.flags.earlyContent"
+          },
+          "result": "你把失业变成了创业发布会。现金流对此保持谨慎。",
+          "effects": {
+            "cash": 18000,
+            "risk": 3,
+            "spirit": -5,
+            "flag": "selfEmployed"
+          }
+        },
+        {
+          "text": "使用“家里有人”",
+          "require": {
+            "__fn__": "r=>r.flags.familyPass"
+          },
+          "result": "名单发生了微小调整。你留下了，家庭对你的决定权也留下了。",
+          "effects": {
+            "relation": -5,
+            "spirit": -3,
+            "consumeFlag": "familyPass"
+          }
+        }
+      ],
+      "icon": "⌫",
+      "weight": 2,
+      "condition": {
+        "__fn__": "r=>r.hidden.risk>=2||r.hidden.adapt<2"
+      },
+      "tags": [
+        "optimize"
+      ]
+    },
+    {
+      "id": "datingAudit",
+      "title": "一次很现实的相亲",
+      "ages": [
+        25,
+        38
+      ],
+      "locations": null,
+      "text": "对方温和、礼貌，并在半小时内完成了对工作、房产、父母养老和生育意愿的初步尽调。",
+      "choices": [
+        {
+          "text": "也坦率交换全部信息",
+          "result": "浪漫感下降，风险透明度上升。你们决定继续见面。",
+          "effects": {
+            "relation": 7,
+            "self": 1,
+            "flag": "partner"
+          }
+        },
+        {
+          "text": "保持模糊，先看感觉",
+          "result": "感觉不错。真正的问题获得了延迟出现的机会。",
+          "effects": {
+            "relation": 6,
+            "risk": 1,
+            "flag": "partner"
+          }
+        },
+        {
+          "text": "礼貌结束",
+          "result": "你没有获得关系，也没有获得新的共同负债。",
+          "effects": {
+            "spirit": 2,
+            "self": 1
+          }
+        }
+      ],
+      "icon": "☕",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "marriage"
+      ]
+    },
+    {
+      "id": "marriage",
+      "title": "是否结婚",
+      "ages": [
+        27,
+        42
+      ],
+      "locations": null,
+      "text": "你们讨论婚姻。双方父母迅速从感情顾问转型为资产、边界与流程专家。",
+      "choices": [
+        {
+          "text": "结婚并共同规划财务",
+          "result": "你们开始共享生活，也开始共享对未来的不同预测。",
+          "effects": {
+            "relation": 12,
+            "cash": -50000,
+            "risk": 2,
+            "flag": "married"
+          },
+          "tags": [
+            "marriage"
+          ]
+        },
+        {
+          "text": "保持伴侣关系，不登记",
+          "result": "关系继续，制度边界保持清晰。长辈认为这是一种长期故障。",
+          "effects": {
+            "relation": 7,
+            "spirit": -2,
+            "flag": "partner"
+          }
+        },
+        {
+          "text": "因为核心问题无法一致而分开",
+          "result": "你失去了一段关系，也避免了把分歧注册成长期义务。",
+          "effects": {
+            "relation": -8,
+            "spirit": -9,
+            "self": 2,
+            "consumeFlag": "partner"
+          }
+        }
+      ],
+      "icon": "○",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.flags.partner"
+      },
+      "tags": [
+        "marriage"
+      ]
+    },
+    {
+      "id": "buyHouse",
+      "title": "买房窗口",
+      "ages": [
+        27,
+        44
+      ],
+      "locations": null,
+      "text": "中介说现在是十年一遇的窗口。过去五年里，他每年都这么说。",
+      "choices": [
+        {
+          "text": "上车，锁定城市",
+          "require": {
+            "__fn__": "r=>r.res.cash>60000"
+          },
+          "result": "你获得了一套房和一条持续二十五年的日历提醒。",
+          "effects": {
+            "cash": -80000,
+            "assets": 720000,
+            "debt": 560000,
+            "spirit": -5,
+            "risk": 3,
+            "flag": "boughtHouse"
+          },
+          "tags": [
+            "house"
+          ]
+        },
+        {
+          "text": "继续租，保留流动性",
+          "result": "你没有资产上涨的故事，也没有每月固定的恐惧。",
+          "effects": {
+            "cash": -12000,
+            "spirit": 3,
+            "risk": -1
+          }
+        },
+        {
+          "text": "回老家或低成本地区买",
+          "require": {
+            "__fn__": "r=>r.flags.migrated||['county','town'].includes(r.birth.location.id)"
+          },
+          "result": "你用较少的钱获得了更多面积，以及更少的工作机会。",
+          "effects": {
+            "cash": -40000,
+            "assets": 310000,
+            "debt": 170000,
+            "adapt": -1,
+            "spirit": 4,
+            "flag": "boughtHouse"
+          }
+        }
+      ],
+      "icon": "▣",
+      "weight": 2,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "house",
+        "risk"
+      ]
+    },
+    {
+      "id": "child",
+      "title": "是否生育",
+      "ages": [
+        29,
+        43
+      ],
+      "locations": null,
+      "text": "你们讨论是否要孩子。所有人都在谈爱，表格里主要是时间、住房和现金流。",
+      "choices": [
+        {
+          "text": "决定生育",
+          "result": "家庭增加了一个新的人，也增加了一套永久运行的责任系统。",
+          "effects": {
+            "cash": -45000,
+            "relation": 10,
+            "spirit": -9,
+            "risk": 2,
+            "flag": "child"
+          },
+          "tags": [
+            "care"
+          ]
+        },
+        {
+          "text": "暂时不生",
+          "result": "你们获得了时间，也获得了来自亲友的持续倒计时。",
+          "effects": {
+            "spirit": 3,
+            "relation": -2
+          }
+        },
+        {
+          "text": "明确不生",
+          "result": "你们把一个模糊问题变成了清晰边界。边界外的人对此意见很多。",
+          "effects": {
+            "self": 2,
+            "spirit": 4,
+            "relation": -5,
+            "flag": "noChild"
+          }
+        }
+      ],
+      "icon": "＋",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.flags.married||r.flags.partner"
+      },
+      "tags": [
+        "care",
+        "marriage"
+      ]
+    },
+    {
+      "id": "parentSick",
+      "title": "父母住院",
+      "ages": [
+        32,
+        58
+      ],
+      "locations": null,
+      "text": "电话在工作时间响起。医院、请假、费用和家族分工在十分钟内同时到达。",
+      "choices": [
+        {
+          "text": "承担主要照护",
+          "result": "事情被你稳住了。所有人因此默认你以后也能稳住。",
+          "effects": {
+            "cash": -38000,
+            "spirit": -13,
+            "health": -5,
+            "relation": 10,
+            "flag": "caregiver"
+          },
+          "tags": [
+            "care"
+          ]
+        },
+        {
+          "text": "出钱，请专业照护",
+          "require": {
+            "__fn__": "r=>r.res.cash>40000"
+          },
+          "result": "照护更专业，内疚并未因此专业化。",
+          "effects": {
+            "cash": -62000,
+            "spirit": -5,
+            "relation": 4
+          }
+        },
+        {
+          "text": "要求兄弟姐妹或亲戚共同承担",
+          "require": {
+            "__fn__": "r=>r.attrs.social>=4"
+          },
+          "result": "家庭群经历了漫长讨论，最后形成了一份没有法律效力但暂时有效的排班表。",
+          "effects": {
+            "cash": -18000,
+            "spirit": -7,
+            "relation": -2,
+            "info": 1
+          }
+        }
+      ],
+      "icon": "✚",
+      "weight": 2,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "care",
+        "health"
+      ]
+    },
+    {
+      "id": "sideHustle",
+      "title": "副业邀请",
+      "ages": [
+        24,
+        45
+      ],
+      "locations": null,
+      "text": "朋友说有一个项目，不影响主业，投入不大，空间很大。四句话里有三句后来被证明不准确。",
+      "choices": [
+        {
+          "text": "小额试水",
+          "result": "你赚到一点钱，并发现自己的晚上可以被再次出售。",
+          "effects": {
+            "cash": 16000,
+            "spirit": -6,
+            "info": 1,
+            "flag": "sideSkill"
+          },
+          "tags": [
+            "side"
+          ]
+        },
+        {
+          "text": "重仓投入",
+          "require": {
+            "__fn__": "r=>r.attrs.ambition>=5"
+          },
+          "result": "项目短暂起飞。你开始把运气解释成能力。",
+          "effects": {
+            "__fn__": "r=>({cash:chance(.45)?85000:-42000,risk:3,spirit:-8,flag:'business'})"
+          },
+          "tags": [
+            "side",
+            "risk"
+          ]
+        },
+        {
+          "text": "拒绝，把晚上留给自己",
+          "result": "你没有获得第二条收入曲线，但保住了一部分完整的夜晚。",
+          "effects": {
+            "spirit": 9,
+            "health": 3
+          }
+        }
+      ],
+      "icon": "↗",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "side"
+      ]
+    },
+    {
+      "id": "viral",
+      "title": "一个旧账号突然爆了",
+      "ages": [
+        26,
+        45
+      ],
+      "locations": null,
+      "text": "你多年前随手发布的内容被算法重新发现。通知数量暴涨，现实生活仍按原价收费。",
+      "choices": [
+        {
+          "text": "趁势更新",
+          "result": "注意力变成收入，生活变成素材。",
+          "effects": {
+            "cash": 48000,
+            "spirit": -9,
+            "social": 2,
+            "flag": "creator"
+          },
+          "tags": [
+            "content"
+          ]
+        },
+        {
+          "text": "只接一次合作",
+          "result": "你把偶然兑换成了一笔钱，没有把自己兑换进去。",
+          "effects": {
+            "cash": 21000,
+            "spirit": -2,
+            "self": 1
+          }
+        },
+        {
+          "text": "关闭通知",
+          "result": "你放过了一次风口。风口没有回头解释。",
+          "effects": {
+            "spirit": 8,
+            "self": 1
+          }
+        }
+      ],
+      "icon": "✦",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.flags.earlyContent||r.flags.misfit"
+      },
+      "tags": [
+        "content"
+      ]
+    },
+    {
+      "id": "burnout",
+      "title": "身体开始结算",
+      "ages": [
+        31,
+        51
+      ],
+      "locations": null,
+      "text": "你发现疲惫不再能靠一个周末修复。体检报告使用了比绩效评语更具体的词。",
+      "choices": [
+        {
+          "text": "系统调整作息与工作",
+          "result": "收入增长放慢，身体停止加速下跌。",
+          "effects": {
+            "cash": -12000,
+            "health": 14,
+            "spirit": 8,
+            "ambition": -1
+          },
+          "tags": [
+            "health"
+          ]
+        },
+        {
+          "text": "先忙完这一阵",
+          "result": "这一阵成功衔接到了下一阵。",
+          "effects": {
+            "cash": 18000,
+            "health": -16,
+            "spirit": -8,
+            "risk": 2
+          }
+        },
+        {
+          "text": "离职休息一段时间",
+          "require": {
+            "__fn__": "r=>r.res.cash>50000"
+          },
+          "result": "你第一次发现，真正休息的前几周主要用来学习如何不工作。",
+          "effects": {
+            "cash": -36000,
+            "health": 18,
+            "spirit": 16,
+            "flag": "careerBreak"
+          }
+        }
+      ],
+      "icon": "♥",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.res.health<70||r.res.spirit<45"
+      },
+      "tags": [
+        "health"
+      ]
+    },
+    {
+      "id": "returnHome",
+      "title": "回去还是留下",
+      "ages": [
+        28,
+        47
+      ],
+      "locations": [
+        "tier1",
+        "tier2"
+      ],
+      "text": "大城市的机会还在，但你的身体、父母和房租开始对“留下”提出不同报价。",
+      "choices": [
+        {
+          "text": "继续留下",
+          "result": "你保留了机会密度，也继续支付密度溢价。",
+          "effects": {
+            "cash": -14000,
+            "adapt": 1,
+            "spirit": -5
+          }
+        },
+        {
+          "text": "回到更低成本的地方",
+          "result": "生活成本下降，职业叙事需要重写。",
+          "effects": {
+            "cash": 20000,
+            "spirit": 8,
+            "adapt": -1,
+            "relation": 6,
+            "flag": "migrated"
+          }
+        },
+        {
+          "text": "远程工作，两边生活",
+          "require": {
+            "__fn__": "r=>r.flags.aiUser||r.flags.freelance"
+          },
+          "result": "你短暂获得了地理自由，并开始同时承担两地的不确定性。",
+          "effects": {
+            "cash": 9000,
+            "spirit": 4,
+            "risk": 2,
+            "flag": "remote"
+          }
+        }
+      ],
+      "icon": "↔",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "house",
+        "care"
+      ]
+    },
+    {
+      "id": "schoolKid",
+      "title": "孩子上学",
+      "ages": [
+        34,
+        50
+      ],
+      "locations": null,
+      "text": "孩子即将上学。你发现自己曾经反感的那套焦虑，已经完成了版本更新。",
+      "choices": [
+        {
+          "text": "投入更多资源",
+          "result": "孩子获得了更好的条件。家庭的自由现金流获得了更深的教育。",
+          "effects": {
+            "cash": -70000,
+            "relation": 5,
+            "spirit": -8,
+            "risk": 1
+          },
+          "tags": [
+            "education"
+          ]
+        },
+        {
+          "text": "选择普通路径，保留家庭生活",
+          "result": "你们放弃了一部分竞争力，也保住了几顿不讨论排名的晚饭。",
+          "effects": {
+            "cash": -18000,
+            "relation": 10,
+            "spirit": 4
+          }
+        },
+        {
+          "text": "让孩子自己决定更多",
+          "result": "你成功打破了一部分循环，也增加了一部分不可控。",
+          "effects": {
+            "self": 1,
+            "relation": 6,
+            "risk": 1
+          }
+        }
+      ],
+      "icon": "▤",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.flags.child"
+      },
+      "tags": [
+        "education",
+        "care"
+      ]
+    },
+    {
+      "id": "middlePromotion",
+      "title": "中年管理岗",
+      "ages": [
+        38,
+        53
+      ],
+      "locations": null,
+      "text": "组织认为你经验丰富、稳定可靠，适合承担跨部门协调。翻译过来，就是所有问题都可以先发给你。",
+      "choices": [
+        {
+          "text": "继续往上走",
+          "result": "收入提高，时间变成一种需要提前申请的资源。",
+          "effects": {
+            "cash": 52000,
+            "spirit": -13,
+            "health": -6,
+            "risk": 2,
+            "flag": "manager"
+          }
+        },
+        {
+          "text": "转专家路线",
+          "require": {
+            "__fn__": "r=>r.attrs.intellect>=5||r.hidden.adapt>=4"
+          },
+          "result": "你减少了管理表演，增加了技能过时焦虑。",
+          "effects": {
+            "cash": 31000,
+            "adapt": 2,
+            "spirit": -5
+          }
+        },
+        {
+          "text": "保住岗位，不再证明自己",
+          "result": "你从增长叙事里退了一步，生活从背景里走了出来。",
+          "effects": {
+            "cash": 14000,
+            "spirit": 10,
+            "ambition": -1
+          }
+        }
+      ],
+      "icon": "△",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "optimize"
+      ]
+    },
+    {
+      "id": "friendCrisis",
+      "title": "朋友的人生故障",
+      "ages": [
+        35,
+        58
+      ],
+      "locations": null,
+      "text": "一位老朋友陷入困境。他没有直接开口，但你们都知道这次聊天不是为了叙旧。",
+      "choices": [
+        {
+          "text": "借钱并陪他处理",
+          "result": "钱未必回来，但一段关系从抽象名词重新变成人。",
+          "effects": {
+            "cash": -30000,
+            "relation": 14,
+            "spirit": -4
+          }
+        },
+        {
+          "text": "只提供信息和联系",
+          "result": "你给出了自己能承担的帮助。成年人的善意开始有边界。",
+          "effects": {
+            "relation": 7,
+            "info": 1
+          }
+        },
+        {
+          "text": "保持距离",
+          "result": "你保住了风险敞口，也失去了一点对自己的想象。",
+          "effects": {
+            "risk": -1,
+            "relation": -6,
+            "spirit": -2
+          }
+        }
+      ],
+      "icon": "…",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "relation"
+      ]
+    },
+    {
+      "id": "inheritance",
+      "title": "一次家庭资产清算",
+      "ages": [
+        42,
+        63
+      ],
+      "locations": null,
+      "text": "家里开始讨论一项资产如何分配。所有人都说不是为了钱，而是为了公平。",
+      "choices": [
+        {
+          "text": "按法律和文件处理",
+          "result": "程序清晰，感情留下了模糊地带。",
+          "effects": {
+            "assets": 180000,
+            "relation": -8,
+            "info": 1
+          }
+        },
+        {
+          "text": "主动让一部分",
+          "result": "你少拿了一些资产，换来一段不保证长期有效的和平。",
+          "effects": {
+            "assets": 90000,
+            "relation": 8
+          }
+        },
+        {
+          "text": "退出争夺",
+          "result": "你获得了道德高地。高地无法出租。",
+          "effects": {
+            "spirit": 5,
+            "relation": 4,
+            "self": 1
+          }
+        }
+      ],
+      "icon": "□",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "relation",
+        "house"
+      ]
+    },
+    {
+      "id": "automationBoss",
+      "title": "被AI管理",
+      "ages": [
+        40,
+        60
+      ],
+      "locations": null,
+      "text": "新系统开始自动分配工作、评估情绪和建议绩效。它非常客观，因为它从不需要承担结果。",
+      "choices": [
+        {
+          "text": "研究规则并利用它",
+          "result": "你学会了向机器展示机器喜欢的你。",
+          "effects": {
+            "info": 2,
+            "adapt": 2,
+            "spirit": -4
+          },
+          "tags": [
+            "ai"
+          ]
+        },
+        {
+          "text": "坚持人工判断",
+          "result": "同事认同你，系统认为你效率异常。",
+          "effects": {
+            "relation": 6,
+            "risk": 2,
+            "spirit": -3
+          }
+        },
+        {
+          "text": "转去更依赖人与现场的工作",
+          "require": {
+            "__fn__": "r=>r.hidden.self>=2"
+          },
+          "result": "收入可能下降，但你的价值暂时不再由一个看不见的评分函数决定。",
+          "effects": {
+            "cash": -16000,
+            "spirit": 9,
+            "adapt": 1,
+            "flag": "careerShift"
+          }
+        }
+      ],
+      "icon": "◎",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "ai",
+        "optimize"
+      ]
+    },
+    {
+      "id": "layoffLate",
+      "title": "四十岁后的重新求职",
+      "ages": [
+        41,
+        58
+      ],
+      "locations": null,
+      "text": "招聘页面写着“年龄不限”。系统筛选器对此有自己的理解。",
+      "choices": [
+        {
+          "text": "降低预期，先进入新行业",
+          "result": "你失去了一部分身份溢价，保住了现金流。",
+          "effects": {
+            "cash": 18000,
+            "spirit": -6,
+            "adapt": 2
+          }
+        },
+        {
+          "text": "用积蓄做小生意",
+          "require": {
+            "__fn__": "r=>r.res.cash>80000"
+          },
+          "result": "你把职业风险换成了经营风险。门店每天准时开门，客流不一定。",
+          "effects": {
+            "cash": -50000,
+            "assets": 60000,
+            "risk": 3,
+            "flag": "business"
+          }
+        },
+        {
+          "text": "长期休整并重新学习",
+          "result": "你暂时退出收入系统，重新进入学生系统。",
+          "effects": {
+            "cash": -30000,
+            "spirit": 8,
+            "adapt": 2,
+            "info": 1
+          }
+        }
+      ],
+      "icon": "↻",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.flags.optimized&&r.age>40"
+      },
+      "tags": [
+        "optimize"
+      ]
+    },
+    {
+      "id": "elderFraud",
+      "title": "保健项目说明会",
+      "ages": [
+        55,
+        75
+      ],
+      "locations": null,
+      "text": "朋友邀请你参加一个“不是推销”的健康说明会。门口先送鸡蛋，里面再解释为什么普通鸡蛋不够。",
+      "choices": [
+        {
+          "text": "听完但不买",
+          "result": "你带走了鸡蛋和一套关于细胞活力的新词汇。",
+          "effects": {
+            "cash": 20,
+            "info": 1
+          }
+        },
+        {
+          "text": "购买一个疗程",
+          "result": "你获得了非常昂贵的希望。身体没有立刻发表意见。",
+          "effects": {
+            "cash": -18000,
+            "spirit": 3,
+            "risk": 1
+          }
+        },
+        {
+          "text": "现场拆穿话术",
+          "require": {
+            "__fn__": "r=>r.hidden.info>=4"
+          },
+          "result": "你救下了两位邻居，也失去了进入这个群聊的资格。",
+          "effects": {
+            "relation": 5,
+            "info": 1
+          }
+        }
+      ],
+      "icon": "🥚",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "health"
+      ]
+    },
+    {
+      "id": "retire",
+      "title": "退休手续",
+      "ages": [
+        55,
+        68
+      ],
+      "locations": null,
+      "text": "系统通知你可以退休了。你突然发现，工作曾经占据了生活的大部分，同时从未正式承诺给你意义。",
+      "choices": [
+        {
+          "text": "彻底退休",
+          "result": "时间回到你手里。前几个月，你不知道该把它放在哪里。",
+          "effects": {
+            "cash": 12000,
+            "spirit": 12,
+            "health": 8,
+            "flag": "retired"
+          }
+        },
+        {
+          "text": "继续返聘",
+          "result": "你获得了收入与熟悉感，也推迟了重新认识自己的时间。",
+          "effects": {
+            "cash": 28000,
+            "spirit": -4,
+            "health": -5
+          }
+        },
+        {
+          "text": "开始一项一直想做的事",
+          "result": "它没有商业前景，因此第一次真正只属于你。",
+          "effects": {
+            "cash": -8000,
+            "spirit": 18,
+            "self": 2,
+            "flag": "lateDream"
+          }
+        }
+      ],
+      "icon": "⌛",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "health"
+      ]
+    },
+    {
+      "id": "community",
+      "title": "社区里的新身份",
+      "ages": [
+        60,
+        82
+      ],
+      "locations": null,
+      "text": "你逐渐成为社区里“知道该找谁”的人。年轻时被叫作多管闲事的能力，晚年开始被称为热心。",
+      "choices": [
+        {
+          "text": "认真参与社区事务",
+          "result": "你重新获得了被需要的感觉，也重新获得了群消息。",
+          "effects": {
+            "relation": 12,
+            "spirit": 5,
+            "social": 1
+          }
+        },
+        {
+          "text": "只帮真正需要的人",
+          "result": "你保留了边界，也保留了几段具体关系。",
+          "effects": {
+            "relation": 8,
+            "spirit": 6
+          }
+        },
+        {
+          "text": "不参与，过自己的生活",
+          "result": "世界照常运行。你终于不必证明自己对它有用。",
+          "effects": {
+            "spirit": 10,
+            "self": 1
+          }
+        }
+      ],
+      "icon": "○",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "relation"
+      ]
+    },
+    {
+      "id": "lateContent",
+      "title": "银发账号",
+      "ages": [
+        58,
+        82
+      ],
+      "locations": null,
+      "text": "家人帮你注册了短视频账号。你随手讲的一段往事获得了几十万播放。评论区开始替你总结一生。",
+      "choices": [
+        {
+          "text": "继续更新",
+          "result": "你成为家族里最晚开始、最早商业化的内容创作者。",
+          "effects": {
+            "cash": 32000,
+            "relation": 6,
+            "spirit": -3,
+            "flag": "creator"
+          },
+          "tags": [
+            "content"
+          ]
+        },
+        {
+          "text": "只记录，不接商业合作",
+          "result": "你留下了声音，而不是一套选品清单。",
+          "effects": {
+            "relation": 10,
+            "spirit": 8
+          }
+        },
+        {
+          "text": "删除账号",
+          "result": "你拒绝把余生变成平台资产。",
+          "effects": {
+            "self": 2,
+            "spirit": 6
+          }
+        }
+      ],
+      "icon": "▻",
+      "weight": 1,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": [
+        "content"
+      ]
+    },
+    {
+      "id": "weather",
+      "title": "一次极端天气",
+      "ages": [
+        18,
+        78
+      ],
+      "locations": null,
+      "text": "城市发布了最高级别预警。所有应用都提醒你不要出门，工作群提醒你保持在线。",
+      "choices": [
+        {
+          "text": "居家办公并随时响应",
+          "result": "你避免了通勤风险，也证明了恶劣天气并不影响工作量。",
+          "effects": {
+            "spirit": -6,
+            "health": 2
+          },
+          "tags": [
+            "weather"
+          ]
+        },
+        {
+          "text": "明确只处理紧急事项",
+          "result": "天没有塌，群里有人记住了你的边界。",
+          "effects": {
+            "spirit": 5,
+            "risk": 1,
+            "self": 1
+          }
+        },
+        {
+          "text": "去帮助受影响的邻居",
+          "result": "你被雨淋透，帮助变得具体。",
+          "effects": {
+            "health": -3,
+            "relation": 10,
+            "spirit": 4
+          }
+        }
+      ],
+      "icon": "☂",
+      "weight": 1,
+      "condition": {
+        "__fn__": "r=>r.world.tags.some(t=>t.id==='weather')"
+      },
+      "tags": [
+        "risk"
+      ]
+    },
+    {
+      "id": "ordinaryYear",
+      "title": "没有发生大事的一年",
+      "ages": [
+        18,
+        80
+      ],
+      "locations": null,
+      "text": "这一年没有升职、暴富、重病或离别。你一度担心自己是不是错过了什么。",
+      "choices": [
+        {
+          "text": "保持现在的节奏",
+          "result": "日子没有成为故事，但成为了生活。",
+          "effects": {
+            "health": 4,
+            "spirit": 6,
+            "relation": 3
+          }
+        },
+        {
+          "text": "主动制造一点变化",
+          "result": "你报了一个课，去了一个地方，认识了一个之后还会联系的人。",
+          "effects": {
+            "cash": -6000,
+            "spirit": 8,
+            "relation": 5,
+            "info": 1
+          }
+        },
+        {
+          "text": "把精力留给休息",
+          "result": "你没有进步。你的身体对此表示感谢。",
+          "effects": {
+            "health": 8,
+            "spirit": 7
+          }
+        }
+      ],
+      "icon": "—",
+      "weight": 0.5,
+      "condition": {
+        "__fn__": "()=>true"
+      },
+      "tags": []
+    }
+  ]
+}
