@@ -2,7 +2,7 @@
   'use strict';
 
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '2.0.0';
+  const VERSION = '2.0.1';
   const app = document.getElementById('app');
 
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -120,14 +120,14 @@
     const r=state.run;
     if(r.res.health<=0||r.age>=88||(r.age>68&&chance((r.age-66)/120))){return finishRun()}
     const secret=r.birth.family.secret;if(secret.age<=r.age&&!r.flags['secret_'+secret.id]){
-      r.flags['secret_'+secret.id]=true;r.currentEvent={id:'secret_'+secret.id,title:'家庭秘密结算',icon:'⌁',text:secret.text,tags:['relation','risk'],choices:[{text:'面对已经发生的事',result:'有些秘密不是答案，只是延迟发送的现实。',effects:secret.effect}]};save();render();return;
+      r.flags['secret_'+secret.id]=true;r.currentEvent={id:'secret_'+secret.id,title:'家庭秘密结算',icon:'🔒',text:secret.text,tags:['relation','risk'],choices:[{text:'面对已经发生的事',result:'有些秘密不是答案，只是延迟发送的现实。',effects:secret.effect}]};save();render();return;
     }
-    const due=r.pending.filter(p=>p.age<=r.age);if(due.length){const p=due[0];r.pending=r.pending.filter(x=>x!==p);r.currentEvent={id:'pending_'+uid(),title:p.title,icon:'↳',text:p.text,tags:p.tags||[],choices:p.choices||[{text:'接受结算',result:p.result||'过去没有消失，它只是选择了今天到达。',effects:p.effects||{}}]};save();render();return}
+    const due=r.pending.filter(p=>p.age<=r.age);if(due.length){const p=due[0];r.pending=r.pending.filter(x=>x!==p);r.currentEvent={id:'pending_'+uid(),title:p.title,icon:'⏳',text:p.text,tags:p.tags||[],choices:p.choices||[{text:'接受结算',result:p.result||'过去没有消失，它只是选择了今天到达。',effects:p.effects||{}}]};save();render();return}
     const drawAges=[6,12,18,22,30,40,55];const nextDraw=drawAges.find(a=>a<=r.age&&!r.stageDrawn.includes(a));if(nextDraw!==undefined)return drawStageCard(nextDraw);
     let candidates=EVENTS.filter(e=>ageEligible(e)&&locationEligible(e)&&e.condition(r)&&!r.usedEvents.includes(e.id));
     if(!candidates.length)candidates=EVENTS.filter(e=>ageEligible(e)&&locationEligible(e)&&e.condition(r));
     if(!candidates.length){
-      r.currentEvent={id:'fallback_'+uid(),title:'平静的一段时间',icon:'—',text:'没有重大新闻落在你身上。生活仍在用一些很小的事情缓慢改变你。',tags:[],choices:[
+      r.currentEvent={id:'fallback_'+uid(),title:'平静的一段时间',icon:'🌤️',text:'没有重大新闻落在你身上。生活仍在用一些很小的事情缓慢改变你。',tags:[],choices:[
         {text:'维持现在的节奏',result:'这段时间没有成为故事，但成为了生活。',effects:{health:3,spirit:4}},
         {text:'联系一个很久没见的人',result:'你们都改变了，但还认得彼此。',effects:{relation:6,spirit:3}},
         {text:'整理财务和身体',result:'没有奇迹发生，风险少了一点。',effects:{cash:-2000,health:5,risk:-1}}
@@ -199,17 +199,17 @@
     const cont=state.run&&state.run.phase!=='ended';
     return `<main class="screen center">
       <div class="version">v${VERSION}</div>
-      <div class="eyebrow">2026 · 中国人生模拟</div>
+      <div class="eyebrow">🎲 2026 · 中国人生模拟</div>
       <h1>人生尚未加载</h1>
       <p class="hero-sub">出生无法选择。加点可以。世界不保证公平，只保证继续运行。</p>
       <div class="mt stack">
-        <button class="btn primary" data-act="new">开始新人生</button>
-        ${cont?`<button class="btn" data-act="continue">继续：${state.run.age}岁 · ${esc(state.run.birth.location.name)}</button>`:''}
+        <button class="btn primary" data-act="new">🎲 开始新人生</button>
+        ${cont?`<button class="btn" data-act="continue">▶️ 继续：${state.run.age}岁 · ${esc(state.run.birth.location.name)}</button>`:''}
       </div>
       <div class="menu-list">
-        <button class="menu-item" data-nav="archive"><strong>人生档案</strong><span class="chev">›</span></button>
-        <button class="menu-item" data-nav="codex"><strong>社会图鉴</strong><span class="muted">${state.meta.codex.length}/${Object.keys(CODEX).length}</span></button>
-        <button class="menu-item" data-nav="settings"><strong>设置</strong><span class="chev">›</span></button>
+        <button class="menu-item" data-nav="archive"><strong>🗂️ 人生档案</strong><span class="chev">›</span></button>
+        <button class="menu-item" data-nav="codex"><strong>📖 社会图鉴</strong><span class="muted">${state.meta.codex.length}/${Object.keys(CODEX).length}</span></button>
+        <button class="menu-item" data-nav="settings"><strong>⚙️ 设置</strong><span class="chev">›</span></button>
       </div>
       <div class="mt tiny">单文件离线运行。无背景音乐、无广告、无账号、无付费抽卡。</div>
     </main>`;
@@ -217,12 +217,12 @@
   function birthView(){
     const r=state.run,b=r.birth;
     return `<main class="screen">
-      <div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">投胎结果</div><span class="pill">${esc(r.seed)}</span></div>
-      <div class="eyebrow">你出生了</div>
+      <div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">👶 投胎结果</div><span class="pill">${esc(r.seed)}</span></div>
+      <div class="eyebrow">📍 你出生了</div>
       <div class="birth-place">${esc(b.location.name)}</div>
       <p class="mt-sm">${esc(b.location.note)}</p>
       <section class="card hero mt">
-        <div class="row"><div><div class="eyebrow">家庭评级</div><h2 style="margin-top:8px">${esc(b.family.economy)}</h2></div><span class="pill">秘密未解锁</span></div>
+        <div class="row"><div><div class="eyebrow">🏠 家庭评级</div><h2 style="margin-top:8px">${esc(b.family.economy)}</h2></div><span class="pill">秘密未解锁</span></div>
         <dl class="spec-list">
           <div class="spec"><dt>父亲</dt><dd>${esc(b.family.father)}</dd></div>
           <div class="spec"><dt>母亲</dt><dd>${esc(b.family.mother)}</dd></div>
@@ -231,25 +231,25 @@
           <div class="spec"><dt>家庭负担</dt><dd>${esc(b.family.burden)}</dd></div>
         </dl>
       </section>
-      <section class="card soft mt-sm"><div class="eyebrow">本局时代环境</div><div class="taglist" style="justify-content:flex-start">${r.world.tags.map(t=>`<span class="pill">${esc(t.name)}</span>`).join('')}</div><p class="tiny mt-sm">这些标签只描述环境，不保证任何一条路线获胜。</p></section>
-      <div class="bottom-actions"><button class="btn primary" data-act="toAttrs">分配你的天赋</button></div>
+      <section class="card soft mt-sm"><div class="eyebrow">🌍 本局时代环境</div><div class="taglist" style="justify-content:flex-start">${r.world.tags.map(t=>`<span class="pill">${esc(t.name)}</span>`).join('')}</div><p class="tiny mt-sm">这些标签只描述环境，不保证任何一条路线获胜。</p></section>
+      <div class="bottom-actions"><button class="btn primary" data-act="toAttrs">🎛️ 分配你的天赋</button></div>
     </main>`;
   }
   function attributesView(){
     const r=state.run;
-    return `<main class="screen">
-      <div class="topbar"><button class="iconbtn" data-nav="birth">‹</button><div class="title">出生加点</div><span></span></div>
-      <div class="remain row"><div><div class="eyebrow">可分配点数</div><div class="big-number">${r.points}</div></div><span class="pill">每项上限 8</span></div>
-      <section class="card">${Object.entries(ATTRS).map(([k,a])=>`<div class="attr-row"><div><div class="attr-name">${a.name}</div><div class="attr-desc">${a.desc}</div></div><div class="stepper"><button data-step="${k}" data-delta="-1">−</button><b>${r.attrs[k]}</b><button data-step="${k}" data-delta="1">＋</button></div></div>`).join('')}</section>
+    return `<main class="screen attributes-screen">
+      <div class="topbar"><button class="iconbtn" data-nav="birth">‹</button><div class="title">🎛️ 出生加点</div><span></span></div>
+      <div class="remain row"><div><div class="eyebrow">✨ 可分配点数</div><div class="big-number">${r.points}</div></div><span class="pill">🔒 每项上限 8</span></div>
+      <section class="card">${Object.entries(ATTRS).map(([k,a])=>`<div class="attr-row"><div><div class="attr-name"><span class="attr-emoji">${a.icon||'•'}</span><span>${a.name}</span></div><div class="attr-desc">${a.desc}</div></div><div class="stepper"><button data-step="${k}" data-delta="-1">−</button><b>${r.attrs[k]}</b><button data-step="${k}" data-delta="1">＋</button></div></div>`).join('')}</section>
       <div class="mt tiny">高属性也会制造代价。高野心更容易跃迁，也更容易把运气误认成能力。</div>
-      <div class="bottom-actions"><button class="btn ghost" data-act="randomAttrs">随机分配</button><button class="btn primary" data-act="confirmAttrs" ${r.points?'disabled':''}>确认出生</button></div>
+      <div class="bottom-actions attributes-actions"><button type="button" class="btn ghost" data-act="randomAttrs">🎲 随机分配</button><button type="button" class="btn primary" data-act="confirmAttrs" ${r.points?'disabled':''}>👶 确认出生</button></div>
     </main>`;
   }
   function fateView(){
-    const r=state.run;const title=r.phase==='stageDraw'?`${r.drawAt}岁 · 选择一张人生牌`:'选择一张先天命牌';
+    const r=state.run;const title=r.phase==='stageDraw'?`🃏 ${r.drawAt}岁 · 选择一张人生牌`:'🃏 选择一张先天命牌';
     return `<main class="screen"><div class="topbar"><span></span><div class="title">${title}</div><span></span></div>
       <p>${r.phase==='stageDraw'?'时代给了你三个方向，只能留下一个。':'每张牌都带来优势，也留下一个隐蔽的价格。'}</p>
-      <div class="stack mt">${r.drawOptions.map((c,i)=>`<button class="card fate-card" style="animation-delay:${i*.06}s;text-align:left" data-card="${c.id}"><div><div class="fate-type">${esc(c.type)}</div><div class="fate-title">《${esc(c.title)}》</div><div class="fate-text">${esc(c.text)}</div></div><div class="row mt-sm"><span class="tiny">点击选择</span><span class="chev">›</span></div></button>`).join('')}</div>
+      <div class="stack mt">${r.drawOptions.map((c,i)=>`<button class="card fate-card" style="animation-delay:${i*.06}s;text-align:left" data-card="${c.id}"><div><div class="fate-type">${esc(c.icon||'🃏')} ${esc(c.type)}</div><div class="fate-title">《${esc(c.title)}》</div><div class="fate-text">${esc(c.text)}</div></div><div class="row mt-sm"><span class="tiny">点击选择</span><span class="chev">›</span></div></button>`).join('')}</div>
     </main>`;
   }
   function gameView(){
@@ -258,14 +258,14 @@
       <header class="game-header">
         <div class="row"><div class="grow"><div class="age">${r.age}岁</div><div class="role">${esc(r.birth.location.name)} · ${esc(roleLine())}</div></div><button class="iconbtn" data-act="status">☰</button></div>
         <div class="resource-strip">
-          <div class="res"><span>现金</span><b>${money(r.res.cash)}</b></div>
-          <div class="res"><span>健康</span><b>${Math.round(r.res.health)}</b></div>
-          <div class="res"><span>精神</span><b>${Math.round(r.res.spirit)}</b></div>
-          <div class="res"><span>关系</span><b>${Math.round(r.res.relation)}</b></div>
+          <div class="res"><span>💰 现金</span><b>${money(r.res.cash)}</b></div>
+          <div class="res"><span>❤️ 健康</span><b>${Math.round(r.res.health)}</b></div>
+          <div class="res"><span>🧠 精神</span><b>${Math.round(r.res.spirit)}</b></div>
+          <div class="res"><span>🤝 关系</span><b>${Math.round(r.res.relation)}</b></div>
         </div>
       </header>
       <section class="card event-card ${r.currentResult?'result-card':''}">
-        ${r.currentResult?`<div><div class="eyebrow">选择已生效</div><div class="event-title" style="margin-top:10px">${esc(e.title)}</div><div class="result-text">${esc(r.currentResult.text)}</div>${deltaHtml(r.currentResult.deltas)}</div><div class="event-foot"><span>过去已经写入时间线</span><span>${ageStage(r.age)}</span></div>`:`<div><div class="event-icon">${e.icon}</div><div class="event-title">${esc(e.title)}</div><div class="event-body">${esc(e.text)}</div></div><div class="event-foot"><span>${ageStage(r.age)}</span><span>人生编号 ${esc(r.seed)}</span></div>`}
+        ${r.currentResult?`<div><div class="eyebrow">✅ 选择已生效</div><div class="event-title" style="margin-top:10px">${esc(e.title)}</div><div class="result-text">${esc(r.currentResult.text)}</div>${deltaHtml(r.currentResult.deltas)}</div><div class="event-foot"><span>过去已经写入时间线</span><span>${ageStage(r.age)}</span></div>`:`<div><div class="event-icon">${e.icon}</div><div class="event-title">${esc(e.title)}</div><div class="event-body">${esc(e.text)}</div></div><div class="event-foot"><span>${ageStage(r.age)}</span><span>人生编号 ${esc(r.seed)}</span></div>`}
       </section>
       ${r.currentResult?`<div class="choices"><button class="btn primary" data-act="afterResult">继续</button></div>`:`<div class="choices">${e.choices.map((c,i)=>{const locked=c.require&&!c.require(r);return `<button class="choice ${locked?'locked':''}" data-choice="${i}">${esc(c.text)}${locked?'<small>条件不足</small>':''}</button>`}).join('')}</div>`}
     </main>`;
@@ -274,7 +274,7 @@
   function endingView(){
     const r=state.run,e=r.ending;
     return `<main class="screen">
-      <div class="eyebrow" style="text-align:center;margin-top:24px">本次人生服务已结束</div>
+      <div class="eyebrow" style="text-align:center;margin-top:24px">🧾 本次人生服务已结束</div>
       <div class="score-ring" style="--score:${e.score}"><div><b>${e.score}</b><span>人生综合值</span></div></div>
       <div class="ending-title">《${esc(e.title)}》</div><div class="ending-line">${esc(e.line)}</div>
       <div class="taglist">${e.tags.map(t=>`<span class="pill">${esc(t)}</span>`).join('')}</div>
@@ -296,7 +296,7 @@
   }
   function archiveView(){
     const hs=state.meta.histories;
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">人生档案</div><span class="pill">${hs.length}次</span></div>
+    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">🗂️ 人生档案</div><span class="pill">${hs.length}次</span></div>
       <section class="card"><div class="stat-grid"><div class="stat-box"><span>完成次数</span><b>${state.meta.stats.runs}</b></div><div class="stat-box"><span>最高综合值</span><b>${state.meta.stats.best}</b></div></div></section>
       <div class="section-title">最近的人生</div>
       <section class="card">${hs.length?hs.map(h=>`<div class="archive-item"><div class="row"><div><div class="archive-title">《${esc(h.title)}》</div><div class="archive-meta">${esc(h.location)} · ${h.age}岁 · 净资产 ${money(h.net)}</div></div><span class="pill">${h.score}</span></div></div>`).join(''):'<p>还没有完成的人生。开始一次投胎，档案才会建立。</p>'}</section>
@@ -304,13 +304,13 @@
   }
   function codexView(){
     const keys=Object.keys(CODEX);
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">社会图鉴</div><span class="pill">${state.meta.codex.length}/${keys.length}</span></div>
+    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">📖 社会图鉴</div><span class="pill">${state.meta.codex.length}/${keys.length}</span></div>
       <p>你见过的机制，会从现实里退到词条里。未解锁内容仍保持模糊。</p>
       <section class="card mt">${keys.map(k=>{const open=state.meta.codex.includes(k),c=CODEX[k];return `<div class="codex-item"><h3>${open?esc(c.title):'未识别机制'}</h3><p class="${open?'':'locked-text'}">${open?esc(c.text):'这段解释需要在某一次人生中亲自遇见。'}</p></div>`}).join('')}</section>
     </main>`;
   }
   function settingsView(){
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">设置</div><span></span></div>
+    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">⚙️ 设置</div><span></span></div>
       <section class="card">
         <button class="menu-item" data-act="toggleHaptic"><strong>轻触反馈</strong><span class="switch ${state.meta.settings.haptic?'on':''}"><i></i></span></button>
         <button class="menu-item" data-act="export"><strong>导出存档</strong><span class="chev">›</span></button>
@@ -345,6 +345,7 @@
     if(a==='new'){if(state.run&&state.run.phase!=='ended'&&!confirm('当前人生尚未结束。确定重新投胎？'))return;newRun()}
     else if(a==='continue'){go(state.run.phase==='birthReveal'?'birth':state.run.phase==='attributes'?'attributes':state.run.phase==='fate'||state.run.phase==='stageDraw'?'fate':'game')}
     else if(a==='toAttrs'){state.run.phase='attributes';go('attributes');save()}
+    else if(a==='randomAttrs'){randomAttrs()}
     else if(a==='confirmAttrs'){state.run.phase='fate';state.run.drawOptions=getFateOptions();go('fate');save()}
     else if(a==='status'){state.overlay='status';render()}
     else if(a==='closeOverlay'){state.overlay=null;render()}
