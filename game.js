@@ -4,7 +4,7 @@
   const APP_KEY='life-unloaded-2026-v1';
   const V31_BACKUP_KEY='life-unloaded-2026-v3.1-backup';
   const CORRUPT_KEY='life-unloaded-2026-corrupt-backup';
-  const VERSION='3.2.1';
+  const VERSION='3.2.2';
   const SCHEMA_VERSION=4;
   const DEBUG=new URLSearchParams(location.search).get('debug')==='1';
   const app=document.getElementById('app');
@@ -284,7 +284,7 @@
     else if(name==='toAttrs'){run.phase='attributes';go('attributes');save()}else if(name==='randomAttrs')randomAttrs();
     else if(name==='confirmAttrs'){if(run.points)return;run.deathAge=clamp(run.deathAge+run.attrs.physique-1,42,105);startCardDraw('innate',0)}
     else if(name==='advance')advanceOneBeat();else if(name==='status'){state.overlay='status';render()}else if(name==='closeOverlay'){state.overlay=null;render()}
-    else if(name==='toggleHaptic'){state.meta.settings.haptic=!state.meta.settings.haptic;save();render()}else if(name==='export')exportText(JSON.stringify({schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,meta:state.meta,run:state.run},null,2),'人生尚未加载-v3.2.1-存档.json');
+    else if(name==='toggleHaptic'){state.meta.settings.haptic=!state.meta.settings.haptic;save();render()}else if(name==='export')exportText(JSON.stringify({schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,meta:state.meta,run:state.run},null,2),'人生尚未加载-v3.2.2-存档.json');
     else if(name==='reset'&&confirm('清除全部人生档案和存档？')){localStorage.removeItem(APP_KEY);state={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};render()}
     else if(name==='exportCorrupt')exportText(state.recovery.raw||'','人生尚未加载-损坏存档.json');else if(name==='clearCorrupt'&&confirm('确认清除损坏存档？')){localStorage.removeItem(APP_KEY);state={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};render()}
     else if(name==='debugFinish'){const report=autoFinishCurrent();showToast(`完成：${report?.age||0}岁，${report?.decisions||0}次选择`)}

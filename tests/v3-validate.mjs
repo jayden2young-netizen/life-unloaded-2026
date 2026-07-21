@@ -23,13 +23,29 @@ check(cards.length===72,`cards ${cards.length} !== 72`);
 
 const ids=data.events.map(x=>x.id);check(new Set(ids).size===ids.length,'duplicate event ids');
 const cardIds=cards.map(x=>x.id);check(new Set(cardIds).size===cardIds.length,'duplicate card ids');
+function parseChineseAge(value){
+  if(/^\d+$/.test(value))return Number(value);
+  const digits={零:0,'〇':0,一:1,二:2,两:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9};
+  if(value==='十')return 10;
+  if(value.includes('十')){
+    const [tens,ones]=value.split('十');
+    return (tens?digits[tens]:1)*10+(ones?digits[ones]:0);
+  }
+  return digits[value];
+}
 for(const event of data.events){
   check(Number.isFinite(event.ageMin)&&Number.isFinite(event.ageMax)&&event.ageMin<=event.ageMax,`${event.id}: invalid age range`);
   check(Array.isArray(event.stage)&&event.stage.length>0,`${event.id}: missing stage`);
   check(typeof event.icon==='string'&&event.icon.length>0,`${event.id}: missing icon`);
   check(event.contentRevision===3,`${event.id}: stale content revision`);
 }
-for(const beat of kinds.beat||[])check([...beat.text].length<=32,`${beat.id}: beat longer than 32 chars (${[...beat.text].length})`);
+for(const beat of kinds.beat||[]){
+  check([...beat.text].length<=32,`${beat.id}: beat longer than 32 chars (${[...beat.text].length})`);
+  for(const match of beat.text.matchAll(/([零〇一二两三四五六七八九十\d]+)岁(?:生日|那年|重启人生)/g)){
+    const literalAge=parseChineseAge(match[1]);
+    check(beat.ageMin===literalAge&&beat.ageMax===literalAge,`${beat.id}: text says age ${literalAge}, range is ${beat.ageMin}-${beat.ageMax}`);
+  }
+}
 for(const swan of kinds.blackSwan||[])check([...swan.text].length<=32,`${swan.id}: black swan longer than 32 chars`);
 const signatureCounts=new Map();const memoryKeys=new Set();
 const forbidden=['找老师或大人商量','先不告诉家里','问一个有经验的人','重新谈条件','承认真实感受','寻找第三条路','先保住现金流'];

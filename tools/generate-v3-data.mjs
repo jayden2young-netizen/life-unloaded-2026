@@ -157,10 +157,21 @@ function beatEffects(theme,index){
   return map[theme]||{};
 }
 
+const exactBeatAges={
+  beat_youth_50:25,
+  beat_adult_27:30,
+  beat_adult_50:35,
+  beat_midlife_50:50,
+  beat_preRetire_46:65
+};
+
 const annualBeats = Object.entries(beatCatalog).flatMap(([stage,texts])=>texts.map((text,index)=>{
-  const [ageMin,ageMax]=stages[stage]; const theme=inferTheme(text,stage,index);
+  const id=`beat_${stage}_${String(index+1).padStart(2,'0')}`;
+  const stageAges=stages[stage],exactAge=exactBeatAges[id];
+  const ageMin=exactAge??stageAges[0],ageMax=exactAge??stageAges[1];
+  const theme=inferTheme(text,stage,index);
   return {
-    id:`beat_${stage}_${String(index+1).padStart(2,'0')}`,kind:'beat',stage:[stage],ageMin,ageMax,
+    id,kind:'beat',stage:[stage],ageMin,ageMax,
     icon:icons[(index+Object.keys(stages).indexOf(stage)*3)%icons.length],text,theme,themes:[theme],tone:inferTone(text),
     requirements:inferRequirements(text),effects:beatEffects(theme,index),weight:10+(index%4),contentRevision:3
   };
