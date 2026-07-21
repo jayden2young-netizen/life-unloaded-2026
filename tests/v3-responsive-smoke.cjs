@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 
 const baseUrl=process.argv[2]||'http://127.0.0.1:8765/';
-const out=path.resolve(__dirname,'..','test-results','responsive-ui');
+const out=path.resolve(__dirname,'..','test-results','v3.2.4-responsive-ui');
 const viewports=[
   {name:'s26',width:360,height:773},
   {name:'short-browser',width:360,height:640},

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 4,
-  "gameVersion": "3.1.0",
+  "gameVersion": "3.2.4",
   "contentRevision": 3,
   "stages": {
     "infancy": [
@@ -2233,8 +2233,8 @@
         "kind": "innate",
         "displayName": "家里有人",
         "title": "家里有人",
-        "effectHint": "第一次卡在窗口时，多一个能问到话的人。",
-        "text": "第一次卡在窗口时，多一个能问到话的人。",
+        "effectHint": "关系 +3；关系事件更常出现，一次再加 +2。",
+        "text": "关系 +3；关系事件更常出现，一次再加 +2。",
         "omenIcon": "🧃",
         "mechanic": "network",
         "effects": {
@@ -2252,8 +2252,8 @@
         "kind": "innate",
         "displayName": "说明书读到最后",
         "title": "说明书读到最后",
-        "effectHint": "第一次签复杂合同时，会发现一条小字。",
-        "text": "第一次签复杂合同时，会发现一条小字。",
+        "effectHint": "精神 +1；一次职场、金钱或数字事件再加 +2。",
+        "text": "精神 +1；一次职场、金钱或数字事件再加 +2。",
         "omenIcon": "🧷",
         "mechanic": "evidence",
         "effects": {
@@ -2271,8 +2271,8 @@
         "kind": "innate",
         "displayName": "很早会做饭",
         "title": "很早会做饭",
-        "effectHint": "独居和拮据时，健康损耗更慢。",
-        "text": "独居和拮据时，健康损耗更慢。",
+        "effectHint": "健康 +3；身体压力 -2，一次健康损失减半。",
+        "text": "健康 +3；身体压力 -2，一次健康损失减半。",
         "omenIcon": "🚌",
         "mechanic": "healthUp",
         "effects": {
@@ -2290,8 +2290,8 @@
         "kind": "innate",
         "displayName": "不怕重新开始",
         "title": "不怕重新开始",
-        "effectHint": "第一次失业后，更快出现转行机会。",
-        "text": "第一次失业后，更快出现转行机会。",
+        "effectHint": "技能经验 +1，精神 +1。",
+        "text": "技能经验 +1，精神 +1。",
         "omenIcon": "📱",
         "mechanic": "skill",
         "effects": {
@@ -2309,8 +2309,8 @@
         "kind": "innate",
         "displayName": "容易被记住",
         "title": "容易被记住",
-        "effectHint": "旧同学和旧同事更容易再次出现。",
-        "text": "旧同学和旧同事更容易再次出现。",
+        "effectHint": "关系 +3；关系事件更常出现，一次再加 +2。",
+        "text": "关系 +3；关系事件更常出现，一次再加 +2。",
         "omenIcon": "🧾",
         "mechanic": "network",
         "effects": {
@@ -2328,8 +2328,8 @@
         "kind": "innate",
         "displayName": "电子原住民",
         "title": "电子原住民",
-        "effectHint": "网络事件更容易变成技能，而非单纯消耗。",
-        "text": "网络事件更容易变成技能，而非单纯消耗。",
+        "effectHint": "数字经验 +2，精神 +1；数字事件更常出现。",
+        "text": "数字经验 +2，精神 +1；数字事件更常出现。",
         "omenIcon": "🍜",
         "mechanic": "digital",
         "effects": {
@@ -2347,8 +2347,8 @@
         "kind": "innate",
         "displayName": "耐耗材质",
         "title": "耐耗材质",
-        "effectHint": "第一次长期熬夜不会立刻拖垮健康。",
-        "text": "第一次长期熬夜不会立刻拖垮健康。",
+        "effectHint": "健康 +3；身体压力 -2，一次健康损失减半。",
+        "text": "健康 +3；身体压力 -2，一次健康损失减半。",
         "omenIcon": "🧥",
         "mechanic": "healthUp",
         "effects": {
@@ -2366,8 +2366,8 @@
         "kind": "innate",
         "displayName": "对数字敏感",
         "title": "对数字敏感",
-        "effectHint": "贷款、投资和工资事件会多一条核算选项。",
-        "text": "贷款、投资和工资事件会多一条核算选项。",
+        "effectHint": "精神 +1；一次职场、金钱或数字事件再加 +2。",
+        "text": "精神 +1；一次职场、金钱或数字事件再加 +2。",
         "omenIcon": "🪪",
         "mechanic": "evidence",
         "effects": {
@@ -2385,8 +2385,8 @@
         "kind": "innate",
         "displayName": "一位安全的大人",
         "title": "一位安全的大人",
-        "effectHint": "青少年遇到麻烦时，多一个可靠联系人。",
-        "text": "青少年遇到麻烦时，多一个可靠联系人。",
+        "effectHint": "关系 +3；关系事件更常出现，一次再加 +2。",
+        "text": "关系 +3；关系事件更常出现，一次再加 +2。",
         "omenIcon": "🏠",
         "mechanic": "network",
         "effects": {
@@ -2404,8 +2404,8 @@
         "kind": "innate",
         "displayName": "县城信用",
         "title": "县城信用",
-        "effectHint": "在县城办事和做生意时，更容易有人作证。",
-        "text": "在县城办事和做生意时，更容易有人作证。",
+        "effectHint": "关系 +3；关系事件更常出现，一次再加 +2。",
+        "text": "关系 +3；关系事件更常出现，一次再加 +2。",
         "omenIcon": "💊",
         "mechanic": "network",
         "effects": {
@@ -2423,8 +2423,8 @@
         "kind": "innate",
         "displayName": "不太爱面子",
         "title": "不太爱面子",
-        "effectHint": "第一次体面消费可以直接退出。",
-        "text": "第一次体面消费可以直接退出。",
+        "effectHint": "现金 +1800；一次金钱或住房损失减半。",
+        "text": "现金 +1800；一次金钱或住房损失减半。",
         "omenIcon": "📦",
         "mechanic": "save",
         "effects": {
@@ -2442,8 +2442,8 @@
         "kind": "innate",
         "displayName": "身体记得节奏",
         "title": "身体记得节奏",
-        "effectHint": "运动习惯更容易在晚年重新回来。",
-        "text": "运动习惯更容易在晚年重新回来。",
+        "effectHint": "健康 +3；身体压力 -2，一次健康损失减半。",
+        "text": "健康 +3；身体压力 -2，一次健康损失减半。",
         "omenIcon": "🪴",
         "mechanic": "healthUp",
         "effects": {
@@ -2461,8 +2461,8 @@
         "kind": "innate",
         "displayName": "会保存证据",
         "title": "会保存证据",
-        "effectHint": "第一次劳动争议自动留下聊天记录。",
-        "text": "第一次劳动争议自动留下聊天记录。",
+        "effectHint": "精神 +1；一次职场、金钱或数字事件再加 +2。",
+        "text": "精神 +1；一次职场、金钱或数字事件再加 +2。",
         "omenIcon": "🎒",
         "mechanic": "evidence",
         "effects": {
@@ -2480,8 +2480,8 @@
         "kind": "innate",
         "displayName": "能听懂口音",
         "title": "能听懂口音",
-        "effectHint": "返乡和熟人社会事件更容易建立关系。",
-        "text": "返乡和熟人社会事件更容易建立关系。",
+        "effectHint": "关系 +4，孤独压力 -2。",
+        "text": "关系 +4，孤独压力 -2。",
         "omenIcon": "☂️",
         "mechanic": "relationUp",
         "effects": {
@@ -2499,8 +2499,8 @@
         "kind": "innate",
         "displayName": "恢复快乐很快",
         "title": "恢复快乐很快",
-        "effectHint": "连续坏事后，精神恢复多一点。",
-        "text": "连续坏事后，精神恢复多一点。",
+        "effectHint": "精神 +4，孤独压力 -1。",
+        "text": "精神 +4，孤独压力 -1。",
         "omenIcon": "🫖",
         "mechanic": "spiritUp",
         "effects": {
@@ -2518,8 +2518,8 @@
         "kind": "innate",
         "displayName": "对权威慢半拍",
         "title": "对权威慢半拍",
-        "effectHint": "第一次内部消息不会立刻相信。",
-        "text": "第一次内部消息不会立刻相信。",
+        "effectHint": "精神 +1；一次职场、金钱或数字事件再加 +2。",
+        "text": "精神 +1；一次职场、金钱或数字事件再加 +2。",
         "omenIcon": "🩻",
         "mechanic": "evidence",
         "effects": {
@@ -2537,8 +2537,8 @@
         "kind": "innate",
         "displayName": "普通得恰到好处",
         "title": "普通得恰到好处",
-        "effectHint": "极端坏事件略少，普通小事略多。",
-        "text": "极端坏事件略少，普通小事略多。",
+        "effectHint": "精神 +4，孤独压力 -1。",
+        "text": "精神 +4，孤独压力 -1。",
         "omenIcon": "🧃",
         "mechanic": "spiritUp",
         "effects": {
@@ -2556,8 +2556,8 @@
         "kind": "innate",
         "displayName": "一个冷门爱好",
         "title": "一个冷门爱好",
-        "effectHint": "人生低谷时，可能出现不靠工作的出口。",
-        "text": "人生低谷时，可能出现不靠工作的出口。",
+        "effectHint": "技能经验 +1，精神 +1。",
+        "text": "技能经验 +1，精神 +1。",
         "omenIcon": "🧷",
         "mechanic": "skill",
         "effects": {
@@ -2575,8 +2575,8 @@
         "kind": "innate",
         "displayName": "很会认路",
         "title": "很会认路",
-        "effectHint": "迁移和陌生城市事件少花一次冤枉钱。",
-        "text": "迁移和陌生城市事件少花一次冤枉钱。",
+        "effectHint": "现金 +1800；一次金钱或住房损失减半。",
+        "text": "现金 +1800；一次金钱或住房损失减半。",
         "omenIcon": "🚌",
         "mechanic": "save",
         "effects": {
@@ -2594,8 +2594,8 @@
         "kind": "innate",
         "displayName": "敢说不知道",
         "title": "敢说不知道",
-        "effectHint": "第一次工作装懂可以改成当场问清。",
-        "text": "第一次工作装懂可以改成当场问清。",
+        "effectHint": "关系 +2，精神 -1；留下诚实记录。",
+        "text": "关系 +2，精神 -1；留下诚实记录。",
         "omenIcon": "📱",
         "mechanic": "truth",
         "effects": {
@@ -2614,8 +2614,8 @@
         "kind": "innate",
         "displayName": "小生意直觉",
         "title": "小生意直觉",
-        "effectHint": "开店和副业事件更容易看见真实流水。",
-        "text": "开店和副业事件更容易看见真实流水。",
+        "effectHint": "精神 +1；一次职场、金钱或数字事件再加 +2。",
+        "text": "精神 +1；一次职场、金钱或数字事件再加 +2。",
         "omenIcon": "🧾",
         "mechanic": "evidence",
         "effects": {
@@ -2633,8 +2633,8 @@
         "kind": "innate",
         "displayName": "能独自吃饭",
         "title": "能独自吃饭",
-        "effectHint": "单身阶段的孤独压力增长更慢。",
-        "text": "单身阶段的孤独压力增长更慢。",
+        "effectHint": "精神 +4，孤独压力 -1。",
+        "text": "精神 +4，孤独压力 -1。",
         "omenIcon": "🍜",
         "mechanic": "spiritUp",
         "effects": {
@@ -2652,8 +2652,8 @@
         "kind": "innate",
         "displayName": "争吵时还能说话",
         "title": "争吵时还能说话",
-        "effectHint": "第一次家庭冲突多一个说清事实的选项。",
-        "text": "第一次家庭冲突多一个说清事实的选项。",
+        "effectHint": "关系 +2，精神 -1；留下诚实记录。",
+        "text": "关系 +2，精神 -1；留下诚实记录。",
         "omenIcon": "🧥",
         "mechanic": "truth",
         "effects": {
@@ -2672,8 +2672,8 @@
         "kind": "innate",
         "displayName": "曾被认真听过",
         "title": "曾被认真听过",
-        "effectHint": "关系破裂后，不会立刻把问题全怪自己。",
-        "text": "关系破裂后，不会立刻把问题全怪自己。",
+        "effectHint": "精神 +4，孤独压力 -1。",
+        "text": "精神 +4，孤独压力 -1。",
         "omenIcon": "🪪",
         "mechanic": "spiritUp",
         "effects": {
@@ -2693,8 +2693,8 @@
         "kind": "stage",
         "displayName": "懂一点劳动合同",
         "title": "懂一点劳动合同",
-        "effectHint": "第一次被改合同，可以看出最吃亏的一条。",
-        "text": "第一次被改合同，可以看出最吃亏的一条。",
+        "effectHint": "现金 -800；留下法律意识记录。",
+        "text": "现金 -800；留下法律意识记录。",
         "omenIcon": "🧾",
         "mechanic": "legal",
         "effects": {
@@ -2715,8 +2715,8 @@
         "kind": "stage",
         "displayName": "旧同学还记得你",
         "title": "旧同学还记得你",
-        "effectHint": "中年失业后，可能收到一份不体面的介绍。",
-        "text": "中年失业后，可能收到一份不体面的介绍。",
+        "effectHint": "关系 +3；关系事件更常出现，一次再加 +2。",
+        "text": "关系 +3；关系事件更常出现，一次再加 +2。",
         "omenIcon": "🍜",
         "mechanic": "network",
         "effects": {
@@ -2734,8 +2734,8 @@
         "kind": "stage",
         "displayName": "会用AI但不表演",
         "title": "会用AI但不表演",
-        "effectHint": "AI事件增加效率，不自动增加汇报材料。",
-        "text": "AI事件增加效率，不自动增加汇报材料。",
+        "effectHint": "数字经验 +2，精神 +1；数字事件更常出现。",
+        "text": "数字经验 +2，精神 +1；数字事件更常出现。",
         "omenIcon": "🧥",
         "mechanic": "digital",
         "effects": {
@@ -2753,8 +2753,8 @@
         "kind": "stage",
         "displayName": "稳定睡眠",
         "title": "稳定睡眠",
-        "effectHint": "连续加班对健康的损耗减少一次。",
-        "text": "连续加班对健康的损耗减少一次。",
+        "effectHint": "健康 +3；身体压力 -2，一次健康损失减半。",
+        "text": "健康 +3；身体压力 -2，一次健康损失减半。",
         "omenIcon": "🪪",
         "mechanic": "healthUp",
         "effects": {
@@ -2772,8 +2772,8 @@
         "kind": "stage",
         "displayName": "一个靠谱朋友",
         "title": "一个靠谱朋友",
-        "effectHint": "关系和职业低谷时，有人会接电话。",
-        "text": "关系和职业低谷时，有人会接电话。",
+        "effectHint": "关系 +4，孤独压力 -2。",
+        "text": "关系 +4，孤独压力 -2。",
         "omenIcon": "🏠",
         "mechanic": "relationUp",
         "effects": {
@@ -2791,8 +2791,8 @@
         "kind": "stage",
         "displayName": "可迁移的技能",
         "title": "可迁移的技能",
-        "effectHint": "换城市后，不必把职业完全清零。",
-        "text": "换城市后，不必把职业完全清零。",
+        "effectHint": "技能经验 +1，精神 +1。",
+        "text": "技能经验 +1，精神 +1。",
         "omenIcon": "💊",
         "mechanic": "skill",
         "effects": {
@@ -2810,8 +2810,8 @@
         "kind": "stage",
         "displayName": "知道医院怎么走",
         "title": "知道医院怎么走",
-        "effectHint": "第一次住院少排错一个窗口。",
-        "text": "第一次住院少排错一个窗口。",
+        "effectHint": "精神 +1；一次职场、金钱或数字事件再加 +2。",
+        "text": "精神 +1；一次职场、金钱或数字事件再加 +2。",
         "omenIcon": "📦",
         "mechanic": "evidence",
         "effects": {
@@ -2829,8 +2829,8 @@
         "kind": "stage",
         "displayName": "不替组织保密",
         "title": "不替组织保密",
-        "effectHint": "裁员和劳动争议时，更容易保留证据。",
-        "text": "裁员和劳动争议时，更容易保留证据。",
+        "effectHint": "现金 -800；留下法律意识记录。",
+        "text": "现金 -800；留下法律意识记录。",
         "omenIcon": "🪴",
         "mechanic": "legal",
         "effects": {
@@ -2851,8 +2851,8 @@
         "kind": "stage",
         "displayName": "小地方的大人物",
         "title": "小地方的大人物",
-        "effectHint": "在县城有效；离开后沉睡，返乡后恢复。",
-        "text": "在县城有效；离开后沉睡，返乡后恢复。",
+        "effectHint": "关系 +3；关系事件更常出现，一次再加 +2。",
+        "text": "关系 +3；关系事件更常出现，一次再加 +2。",
         "omenIcon": "🎒",
         "mechanic": "network",
         "effects": {
@@ -2870,8 +2870,8 @@
         "kind": "stage",
         "displayName": "一份不体面的现金流",
         "title": "一份不体面的现金流",
-        "effectHint": "失业期间仍有少量收入。",
-        "text": "失业期间仍有少量收入。",
+        "effectHint": "进入灵活就业；现金 +2500，职业压力 +2。",
+        "text": "进入灵活就业；现金 +2500，职业压力 +2。",
         "omenIcon": "☂️",
         "mechanic": "gig",
         "effects": {
@@ -2893,8 +2893,8 @@
         "kind": "stage",
         "displayName": "开始记账",
         "title": "开始记账",
-        "effectHint": "第一次现金流危机提前一年出现提醒。",
-        "text": "第一次现金流危机提前一年出现提醒。",
+        "effectHint": "现金 +1800；一次金钱或住房损失减半。",
+        "text": "现金 +1800；一次金钱或住房损失减半。",
         "omenIcon": "🫖",
         "mechanic": "save",
         "effects": {
@@ -2912,8 +2912,8 @@
         "kind": "stage",
         "displayName": "及时退出",
         "title": "及时退出",
-        "effectHint": "第一次高风险投资可以在扩大前离场。",
-        "text": "第一次高风险投资可以在扩大前离场。",
+        "effectHint": "精神 +1；一次职场、金钱或数字事件再加 +2。",
+        "text": "精神 +1；一次职场、金钱或数字事件再加 +2。",
         "omenIcon": "🩻",
         "mechanic": "evidence",
         "effects": {
@@ -2931,8 +2931,8 @@
         "kind": "stage",
         "displayName": "会修旧东西",
         "title": "会修旧东西",
-        "effectHint": "住房和设备故障少花一次维修费。",
-        "text": "住房和设备故障少花一次维修费。",
+        "effectHint": "现金 +1800；一次金钱或住房损失减半。",
+        "text": "现金 +1800；一次金钱或住房损失减半。",
         "omenIcon": "🧃",
         "mechanic": "save",
         "effects": {
@@ -2950,8 +2950,8 @@
         "kind": "stage",
         "displayName": "不再追所有认可",
         "title": "不再追所有认可",
-        "effectHint": "一次被忽视不会同时扣掉关系和精神。",
-        "text": "一次被忽视不会同时扣掉关系和精神。",
+        "effectHint": "精神 +4，孤独压力 -1。",
+        "text": "精神 +4，孤独压力 -1。",
         "omenIcon": "🧷",
         "mechanic": "spiritUp",
         "effects": {
@@ -2969,8 +2969,8 @@
         "kind": "stage",
         "displayName": "跨年龄朋友",
         "title": "跨年龄朋友",
-        "effectHint": "退休后更容易保持新的社交圈。",
-        "text": "退休后更容易保持新的社交圈。",
+        "effectHint": "关系 +3；关系事件更常出现，一次再加 +2。",
+        "text": "关系 +3；关系事件更常出现，一次再加 +2。",
         "omenIcon": "🚌",
         "mechanic": "network",
         "effects": {
@@ -2988,8 +2988,8 @@
         "kind": "stage",
         "displayName": "一段稳定关系",
         "title": "一段稳定关系",
-        "effectHint": "重大疾病时，多一个长期照护来源。",
-        "text": "重大疾病时，多一个长期照护来源。",
+        "effectHint": "进入稳定关系，关系 +5。",
+        "text": "进入稳定关系，关系 +5。",
         "omenIcon": "📱",
         "mechanic": "partner",
         "effects": {
@@ -3007,8 +3007,8 @@
         "kind": "stage",
         "displayName": "懂得分配照护",
         "title": "懂得分配照护",
-        "effectHint": "家庭住院事件不再默认只由你承担。",
-        "text": "家庭住院事件不再默认只由你承担。",
+        "effectHint": "边界经验 +1；精神 +3，关系 -1。",
+        "text": "边界经验 +1；精神 +3，关系 -1。",
         "omenIcon": "🧾",
         "mechanic": "boundary",
         "effects": {
@@ -3027,8 +3027,8 @@
         "kind": "stage",
         "displayName": "长期复健",
         "title": "长期复健",
-        "effectHint": "慢性病不会只剩恶化路线。",
-        "text": "慢性病不会只剩恶化路线。",
+        "effectHint": "健康 +3；身体压力 -2，一次健康损失减半。",
+        "text": "健康 +3；身体压力 -2，一次健康损失减半。",
         "omenIcon": "🍜",
         "mechanic": "healthUp",
         "effects": {
@@ -3046,8 +3046,8 @@
         "kind": "stage",
         "displayName": "旧账号还在",
         "title": "旧账号还在",
-        "effectHint": "某个行业风口可能重新找到你的旧作品。",
-        "text": "某个行业风口可能重新找到你的旧作品。",
+        "effectHint": "数字经验 +2，精神 +1；数字事件更常出现。",
+        "text": "数字经验 +2，精神 +1；数字事件更常出现。",
         "omenIcon": "🧥",
         "mechanic": "digital",
         "effects": {
@@ -3065,8 +3065,8 @@
         "kind": "stage",
         "displayName": "会做提示词",
         "title": "会做提示词",
-        "effectHint": "AI诈骗更难骗你，AI工作仍可能累你。",
-        "text": "AI诈骗更难骗你，AI工作仍可能累你。",
+        "effectHint": "数字经验 +2，精神 +1；数字事件更常出现。",
+        "text": "数字经验 +2，精神 +1；数字事件更常出现。",
         "omenIcon": "🪪",
         "mechanic": "digital",
         "effects": {
@@ -3084,8 +3084,8 @@
         "kind": "stage",
         "displayName": "能把话讲短",
         "title": "能把话讲短",
-        "effectHint": "窗口、面试和家庭会议更容易说到重点。",
-        "text": "窗口、面试和家庭会议更容易说到重点。",
+        "effectHint": "关系 +2，精神 -1；留下诚实记录。",
+        "text": "关系 +2，精神 -1；留下诚实记录。",
         "omenIcon": "🏠",
         "mechanic": "truth",
         "effects": {
@@ -3104,8 +3104,8 @@
         "kind": "stage",
         "displayName": "一位公平的老师",
         "title": "一位公平的老师",
-        "effectHint": "教育分流时，多一个不收钱的意见。",
-        "text": "教育分流时，多一个不收钱的意见。",
+        "effectHint": "关系 +3；关系事件更常出现，一次再加 +2。",
+        "text": "关系 +3；关系事件更常出现，一次再加 +2。",
         "omenIcon": "💊",
         "mechanic": "network",
         "effects": {
@@ -3123,8 +3123,8 @@
         "kind": "stage",
         "displayName": "不靠酒桌的关系",
         "title": "不靠酒桌的关系",
-        "effectHint": "职业人脉不会因为拒酒全部消失。",
-        "text": "职业人脉不会因为拒酒全部消失。",
+        "effectHint": "关系 +3；关系事件更常出现，一次再加 +2。",
+        "text": "关系 +3；关系事件更常出现，一次再加 +2。",
         "omenIcon": "📦",
         "mechanic": "network",
         "effects": {
@@ -3142,8 +3142,8 @@
         "kind": "stage",
         "displayName": "识别情绪操控",
         "title": "识别情绪操控",
-        "effectHint": "关系事件会提前暴露一次控制迹象。",
-        "text": "关系事件会提前暴露一次控制迹象。",
+        "effectHint": "精神 +1；一次职场、金钱或数字事件再加 +2。",
+        "text": "精神 +1；一次职场、金钱或数字事件再加 +2。",
         "omenIcon": "🪴",
         "mechanic": "evidence",
         "effects": {
@@ -3161,8 +3161,8 @@
         "kind": "stage",
         "displayName": "房价不是人格",
         "title": "房价不是人格",
-        "effectHint": "房产下跌不会直接重创精神。",
-        "text": "房产下跌不会直接重创精神。",
+        "effectHint": "精神 +4，孤独压力 -1。",
+        "text": "精神 +4，孤独压力 -1。",
         "omenIcon": "🎒",
         "mechanic": "spiritUp",
         "effects": {
@@ -3180,8 +3180,8 @@
         "kind": "stage",
         "displayName": "定期体检",
         "title": "定期体检",
-        "effectHint": "一次疾病会在严重前被发现。",
-        "text": "一次疾病会在严重前被发现。",
+        "effectHint": "健康 +3；身体压力 -2，一次健康损失减半。",
+        "text": "健康 +3；身体压力 -2，一次健康损失减半。",
         "omenIcon": "☂️",
         "mechanic": "healthUp",
         "effects": {
@@ -3199,8 +3199,8 @@
         "kind": "stage",
         "displayName": "可以卖掉的面子",
         "title": "可以卖掉的面子",
-        "effectHint": "现金紧张时，可以选择更便宜的生活。",
-        "text": "现金紧张时，可以选择更便宜的生活。",
+        "effectHint": "现金 +1800；一次金钱或住房损失减半。",
+        "text": "现金 +1800；一次金钱或住房损失减半。",
         "omenIcon": "🫖",
         "mechanic": "save",
         "effects": {
@@ -3218,8 +3218,8 @@
         "kind": "stage",
         "displayName": "不把忙当成功",
         "title": "不把忙当成功",
-        "effectHint": "升职事件会同时显示真实工作量。",
-        "text": "升职事件会同时显示真实工作量。",
+        "effectHint": "精神 +1；一次职场、金钱或数字事件再加 +2。",
+        "text": "精神 +1；一次职场、金钱或数字事件再加 +2。",
         "omenIcon": "🩻",
         "mechanic": "evidence",
         "effects": {
@@ -3237,8 +3237,8 @@
         "kind": "stage",
         "displayName": "错误专业的余料",
         "title": "错误专业的余料",
-        "effectHint": "转行时，旧专业仍能提供一项技能。",
-        "text": "转行时，旧专业仍能提供一项技能。",
+        "effectHint": "技能经验 +1，精神 +1。",
+        "text": "技能经验 +1，精神 +1。",
         "omenIcon": "🧃",
         "mechanic": "skill",
         "effects": {
@@ -3256,8 +3256,8 @@
         "kind": "stage",
         "displayName": "稳定更新的小工具",
         "title": "稳定更新的小工具",
-        "effectHint": "副业不爆红，也会慢慢产生小额收入。",
-        "text": "副业不爆红，也会慢慢产生小额收入。",
+        "effectHint": "进入灵活就业；现金 +2500，职业压力 +2。",
+        "text": "进入灵活就业；现金 +2500，职业压力 +2。",
         "omenIcon": "🧷",
         "mechanic": "gig",
         "effects": {
@@ -3279,8 +3279,8 @@
         "kind": "stage",
         "displayName": "会申请公共服务",
         "title": "会申请公共服务",
-        "effectHint": "补贴和办事事件少缺一份材料。",
-        "text": "补贴和办事事件少缺一份材料。",
+        "effectHint": "现金 -800；留下法律意识记录。",
+        "text": "现金 -800；留下法律意识记录。",
         "omenIcon": "🚌",
         "mechanic": "legal",
         "effects": {
@@ -3301,8 +3301,8 @@
         "kind": "stage",
         "displayName": "亲戚群静音",
         "title": "亲戚群静音",
-        "effectHint": "熟人压力对精神的损耗减少一次。",
-        "text": "熟人压力对精神的损耗减少一次。",
+        "effectHint": "边界经验 +1；精神 +3，关系 -1。",
+        "text": "边界经验 +1；精神 +3，关系 -1。",
         "omenIcon": "📱",
         "mechanic": "boundary",
         "effects": {
@@ -3321,8 +3321,8 @@
         "kind": "stage",
         "displayName": "孩子不是项目",
         "title": "孩子不是项目",
-        "effectHint": "子女教育事件多一个真正退出的选项。",
-        "text": "子女教育事件多一个真正退出的选项。",
+        "effectHint": "边界经验 +1；精神 +3，关系 -1。",
+        "text": "边界经验 +1；精神 +3，关系 -1。",
         "omenIcon": "🧾",
         "mechanic": "boundary",
         "effects": {
@@ -3341,8 +3341,8 @@
         "kind": "stage",
         "displayName": "具体怀疑诈骗",
         "title": "具体怀疑诈骗",
-        "effectHint": "可疑电话会先显示一个漏洞。",
-        "text": "可疑电话会先显示一个漏洞。",
+        "effectHint": "精神 +1；一次职场、金钱或数字事件再加 +2。",
+        "text": "精神 +1；一次职场、金钱或数字事件再加 +2。",
         "omenIcon": "🍜",
         "mechanic": "evidence",
         "effects": {
@@ -3360,8 +3360,8 @@
         "kind": "stage",
         "displayName": "愿意被年轻人教",
         "title": "愿意被年轻人教",
-        "effectHint": "晚年学习新工具不会损失自尊。",
-        "text": "晚年学习新工具不会损失自尊。",
+        "effectHint": "数字经验 +2，精神 +1；数字事件更常出现。",
+        "text": "数字经验 +2，精神 +1；数字事件更常出现。",
         "omenIcon": "🧥",
         "mechanic": "digital",
         "effects": {
@@ -3379,8 +3379,8 @@
         "kind": "stage",
         "displayName": "遗嘱能说清",
         "title": "遗嘱能说清",
-        "effectHint": "遗产事件更容易保留关系和证据。",
-        "text": "遗产事件更容易保留关系和证据。",
+        "effectHint": "现金 -800；留下法律意识记录。",
+        "text": "现金 -800；留下法律意识记录。",
         "omenIcon": "🪪",
         "mechanic": "legal",
         "effects": {
@@ -3403,8 +3403,8 @@
         "kind": "adversity",
         "displayName": "最低点有人接电话",
         "title": "最低点有人接电话",
-        "effectHint": "精神低于临界时，有人主动联系一次。",
-        "text": "精神低于临界时，有人主动联系一次。",
+        "effectHint": "关系 +4，孤独压力 -2。",
+        "text": "关系 +4，孤独压力 -2。",
         "omenIcon": "💊",
         "mechanic": "relationUp",
         "effects": {
@@ -3422,8 +3422,8 @@
         "kind": "adversity",
         "displayName": "被裁后技能还在",
         "title": "被裁后技能还在",
-        "effectHint": "失业不会清空全部工作经验。",
-        "text": "失业不会清空全部工作经验。",
+        "effectHint": "技能经验 +1，精神 +1。",
+        "text": "技能经验 +1，精神 +1。",
         "omenIcon": "📦",
         "mechanic": "skill",
         "effects": {
@@ -3441,8 +3441,8 @@
         "kind": "adversity",
         "displayName": "债务协商窗口",
         "title": "债务协商窗口",
-        "effectHint": "第一次还不上钱时，可以申请延期。",
-        "text": "第一次还不上钱时，可以申请延期。",
+        "effectHint": "现金 -800；留下法律意识记录。",
+        "text": "现金 -800；留下法律意识记录。",
         "omenIcon": "🪴",
         "mechanic": "legal",
         "effects": {
@@ -3463,8 +3463,8 @@
         "kind": "adversity",
         "displayName": "一次及时检查",
         "title": "一次及时检查",
-        "effectHint": "健康临界时，自动触发复查机会。",
-        "text": "健康临界时，自动触发复查机会。",
+        "effectHint": "健康 +3；身体压力 -2，一次健康损失减半。",
+        "text": "健康 +3；身体压力 -2，一次健康损失减半。",
         "omenIcon": "🎒",
         "mechanic": "healthUp",
         "effects": {
@@ -3482,8 +3482,8 @@
         "kind": "adversity",
         "displayName": "关系外的支持",
         "title": "关系外的支持",
-        "effectHint": "分手或离婚后，旧朋友重新出现。",
-        "text": "分手或离婚后，旧朋友重新出现。",
+        "effectHint": "关系 +3；关系事件更常出现，一次再加 +2。",
+        "text": "关系 +3；关系事件更常出现，一次再加 +2。",
         "omenIcon": "☂️",
         "mechanic": "network",
         "effects": {
@@ -3501,8 +3501,8 @@
         "kind": "adversity",
         "displayName": "允许从头开始",
         "title": "允许从头开始",
-        "effectHint": "一次重大失败不会关闭同类选择。",
-        "text": "一次重大失败不会关闭同类选择。",
+        "effectHint": "精神 +4，孤独压力 -1。",
+        "text": "精神 +4，孤独压力 -1。",
         "omenIcon": "🫖",
         "mechanic": "spiritUp",
         "effects": {
@@ -3520,8 +3520,8 @@
         "kind": "adversity",
         "displayName": "没有被羞耻绑住",
         "title": "没有被羞耻绑住",
-        "effectHint": "公开出丑后，精神损耗减半一次。",
-        "text": "公开出丑后，精神损耗减半一次。",
+        "effectHint": "精神 +4，孤独压力 -1。",
+        "text": "精神 +4，孤独压力 -1。",
         "omenIcon": "🩻",
         "mechanic": "spiritUp",
         "effects": {
@@ -3539,8 +3539,8 @@
         "kind": "adversity",
         "displayName": "资产没全锁死",
         "title": "资产没全锁死",
-        "effectHint": "现金危机时，仍有一小部分可动用。",
-        "text": "现金危机时，仍有一小部分可动用。",
+        "effectHint": "现金 +1800；一次金钱或住房损失减半。",
+        "text": "现金 +1800；一次金钱或住房损失减半。",
         "omenIcon": "🧃",
         "mechanic": "save",
         "effects": {
@@ -3558,8 +3558,8 @@
         "kind": "adversity",
         "displayName": "照护有人分担",
         "title": "照护有人分担",
-        "effectHint": "家庭照护压力过高时，出现替班者。",
-        "text": "家庭照护压力过高时，出现替班者。",
+        "effectHint": "照护责任 +1；关系 +3，精神 -2，家庭压力 +3。",
+        "text": "照护责任 +1；关系 +3，精神 -2，家庭压力 +3。",
         "omenIcon": "🧷",
         "mechanic": "care",
         "effects": {
@@ -3581,8 +3581,8 @@
         "kind": "adversity",
         "displayName": "一次法律援助",
         "title": "一次法律援助",
-        "effectHint": "劳动或家庭纠纷时，多一个低价援助选项。",
-        "text": "劳动或家庭纠纷时，多一个低价援助选项。",
+        "effectHint": "现金 -800；留下法律意识记录。",
+        "text": "现金 -800；留下法律意识记录。",
         "omenIcon": "🚌",
         "mechanic": "legal",
         "effects": {
@@ -3603,8 +3603,8 @@
         "kind": "adversity",
         "displayName": "旧技能突然值钱",
         "title": "旧技能突然值钱",
-        "effectHint": "失业后，一项旧技能会收到询价。",
-        "text": "失业后，一项旧技能会收到询价。",
+        "effectHint": "现金 +3200，金钱压力 -1。",
+        "text": "现金 +3200，金钱压力 -1。",
         "omenIcon": "📱",
         "mechanic": "cashUp",
         "effects": {
@@ -3622,8 +3622,8 @@
         "kind": "adversity",
         "displayName": "坏运停在这一年",
         "title": "坏运停在这一年",
-        "effectHint": "连续三次坏事件后，下一年只出低烈度事件。",
-        "text": "连续三次坏事件后，下一年只出低烈度事件。",
+        "effectHint": "精神 +4，孤独压力 -1。",
+        "text": "精神 +4，孤独压力 -1。",
         "omenIcon": "🧾",
         "mechanic": "spiritUp",
         "effects": {
@@ -23936,153 +23936,310 @@
     {
       "id": "codex_01",
       "name": "AI提效",
-      "text": "AI提效不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "AI提效不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "AI提效",
+        "AI接管",
+        "AI能力",
+        "AI汇报"
+      ]
     },
     {
       "id": "codex_02",
       "name": "组织优化",
-      "text": "组织优化不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "组织优化不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "组织优化",
+        "优化通知",
+        "裁员名单"
+      ]
     },
     {
       "id": "codex_03",
       "name": "灵活就业",
-      "text": "灵活就业不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "灵活就业不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "灵活就业",
+        "平台司机"
+      ]
     },
     {
       "id": "codex_04",
       "name": "账面财富",
-      "text": "账面财富不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "账面财富不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "账面财富",
+        "账面涨",
+        "账面资产"
+      ]
     },
     {
       "id": "codex_05",
       "name": "稳定溢价",
-      "text": "稳定溢价不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "稳定溢价不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "稳定",
+        "国企"
+      ]
     },
     {
       "id": "codex_06",
       "name": "人情债",
-      "text": "人情债不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "人情债不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "人情债",
+        "担保",
+        "欠人情"
+      ]
     },
     {
       "id": "codex_07",
       "name": "情绪价值",
-      "text": "情绪价值不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "情绪价值不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "情绪价值",
+        "认真听过"
+      ]
     },
     {
       "id": "codex_08",
       "name": "学历门槛",
-      "text": "学历门槛不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "学历门槛不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "学历门槛",
+        "高考",
+        "志愿表",
+        "职校"
+      ]
     },
     {
       "id": "codex_09",
       "name": "副业",
-      "text": "副业不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "副业不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "副业",
+        "接到广告",
+        "小生意"
+      ]
     },
     {
       "id": "codex_10",
       "name": "婚恋审计",
-      "text": "婚恋审计不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "婚恋审计不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "婚恋审计",
+        "相亲",
+        "彩礼",
+        "婚房"
+      ]
     },
     {
       "id": "codex_11",
       "name": "健康资产",
-      "text": "健康资产不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "健康资产不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "健康资产",
+        "体检",
+        "住院"
+      ]
     },
     {
       "id": "codex_12",
       "name": "熟人浓度",
-      "text": "熟人浓度不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "熟人浓度不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "熟人浓度",
+        "熟人社会",
+        "家里有人"
+      ]
     },
     {
       "id": "codex_13",
       "name": "注意力市场",
-      "text": "注意力市场不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "注意力市场不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "注意力市场",
+        "短视频",
+        "直播间",
+        "涨粉"
+      ]
     },
     {
       "id": "codex_14",
       "name": "照护责任",
-      "text": "照护责任不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "照护责任不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "照护责任",
+        "陪护",
+        "护工",
+        "带孙"
+      ]
     },
     {
       "id": "codex_15",
       "name": "风险敞口",
-      "text": "风险敞口不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "风险敞口不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "风险敞口",
+        "内部项目",
+        "高风险投资"
+      ]
     },
     {
       "id": "codex_16",
       "name": "工牌颜色",
-      "text": "工牌颜色不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "工牌颜色不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "工牌颜色",
+        "外包工牌",
+        "外包合同"
+      ]
     },
     {
       "id": "codex_17",
       "name": "现金流",
-      "text": "现金流不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "现金流不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "现金流",
+        "信用卡账单",
+        "工资到账"
+      ]
     },
     {
       "id": "codex_18",
       "name": "家庭边界",
-      "text": "家庭边界不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "家庭边界不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "家庭边界",
+        "边界重新",
+        "翻到了你的聊天记录"
+      ]
     },
     {
       "id": "codex_19",
       "name": "长期关系",
-      "text": "长期关系不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "长期关系不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "长期关系",
+        "稳定伴侣",
+        "婚姻纪念日"
+      ]
     },
     {
       "id": "codex_20",
       "name": "数字孤独",
-      "text": "数字孤独不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "数字孤独不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "数字孤独",
+        "AI陪你",
+        "视频通话"
+      ]
     },
     {
       "id": "codex_21",
       "name": "内部消息",
-      "text": "内部消息不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "内部消息不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "内部消息",
+        "内部项目"
+      ]
     },
     {
       "id": "codex_22",
       "name": "银发经济",
-      "text": "银发经济不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "银发经济不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "银发经济",
+        "养老项目",
+        "保健品",
+        "退休金"
+      ]
     },
     {
       "id": "codex_23",
       "name": "平台劳动",
-      "text": "平台劳动不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "平台劳动不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "平台劳动",
+        "平台司机",
+        "外卖软件"
+      ]
     },
     {
       "id": "codex_24",
       "name": "性别期待",
-      "text": "性别期待不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "性别期待不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "性别期待",
+        "重男轻女",
+        "gender"
+      ]
     },
     {
       "id": "codex_25",
       "name": "职业透明化",
-      "text": "职业透明化不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "职业透明化不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "职业透明化",
+        "招聘软件",
+        "薪资",
+        "考勤表"
+      ]
     },
     {
       "id": "codex_26",
       "name": "组织身份",
-      "text": "组织身份不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "组织身份不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "组织身份",
+        "单位身份",
+        "岗位名称",
+        "工龄"
+      ]
     },
     {
       "id": "codex_27",
       "name": "迁移成本",
-      "text": "迁移成本不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "迁移成本不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "迁移成本",
+        "搬家",
+        "回家乡",
+        "异地"
+      ]
     },
     {
       "id": "codex_28",
       "name": "房产流动性",
-      "text": "房产流动性不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "房产流动性不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "房产流动性",
+        "房贷",
+        "首付",
+        "房本"
+      ]
     },
     {
       "id": "codex_29",
       "name": "成人灰度",
-      "text": "成人灰度不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "成人灰度不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "成人灰度",
+        "短暂陪伴",
+        "双方都有家庭"
+      ]
     },
     {
       "id": "codex_30",
       "name": "晚年自主",
-      "text": "晚年自主不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。"
+      "text": "晚年自主不是单一选择，而是一组资源、关系、概率和长期后果共同形成的结构。",
+      "triggers": [
+        "晚年自主",
+        "独居",
+        "遗嘱",
+        "照护机构"
+      ]
     }
   ],
-  "version": "3.2.0"
+  "version": "3.2.4"
 }
