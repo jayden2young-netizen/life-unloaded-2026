@@ -43,3 +43,8 @@ Original prompt: Implement the approved 《人生尚未加载 · 2026》v3.0 人
 - 2026-07-21: Moved innate, stage, and adversity cards plus all decisions into non-dismissible bottom sheets. Chosen cards and decisions immediately collapse into one timeline row; the separate result panel was removed.
 - 2026-07-21: Kept schema 4 and content revision 3, added v3.2 result-state migration, reload-safe pending sheets, and saved manual year-boundary state.
 - 2026-07-21: One browser life reached a 95-year ending with 145 timeline rows, 12 decisions, and three echoes. Verified idle play does not advance, card reload recovery works, same-year events need separate taps, and 390×844 / 375×812 have no horizontal overflow or console errors. No batch simulation was run.
+
+## v3.2.2 年龄文案对齐
+
+- 2026-07-21: Five annual events with an explicit age now trigger only at their matching ages: 25, 30, 35, 50, and 65.
+- 2026-07-21: Static validation now rejects annual event text whose explicit age differs from its trigger age.
