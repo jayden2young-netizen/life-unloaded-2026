@@ -35,3 +35,11 @@ Original prompt: Implement the approved 《人生尚未加载 · 2026》v3.0 人
 - 2026-07-21: Re-authored the content as 400 annual beats, 100 independent decisions, 80 fact-gated echoes, and 20 black swans. Curated cards were reduced to 24 innate, 36 stage, and 12 adversity cards with clear player-facing uses.
 - 2026-07-21: Static validation passed: 600 total nodes, 72 cards, 50 annual beats in each age stage, 100 unique choice sets, and 40.7% low-intensity annual content.
 - 2026-07-21: One browser life reached a 102-year ending with 146 timeline events, 13 decisions, and five old-choice echoes. The 390×844 and 375×812 checks had no horizontal overflow, and the browser console had no errors. No batch simulation was run.
+
+## v3.2.1 手动推进 UX
+
+- 2026-07-21: Removed the home eyebrow and explanatory subtitle; shortened the footer to `离线运行 · 自动存档`.
+- 2026-07-21: Replaced timer-driven play, pause, and speed controls with one-tap timeline advancement. One touch now reaches exactly one visible event, mandatory bottom sheet, or ending.
+- 2026-07-21: Moved innate, stage, and adversity cards plus all decisions into non-dismissible bottom sheets. Chosen cards and decisions immediately collapse into one timeline row; the separate result panel was removed.
+- 2026-07-21: Kept schema 4 and content revision 3, added v3.2 result-state migration, reload-safe pending sheets, and saved manual year-boundary state.
+- 2026-07-21: One browser life reached a 95-year ending with 145 timeline rows, 12 decisions, and three echoes. Verified idle play does not advance, card reload recovery works, same-year events need separate taps, and 390×844 / 375×812 have no horizontal overflow or console errors. No batch simulation was run.
