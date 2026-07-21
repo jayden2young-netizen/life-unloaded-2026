@@ -48,3 +48,10 @@ Original prompt: Implement the approved 《人生尚未加载 · 2026》v3.0 人
 
 - 2026-07-21: Five annual events with an explicit age now trigger only at their matching ages: 25, 30, 35, 50, and 65.
 - 2026-07-21: Static validation now rejects annual event text whose explicit age differs from its trigger age.
+
+## v3.2.3 自适应交互可达性
+
+- 2026-07-21: Reproduced the reported class of failure when a mobile browser reduced the usable viewport to 320×568: the timeline retained a 330px minimum and its tap target extended below the visible screen.
+- 2026-07-21: The gameplay screen now fits the dynamic viewport, with the timeline itself handling vertical overflow. Short-screen card, decision, and status sheets can use the full safe height and explicitly support touch scrolling.
+- 2026-07-21: Existing colors, typography, component dimensions, copy, and game behavior were intentionally preserved.
+- 2026-07-21: Responsive Playwright checks passed at 360×773, 360×640, and 320×568. Birth, attributes, timeline, all three card choices, and the last decision choice were visible and unobstructed, with no horizontal overflow or console errors.
