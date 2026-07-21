@@ -9,7 +9,7 @@ const kinds=Object.groupBy(data.events,event=>event.kind);const cards=Object.val
 const allowedRoots=['version','gameVersion','schemaVersion','contentRevision','stages','locations','familyArchetypes','familySecrets','attributes','desires','mainConflicts','cards','events','endingProfiles','endingTitles','endingFragments','codex'];
 const checkKeys=(object,allowed,label)=>{for(const key of Object.keys(object||{}))check(allowed.includes(key),`${label}: unconsumed field ${key}`)};
 
-check(data.version==='4.0.0','data version must be 4.0.0');check(data.gameVersion==='4.0.0','data gameVersion must be 4.0.0');
+check(data.version==='4.0.1','data version must be 4.0.1');check(data.gameVersion==='4.0.1','data gameVersion must be 4.0.1');
 check(data.schemaVersion===5,'schemaVersion must be 5');check(data.contentRevision===4,'contentRevision must be 4');
 check(JSON.stringify(Object.keys(data).sort())===JSON.stringify(allowedRoots.sort()),'unknown or dead root data field');
 check((kinds.beat||[]).length===400,'annual beats must be 400');check((kinds.decision||[]).length===100,'decisions must be 100');
@@ -41,11 +41,28 @@ for(const event of data.events){
 const signatures=new Set();
 for(const decision of kinds.decision||[]){
   check(decision.choices.length>=2&&decision.choices.length<=4,`${decision.id}: invalid choices`);const signature=decision.choices.map(x=>x.text).join('|');check(!signatures.has(signature),`${decision.id}: reused choice set`);signatures.add(signature);
-  const facts=decision.requirements?.facts||{},prompt=decision.prompt;
+  const facts=decision.requirements?.facts||{},prompt=decision.prompt,scene=[prompt,...decision.choices.flatMap(choice=>[choice.text,choice.resultText])].join(' ');
   if(/伴侣|婚姻纪念日|恋人|现任|婚房/.test(prompt)&&!/一位新朋友/.test(prompt))check(facts.relationshipAny?.length,`${decision.id}: partner scene lacks relationship gate`);
-  if(/孩子|子女/.test(prompt)&&!/想要孩子/.test(prompt))check(facts.childrenMin>=1,`${decision.id}: child scene lacks child gate`);
+  if(/孩子|子女|带孙|孙辈/.test(scene)&&!/想要孩子|没有子女/.test(prompt))check(facts.childrenMin>=1,`${decision.id}: child scene lacks child gate`);
+  if(/没有子女/.test(prompt))check(facts.childrenMax===0,`${decision.id}: childless scene lacks zero-child gate`);
   if(/^公司|^领导|^单位|裁员名单|外包合同|劝退自己带出的徒弟/.test(prompt))check(JSON.stringify(facts.jobAny)==='["employed"]',`${decision.id}: corporate scene is not employed-only`);
+  if(/新工作涨薪/.test(prompt))check(JSON.stringify(facts.jobAny)==='["employed"]',`${decision.id}: job-change scene is not employed-only`);
   const outcomeSignatures=new Set();for(const choice of decision.choices){checkKeys(choice,['id','text','resultText','consequenceHints','effects','memoryKey'],choice.id);check(!choiceIds.has(choice.id),`${choice.id}: duplicate choice`);choiceIds.add(choice.id);check(choice.memoryKey,`${choice.id}: missing memory key`);memoryKeys.add(choice.memoryKey);check(Object.keys(choice.effects||{}).length>0,`${choice.id}: no effects`);inspectEffects(choice.effects||{},choice.id);for(const tag of choice.effects?.outcomeTagsAdd||[])allOutcomeTags.add(tag);outcomeSignatures.add(JSON.stringify((choice.effects?.outcomeTagsAdd||[]).filter(tag=>tag!==decision.theme).sort()))}check(outcomeSignatures.size>=2,`${decision.id}: choices do not create distinct outcome paths`);
+}
+
+for(const beat of kinds.beat||[]){
+  const facts=beat.requirements?.facts||{};
+  if(beat.ageMax>=19&&/孩子|子女|带孙|孙辈/.test(beat.text)&&!/没有子女/.test(beat.text))check(facts.childrenMin>=1,`${beat.id}: child beat lacks child gate`);
+  if(/没有子女/.test(beat.text))check(facts.childrenMax===0,`${beat.id}: childless beat lacks zero-child gate`);
+  if(/换工作涨了薪/.test(beat.text))check(JSON.stringify(facts.jobAny)==='["employed"]',`${beat.id}: job-change beat is not employed-only`);
+}
+
+const decisionMap=new Map((kinds.decision||[]).map(event=>[event.id,event])),echoMap=new Map((kinds.echo||[]).map(event=>[event.id,event]));
+const civilFollowup=decisionMap.get('decision_037');check(civilFollowup?.requirements?.memoriesAny?.includes('decision_036_c2')&&civilFollowup.requirements.memoriesAny.includes('decision_036_c3'),'civil-service follow-up is not linked to the opening choice');
+check(Object.values(echoMap.get('echo_037')?.choiceOutcomes||{}).some(outcome=>outcome.effects?.outcomeTagsAdd?.includes('publicCareer')),'civil-service chain has no public-career result');
+for(const [id,childRange] of [['decision_054',[6,12]],['decision_065',[12,18]],['decision_073',[18,30]],['decision_080',[25,45]],['decision_086',[25,55]]]){
+  const decision=decisionMap.get(id),facts=decision?.requirements?.facts||{};check(JSON.stringify(facts.childAgeAny)===JSON.stringify(childRange),`${id}: child-chain age gate is wrong`);
+  if(Number(id.slice(-3))<=80)for(const choice of decision.choices)check(choice.effects?.scheduleEcho?.chance===1,`${choice.id}: child-chain echo is not guaranteed`);
 }
 
 for(const echo of kinds.echo||[]){

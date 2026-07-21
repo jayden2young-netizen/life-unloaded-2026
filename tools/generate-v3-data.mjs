@@ -99,8 +99,8 @@ const beatCatalog = {
   elder: [
     '孩子远程修好手机，也顺手改了密码。','社区食堂换了厨师，群里开了三天会。','你在公园认识新朋友，先交换降压药名字。','直播间说只剩三单，第二天仍只剩三单。','AI陪你聊到半夜，第二天提醒你少看手机。',
     '你第一次独自旅行，子女每小时要定位。','保健讲座送鸡蛋，课程比鸡蛋贵很多。','老朋友发来语音，背景里全是风声。','你学会视频通话，镜头仍对着天花板。','社区让你当楼长，退休生活重新有了群。',
-    '你把养老金分成三张卡，自己记得最清楚。','孙辈教你玩游戏，你先学会了充值。','晚年相亲局先交流病历和住房。','你在菜市场砍价成功，开心了一整天。','旧同事群有人发内部消息，来源是另一个群。',
-    '你拒绝一次免费体检，推销员比孩子更着急。','智能手表半夜报警，原因是戴反了。','你参加社区舞会，第二周换了搭档。','孩子劝你卖房，买家先劝你降价。','你在手机里找到二十年前的录音。',
+    '你把养老金分成三张卡，自己记得最清楚。','孙辈教你玩游戏，你先学会了充值。','没有子女也没有伴侣，你把朋友和邻居写进紧急联系人。','你在菜市场砍价成功，开心了一整天。','旧同事群有人发内部消息，来源是另一个群。',
+    '你拒绝一次免费体检，推销员比孩子更着急。','智能手表半夜报警，原因是戴反了。','没有子女的你和伴侣，把彼此之外的紧急联系人也写进本子。','孩子劝你卖房，买家先劝你降价。','你在手机里找到二十年前的录音。',
     '老朋友住院，你们隔着病房门聊天。','社区课程教AI，你用它写投诉信。','你开始养猫，猫对养老计划没有意见。','养老金到账日，银行理财电话准时响起。','你把遗嘱说清楚，饭桌比平时安静。',
     '旅行团承诺纯玩，购物店负责解释纯。','你学会网上挂号，号已经约到下个月。','子女给你装监控，你用毛巾盖住一半。','保温杯掉漆了，你仍认得是哪次会议发的。','你在社区开小摊，第一天只卖给熟人。',
     'AI把你的老照片修得不像你，全家点赞。','你拒绝带孙，约老朋友看了场下午电影。','直播间老师叫你家人，退款时改叫用户。','你在公园下棋赢了，回家没告诉任何人。','邻居教你种菜，收成够炒一盘。',
@@ -138,13 +138,13 @@ function inferTone(text){
 function inferRequirements(text,stage){
   const req={};
   const adultChildContext=stages[stage][0]>=19;
-  if(adultChildContext&&/孩子|家长群|带孙|孙辈/.test(text))req.facts={childrenMin:1};
+  if(adultChildContext&&/孩子|子女|家长群|带孙|孙辈/.test(text))req.facts={childrenMin:1};
   if(adultChildContext&&/入园|幼儿园/.test(text))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[2,6]};
   if(adultChildContext&&/补课|兴趣班|检查作业|家长群/.test(text))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[6,18]};
   if(adultChildContext&&/孩子毕业|子女毕业/.test(text))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[18,30]};
   if(adultChildContext&&/带孙|孙辈/.test(text))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[25,60]};
   if(/伴侣|婚姻纪念日|晚年恋爱/.test(text))req.facts={...(req.facts||{}),relationshipAny:['dating','partnered','married']};
-  if(/^公司|^领导|^单位|同事|工牌|部门|年会|团建|绩效|年假|门禁卡|试用期|工资到账|第一次涨薪/.test(text))req.facts={...(req.facts||{}),jobAny:['employed']};
+  if(/^公司|^领导|^单位|同事|工牌|部门|年会|团建|绩效|年假|门禁卡|试用期|工资到账|第一次涨薪|换工作涨了薪/.test(text))req.facts={...(req.facts||{}),jobAny:['employed']};
   if(/接单|跑单|灵活就业/.test(text))req.facts={...(req.facts||{}),jobAny:['gig']};
   if(/你把副业做成第二份全职|你的小生意/.test(text))req.facts={...(req.facts||{}),jobAny:['selfEmployed']};
   if(/招聘软件|面试邀请|招聘网站|再就业培训|求职/.test(text))req.facts={...(req.facts||{}),jobAny:['unemployed']};
@@ -153,6 +153,11 @@ function inferRequirements(text,stage){
   if(/退休后|养老金|退休账户/.test(text))req.facts={...(req.facts||{}),jobAny:['retired']};
   return req;
 }
+
+const beatRequirementOverrides={
+  beat_elder_13:{facts:{childrenMax:0,relationshipAny:['none','divorced','widowed']}},
+  beat_elder_18:{facts:{childrenMax:0,relationshipAny:['partnered','married']}}
+};
 
 function intensityFor(index){return index<25?'low':index<43?'medium':'high'}
 
@@ -189,7 +194,7 @@ const annualBeats = Object.entries(beatCatalog).flatMap(([stage,texts])=>texts.m
     id,kind:'beat',stage:[stage],ageMin,ageMax,
     icon:icons[(index+Object.keys(stages).indexOf(stage)*3)%icons.length],text,theme,themes:[theme],tone:inferTone(text),
     intensity:intensityFor(index),tags:[theme,stage],relevantAttrs:theme==='health'?['physique']:theme==='career'?['ambition','stability']:theme==='relationship'?['social']:theme==='education'?['intellect']:theme==='money'?['stability','ambition']:[],
-    requirements:inferRequirements(text,stage),effects:beatEffects(theme,index),weight:10+(index%4),contentRevision:4
+    requirements:beatRequirementOverrides[id]||inferRequirements(text,stage),effects:beatEffects(theme,index),weight:10+(index%4),contentRevision:4
   };
 }));
 
@@ -235,17 +240,17 @@ function relationshipTarget(prompt){
 }
 
 function decisionRequirements(row){
-  const req={};const prompt=row.prompt;
+  const req={};const prompt=row.prompt;const scene=[prompt,...row.options.flatMap(option=>[option.text,option.result])].join(' ');
   if(/伴侣|婚姻纪念日|恋人|现任/.test(prompt))req.facts={relationshipAny:['dating','partnered','married']};
-  if(/一位新朋友想和你共同生活/.test(prompt))req.facts={relationshipAny:['none','divorced','widowed']};
+  if(/一位新朋友想和你共同生活/.test(prompt))req.facts={relationshipAny:['none','divorced','widowed'],childrenMax:0};
   if(/旧爱重新联系|前任深夜/.test(prompt))req.facts={relationshipAny:['dating','partnered','married']};
   if(/婚房还差/.test(prompt))req.facts={relationshipAny:['dating','partnered']};
-  if(/孩子|子女/.test(prompt)&&!/想要孩子/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1};
+  if(/孩子|子女|带孙|孙辈/.test(scene)&&!/想要孩子|没有子女/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1};
   if(/孩子.*兴趣班|孩子.*补习|补习.*孩子/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[6,18]};
   if(/孩子毕业/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[18,30]};
   if(/带孙/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[25,60]};
   if(/伴侣想要孩子/.test(prompt))req.facts={...(req.facts||{}),relationshipAny:['partnered','married'],childrenMax:0,flagsNone:['childfree']};
-  if(/^公司|^领导|^单位|裁员名单|外包合同|劝退自己带出的徒弟/.test(prompt))req.facts={...(req.facts||{}),jobAny:['employed']};
+  if(/^公司|^领导|^单位|裁员名单|外包合同|劝退自己带出的徒弟|新工作涨薪/.test(prompt))req.facts={...(req.facts||{}),jobAny:['employed']};
   if(/退休后有人请你/.test(prompt))req.facts={...(req.facts||{}),jobAny:['retired']};
   if(/成年子女要你帮忙付首付|卖房搬去同住/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1,housingAny:['owned']};
   return req;
@@ -290,7 +295,7 @@ const decisionRows=[
   D('youth',20,24,'冷门账号第一次接到广告。',[O('照报价接下','广告钱不多，评论先变了。','现金↑','cashUp'),O('只接真正用过的','钱少一点，账号还能看。','信用↑','evidence'),O('拒绝所有广告','粉丝没涨，旧内容继续慢慢被看见。','自由↑','refuse')],'digital','那次广告决定了账号后来的气味。'),
   D('youth',20,24,'朋友借你两个月房租。',[O('把积蓄转给他','朋友暂时住下，你的账户见底。','现金↓','cashDown'),O('只借一半','你们都觉得对方应该再理解一点。','关系变化','compromise'),O('介绍一份夜班','钱没借，人情换了种方式。','关系↑','network')],'relationship','那笔房租后来没有按原样回来。'),
   D('youth',21,24,'考公和工作offer撞在同一天。',[O('签下工作','工资下月到账，题库先卸载了。','获得工作','career'),O('继续备考','offer过期，准考证留下。','学习↑','study'),O('白天上班晚上学','两条路都没关，睡眠先关了。','健康↓','healthDown')],'career','几年后，你又路过那场考试。',true),
-  D('youth',21,24,'合租室友两个月没交电费。',[O('先替他垫上','灯没停，你开始记账。','现金↓','cashDown'),O('今晚拉电闸','室友回来了，关系也断电了。','关系↓','relationDown'),O('通知房东换人','押金扯了很久，新室友按时交钱。','边界↑','legal')],'city','后来租房时，你先问清电费。'),
+  D('youth',22,27,'笔试成绩压线进面，面试和收入只能先稳住一头。',[O('不报班，自己准备面试','名单公示后，你的工牌换成了编制表格。','进入公共部门','career'),O('先把收入稳住','你先接住一份工作，准考证收进抽屉。','获得工作','career'),O('再准备一年','题库又翻到第一页，生活费开始倒数。','继续备考','study')],'career','那次面试或再考，几年后写进了你的履历。',true),
   D('youth',22,25,'公司让你签空白加班确认。',[O('先拍照再签','照片留着，工资照旧。','留下证据','evidence'),O('拒绝签字','主管记住了你，系统也记住了。','边界↑','refuse'),O('签完就投简历','表交了，退路也开始加载。','保留退路','career')],'career','那张确认表后来成了一份证据。'),
   D('youth',22,25,'人才补贴差最后一份证明。',[O('回母校补材料','跑了两趟，补贴终于到账。','现金↑','cashUp'),O('花钱找代办','材料齐了，你多付一笔服务费。','现金↓','cashDown'),O('放弃申请','周末保住了，补贴留在公告里。','精神↑','single')],'city','那份证明后来又被另一个窗口要求。'),
   D('youth',22,25,'领导要你把同事的错误扛下来。',[O('先替他认','项目过了，你多了一次记录。','风险↑','riskUp'),O('把聊天记录发群里','责任清楚了，关系也清楚了。','关系↓','evidence'),O('拉同事一起说明','领导不满意，但没人单独背锅。','关系↑','network')],'career','那次背锅决定了谁后来愿意帮你。'),
@@ -342,7 +347,7 @@ const decisionRows=[
   D('preRetire',55,61,'单位让你把经验“无偿传承”。',[O('整理完整手册','新人少踩坑，你多加了一个月班。','经验↑','skill'),O('只教愿意学的人','知识留下了，范围由你决定。','边界↑','boundary'),O('按顾问价格报价','单位沉默两天，最后真批了预算。','现金↑','cashUp')],'career','那份手册后来仍有人署你的名字。'),
   D('preRetire',56,62,'伴侣想退休后回老家住。',[O('一起回去','城市生活收进纸箱，熟人重新出现。','迁移','move'),O('两边各住半年','房子多开一扇门，行李永远没收完。','关系变化','compromise'),O('各过各的','关系没有结束，地址先分开了。','边界↑','boundary')],'relationship','两个地址后来塑造了不同的晚年。',true),
   D('preRetire',57,63,'医生建议做一个不小的手术。',[O('尽快排期','住院一阵，后面的日子轻了一些。','健康↑','healthUp'),O('再找一家复诊','多花一次挂号费，方案变得清楚。','现金↓','evidence'),O('能拖就拖','生活照旧，风险也跟着走。','风险↑','healthDown')],'health','那次手术或拖延后来给出答案。',true),
-  D('preRetire',58,64,'孩子想让你长期带孙。',[O('搬过去一起住','家里热闹了，你的时间少了。','照护责任↑','care'),O('只负责工作日接送','边界写在课表上，仍常被加课。','关系↑','boundary'),O('明确不长期带','孩子不高兴，你的退休没有变成新岗位。','关系↓','refuse')],'family','孙辈后来记得你陪过什么，而非多久。'),
+  D('preRetire',58,72,'成年子女想让你搬近一点，方便彼此照应。',[O('搬到同一小区','距离近了，门仍各自关得上。','关系↑','move'),O('保留现在的住处','来往要坐车，生活节奏仍由自己安排。','边界↑','boundary'),O('先短住三个月','行李没有全拆，彼此先试着适应。','保留余地','compromise')],'family','后来你们用距离重新理解了照应。'),
   D('preRetire',59,65,'旧同事拉你投一个养老项目。',[O('拿退休金入股','项目群很热闹，现金开始安静。','风险↑','riskUp'),O('只帮他看材料','文件漏洞不少，朋友的热情不少。','获得信息','evidence'),O('拒绝任何投资','友情少了一顿饭，养老金还在。','边界↑','refuse')],'money','那个养老项目后来登上了本地新闻。'),
   D('preRetire',60,65,'退休后有人请你回去临时顶班。',[O('按天接活','你重新有了工位，也保留了下班。','现金↑','gig'),O('只远程答疑','电话很多，鞋不用换。','经验↑','skill'),O('彻底不回头','群聊静音，下午终于属于自己。','精神↑','single')],'career','那次返聘决定了你和旧单位的距离。'),
   D('preRetire',61,65,'老朋友病重，想见你一面。',[O('当天买票','你赶上了清醒的一段时间。','关系↑','relationUp'),O('先处理家里事情','票改了两次，最后还是去了。','压力↑','care'),O('只打视频电话','画面很卡，想说的话都说了。','关系↑','truth')],'relationship','那次见面或通话后来留得很久。',true),
@@ -352,12 +357,12 @@ const decisionRows=[
   D('elder',66,73,'直播间说这款保健品只剩三单。',[O('先买一个疗程','快递很快，效果需要耐心解释。','现金↓','spend'),O('截图问医生','医生先看成分，再问你哪里不舒服。','健康↑','evidence'),O('关掉直播去散步','三单没有抢到，步数倒完成了。','健康↑','healthUp')],'elder','那个直播间后来换了名字继续营业。'),
   D('elder',67,75,'老朋友提议一起旅居三个月。',[O('订下长租房','行李多了，日子也换了风景。','现金↓','move'),O('先住两周','新鲜感过后，你们仍愿意留下。','关系↑','relationUp'),O('留在熟悉社区','旅行没去，楼下的人每天见得到。','稳定','stay')],'identity','那段旅居或留下成了晚年坐标。',true),
   D('elder',68,76,'一位新朋友想和你共同生活。',[O('互换备用钥匙','没有婚礼，生活多了一套餐具。','关系↑','partner'),O('保持各自住处','见面需要约，但没人失去自己的门。','边界↑','boundary'),O('只做旅行搭子','你们不谈余生，只订下一张票。','关系↑','relationUp')],'relationship','两把钥匙或两张车票留下了答案。',true),
-  D('elder',69,78,'银行经理推荐“内部养老产品”。',[O('把一部分钱转入','收益按月显示，取出另有条件。','风险↑','riskUp'),O('带合同回家看','小字很多，你发现一条退出费用。','留下证据','evidence'),O('只存定期','收益普通，晚上不用研究群消息。','稳定','save')],'money','那份养老产品后来接受了市场教育。'),
+  D('elder',69,82,'没有子女的你和伴侣，开始商量谁先失能怎么办。',[O('把照护预算单独存下','钱少了自由用途，多了一层确定。','安全感↑','save'),O('搬到医疗更近的社区','熟悉的菜场远了，医院近了。','迁移','move'),O('把朋友和手足也写进联系人','你们承认两个人之外仍需要别人。','关系↑','network')],'care','那份照护安排后来比口头保证更可靠。',true),
   D('elder',70,80,'孩子想让你卖房搬去同住。',[O('卖房搬过去','房本变成存款，生活变成同一屋檐。','关系↑','cashUp'),O('只在附近租房','彼此有照应，也各有钥匙。','边界↑','move'),O('继续独居','熟悉的菜场留下，风险自己承担。','自由↑','refuse')],'family','那次搬或不搬决定了每天见谁。',true),
   D('elder',72,82,'诈骗电话准确说出你的姓名和住址。',[O('按他说的转账验证','钱转出去，电话马上安静。','现金↓','riskUp'),O('挂断后打官方电话','等了很久，确认是骗局。','保住现金','evidence'),O('跟他聊到对方先挂','你没转钱，也没套出幕后老板。','精神↑','spiritUp')],'digital','那通电话后来成了你劝别人的故事。'),
-  D('elder',74,85,'你开始需要别人帮忙洗澡。',[O('请固定照护员','陌生变成熟悉，生活多了一张排班表。','现金↓','care'),O('由孩子轮流来','钱省下了，家庭时间重新分配。','关系↑','care'),O('坚持自己慢慢来','自主保住了，浴室装上扶手。','边界↑','healthUp')],'care','那份照护安排后来保护了尊严。',true),
-  D('elder',76,90,'你准备把遗嘱正式写下来。',[O('按关系和照护分','纸上很清楚，家里不一定同意。','留下证据','legal'),O('平均分给子女','数字平了，旧账没有。','关系变化','compromise'),O('留一部分做公益','名字留在一处，亲戚多了意见。','关系↓','refuse')],'family','那份遗嘱后来让告别少了一场争夺。',true),
-  D('elder',80,105,'医生建议你接受更多日常照护。',[O('搬进照护机构','房间小了，紧急按钮近了。','健康↑','care'),O('请人上门','熟悉的家留下，现金按月减少。','现金↓','cashDown'),O('由家人轮流照顾','身边总有人，家里的日程全变了。','关系↑','care')],'care','最后那段生活由这份安排托住。',true)
+  D('elder',74,85,'你开始需要别人帮忙洗澡。',[O('请固定照护员','陌生变成熟悉，生活多了一张排班表。','现金↓','care'),O('申请社区上门服务','时段不完全合意，但每周有人按门铃。','关系↑','network'),O('坚持自己慢慢来','自主保住了，浴室装上扶手。','边界↑','healthUp')],'care','那份照护安排后来保护了尊严。',true),
+  D('elder',76,90,'你准备把遗嘱正式写下来。',[O('按真实照护和关系分配','纸上很清楚，亲友仍各有理解。','留下证据','legal'),O('先留足医疗和照护金','能分的少了，最后几年稳了一点。','安全感↑','save'),O('留一部分做公益','名字留在一处，亲戚多了意见。','关系↓','refuse')],'family','那份遗嘱后来让告别少了一场争夺。',true),
+  D('elder',80,105,'医生建议你接受更多日常照护。',[O('搬进照护机构','房间小了，紧急按钮近了。','健康↑','care'),O('请人上门','熟悉的家留下，现金按月减少。','现金↓','cashDown'),O('加入社区互助照护','固定的人不多，但每天都有人确认你平安。','关系↑','network')],'care','最后那段生活由这份安排托住。',true)
 ];
 
 if(decisionRows.length!==100)throw new Error(`Expected 100 decisions, got ${decisionRows.length}`);
@@ -389,6 +394,20 @@ const decisions=decisionRows.map((row,index)=>{
       consequenceHints:[option.hint],effects:decisionEffects(option.impact,row),memoryKey:`${id}_c${choiceIndex+1}`})),echoText:row.echo};
 });
 
+const decisionById=new Map(decisions.map(decision=>[decision.id,decision]));
+decisionById.get('decision_037').stage=['youth','adult'];decisionById.get('decision_037').requirements={memoriesAny:['decision_036_c2','decision_036_c3'],facts:{jobAny:['employed','unemployed']}};
+decisionById.get('decision_095').requirements={facts:{childrenMax:0,relationshipAny:['partnered','married']}};
+for(const [id,stage,ageMin,ageMax,childAgeAny] of [
+  ['decision_054',['adult','midlife'],30,45,[6,12]],
+  ['decision_065',['midlife','preRetire'],36,58,[12,18]],
+  ['decision_073',['midlife','preRetire'],42,65,[18,30]],
+  ['decision_080',['preRetire','elder'],52,80,[25,45]],
+  ['decision_086',['preRetire','elder'],58,80,[25,55]]
+]){
+  const decision=decisionById.get(id);decision.stage=stage;decision.ageMin=ageMin;decision.ageMax=ageMax;
+  decision.requirements={...(decision.requirements||{}),facts:{...(decision.requirements?.facts||{}),childrenMin:1,childAgeAny}};
+}
+
 const echoes=decisions.slice(0,80).map((decision,index)=>{
   const ageMin=Math.min(100,decision.ageMin+4),ageMax=Math.min(105,decision.ageMax+24);
   const echoStages=Object.entries(stages).filter(([,range])=>Math.max(range[0],ageMin)<=Math.min(range[1],ageMax)).map(([stage])=>stage);
@@ -401,11 +420,11 @@ const echoes=decisions.slice(0,80).map((decision,index)=>{
     effects:{resources:{spirit:index%2?2:-1},pressures:{loneliness:index%2?-1:1}},weight:12,contentRevision:4};
 });
 
-const decisionById=new Map(decisions.map(decision=>[decision.id,decision]));
 function setEmployment(id,choiceIndex,status,career,sector){const effects=decisionById.get(id).choices[choiceIndex].effects;effects.employment={...(effects.employment||{}),status,...(career?{career}:{}),...(sector?{sector}:{})};effects.outcomeTagsAdd=[...new Set([...(effects.outcomeTagsAdd||[]),status])];}
 function setPartner(id,choiceIndex,status,bond){const effects=decisionById.get(id).choices[choiceIndex].effects;effects.relationships={...(effects.relationships||{}),partnerStatus:status,...(bond===undefined?{}:{partnerBond:bond})};effects.outcomeTagsAdd=[...new Set([...(effects.outcomeTagsAdd||[]),status])];}
 
 setEmployment('decision_036',0,'employed');setEmployment('decision_036',1,'unemployed','备考与求职','public');setEmployment('decision_036',2,'employed');
+setEmployment('decision_037',0,'employed','基层公务员','public');setEmployment('decision_037',1,'employed');setEmployment('decision_037',2,'unemployed','继续备考','public');
 setEmployment('decision_042',0,'selfEmployed','合伙小店','retail');setEmployment('decision_042',1,'gig','周末店务','retail');
 setEmployment('decision_050',0,'selfEmployed','自主经营','independent');
 setEmployment('decision_051',0,'careLeave');setEmployment('decision_064',0,'careLeave');
@@ -417,6 +436,48 @@ setPartner('decision_041',0,'partnered',4);setPartner('decision_041',2,'separate
 const exReply=decisionById.get('decision_044').choices[0].effects;exReply.relationships={partnerBond:-5};exReply.outcomeTagsAdd=['lie','relationship'];
 setPartner('decision_045',0,'married',5);setPartner('decision_045',1,'married',6);setPartner('decision_045',2,'separated',-8);
 setPartner('decision_053',2,'divorced',-10);setPartner('decision_066',0,'separated',-4);setPartner('decision_066',2,'divorced',-10);setPartner('decision_084',2,'separated',-4);
+
+for(const choice of decisionById.get('decision_037').choices)choice.effects.flagsAdd=[...(choice.effects.flagsAdd||[]),'civilServiceResolved'];
+const echoById=new Map(echoes.map(echo=>[echo.id,echo]));
+function setEchoSchedule(decisionId,delayMin,delayMax){for(const choice of decisionById.get(decisionId).choices)choice.effects.scheduleEcho={eventId:`echo_${decisionId.slice(-3)}`,delayMin,delayMax,chance:1}}
+for(const [id,min,max] of [['decision_036',6,9],['decision_037',3,6],['decision_047',5,7],['decision_054',3,5],['decision_065',3,5],['decision_073',3,5],['decision_080',4,6]])setEchoSchedule(id,min,max);
+
+echoById.get('echo_036').choiceOutcomes={
+  decision_036_c1:{text:'当年签下的工作offer成了第一段完整履历，题库账号终于停止续费。',effects:{resources:{spirit:2},pressures:{career:-3},desires:{stability:4},outcomeTagsAdd:['echo','career','workOffer']}},
+  decision_036_c2:{text:'那张准考证把你带到下一次面试门口，代价是更紧的现金流。',effects:{resources:{spirit:1},pressures:{money:3},desires:{achievement:5,security:-3},outcomeTagsAdd:['echo','study','civilService']}},
+  decision_036_c3:{text:'白天工作、晚上备考的那段日子留下一项本事，也留下一笔身体欠账。',effects:{resources:{health:-2,spirit:2},lifeFacts:{skills:1},desires:{achievement:4,body:-3},outcomeTagsAdd:['echo','skill','civilService']}}
+};
+echoById.get('echo_037').choiceOutcomes={
+  decision_037_c1:{text:'第一次年度考核落在桌上，你终于确认“上岸”也只是另一种开始。',effects:{resources:{cash:6000,spirit:2},pressures:{career:-3},desires:{stability:6,status:3},outcomeTagsAdd:['echo','civilService','publicCareer']}},
+  decision_037_c2:{text:'收入稳定下来后，准考证一直夹在抽屉里，没有再替你作决定。',effects:{resources:{cash:6000,spirit:1},desires:{stability:4,achievement:-2},outcomeTagsAdd:['echo','workOffer','civilServiceExit']}},
+  decision_037_c3:{text:'又一年成绩出来，你没得到保证，但多了一套能迁移到工作的能力。',effects:{resources:{spirit:-1},lifeFacts:{skills:1},pressures:{career:2},desires:{achievement:3,security:-2},outcomeTagsAdd:['echo','civilServiceRetake','skill']}}
+};
+
+echoById.get('echo_047').choiceOutcomes={
+  decision_047_c1:{text:'孩子背着小书包走进校门，你们第一次发现养育会按年龄继续出题。',effects:{relationships:{childBond:4},resources:{cash:-6000},pressures:{family:3},desires:{familyBelonging:6,care:4},outcomeTagsAdd:['echo','child','childSchool']}},
+  decision_047_c2:{text:'日历上的“两年后”到了，你们需要重新回答那道没有消失的问题。',effects:{resources:{spirit:-1},pressures:{family:3},desires:{familyBelonging:-2,freedom:2},outcomeTagsAdd:['echo','childDeferred']}},
+  decision_047_c3:{text:'后来再有人问起孩子，你们已经学会把答案说成完整的一句话。',effects:{resources:{spirit:3},pressures:{family:-3},desires:{freedom:5,peace:3},outcomeTagsAdd:['echo','noChild','childfree']}}
+};
+echoById.get('echo_054').choiceOutcomes={
+  decision_054_c1:{text:'当年的兴趣班成了一项坚持，也成了孩子判断你是否只看结果的证据。',effects:{relationships:{childBond:1},pressures:{family:1},desires:{care:3},outcomeTagsAdd:['echo','childSchool','care']}},
+  decision_054_c2:{text:'社区班设备旧一点，孩子却第一次愿意主动提前出门。',effects:{relationships:{childBond:4},resources:{spirit:2},desires:{familyBelonging:4},outcomeTagsAdd:['echo','childSchool','save']}},
+  decision_054_c3:{text:'孩子后来换过几次兴趣，但一直记得那次选择权真的在自己手里。',effects:{relationships:{childBond:5},pressures:{family:-2},desires:{care:4},outcomeTagsAdd:['echo','childAutonomy','truth']}}
+};
+echoById.get('echo_065').choiceOutcomes={
+  decision_065_c1:{text:'少上一门补习后，孩子没有立刻变优秀，但和你多说了几句话。',effects:{relationships:{childBond:5},resources:{spirit:2},outcomeTagsAdd:['echo','childAutonomy','relationUp']}},
+  decision_065_c2:{text:'那一学期结束了，成绩单留下，孩子沉默的方式也留下。',effects:{relationships:{childBond:-4},pressures:{family:4},outcomeTagsAdd:['echo','childSchool','compromise']}},
+  decision_065_c3:{text:'自己选的兴趣没有变成职业，却让孩子在申请表上有了一件愿意写的事。',effects:{relationships:{childBond:3},lifeFacts:{learningExperience:1},outcomeTagsAdd:['echo','childAutonomy','skill']}}
+};
+echoById.get('echo_073').choiceOutcomes={
+  decision_073_c1:{text:'孩子终于搬出去，空下来的房间证明慢一点也能走到独立。',effects:{relationships:{childBond:4},pressures:{family:-3},outcomeTagsAdd:['echo','adultChild','care']}},
+  decision_073_c2:{text:'熟人介绍的工作保住了收入，也让孩子第一次理解人情会跟着入职。',effects:{relationships:{childBond:1},pressures:{family:1},outcomeTagsAdd:['echo','adultChild','network']}},
+  decision_073_c3:{text:'三个月期限到了，孩子接住了自己的账单，也重新计算了和你的距离。',effects:{relationships:{childBond:2},pressures:{family:-2},outcomeTagsAdd:['echo','adultChild','boundary']}}
+};
+echoById.get('echo_080').choiceOutcomes={
+  decision_080_c1:{text:'孩子住进新房后，你的养老账本少了一大块，来往却没有自动增加。',effects:{resources:{spirit:-1},pressures:{money:5},desires:{security:-5,familyBelonging:2},outcomeTagsAdd:['echo','adultChild','housing']}},
+  decision_080_c2:{text:'那笔有限的支持被写进转账备注，后来反而少了许多含糊争执。',effects:{relationships:{childBond:3},pressures:{family:-2},outcomeTagsAdd:['echo','adultChild','boundary']}},
+  decision_080_c3:{text:'孩子后来自己凑齐首付，你们都记得那次拒绝并没有结束关系。',effects:{relationships:{childBond:2},resources:{spirit:2},desires:{security:3},outcomeTagsAdd:['echo','adultChild','refuse']}}
+};
 
 const S=(band,ageMin,ageMax,text,theme,effects,requirements={})=>({band,ageMin,ageMax,text,theme,effects,requirements});
 const blackSwanRows=[
@@ -570,7 +631,7 @@ const codex=previous.codex.map(({triggers,...entry},index)=>({...entry,category:
 const publishEvent=event=>{const copy=structuredClone(event);delete copy.tags;delete copy.themes;if(copy.kind==='decision'){delete copy.title;delete copy.text;delete copy.stakes;delete copy.echoText}if(copy.kind==='echo')delete copy.weight;return copy};
 
 const output = {
-  version:'4.0.0',gameVersion:'4.0.0',schemaVersion:5,contentRevision:4,
+  version:'4.0.1',gameVersion:'4.0.1',schemaVersion:5,contentRevision:4,
   stages,locations:previous.locations,familyArchetypes,familySecrets,attributes:previous.attributes,desires:previous.desires,mainConflicts:previous.mainConflicts,
   cards,events:[...annualBeats,...decisions,...echoes,...blackSwans].map(publishEvent),endingProfiles,endingTitles,endingFragments,codex
 };

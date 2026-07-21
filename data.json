@@ -1,6 +1,6 @@
 {
-  "version": "4.0.0",
-  "gameVersion": "4.0.0",
+  "version": "4.0.1",
+  "gameVersion": "4.0.1",
   "schemaVersion": 5,
   "contentRevision": 4,
   "stages": {
@@ -10659,7 +10659,13 @@
         "ambition",
         "stability"
       ],
-      "requirements": {},
+      "requirements": {
+        "facts": {
+          "jobAny": [
+            "employed"
+          ]
+        }
+      },
       "effects": {
         "lifeFacts": {
           "workExperience": 1
@@ -12718,7 +12724,11 @@
       "relevantAttrs": [
         "physique"
       ],
-      "requirements": {},
+      "requirements": {
+        "facts": {
+          "childrenMin": 1
+        }
+      },
       "effects": {
         "resources": {
           "health": -1
@@ -12961,7 +12971,11 @@
       "tone": "reality",
       "intensity": "low",
       "relevantAttrs": [],
-      "requirements": {},
+      "requirements": {
+        "facts": {
+          "childrenMin": 1
+        }
+      },
       "effects": {
         "lifeFacts": {
           "digitalExperience": 1
@@ -14116,7 +14130,11 @@
       "tone": "light",
       "intensity": "low",
       "relevantAttrs": [],
-      "requirements": {},
+      "requirements": {
+        "facts": {
+          "childrenMin": 1
+        }
+      },
       "effects": {
         "lifeFacts": {
           "digitalExperience": 1
@@ -14297,20 +14315,29 @@
       "ageMin": 66,
       "ageMax": 105,
       "icon": "🧷",
-      "text": "晚年相亲局先交流病历和住房。",
-      "theme": "health",
+      "text": "没有子女也没有伴侣，你把朋友和邻居写进紧急联系人。",
+      "theme": "relationship",
       "tone": "reality",
       "intensity": "low",
       "relevantAttrs": [
-        "physique"
+        "social"
       ],
-      "requirements": {},
+      "requirements": {
+        "facts": {
+          "childrenMax": 0,
+          "relationshipAny": [
+            "none",
+            "divorced",
+            "widowed"
+          ]
+        }
+      },
       "effects": {
-        "resources": {
-          "health": 1
+        "relationships": {
+          "network": -1
         },
         "pressures": {
-          "body": -1
+          "family": 1
         }
       },
       "weight": 10,
@@ -14447,15 +14474,28 @@
       "ageMin": 66,
       "ageMax": 105,
       "icon": "🧥",
-      "text": "你参加社区舞会，第二周换了搭档。",
-      "theme": "digital",
+      "text": "没有子女的你和伴侣，把彼此之外的紧急联系人也写进本子。",
+      "theme": "relationship",
       "tone": "reality",
       "intensity": "low",
-      "relevantAttrs": [],
-      "requirements": {},
+      "relevantAttrs": [
+        "social"
+      ],
+      "requirements": {
+        "facts": {
+          "childrenMax": 0,
+          "relationshipAny": [
+            "partnered",
+            "married"
+          ]
+        }
+      },
       "effects": {
-        "lifeFacts": {
-          "digitalExperience": 1
+        "relationships": {
+          "network": 1
+        },
+        "pressures": {
+          "family": -1
         }
       },
       "weight": 11,
@@ -14718,7 +14758,11 @@
       "tone": "reality",
       "intensity": "medium",
       "relevantAttrs": [],
-      "requirements": {},
+      "requirements": {
+        "facts": {
+          "childrenMin": 1
+        }
+      },
       "effects": {
         "resources": {
           "spirit": 1
@@ -19388,8 +19432,8 @@
             },
             "scheduleEcho": {
               "eventId": "echo_036",
-              "delayMin": 4,
-              "delayMax": 18,
+              "delayMin": 6,
+              "delayMax": 9,
               "chance": 1
             }
           },
@@ -19420,8 +19464,8 @@
             },
             "scheduleEcho": {
               "eventId": "echo_036",
-              "delayMin": 4,
-              "delayMax": 18,
+              "delayMin": 6,
+              "delayMax": 9,
               "chance": 1
             },
             "employment": {
@@ -19457,8 +19501,8 @@
             },
             "scheduleEcho": {
               "eventId": "echo_036",
-              "delayMin": 4,
-              "delayMax": 18,
+              "delayMin": 6,
+              "delayMax": 9,
               "chance": 1
             },
             "employment": {
@@ -19473,111 +19517,147 @@
       "id": "decision_037",
       "kind": "decision",
       "stage": [
-        "youth"
+        "youth",
+        "adult"
       ],
-      "ageMin": 21,
-      "ageMax": 24,
+      "ageMin": 22,
+      "ageMax": 27,
       "icon": "🪪",
-      "prompt": "合租室友两个月没交电费。",
-      "theme": "city",
-      "intensity": "medium",
-      "relevantAttrs": [],
-      "requirements": {},
+      "prompt": "笔试成绩压线进面，面试和收入只能先稳住一头。",
+      "theme": "career",
+      "intensity": "high",
+      "relevantAttrs": [
+        "ambition",
+        "stability"
+      ],
+      "requirements": {
+        "memoriesAny": [
+          "decision_036_c2",
+          "decision_036_c3"
+        ],
+        "facts": {
+          "jobAny": [
+            "employed",
+            "unemployed"
+          ]
+        }
+      },
       "weight": 15,
       "contentRevision": 4,
       "choices": [
         {
           "id": "decision_037_c1",
-          "text": "先替他垫上",
-          "resultText": "灯没停，你开始记账。",
+          "text": "不报班，自己准备面试",
+          "resultText": "名单公示后，你的工牌换成了编制表格。",
           "consequenceHints": [
-            "现金↓"
+            "进入公共部门"
           ],
           "effects": {
-            "resources": {
-              "cash": -6000
+            "employment": {
+              "status": "employed",
+              "career": "基层公务员",
+              "sector": "public"
             },
-            "pressures": {
-              "money": 4
+            "lifeFacts": {
+              "workExperience": 2
+            },
+            "resources": {
+              "cash": 12000
             },
             "outcomeTagsAdd": [
-              "cashDown",
-              "city"
+              "career",
+              "employed"
             ],
             "desires": {
-              "wealth": -5,
-              "security": -4
+              "achievement": 6,
+              "status": 4
             },
             "scheduleEcho": {
               "eventId": "echo_037",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
-            }
+              "delayMin": 3,
+              "delayMax": 6,
+              "chance": 1
+            },
+            "flagsAdd": [
+              "civilServiceResolved"
+            ]
           },
           "memoryKey": "decision_037_c1"
         },
         {
           "id": "decision_037_c2",
-          "text": "今晚拉电闸",
-          "resultText": "室友回来了，关系也断电了。",
+          "text": "先把收入稳住",
+          "resultText": "你先接住一份工作，准考证收进抽屉。",
           "consequenceHints": [
-            "关系↓"
+            "获得工作"
           ],
           "effects": {
-            "relationships": {
-              "network": -6
+            "employment": {
+              "status": "employed"
             },
-            "pressures": {
-              "family": 4
+            "lifeFacts": {
+              "workExperience": 2
+            },
+            "resources": {
+              "cash": 12000
             },
             "outcomeTagsAdd": [
-              "relationDown",
-              "city"
+              "career",
+              "employed"
             ],
             "desires": {
-              "love": -6,
-              "familyBelonging": -3
+              "achievement": 6,
+              "status": 4
             },
             "scheduleEcho": {
               "eventId": "echo_037",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
-            }
+              "delayMin": 3,
+              "delayMax": 6,
+              "chance": 1
+            },
+            "flagsAdd": [
+              "civilServiceResolved"
+            ]
           },
           "memoryKey": "decision_037_c2"
         },
         {
           "id": "decision_037_c3",
-          "text": "通知房东换人",
-          "resultText": "押金扯了很久，新室友按时交钱。",
+          "text": "再准备一年",
+          "resultText": "题库又翻到第一页，生活费开始倒数。",
           "consequenceHints": [
-            "边界↑"
+            "继续备考"
           ],
           "effects": {
             "lifeFacts": {
-              "legalAwareness": 1
-            },
-            "resources": {
-              "cash": -800
+              "educationProgress": 1
             },
             "pressures": {
-              "career": -1
+              "career": -2
             },
             "outcomeTagsAdd": [
-              "legal",
-              "city"
+              "study",
+              "career",
+              "unemployed"
             ],
             "desires": {
-              "security": 3
+              "achievement": 5,
+              "exploration": 2
             },
             "scheduleEcho": {
               "eventId": "echo_037",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
-            }
+              "delayMin": 3,
+              "delayMax": 6,
+              "chance": 1
+            },
+            "employment": {
+              "status": "unemployed",
+              "career": "继续备考",
+              "sector": "public"
+            },
+            "flagsAdd": [
+              "civilServiceResolved"
+            ]
           },
           "memoryKey": "decision_037_c3"
         }
@@ -20762,8 +20842,8 @@
             },
             "scheduleEcho": {
               "eventId": "echo_047",
-              "delayMin": 4,
-              "delayMax": 18,
+              "delayMin": 5,
+              "delayMax": 7,
               "chance": 1
             }
           },
@@ -20794,8 +20874,8 @@
             },
             "scheduleEcho": {
               "eventId": "echo_047",
-              "delayMin": 4,
-              "delayMax": 18,
+              "delayMin": 5,
+              "delayMax": 7,
               "chance": 1
             }
           },
@@ -20828,8 +20908,8 @@
             },
             "scheduleEcho": {
               "eventId": "echo_047",
-              "delayMin": 4,
-              "delayMax": 18,
+              "delayMin": 5,
+              "delayMax": 7,
               "chance": 1
             }
           },
@@ -21580,10 +21660,11 @@
       "id": "decision_054",
       "kind": "decision",
       "stage": [
-        "adult"
+        "adult",
+        "midlife"
       ],
       "ageMin": 30,
-      "ageMax": 35,
+      "ageMax": 45,
       "icon": "🧾",
       "prompt": "孩子的兴趣班一年要两万。",
       "theme": "family",
@@ -21594,7 +21675,7 @@
           "childrenMin": 1,
           "childAgeAny": [
             6,
-            18
+            12
           ]
         }
       },
@@ -21625,9 +21706,9 @@
             },
             "scheduleEcho": {
               "eventId": "echo_054",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
+              "delayMin": 3,
+              "delayMax": 5,
+              "chance": 1
             }
           },
           "memoryKey": "decision_054_c1"
@@ -21656,9 +21737,9 @@
             },
             "scheduleEcho": {
               "eventId": "echo_054",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
+              "delayMin": 3,
+              "delayMax": 5,
+              "chance": 1
             }
           },
           "memoryKey": "decision_054_c2"
@@ -21690,9 +21771,9 @@
             },
             "scheduleEcho": {
               "eventId": "echo_054",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
+              "delayMin": 3,
+              "delayMax": 5,
+              "chance": 1
             }
           },
           "memoryKey": "decision_054_c3"
@@ -22060,7 +22141,13 @@
         "ambition",
         "stability"
       ],
-      "requirements": {},
+      "requirements": {
+        "facts": {
+          "jobAny": [
+            "employed"
+          ]
+        }
+      },
       "weight": 16,
       "contentRevision": 4,
       "choices": [
@@ -22890,10 +22977,11 @@
       "id": "decision_065",
       "kind": "decision",
       "stage": [
-        "midlife"
+        "midlife",
+        "preRetire"
       ],
       "ageMin": 36,
-      "ageMax": 44,
+      "ageMax": 58,
       "icon": "🩻",
       "prompt": "孩子坚持不参加补习。",
       "theme": "family",
@@ -22903,7 +22991,7 @@
         "facts": {
           "childrenMin": 1,
           "childAgeAny": [
-            6,
+            12,
             18
           ]
         }
@@ -22935,9 +23023,9 @@
             },
             "scheduleEcho": {
               "eventId": "echo_065",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
+              "delayMin": 3,
+              "delayMax": 5,
+              "chance": 1
             }
           },
           "memoryKey": "decision_065_c1"
@@ -22967,9 +23055,9 @@
             },
             "scheduleEcho": {
               "eventId": "echo_065",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
+              "delayMin": 3,
+              "delayMax": 5,
+              "chance": 1
             }
           },
           "memoryKey": "decision_065_c2"
@@ -22999,9 +23087,9 @@
             },
             "scheduleEcho": {
               "eventId": "echo_065",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
+              "delayMin": 3,
+              "delayMax": 5,
+              "chance": 1
             }
           },
           "memoryKey": "decision_065_c3"
@@ -23848,10 +23936,11 @@
       "id": "decision_073",
       "kind": "decision",
       "stage": [
-        "midlife"
+        "midlife",
+        "preRetire"
       ],
       "ageMin": 42,
-      "ageMax": 50,
+      "ageMax": 65,
       "icon": "🩻",
       "prompt": "孩子毕业后暂时找不到工作。",
       "theme": "family",
@@ -23897,9 +23986,9 @@
             },
             "scheduleEcho": {
               "eventId": "echo_073",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
+              "delayMin": 3,
+              "delayMax": 5,
+              "chance": 1
             }
           },
           "memoryKey": "decision_073_c1"
@@ -23928,9 +24017,9 @@
             },
             "scheduleEcho": {
               "eventId": "echo_073",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
+              "delayMin": 3,
+              "delayMax": 5,
+              "chance": 1
             }
           },
           "memoryKey": "decision_073_c2"
@@ -23962,9 +24051,9 @@
             },
             "scheduleEcho": {
               "eventId": "echo_073",
-              "delayMin": 4,
-              "delayMax": 18,
-              "chance": 0.55
+              "delayMin": 3,
+              "delayMax": 5,
+              "chance": 1
             }
           },
           "memoryKey": "decision_073_c3"
@@ -23990,7 +24079,8 @@
             "dating",
             "partnered",
             "married"
-          ]
+          ],
+          "childrenMin": 1
         }
       },
       "weight": 17,
@@ -24221,7 +24311,11 @@
       "theme": "elder",
       "intensity": "medium",
       "relevantAttrs": [],
-      "requirements": {},
+      "requirements": {
+        "facts": {
+          "childrenMin": 1
+        }
+      },
       "weight": 14,
       "contentRevision": 4,
       "choices": [
@@ -24712,10 +24806,11 @@
       "id": "decision_080",
       "kind": "decision",
       "stage": [
-        "preRetire"
+        "preRetire",
+        "elder"
       ],
       "ageMin": 52,
-      "ageMax": 58,
+      "ageMax": 80,
       "icon": "🫖",
       "prompt": "成年子女要你帮忙付首付。",
       "theme": "family",
@@ -24726,6 +24821,10 @@
           "childrenMin": 1,
           "housingAny": [
             "owned"
+          ],
+          "childAgeAny": [
+            25,
+            45
           ]
         }
       },
@@ -24757,7 +24856,7 @@
             "scheduleEcho": {
               "eventId": "echo_080",
               "delayMin": 4,
-              "delayMax": 18,
+              "delayMax": 6,
               "chance": 1
             }
           },
@@ -24791,7 +24890,7 @@
             "scheduleEcho": {
               "eventId": "echo_080",
               "delayMin": 4,
-              "delayMax": 18,
+              "delayMax": 6,
               "chance": 1
             }
           },
@@ -24823,7 +24922,7 @@
             "scheduleEcho": {
               "eventId": "echo_080",
               "delayMin": 4,
-              "delayMax": 18,
+              "delayMax": 6,
               "chance": 1
             }
           },
@@ -25341,12 +25440,13 @@
       "id": "decision_086",
       "kind": "decision",
       "stage": [
-        "preRetire"
+        "preRetire",
+        "elder"
       ],
       "ageMin": 58,
-      "ageMax": 64,
+      "ageMax": 80,
       "icon": "🫖",
-      "prompt": "孩子想让你长期带孙。",
+      "prompt": "成年子女想让你搬近一点，方便彼此照应。",
       "theme": "family",
       "intensity": "medium",
       "relevantAttrs": [],
@@ -25355,7 +25455,7 @@
           "childrenMin": 1,
           "childAgeAny": [
             25,
-            60
+            55
           ]
         }
       },
@@ -25364,39 +25464,38 @@
       "choices": [
         {
           "id": "decision_086_c1",
-          "text": "搬过去一起住",
-          "resultText": "家里热闹了，你的时间少了。",
+          "text": "搬到同一小区",
+          "resultText": "距离近了，门仍各自关得上。",
           "consequenceHints": [
-            "照护责任↑"
+            "关系↑"
           ],
           "effects": {
             "lifeFacts": {
-              "careDuty": 1
+              "moved": 1
             },
             "resources": {
-              "relation": 3,
-              "spirit": -2
+              "cash": -8000
             },
             "pressures": {
-              "family": 3
+              "family": 2
             },
             "outcomeTagsAdd": [
-              "care",
+              "move",
               "family"
             ],
             "desires": {
-              "care": 7,
-              "achievement": -2
+              "exploration": 6,
+              "familyBelonging": -2
             }
           },
           "memoryKey": "decision_086_c1"
         },
         {
           "id": "decision_086_c2",
-          "text": "只负责工作日接送",
-          "resultText": "边界写在课表上，仍常被加课。",
+          "text": "保留现在的住处",
+          "resultText": "来往要坐车，生活节奏仍由自己安排。",
           "consequenceHints": [
-            "关系↑"
+            "边界↑"
           ],
           "effects": {
             "lifeFacts": {
@@ -25421,26 +25520,26 @@
         },
         {
           "id": "decision_086_c3",
-          "text": "明确不长期带",
-          "resultText": "孩子不高兴，你的退休没有变成新岗位。",
+          "text": "先短住三个月",
+          "resultText": "行李没有全拆，彼此先试着适应。",
           "consequenceHints": [
-            "关系↓"
+            "保留余地"
           ],
           "effects": {
             "lifeFacts": {
-              "refusals": 1
+              "compromises": 1
             },
             "resources": {
-              "spirit": 2,
-              "relation": -2
+              "relation": 2,
+              "spirit": -2
             },
             "outcomeTagsAdd": [
-              "refuse",
+              "compromise",
               "family"
             ],
             "desires": {
-              "freedom": 5,
-              "familyBelonging": -3
+              "familyBelonging": 3,
+              "freedom": -3
             }
           },
           "memoryKey": "decision_086_c3"
@@ -26161,7 +26260,8 @@
             "none",
             "divorced",
             "widowed"
-          ]
+          ],
+          "childrenMax": 0
         }
       },
       "weight": 17,
@@ -26251,75 +26351,30 @@
         "elder"
       ],
       "ageMin": 69,
-      "ageMax": 78,
+      "ageMax": 82,
       "icon": "🪴",
-      "prompt": "银行经理推荐“内部养老产品”。",
-      "theme": "money",
-      "intensity": "medium",
-      "relevantAttrs": [
-        "stability",
-        "ambition"
-      ],
-      "requirements": {},
+      "prompt": "没有子女的你和伴侣，开始商量谁先失能怎么办。",
+      "theme": "care",
+      "intensity": "high",
+      "relevantAttrs": [],
+      "requirements": {
+        "facts": {
+          "childrenMax": 0,
+          "relationshipAny": [
+            "partnered",
+            "married"
+          ]
+        }
+      },
       "weight": 18,
       "contentRevision": 4,
       "choices": [
         {
           "id": "decision_095_c1",
-          "text": "把一部分钱转入",
-          "resultText": "收益按月显示，取出另有条件。",
+          "text": "把照护预算单独存下",
+          "resultText": "钱少了自由用途，多了一层确定。",
           "consequenceHints": [
-            "风险↑"
-          ],
-          "effects": {
-            "pressures": {
-              "money": 2,
-              "career": 2
-            },
-            "lifeFacts": {
-              "riskExposure": 1
-            },
-            "outcomeTagsAdd": [
-              "riskUp",
-              "money"
-            ],
-            "desires": {
-              "exploration": 4,
-              "security": -5
-            }
-          },
-          "memoryKey": "decision_095_c1"
-        },
-        {
-          "id": "decision_095_c2",
-          "text": "带合同回家看",
-          "resultText": "小字很多，你发现一条退出费用。",
-          "consequenceHints": [
-            "留下证据"
-          ],
-          "effects": {
-            "lifeFacts": {
-              "evidenceHabit": 1
-            },
-            "resources": {
-              "spirit": 1
-            },
-            "outcomeTagsAdd": [
-              "evidence",
-              "money"
-            ],
-            "desires": {
-              "security": 3
-            }
-          },
-          "memoryKey": "decision_095_c2"
-        },
-        {
-          "id": "decision_095_c3",
-          "text": "只存定期",
-          "resultText": "收益普通，晚上不用研究群消息。",
-          "consequenceHints": [
-            "稳定"
+            "安全感↑"
           ],
           "effects": {
             "lifeFacts": {
@@ -26330,11 +26385,64 @@
             },
             "outcomeTagsAdd": [
               "save",
-              "money"
+              "care"
             ],
             "desires": {
               "security": 5,
               "wealth": 3
+            }
+          },
+          "memoryKey": "decision_095_c1"
+        },
+        {
+          "id": "decision_095_c2",
+          "text": "搬到医疗更近的社区",
+          "resultText": "熟悉的菜场远了，医院近了。",
+          "consequenceHints": [
+            "迁移"
+          ],
+          "effects": {
+            "lifeFacts": {
+              "moved": 1
+            },
+            "resources": {
+              "cash": -8000
+            },
+            "pressures": {
+              "family": 2
+            },
+            "outcomeTagsAdd": [
+              "move",
+              "care"
+            ],
+            "desires": {
+              "exploration": 6,
+              "familyBelonging": -2
+            }
+          },
+          "memoryKey": "decision_095_c2"
+        },
+        {
+          "id": "decision_095_c3",
+          "text": "把朋友和手足也写进联系人",
+          "resultText": "你们承认两个人之外仍需要别人。",
+          "consequenceHints": [
+            "关系↑"
+          ],
+          "effects": {
+            "lifeFacts": {
+              "network": 1
+            },
+            "resources": {
+              "relation": 3
+            },
+            "outcomeTagsAdd": [
+              "network",
+              "care"
+            ],
+            "desires": {
+              "recognition": 3,
+              "love": 3
             }
           },
           "memoryKey": "decision_095_c3"
@@ -26587,29 +26695,25 @@
         },
         {
           "id": "decision_098_c2",
-          "text": "由孩子轮流来",
-          "resultText": "钱省下了，家庭时间重新分配。",
+          "text": "申请社区上门服务",
+          "resultText": "时段不完全合意，但每周有人按门铃。",
           "consequenceHints": [
             "关系↑"
           ],
           "effects": {
             "lifeFacts": {
-              "careDuty": 1
+              "network": 1
             },
             "resources": {
-              "relation": 3,
-              "spirit": -2
-            },
-            "pressures": {
-              "family": 3
+              "relation": 3
             },
             "outcomeTagsAdd": [
-              "care",
+              "network",
               "care"
             ],
             "desires": {
-              "care": 7,
-              "achievement": -2
+              "recognition": 3,
+              "love": 3
             }
           },
           "memoryKey": "decision_098_c2"
@@ -26660,8 +26764,8 @@
       "choices": [
         {
           "id": "decision_099_c1",
-          "text": "按关系和照护分",
-          "resultText": "纸上很清楚，家里不一定同意。",
+          "text": "按真实照护和关系分配",
+          "resultText": "纸上很清楚，亲友仍各有理解。",
           "consequenceHints": [
             "留下证据"
           ],
@@ -26687,26 +26791,25 @@
         },
         {
           "id": "decision_099_c2",
-          "text": "平均分给子女",
-          "resultText": "数字平了，旧账没有。",
+          "text": "先留足医疗和照护金",
+          "resultText": "能分的少了，最后几年稳了一点。",
           "consequenceHints": [
-            "关系变化"
+            "安全感↑"
           ],
           "effects": {
             "lifeFacts": {
-              "compromises": 1
+              "savings": 1
             },
             "resources": {
-              "relation": 2,
-              "spirit": -2
+              "cash": 4000
             },
             "outcomeTagsAdd": [
-              "compromise",
+              "save",
               "family"
             ],
             "desires": {
-              "familyBelonging": 3,
-              "freedom": -3
+              "security": 5,
+              "wealth": 3
             }
           },
           "memoryKey": "decision_099_c2"
@@ -26812,29 +26915,25 @@
         },
         {
           "id": "decision_100_c3",
-          "text": "由家人轮流照顾",
-          "resultText": "身边总有人，家里的日程全变了。",
+          "text": "加入社区互助照护",
+          "resultText": "固定的人不多，但每天都有人确认你平安。",
           "consequenceHints": [
             "关系↑"
           ],
           "effects": {
             "lifeFacts": {
-              "careDuty": 1
+              "network": 1
             },
             "resources": {
-              "relation": 3,
-              "spirit": -2
-            },
-            "pressures": {
-              "family": 3
+              "relation": 3
             },
             "outcomeTagsAdd": [
-              "care",
+              "network",
               "care"
             ],
             "desires": {
-              "care": 7,
-              "achievement": -2
+              "recognition": 3,
+              "love": 3
             }
           },
           "memoryKey": "decision_100_c3"
@@ -29837,53 +29936,62 @@
       },
       "choiceOutcomes": {
         "decision_036_c1": {
-          "text": "几年后，你又路过那场考试。 当年的决定先给出了回报。",
+          "text": "当年签下的工作offer成了第一段完整履历，题库账号终于停止续费。",
           "effects": {
             "resources": {
-              "spirit": 3
+              "spirit": 2
+            },
+            "pressures": {
+              "career": -3
             },
             "desires": {
-              "achievement": 6,
-              "status": 4
+              "stability": 4
             },
             "outcomeTagsAdd": [
               "echo",
               "career",
-              "career"
+              "workOffer"
             ]
           }
         },
         "decision_036_c2": {
-          "text": "几年后，你又路过那场考试。 代价和余地一起留下。",
+          "text": "那张准考证把你带到下一次面试门口，代价是更紧的现金流。",
           "effects": {
             "resources": {
               "spirit": 1
             },
+            "pressures": {
+              "money": 3
+            },
             "desires": {
               "achievement": 5,
-              "exploration": 2
+              "security": -3
             },
             "outcomeTagsAdd": [
               "echo",
               "study",
-              "career"
+              "civilService"
             ]
           }
         },
         "decision_036_c3": {
-          "text": "几年后，你又路过那场考试。 你仍认得当时为何这样选。",
+          "text": "白天工作、晚上备考的那段日子留下一项本事，也留下一笔身体欠账。",
           "effects": {
             "resources": {
-              "spirit": -2
+              "health": -2,
+              "spirit": 2
+            },
+            "lifeFacts": {
+              "skills": 1
             },
             "desires": {
-              "body": -6,
-              "peace": -2
+              "achievement": 4,
+              "body": -3
             },
             "outcomeTagsAdd": [
               "echo",
-              "healthDown",
-              "career"
+              "skill",
+              "civilService"
             ]
           }
         }
@@ -29903,16 +30011,16 @@
       "sourceDecisionId": "decision_037",
       "kind": "echo",
       "stage": [
-        "youth",
         "adult",
-        "midlife"
+        "midlife",
+        "preRetire"
       ],
-      "ageMin": 25,
-      "ageMax": 48,
+      "ageMin": 26,
+      "ageMax": 51,
       "icon": "↩️",
-      "text": "后来租房时，你先问清电费。",
-      "theme": "city",
-      "intensity": "medium",
+      "text": "那次面试或再考，几年后写进了你的履历。",
+      "theme": "career",
+      "intensity": "high",
       "requirements": {
         "memoriesAny": [
           "decision_037_c1",
@@ -29922,52 +30030,64 @@
       },
       "choiceOutcomes": {
         "decision_037_c1": {
-          "text": "后来租房时，你先问清电费。 当年的决定先给出了回报。",
+          "text": "第一次年度考核落在桌上，你终于确认“上岸”也只是另一种开始。",
           "effects": {
             "resources": {
-              "spirit": 3
+              "cash": 6000,
+              "spirit": 2
+            },
+            "pressures": {
+              "career": -3
             },
             "desires": {
-              "wealth": -5,
-              "security": -4
+              "stability": 6,
+              "status": 3
             },
             "outcomeTagsAdd": [
               "echo",
-              "cashDown",
-              "city"
+              "civilService",
+              "publicCareer"
             ]
           }
         },
         "decision_037_c2": {
-          "text": "后来租房时，你先问清电费。 代价和余地一起留下。",
+          "text": "收入稳定下来后，准考证一直夹在抽屉里，没有再替你作决定。",
           "effects": {
             "resources": {
+              "cash": 6000,
               "spirit": 1
             },
             "desires": {
-              "love": -6,
-              "familyBelonging": -3
+              "stability": 4,
+              "achievement": -2
             },
             "outcomeTagsAdd": [
               "echo",
-              "relationDown",
-              "city"
+              "workOffer",
+              "civilServiceExit"
             ]
           }
         },
         "decision_037_c3": {
-          "text": "后来租房时，你先问清电费。 你仍认得当时为何这样选。",
+          "text": "又一年成绩出来，你没得到保证，但多了一套能迁移到工作的能力。",
           "effects": {
             "resources": {
-              "spirit": -2
+              "spirit": -1
+            },
+            "lifeFacts": {
+              "skills": 1
+            },
+            "pressures": {
+              "career": 2
             },
             "desires": {
-              "security": 3
+              "achievement": 3,
+              "security": -2
             },
             "outcomeTagsAdd": [
               "echo",
-              "legal",
-              "city"
+              "civilServiceRetake",
+              "skill"
             ]
           }
         }
@@ -30759,54 +30879,64 @@
       },
       "choiceOutcomes": {
         "decision_047_c1": {
-          "text": "那个关于孩子的答案后来又被问起。 当年的决定先给出了回报。",
+          "text": "孩子背着小书包走进校门，你们第一次发现养育会按年龄继续出题。",
           "effects": {
+            "relationships": {
+              "childBond": 4
+            },
             "resources": {
-              "spirit": 3
+              "cash": -6000
+            },
+            "pressures": {
+              "family": 3
             },
             "desires": {
-              "familyBelonging": 7,
-              "care": 6,
-              "freedom": -3
+              "familyBelonging": 6,
+              "care": 4
             },
             "outcomeTagsAdd": [
               "echo",
               "child",
-              "family"
+              "childSchool"
             ]
           }
         },
         "decision_047_c2": {
-          "text": "那个关于孩子的答案后来又被问起。 代价和余地一起留下。",
+          "text": "日历上的“两年后”到了，你们需要重新回答那道没有消失的问题。",
           "effects": {
             "resources": {
-              "spirit": 1
+              "spirit": -1
+            },
+            "pressures": {
+              "family": 3
             },
             "desires": {
-              "familyBelonging": 3,
-              "freedom": -3
+              "familyBelonging": -2,
+              "freedom": 2
             },
             "outcomeTagsAdd": [
               "echo",
-              "compromise",
-              "family"
+              "childDeferred"
             ]
           }
         },
         "decision_047_c3": {
-          "text": "那个关于孩子的答案后来又被问起。 你仍认得当时为何这样选。",
+          "text": "后来再有人问起孩子，你们已经学会把答案说成完整的一句话。",
           "effects": {
             "resources": {
-              "spirit": -2
+              "spirit": 3
+            },
+            "pressures": {
+              "family": -3
             },
             "desires": {
-              "freedom": 7,
-              "familyBelonging": -2
+              "freedom": 5,
+              "peace": 3
             },
             "outcomeTagsAdd": [
               "echo",
               "noChild",
-              "family"
+              "childfree"
             ]
           }
         }
@@ -31334,10 +31464,11 @@
       "stage": [
         "adult",
         "midlife",
-        "preRetire"
+        "preRetire",
+        "elder"
       ],
       "ageMin": 34,
-      "ageMax": 59,
+      "ageMax": 69,
       "icon": "↩️",
       "text": "那个兴趣后来以另一种方式留下。",
       "theme": "family",
@@ -31351,53 +31482,59 @@
       },
       "choiceOutcomes": {
         "decision_054_c1": {
-          "text": "那个兴趣后来以另一种方式留下。 当年的决定先给出了回报。",
+          "text": "当年的兴趣班成了一项坚持，也成了孩子判断你是否只看结果的证据。",
           "effects": {
-            "resources": {
-              "spirit": 3
+            "relationships": {
+              "childBond": 1
+            },
+            "pressures": {
+              "family": 1
             },
             "desires": {
-              "wealth": -5,
-              "security": -4
+              "care": 3
             },
             "outcomeTagsAdd": [
               "echo",
-              "cashDown",
-              "family"
+              "childSchool",
+              "care"
             ]
           }
         },
         "decision_054_c2": {
-          "text": "那个兴趣后来以另一种方式留下。 代价和余地一起留下。",
+          "text": "社区班设备旧一点，孩子却第一次愿意主动提前出门。",
           "effects": {
+            "relationships": {
+              "childBond": 4
+            },
             "resources": {
-              "spirit": 1
+              "spirit": 2
             },
             "desires": {
-              "security": 5,
-              "wealth": 3
+              "familyBelonging": 4
             },
             "outcomeTagsAdd": [
               "echo",
-              "save",
-              "family"
+              "childSchool",
+              "save"
             ]
           }
         },
         "decision_054_c3": {
-          "text": "那个兴趣后来以另一种方式留下。 你仍认得当时为何这样选。",
+          "text": "孩子后来换过几次兴趣，但一直记得那次选择权真的在自己手里。",
           "effects": {
-            "resources": {
-              "spirit": -2
+            "relationships": {
+              "childBond": 5
+            },
+            "pressures": {
+              "family": -2
             },
             "desires": {
-              "love": 3,
-              "peace": 2
+              "care": 4
             },
             "outcomeTagsAdd": [
               "echo",
-              "truth",
-              "family"
+              "childAutonomy",
+              "truth"
             ]
           }
         }
@@ -32267,7 +32404,7 @@
         "elder"
       ],
       "ageMin": 40,
-      "ageMax": 68,
+      "ageMax": 82,
       "icon": "↩️",
       "text": "孩子后来记得你是否听过这一次。",
       "theme": "family",
@@ -32281,53 +32418,50 @@
       },
       "choiceOutcomes": {
         "decision_065_c1": {
-          "text": "孩子后来记得你是否听过这一次。 当年的决定先给出了回报。",
+          "text": "少上一门补习后，孩子没有立刻变优秀，但和你多说了几句话。",
           "effects": {
-            "resources": {
-              "spirit": 3
+            "relationships": {
+              "childBond": 5
             },
-            "desires": {
-              "love": 6,
-              "familyBelonging": 3
+            "resources": {
+              "spirit": 2
             },
             "outcomeTagsAdd": [
               "echo",
-              "relationUp",
-              "family"
+              "childAutonomy",
+              "relationUp"
             ]
           }
         },
         "decision_065_c2": {
-          "text": "孩子后来记得你是否听过这一次。 代价和余地一起留下。",
+          "text": "那一学期结束了，成绩单留下，孩子沉默的方式也留下。",
           "effects": {
-            "resources": {
-              "spirit": 1
+            "relationships": {
+              "childBond": -4
             },
-            "desires": {
-              "familyBelonging": 3,
-              "freedom": -3
+            "pressures": {
+              "family": 4
             },
             "outcomeTagsAdd": [
               "echo",
-              "compromise",
-              "family"
+              "childSchool",
+              "compromise"
             ]
           }
         },
         "decision_065_c3": {
-          "text": "孩子后来记得你是否听过这一次。 你仍认得当时为何这样选。",
+          "text": "自己选的兴趣没有变成职业，却让孩子在申请表上有了一件愿意写的事。",
           "effects": {
-            "resources": {
-              "spirit": -2
+            "relationships": {
+              "childBond": 3
             },
-            "desires": {
-              "peace": 3,
-              "wealth": -3
+            "lifeFacts": {
+              "learningExperience": 1
             },
             "outcomeTagsAdd": [
               "echo",
-              "spend",
-              "family"
+              "childAutonomy",
+              "skill"
             ]
           }
         }
@@ -32947,7 +33081,7 @@
         "elder"
       ],
       "ageMin": 46,
-      "ageMax": 74,
+      "ageMax": 89,
       "icon": "↩️",
       "text": "孩子后来记得你给的是时间还是答案。",
       "theme": "family",
@@ -32961,53 +33095,50 @@
       },
       "choiceOutcomes": {
         "decision_073_c1": {
-          "text": "孩子后来记得你给的是时间还是答案。 当年的决定先给出了回报。",
+          "text": "孩子终于搬出去，空下来的房间证明慢一点也能走到独立。",
           "effects": {
-            "resources": {
-              "spirit": 3
+            "relationships": {
+              "childBond": 4
             },
-            "desires": {
-              "care": 7,
-              "achievement": -2
+            "pressures": {
+              "family": -3
             },
             "outcomeTagsAdd": [
               "echo",
-              "care",
-              "family"
+              "adultChild",
+              "care"
             ]
           }
         },
         "decision_073_c2": {
-          "text": "孩子后来记得你给的是时间还是答案。 代价和余地一起留下。",
+          "text": "熟人介绍的工作保住了收入，也让孩子第一次理解人情会跟着入职。",
           "effects": {
-            "resources": {
-              "spirit": 1
+            "relationships": {
+              "childBond": 1
             },
-            "desires": {
-              "recognition": 3,
-              "love": 3
+            "pressures": {
+              "family": 1
             },
             "outcomeTagsAdd": [
               "echo",
-              "network",
-              "family"
+              "adultChild",
+              "network"
             ]
           }
         },
         "decision_073_c3": {
-          "text": "孩子后来记得你给的是时间还是答案。 你仍认得当时为何这样选。",
+          "text": "三个月期限到了，孩子接住了自己的账单，也重新计算了和你的距离。",
           "effects": {
-            "resources": {
-              "spirit": -2
+            "relationships": {
+              "childBond": 2
             },
-            "desires": {
-              "freedom": 7,
-              "familyBelonging": -2
+            "pressures": {
+              "family": -2
             },
             "outcomeTagsAdd": [
               "echo",
-              "boundary",
-              "family"
+              "adultChild",
+              "boundary"
             ]
           }
         }
@@ -33538,7 +33669,7 @@
         "elder"
       ],
       "ageMin": 56,
-      "ageMax": 82,
+      "ageMax": 104,
       "icon": "↩️",
       "text": "那笔首付后来影响了两代人的距离。",
       "theme": "family",
@@ -33552,53 +33683,57 @@
       },
       "choiceOutcomes": {
         "decision_080_c1": {
-          "text": "那笔首付后来影响了两代人的距离。 当年的决定先给出了回报。",
+          "text": "孩子住进新房后，你的养老账本少了一大块，来往却没有自动增加。",
           "effects": {
             "resources": {
-              "spirit": 3
+              "spirit": -1
+            },
+            "pressures": {
+              "money": 5
             },
             "desires": {
-              "wealth": -5,
-              "security": -4
+              "security": -5,
+              "familyBelonging": 2
             },
             "outcomeTagsAdd": [
               "echo",
-              "cashDown",
-              "family"
+              "adultChild",
+              "housing"
             ]
           }
         },
         "decision_080_c2": {
-          "text": "那笔首付后来影响了两代人的距离。 代价和余地一起留下。",
+          "text": "那笔有限的支持被写进转账备注，后来反而少了许多含糊争执。",
           "effects": {
-            "resources": {
-              "spirit": 1
+            "relationships": {
+              "childBond": 3
             },
-            "desires": {
-              "freedom": 7,
-              "familyBelonging": -2
+            "pressures": {
+              "family": -2
             },
             "outcomeTagsAdd": [
               "echo",
-              "boundary",
-              "family"
+              "adultChild",
+              "boundary"
             ]
           }
         },
         "decision_080_c3": {
-          "text": "那笔首付后来影响了两代人的距离。 你仍认得当时为何这样选。",
+          "text": "孩子后来自己凑齐首付，你们都记得那次拒绝并没有结束关系。",
           "effects": {
+            "relationships": {
+              "childBond": 2
+            },
             "resources": {
-              "spirit": -2
+              "spirit": 2
             },
             "desires": {
-              "freedom": 5,
-              "familyBelonging": -3
+              "security": 3
             },
             "outcomeTagsAdd": [
               "echo",
-              "refuse",
-              "family"
+              "adultChild",
+              "refuse"
             ]
           }
         }

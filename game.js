@@ -4,7 +4,7 @@
   const APP_KEY='life-unloaded-2026-v1';
   const V32_BACKUP_KEY='life-unloaded-2026-v3.2-backup';
   const CORRUPT_KEY='life-unloaded-2026-corrupt-backup';
-  const VERSION='4.0.0';
+  const VERSION='4.0.1';
   const SCHEMA_VERSION=5;
   const DEBUG=new URLSearchParams(location.search).get('debug')==='1';
   const app=document.getElementById('app');
@@ -63,6 +63,16 @@
   function topDesires(run=state.run,count=3){return Object.entries(run.desires||{}).sort((a,b)=>b[1].drive-a[1].drive).slice(0,count).map(([key,value])=>({key,...value,name:DATA.desires[key]?.name||key}))}
   function tagCount(run,key){return Number(run.outcomeTags?.[key]||0)}
   function addTag(run,key,amount=1){if(key)increment(run.outcomeTags,key,amount)}
+  function defaultCareer(run){const pool=occupations[run.birth?.location?.id]||occupations.tier2;return pool[stable(run.seed,`career-${run.age}`,pool.length)]}
+  function repairEducationEmployment(run){
+    if(!run?.employment||!run.lifeFacts)return;
+    if(run.age>=22&&run.lifeFacts.education==='大学在读'){run.lifeFacts.education='大学毕业';run.milestones={...(run.milestones||{}),graduated:true}}
+    if(run.age>=25&&run.employment.status==='student'){run.employment.status='unemployed';run.employment.career='毕业求职';run.employment.sector='services';run.employment.unemployedYears=Math.max(1,run.employment.unemployedYears||0)}
+    if(run.employment.status==='employed'&&(!run.employment.career||/在读|学生|寻找|尚未|备考|求职/.test(run.employment.career)))run.employment.career=defaultCareer(run);
+    if(run.employment.status==='gig'&&(!run.employment.career||/在读|学生/.test(run.employment.career)))run.employment.career='灵活就业';
+    if(run.employment.status==='selfEmployed'&&(!run.employment.career||/在读|学生/.test(run.employment.career)))run.employment.career='自主经营';
+    if(run.employment.status==='retired'&&(!run.employment.career||/在读|学生/.test(run.employment.career)))run.employment.career='退休生活';
+  }
 
   function seededDNA(seed,birth,archetype){
     const mods=archetype?.dnaMods||{};const value=(key,base=50)=>clamp(base+stable(seed,key,71)-35+(mods[key]||0),0,100);
@@ -76,7 +86,7 @@
     for(const[attr,keys]of Object.entries(attrMap))for(const key of keys){const spec=DATA.desires[key]||{min:0,max:100};values[key].drive=clamp(values[key].drive+(run.attrs[attr]-4)*4,Math.max(10,spec.min),Math.min(90,spec.max))}run.desires=values;
   }
   function chooseConflicts(run){const pool=[...(DATA.mainConflicts||[])].sort((a,b)=>{const av=a.desireKeys.reduce((n,key)=>n+(run.desires[key]?.drive||0),0)+stable(run.seed,a.id,20);const bv=b.desireKeys.reduce((n,key)=>n+(run.desires[key]?.drive||0),0)+stable(run.seed,b.id,20);return bv-av});return pool.slice(0,2).map(x=>x.id)}
-  function syncDerivedFacts(run=state.run){if(!run)return;run.lifeFacts.jobStatus=run.employment.status;run.lifeFacts.career=run.employment.career;run.lifeFacts.relationship=partnerStatus(run);run.lifeFacts.children=run.relationships.children.length;run.lifeFacts.debt=run.res.debt>0?1:0;run.res.relation=supportScore(run)}
+  function syncDerivedFacts(run=state.run){if(!run)return;repairEducationEmployment(run);run.lifeFacts.jobStatus=run.employment.status;run.lifeFacts.career=run.employment.career;run.lifeFacts.relationship=partnerStatus(run);run.lifeFacts.children=run.relationships.children.length;run.lifeFacts.debt=run.res.debt>0?1:0;run.res.relation=supportScore(run)}
 
   function createRun(seed=makeSeed()){
     const run={seed,rngState:hashSeed(seed),schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,contentRevision:4,phase:'birth',age:0};state.run=run;
@@ -104,7 +114,7 @@
 
   function migrateRun(old){
     if(!old||typeof old!=='object'||old.schemaVersion!==SCHEMA_VERSION)return null;
-    old.gameVersion=VERSION;old.contentRevision=4;old.yearStarted=Boolean(old.yearStarted);old.scheduledEchoes=Array.isArray(old.scheduledEchoes)?old.scheduledEchoes:[];old.usedEchoes=Array.isArray(old.usedEchoes)?old.usedEchoes:[];old.outcomeTags=old.outcomeTags||{};old.flags=old.flags||{};old.crisisYears=old.crisisYears||{employment:0,money:0,health:0};old.conflictDecisionStages=old.conflictDecisionStages||{};syncDerivedFacts(old);return old;
+    old.gameVersion=VERSION;old.contentRevision=4;old.yearStarted=Boolean(old.yearStarted);old.scheduledEchoes=Array.isArray(old.scheduledEchoes)?old.scheduledEchoes:[];old.usedEchoes=Array.isArray(old.usedEchoes)?old.usedEchoes:[];old.outcomeTags=old.outcomeTags||{};old.flags=old.flags||{};old.crisisYears=old.crisisYears||{employment:0,money:0,health:0};old.conflictDecisionStages=old.conflictDecisionStages||{};old.milestones=old.milestones||{};syncDerivedFacts(old);return old;
   }
 
   function loadState(){
@@ -173,7 +183,7 @@
   function applyEffects(raw={},event={theme:'ordinary'},context={}){
     const effects=copy(raw);applyCardShield(event,effects);const run=state.run,changed=[];
     for(const[key,rawValue]of Object.entries(effects.resources||{})){let value=Number(rawValue);if(key==='relation'){run.relationships.network=clamp(run.relationships.network+value,0,100);continue}if(key==='health'&&value>0)value=Math.round(value*clamp(.72+run.attrs.physique*.04+(run.birth.location.mods.medical||50)/500,.85,1.25));run.res[key]=clamp((run.res[key]||0)+value,key==='cash'?-999999999:0,key==='cash'||key==='assets'||key==='debt'?999999999:100);changed.push(key)}
-    if(effects.employment){const previous=run.employment.status;if(['employed','gig','selfEmployed'].includes(previous)){run.employment.previousCareer=run.employment.career;run.employment.previousSector=run.employment.sector}run.employment={...run.employment,...effects.employment};if(run.employment.status!==previous){run.employment.tenure=0;run.employment.unemployedYears=run.employment.status==='unemployed'?Math.max(1,run.employment.unemployedYears||0):0;if(run.employment.status==='employed'&&(!run.employment.career||/寻找|尚未|备考/.test(run.employment.career)))run.employment.career=pick(occupations[run.birth.location.id]);if(run.employment.status==='gig'&&!effects.employment.career)run.employment.career='灵活就业';if(run.employment.status==='selfEmployed'&&!effects.employment.career)run.employment.career='自主经营';if(run.employment.status==='retired'&&!effects.employment.career)run.employment.career='退休生活';run.employment.sector=effects.employment.sector||sectorForCareer(run.employment.career||'')}}
+    if(effects.employment){const previous=run.employment.status;if(['employed','gig','selfEmployed'].includes(previous)){run.employment.previousCareer=run.employment.career;run.employment.previousSector=run.employment.sector}run.employment={...run.employment,...effects.employment};if(run.employment.status!==previous){run.employment.tenure=0;run.employment.unemployedYears=run.employment.status==='unemployed'?Math.max(1,run.employment.unemployedYears||0):0;if(run.employment.status==='employed'&&(!run.employment.career||/在读|学生|寻找|尚未|备考|求职/.test(run.employment.career)))run.employment.career=defaultCareer(run);if(run.employment.status==='gig'&&!effects.employment.career)run.employment.career='灵活就业';if(run.employment.status==='selfEmployed'&&!effects.employment.career)run.employment.career='自主经营';if(run.employment.status==='retired'&&!effects.employment.career)run.employment.career='退休生活';run.employment.sector=effects.employment.sector||sectorForCareer(run.employment.career||'')}}
     for(const[key,value]of Object.entries(effects.lifeFacts||{})){if(typeof value==='number'&&typeof run.lifeFacts[key]==='number')run.lifeFacts[key]+=value;else run.lifeFacts[key]=value}
     for(const[key,value]of Object.entries(effects.pressures||{}))run.pressures[key]=clamp((run.pressures[key]||0)+Number(value),0,100);
     const rel=effects.relationships||{};if(rel.partnerStatus){run.relationships.partner.status=rel.partnerStatus;run.relationships.partner.sinceAge=run.age;if(rel.partnerStatus==='none')run.relationships.partner.bond=0}
@@ -207,6 +217,9 @@
   function milestoneFacts(run=state.run){
     const age=run.age;if(age>=7&&!run.milestones.primary){run.lifeFacts.education='小学';run.milestones.primary=true}if(age>=13&&!run.milestones.middle){run.lifeFacts.education='初中';run.milestones.middle=true}if(age>=16&&!run.milestones.secondary){run.lifeFacts.education=run.attrs.intellect>=5?'普通高中':'职校或高中';run.milestones.secondary=true}
     if(age>=19&&!run.milestones.education){const education=run.birth.location.mods.education+run.lifeDNA.educationExpectation+(run.attrs.intellect-4)*10+(run.lifeFacts.educationProgress||0)*8;run.lifeFacts.education=education>=145?'大学在读':education>=112?'大专或职校毕业':'中学毕业';run.milestones.education=true}
+    if(age>=22&&run.lifeFacts.education==='大学在读'){run.lifeFacts.education='大学毕业';run.milestones.graduated=true}
+    if(age>=25&&run.employment.status==='student'){run.employment.status='unemployed';run.employment.career='毕业求职';run.employment.sector='services';run.employment.unemployedYears=Math.max(1,run.employment.unemployedYears||0)}
+    repairEducationEmployment(run);
     if(age>=60&&run.employment.status==='employed'&&run.attrs.stability>=5&&!run.milestones.retired){run.employment.status='retired';run.employment.career='退休生活';run.milestones.retired=true;addTag(run,'retired')}
     syncDerivedFacts(run);
   }
@@ -259,14 +272,16 @@
     return false;
   }
   function transitionDecision(){const run=state.run;if(run.age<21||run.age>24||run.employment.status!=='student'||run.milestones.workTransition)return null;const event=INDEX.event.get('decision_036');return event&&eligible(event)?event:null}
+  function civilServiceDecision(){const run=state.run,event=INDEX.event.get('decision_037');if(!event||run.decisionCount>=run.targetDecisions)return null;return eligible(event)?event:null}
+  function childChainDecision(){const run=state.run;if(run.decisionCount>=run.targetDecisions||!run.relationships.children.length)return null;for(const id of['decision_054','decision_065','decision_073','decision_080','decision_086']){const event=INDEX.event.get(id);if(event&&eligible(event))return event}return null}
   function conflictDecision(){const run=state.run,stage=stageForAge(run.age);if(['infancy','childhood'].includes(stage)||run.conflictDecisionStages[stage])return null;const themes=new Set(run.mainConflicts.flatMap(id=>INDEX.conflict.get(id)?.themes||[]));return weightedPick((INDEX.byStage[stage]?.decision||[]).filter(event=>eligible(event)&&themes.has(event.theme)),eventWeight)}
   function shouldOfferDecision(){
-    const run=state.run,stage=stageForAge(run.age),quota=STAGE_QUOTAS[stage]||0,count=run.stageDecisionCounts[stage]||0;if(activeCrisis(run)&&crisisCandidates(activeCrisis(run)).length)return true;if(transitionDecision())return true;if(count>=quota||run.decisionCount>=run.targetDecisions)return false;
+    const run=state.run,stage=stageForAge(run.age),quota=STAGE_QUOTAS[stage]||0,count=run.stageDecisionCounts[stage]||0;if(activeCrisis(run)&&crisisCandidates(activeCrisis(run)).length)return true;if(transitionDecision())return true;if(civilServiceDecision()||childChainDecision())return true;if(count>=quota||run.decisionCount>=run.targetDecisions)return false;
     const range=DATA.stages[stage],remaining=Math.max(0,range[1]-run.age),need=quota-count;if(run.age-run.lastDecisionAge<2&&remaining>need)return false;
     if(remaining<=need)return true;return chance(Math.min(.55,(need/(remaining+1))*1.45));
   }
   function offerDecision(){
-    const run=state.run,crisis=activeCrisis(run),crisisEvent=crisisDecision(crisis),event=crisisEvent||transitionDecision()||conflictDecision()||selectFrom('decision');if(!event)return false;run.phase='decision';run.currentDecision=event;run.currentCrisis=crisisEvent?crisis:null;save();render();return true;
+    const run=state.run,crisis=activeCrisis(run),crisisEvent=crisisDecision(crisis),event=crisisEvent||transitionDecision()||civilServiceDecision()||childChainDecision()||conflictDecision()||selectFrom('decision');if(!event)return false;run.phase='decision';run.currentDecision=event;run.currentCrisis=crisisEvent?crisis:null;save();render();return true;
   }
   function finishYear(){
     const run=state.run;if(run.phase!=='playing')return true;if(run.seenThisYear.length<2&&shouldOfferDecision()&&offerDecision())return true;
@@ -379,7 +394,7 @@
     else if(name==='toAttrs'){run.phase='attributes';go('attributes');save()}else if(name==='randomAttrs')randomAttrs();
     else if(name==='confirmAttrs'){if(run.points)return;initializeDesires(run);run.mainConflicts=chooseConflicts(run);run.deathAge=clamp(run.deathAge+run.attrs.physique-1,42,105);startCardDraw('innate',0)}
     else if(name==='advance')advanceOneBeat();else if(name==='status'){state.overlay='status';render()}else if(name==='closeOverlay'){state.overlay=null;render()}
-    else if(name==='toggleHaptic'){state.meta.settings.haptic=!state.meta.settings.haptic;save();render()}else if(name==='export')exportText(JSON.stringify({schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,meta:state.meta,run:state.run},null,2),'人生尚未加载-v4.0.0-存档.json');
+    else if(name==='toggleHaptic'){state.meta.settings.haptic=!state.meta.settings.haptic;save();render()}else if(name==='export')exportText(JSON.stringify({schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,meta:state.meta,run:state.run},null,2),'人生尚未加载-v4.0.1-存档.json');
     else if(name==='reset'&&confirm('清除全部人生档案和存档？')){localStorage.removeItem(APP_KEY);state={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};render()}
     else if(name==='exportCorrupt')exportText(state.recovery.raw||'','人生尚未加载-损坏存档.json');else if(name==='clearCorrupt'&&confirm('确认清除损坏存档？')){localStorage.removeItem(APP_KEY);state={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};render()}
     else if(name==='debugFinish'){const report=autoFinishCurrent();showToast(`完成：${report?.age||0}岁，${report?.decisions||0}次选择`)}
@@ -400,7 +415,7 @@
     app.innerHTML='<main class="loading-screen"><div><div class="loading-mark">◌</div><h2>正在加载人生数据库</h2><p>一年一年，马上开始。</p></div></main>';
     const response=await fetch(`./data.json?v=${VERSION}`,{cache:'no-store'});if(!response.ok)throw new Error(`人生数据库加载失败（HTTP ${response.status}）`);DATA=await response.json();if(DATA.schemaVersion!==SCHEMA_VERSION)throw new Error(`数据版本不兼容：需要 ${SCHEMA_VERSION}，实际 ${DATA.schemaVersion}`);
     INDEX=buildIndex();state=loadState();render();window.__LIFE_BOOTED__=true;
-    if(DEBUG)window.__LIFE_DEBUG__={snapshot:()=>copy(state.run),advance:()=>advanceOneBeat(true),autoFinishCurrent,forceAge:age=>{if(state.run){state.run.age=clamp(age,0,105);state.run.yearStarted=false;state.run.yearQueue=[];milestoneFacts();render()}},forceDecision:id=>{const event=INDEX.event.get(id);if(state.run&&event?.kind==='decision'){state.run.age=event.ageMin;state.run.currentDecision=event;state.run.currentCrisis=null;state.run.phase='decision';state.run.yearStarted=true;render()}},patchRun:patch=>{if(state.run){for(const[key,value]of Object.entries(patch||{})){if(value&&typeof value==='object'&&!Array.isArray(value)&&state.run[key]&&typeof state.run[key]==='object')state.run[key]={...state.run[key],...copy(value)};else state.run[key]=copy(value)}syncDerivedFacts(state.run);render()}},eligibleIds:kind=>(INDEX.byStage[stageForAge(state.run.age)]?.[kind]||[]).filter(event=>eligible(event)).map(x=>x.id),crisisCandidateIds:type=>crisisCandidates(type).map(event=>event.id),settleCurrentYear:()=>{settleYear(state.run);render();return copy(state.run)},previewEndingProfile:outcomeTags=>{const run=copy(state.run);run.outcomeTags=copy(outcomeTags||{});return endingProfile(run).id},counts:()=>Object.fromEntries(Object.entries(INDEX.kinds).map(([k,v])=>[k,v.length]))};
+    if(DEBUG)window.__LIFE_DEBUG__={snapshot:()=>copy(state.run),advance:()=>advanceOneBeat(true),autoFinishCurrent,forceAge:age=>{if(state.run){state.run.age=clamp(age,0,105);state.run.yearStarted=false;state.run.yearQueue=[];milestoneFacts();render()}},forceDecision:id=>{const event=INDEX.event.get(id);if(state.run&&event?.kind==='decision'){state.run.age=event.ageMin;state.run.currentDecision=event;state.run.currentCrisis=null;state.run.phase='decision';state.run.yearStarted=true;render()}},patchRun:patch=>{if(state.run){for(const[key,value]of Object.entries(patch||{})){if(value&&typeof value==='object'&&!Array.isArray(value)&&state.run[key]&&typeof state.run[key]==='object')state.run[key]={...state.run[key],...copy(value)};else state.run[key]=copy(value)}syncDerivedFacts(state.run);render()}},eligibleIds:kind=>(INDEX.byStage[stageForAge(state.run.age)]?.[kind]||[]).filter(event=>eligible(event)).map(x=>x.id),priorityDecisionIds:()=>({transition:transitionDecision()?.id||null,civilService:civilServiceDecision()?.id||null,child:childChainDecision()?.id||null}),crisisCandidateIds:type=>crisisCandidates(type).map(event=>event.id),settleCurrentYear:()=>{settleYear(state.run);render();return copy(state.run)},previewEndingProfile:outcomeTags=>{const run=copy(state.run);run.outcomeTags=copy(outcomeTags||{});return endingProfile(run).id},counts:()=>Object.fromEntries(Object.entries(INDEX.kinds).map(([k,v])=>[k,v.length]))};
   }catch(error){console.error(error);app.innerHTML=`<main class="boot-fallback"><div><div class="boot-label">启动失败</div><h1>人生数据库没有加载成功</h1><p>${esc(error.message||error)}</p></div><div class="boot-card"><p>请确认 index.html、style.css、game.js 与 data.json 位于同一目录。</p><button class="btn primary mt" onclick="location.reload()">重新加载</button></div></main>`}
 
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.run)save(true)});window.addEventListener('pagehide',()=>save(true));
