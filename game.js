@@ -4,7 +4,7 @@
   const APP_KEY='life-unloaded-2026-v1';
   const V31_BACKUP_KEY='life-unloaded-2026-v3.1-backup';
   const CORRUPT_KEY='life-unloaded-2026-corrupt-backup';
-  const VERSION='3.2.3';
+  const VERSION='3.2.4';
   const SCHEMA_VERSION=4;
   const DEBUG=new URLSearchParams(location.search).get('debug')==='1';
   const app=document.getElementById('app');
@@ -41,7 +41,7 @@
   const contentKey=item=>`${item.id}@r${item.contentRevision||DATA.contentRevision}`;
 
   function defaultMeta(){return{schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,histories:[],codex:[],settings:{haptic:true,reducedMotion:false},stats:{runs:0,best:0},seenContent:{events:{},cards:{},families:{},endings:{}},recentLives:[]}}
-  function normalizeMeta(meta={}){const fresh=defaultMeta(),seen=meta.seenContent||{};return{...fresh,...meta,schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,settings:{...fresh.settings,...(meta.settings||{})},stats:{...fresh.stats,...(meta.stats||{})},seenContent:{events:{...(seen.events||{})},cards:{...(seen.cards||{})},families:{...(seen.families||{})},endings:{...(seen.endings||{})}},histories:Array.isArray(meta.histories)?meta.histories.slice(0,30):[],recentLives:Array.isArray(meta.recentLives)?meta.recentLives.slice(0,5):[]}}
+  function normalizeMeta(meta={}){const fresh=defaultMeta(),seen=meta.seenContent||{},validCodex=new Set(DATA.codex.map(x=>x.id));return{...fresh,...meta,schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,settings:{...fresh.settings,...(meta.settings||{})},stats:{...fresh.stats,...(meta.stats||{})},seenContent:{events:{...(seen.events||{})},cards:{...(seen.cards||{})},families:{...(seen.families||{})},endings:{...(seen.endings||{})}},histories:Array.isArray(meta.histories)?meta.histories.slice(0,30):[],codex:Array.isArray(meta.codex)?meta.codex.filter(id=>validCodex.has(id)).slice(0,DATA.codex.length):[],recentLives:Array.isArray(meta.recentLives)?meta.recentLives.slice(0,5):[]}}
 
   function buildIndex(){
     const kinds={beat:[],decision:[],echo:[],blackSwan:[]},byStage={};
@@ -143,17 +143,21 @@
     for(const[key,value]of Object.entries(effects.pressures||{}))run.pressures[key]=clamp((run.pressures[key]||0)+Number(value),0,100);
     return changed;
   }
+  function unlockCodex(...sources){
+    const text=sources.flatMap(source=>typeof source==='string'?[source]:[source?.text,source?.prompt,source?.title,source?.displayName,source?.effectHint,source?.theme]).filter(Boolean).join(' ');
+    for(const entry of DATA.codex){if(!state.meta.codex.includes(entry.id)&&entry.triggers?.some(trigger=>text.includes(trigger)))state.meta.codex.push(entry.id)}
+  }
   function addTimeline(event,text=event.text,kind=event.kind){
     const run=state.run;run.timeline.push({age:run.age,icon:event.icon||'•',text,kind,theme:event.theme,id:event.id});if(run.timeline.length>180)run.timeline.shift();
     if(kind==='echo')run.echoCount++;
-    run.usedEvents.push(event.id);increment(state.meta.seenContent.events,contentKey(event));
+    run.usedEvents.push(event.id);increment(state.meta.seenContent.events,contentKey(event));unlockCodex(event,text);
   }
   function addChoiceTimeline(event,choice){
     const run=state.run;run.timeline.push({age:run.age,icon:event.icon||'•',text:`${event.prompt} 你选了“${choice.text}”。${choice.resultText}`,kind:'decision',theme:event.theme,id:event.id,hints:choice.consequenceHints||[]});if(run.timeline.length>180)run.timeline.shift();
-    run.usedEvents.push(event.id);increment(state.meta.seenContent.events,contentKey(event));
+    run.usedEvents.push(event.id);increment(state.meta.seenContent.events,contentKey(event));unlockCodex(event,choice.text,choice.resultText,choice.consequenceHints?.join(' '));
   }
   function addCardTimeline(card){
-    const run=state.run;run.timeline.push({age:run.age,icon:card.omenIcon||'🃏',text:`抽到《${card.displayName}》：${card.effectHint}`,kind:'card',theme:'card',id:card.id});if(run.timeline.length>180)run.timeline.shift();
+    const run=state.run;run.timeline.push({age:run.age,icon:card.omenIcon||'🃏',text:`抽到《${card.displayName}》：${card.effectHint}`,kind:'card',theme:'card',id:card.id});if(run.timeline.length>180)run.timeline.shift();unlockCodex(card);
   }
   function milestoneFacts(run=state.run){
     const age=run.age;if(age>=7)run.lifeFacts.education='小学';if(age>=13)run.lifeFacts.education='初中';if(age>=16)run.lifeFacts.education=run.attrs.intellect>=5?'普通高中':'职校或高中';
@@ -284,21 +288,21 @@
     else if(name==='toAttrs'){run.phase='attributes';go('attributes');save()}else if(name==='randomAttrs')randomAttrs();
     else if(name==='confirmAttrs'){if(run.points)return;run.deathAge=clamp(run.deathAge+run.attrs.physique-1,42,105);startCardDraw('innate',0)}
     else if(name==='advance')advanceOneBeat();else if(name==='status'){state.overlay='status';render()}else if(name==='closeOverlay'){state.overlay=null;render()}
-    else if(name==='toggleHaptic'){state.meta.settings.haptic=!state.meta.settings.haptic;save();render()}else if(name==='export')exportText(JSON.stringify({schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,meta:state.meta,run:state.run},null,2),'人生尚未加载-v3.2.3-存档.json');
+    else if(name==='toggleHaptic'){state.meta.settings.haptic=!state.meta.settings.haptic;save();render()}else if(name==='export')exportText(JSON.stringify({schemaVersion:SCHEMA_VERSION,gameVersion:VERSION,meta:state.meta,run:state.run},null,2),'人生尚未加载-v3.2.4-存档.json');
     else if(name==='reset'&&confirm('清除全部人生档案和存档？')){localStorage.removeItem(APP_KEY);state={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};render()}
     else if(name==='exportCorrupt')exportText(state.recovery.raw||'','人生尚未加载-损坏存档.json');else if(name==='clearCorrupt'&&confirm('确认清除损坏存档？')){localStorage.removeItem(APP_KEY);state={view:'home',meta:defaultMeta(),run:null,overlay:null,toast:null,recovery:null};render()}
     else if(name==='debugFinish'){const report=autoFinishCurrent();showToast(`完成：${report?.age||0}岁，${report?.decisions||0}次选择`)}
   }
   function bind(){app.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>go(el.dataset.nav));app.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>action(el.dataset.act));app.querySelectorAll('[data-step]').forEach(el=>el.onclick=()=>stepAttr(el.dataset.step,Number(el.dataset.delta)));app.querySelectorAll('[data-card]').forEach(el=>el.onclick=()=>chooseCard(el.dataset.card));app.querySelectorAll('[data-choice]').forEach(el=>el.onclick=()=>chooseDecision(Number(el.dataset.choice)));const stream=app.querySelector('.life-stream');if(stream)stream.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&state.run?.phase==='playing'){event.preventDefault();advanceOneBeat()}}}
 
-  function renderGameToText(){const run=state.run;return JSON.stringify({view:state.view,version:VERSION,run:run?{phase:run.phase,age:run.age,canAdvance:state.view==='game'&&run.phase==='playing',overlay:run.phase==='decision'?'decision':run.phase==='card'?'card':null,resources:run.res,visibleTimeline:run.timeline.slice(-6).map(x=>({age:x.age,text:x.text,kind:x.kind})),decision:run.currentDecision?{prompt:run.currentDecision.prompt,choices:run.currentDecision.choices.map((x,index)=>({index,text:x.text}))}:null,cards:run.phase==='card'?run.drawOptions.map(x=>({id:x.id,name:x.displayName,effect:x.effectHint})):null,decisionCount:run.decisionCount,ending:run.ending?{title:run.ending.title,age:run.ending.age,facts:run.ending.facts.length}:null}:null})}
+  function renderGameToText(){const run=state.run;return JSON.stringify({view:state.view,version:VERSION,codexUnlocked:state.meta.codex.length,run:run?{phase:run.phase,age:run.age,canAdvance:state.view==='game'&&run.phase==='playing',overlay:run.phase==='decision'?'decision':run.phase==='card'?'card':null,resources:run.res,visibleTimeline:run.timeline.slice(-6).map(x=>({age:x.age,text:x.text,kind:x.kind})),decision:run.currentDecision?{prompt:run.currentDecision.prompt,choices:run.currentDecision.choices.map((x,index)=>({index,text:x.text}))}:null,cards:run.phase==='card'?run.drawOptions.map(x=>({id:x.id,name:x.displayName,effect:x.effectHint})):null,decisionCount:run.decisionCount,ending:run.ending?{title:run.ending.title,age:run.ending.age,facts:run.ending.facts.length}:null}:null})}
   window.render_game_to_text=renderGameToText;
   window.advanceTime=ms=>{const steps=Math.max(1,Math.floor(Number(ms||800)/800));for(let i=0;i<steps;i++)if(state.run?.phase==='playing')advanceOneBeat(true);return renderGameToText()};
 
   function autoFinishCurrent(){
     if(!state.run)return null;const before=simulationMode;simulationMode=true;let guard=0;
     try{while(state.run.phase!=='ended'&&guard++<1000){const run=state.run;if(run.phase==='birth'){run.phase='attributes';continue}if(run.phase==='attributes'){randomAttrs();startCardDraw('innate',0);continue}if(run.phase==='card'){chooseCard(run.drawOptions[0].id);inputLocked=false;continue}if(run.phase==='decision'){chooseDecision(Math.floor(rng()*run.currentDecision.choices.length));inputLocked=false;continue}advanceOneBeat(true)}return{age:state.run.age,decisions:state.run.decisionCount,events:state.run.timeline.length,ending:state.run.ending?.title,guard}}
-    finally{simulationMode=before;render()}
+    finally{simulationMode=before;if(!simulationMode)save(true);render()}
   }
 
   try{

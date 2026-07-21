@@ -1,7 +1,8 @@
 const {chromium}=require('playwright');
 const fs=require('node:fs');const path=require('node:path');
 const baseUrl=process.argv[2]||'http://127.0.0.1:8765/';
-const out=path.resolve(__dirname,'..','test-results','v3.2.3-browser');fs.mkdirSync(out,{recursive:true});
+const out=path.resolve(__dirname,'..','test-results','v3.2.4-browser');fs.mkdirSync(out,{recursive:true});
+const data=JSON.parse(fs.readFileSync(path.resolve(__dirname,'..','data.json'),'utf8'));const cardHints=new Map(Object.values(data.cards).flat().map(card=>[card.id,card.effectHint]));
 const assert=(value,message)=>{if(!value)throw new Error(message)};
 
 (async()=>{
@@ -13,8 +14,9 @@ const assert=(value,message)=>{if(!value)throw new Error(message)};
   assert(!await overflow(),'390 home overflow');const home=await page.locator('main').innerText();assert(!/中国人生模拟|真正的岔路|无音乐|无广告/.test(home),'removed home copy is still visible');assert(home.includes('离线运行 · 自动存档'),'short home footer missing');
   await page.click('[data-act=new]');await page.click('[data-act=toAttrs]');await page.click('[data-act=randomAttrs]');await page.click('[data-act=confirmAttrs]');
   assert(await page.locator('.choice-sheet.card-sheet').count()===1,'innate card bottom sheet missing');assert(await page.locator('[data-card]').count()===3,'three card options expected');
+  const offered=await gameState();assert(offered.run.cards.every(card=>card.effect===cardHints.get(card.id)),'rendered card text differs from generated mechanic description');
   await page.reload({waitUntil:'networkidle'});await page.click('[data-act=continue]');assert(await page.locator('.choice-sheet.card-sheet').count()===1,'card sheet did not survive reload');
-  await page.locator('[data-card]').first().click();await page.waitForTimeout(250);let state=await gameState();assert(state.version==='3.2.3','wrong runtime version');assert(state.run.visibleTimeline.at(-1).kind==='card','selected card did not collapse into timeline');
+  await page.locator('[data-card]').first().click();await page.waitForTimeout(250);let state=await gameState();assert(state.version==='3.2.4','wrong runtime version');assert(state.run.visibleTimeline.at(-1).kind==='card','selected card did not collapse into timeline');
   const idleBefore=JSON.stringify(state.run);await page.waitForTimeout(1300);state=await gameState();assert(JSON.stringify(state.run)===idleBefore,'life advanced without a player tap');
   let sawSameAge=false,sawDecision=false,previousAge=null;
   for(let step=0;step<40&&!sawDecision;step++){
@@ -25,6 +27,6 @@ const assert=(value,message)=>{if(!value)throw new Error(message)};
   const beforeChoice=await gameState();await page.locator('[data-choice]').first().click();await page.waitForTimeout(250);const afterChoice=await gameState();assert(afterChoice.run.phase==='playing'&&afterChoice.run.overlay===null,'decision sheet did not close');assert(afterChoice.run.visibleTimeline.at(-1).kind==='decision','decision did not collapse into timeline');assert(!await page.locator('.compact-result').count(),'legacy result panel is visible');
   assert(sawSameAge,'no separately revealed same-year event observed');await page.screenshot({path:path.join(out,'390-manual-stream.png'),fullPage:true});
   await page.setViewportSize({width:375,height:812});assert(!await overflow(),'375 stream overflow');await page.evaluate(()=>window.__LIFE_DEBUG__.autoFinishCurrent());await page.waitForSelector('.ending-review');
-  const ending=await page.locator('main').innerText();assert(/你活了\s*\d+\s*岁/.test(ending),'ending age missing');const save=await page.evaluate(()=>JSON.parse(localStorage.getItem('life-unloaded-2026-v1')));assert(save.schemaVersion===4&&save.gameVersion==='3.2.3','save version wrong');assert(save.run.decisionCount>=12&&save.run.decisionCount<=18,`decision count ${save.run.decisionCount}`);
-  await page.screenshot({path:path.join(out,'375-ending.png'),fullPage:true});assert(errors.length===0,`console errors: ${errors.join(' | ')}`);console.log(JSON.stringify({version:'3.2.3',age:save.run.age,events:save.run.timeline.length,decisions:save.run.decisionCount,errors},null,2));await browser.close();
+  const ending=await page.locator('main').innerText();assert(/你活了\s*\d+\s*岁/.test(ending),'ending age missing');const save=await page.evaluate(()=>JSON.parse(localStorage.getItem('life-unloaded-2026-v1')));assert(save.schemaVersion===4&&save.gameVersion==='3.2.4','save version wrong');assert(save.meta.codex.length>=1,'matching timeline content did not persist a social-codex unlock');assert(save.run.decisionCount>=12&&save.run.decisionCount<=18,`decision count ${save.run.decisionCount}`);
+  await page.screenshot({path:path.join(out,'375-ending.png'),fullPage:true});assert(errors.length===0,`console errors: ${errors.join(' | ')}`);console.log(JSON.stringify({version:'3.2.4',age:save.run.age,events:save.run.timeline.length,decisions:save.run.decisionCount,codexUnlocked:save.meta.codex.length,errors},null,2));await browser.close();
 })().catch(error=>{console.error(error);process.exit(1)});

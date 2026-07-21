@@ -11,10 +11,10 @@ Original prompt: Implement the approved 《人生尚未加载 · 2026》v3.0 人
 - 2026-07-21: Static data validation passed. Five fixed-seed lives all reached endings without a dead loop, invalid number, age reversal, locked choice set, or ordinary-event duplication. Observed lifespan was 66–95 and cross-life event overlap was 1.8%; this is a five-life smoke observation, not a statistical guarantee.
 - 2026-07-21: Browser smoke passed at 390×844 and 375×812, including the main playable path, save schema, readable `data.json` failure page, resource labels, horizontal overflow, and ending evidence.
 
-## Remaining delivery step
+## Historical v3.0 delivery note（已完成）
 
-- Commit the completed local branch, then publish/open/merge the PR and verify the GitHub Pages root if repository write permission is available.
-- Manual narrative and balance playtesting is intentionally left to the user, per the latest instruction.
+- 原先记录的提交、发布和 GitHub Pages 交付步骤已经完成；当前状态以最新版本章节、当前文件和 GitHub `main` 为准。
+- 主观叙事与数值体验继续由用户人工验收。
 
 ## v3.1.0 少解释，多生活
 
@@ -55,3 +55,11 @@ Original prompt: Implement the approved 《人生尚未加载 · 2026》v3.0 人
 - 2026-07-21: The gameplay screen now fits the dynamic viewport, with the timeline itself handling vertical overflow. Short-screen card, decision, and status sheets can use the full safe height and explicitly support touch scrolling.
 - 2026-07-21: Existing colors, typography, component dimensions, copy, and game behavior were intentionally preserved.
 - 2026-07-21: Responsive Playwright checks passed at 360×773, 360×640, and 320×568. Birth, attributes, timeline, all three card choices, and the last decision choice were visible and unobstructed, with no horizontal overflow or console errors.
+
+## v3.2.4 边界收敛
+
+- 2026-07-22: Aligned the page, runtime, generated data, save export, README, and automated checks on v3.2.4 while preserving `life-unloaded-2026-v1` and schema 4.
+- 2026-07-22: Added data-driven unlock triggers for the existing 30 social-codex entries. Timeline events, decisions, and selected cards can now persist matching unlocks.
+- 2026-07-22: Replaced aspirational card promises with generated descriptions of the mechanics the runtime already applies. Card names, counts, effects, and draw flow remain unchanged.
+- 2026-07-22: Family secrets, desires, relationships, scheduled echoes, and ending-fragment integration are explicitly deferred to a later runtime milestone and were not changed here.
+- 2026-07-22: Static validation passed with 600 events, 72 cards, 30 codex entries, and no failures. One browser life ended at age 69 with 110 timeline rows, 13 decisions, 14 persisted codex unlocks, and no console errors; the gameplay and ending screenshots were visually checked.

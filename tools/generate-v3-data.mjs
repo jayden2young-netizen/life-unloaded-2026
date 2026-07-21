@@ -344,6 +344,24 @@ const blackSwanTexts=[
 ];
 const blackSwans=blackSwanTexts.map(([text,theme],index)=>({id:`swan_${String(index+1).padStart(2,'0')}`,kind:'blackSwan',stage:Object.keys(stages),ageMin:7,ageMax:100,icon:'🪐',text,theme,themes:[theme,'blackSwan'],requirements:{},effects:{},weight:1,contentRevision:3}));
 
+const mechanicHints={
+  network:'关系 +3；关系事件更常出现，一次再加 +2。',
+  evidence:'精神 +1；一次职场、金钱或数字事件再加 +2。',
+  healthUp:'健康 +3；身体压力 -2，一次健康损失减半。',
+  skill:'技能经验 +1，精神 +1。',
+  digital:'数字经验 +2，精神 +1；数字事件更常出现。',
+  save:'现金 +1800；一次金钱或住房损失减半。',
+  relationUp:'关系 +4，孤独压力 -2。',
+  spiritUp:'精神 +4，孤独压力 -1。',
+  truth:'关系 +2，精神 -1；留下诚实记录。',
+  legal:'现金 -800；留下法律意识记录。',
+  gig:'进入灵活就业；现金 +2500，职业压力 +2。',
+  partner:'进入稳定关系，关系 +5。',
+  boundary:'边界经验 +1；精神 +3，关系 -1。',
+  care:'照护责任 +1；关系 +3，精神 -2，家庭压力 +3。',
+  cashUp:'现金 +3200，金钱压力 -1。'
+};
+
 const cardRows={
   innate:[
     ['家里有人','第一次卡在窗口时，多一个能问到话的人。','network'],['说明书读到最后','第一次签复杂合同时，会发现一条小字。','evidence'],
@@ -389,15 +407,32 @@ const cardRows={
   ]
 };
 
-function buildCards(rows,kind){return rows.map(([displayName,effectHint,impact],index)=>({
+function buildCards(rows,kind){return rows.map(([displayName,,impact],index)=>{const effectHint=mechanicHints[impact];if(!effectHint)throw new Error(`Missing mechanic hint for ${impact}`);return{
   id:`${kind}_${String(index+1).padStart(2,'0')}`,kind,displayName,title:displayName,effectHint,text:effectHint,
   omenIcon:icons[(index+(kind==='stage'?4:kind==='adversity'?9:0))%icons.length],mechanic:impact,effects:decisionEffects(impact),contentRevision:3
-}));}
+};});}
 const cards={innate:buildCards(cardRows.innate,'innate'),stage:buildCards(cardRows.stage,'stage'),adversity:buildCards(cardRows.adversity,'adversity')};
+
+const codexTriggers={
+  codex_01:['AI提效','AI接管','AI能力','AI汇报'],codex_02:['组织优化','优化通知','裁员名单'],
+  codex_03:['灵活就业','平台司机'],codex_04:['账面财富','账面涨','账面资产'],codex_05:['稳定','国企'],
+  codex_06:['人情债','担保','欠人情'],codex_07:['情绪价值','认真听过'],codex_08:['学历门槛','高考','志愿表','职校'],
+  codex_09:['副业','接到广告','小生意'],codex_10:['婚恋审计','相亲','彩礼','婚房'],codex_11:['健康资产','体检','住院'],
+  codex_12:['熟人浓度','熟人社会','家里有人'],codex_13:['注意力市场','短视频','直播间','涨粉'],
+  codex_14:['照护责任','陪护','护工','带孙'],codex_15:['风险敞口','内部项目','高风险投资'],
+  codex_16:['工牌颜色','外包工牌','外包合同'],codex_17:['现金流','信用卡账单','工资到账'],
+  codex_18:['家庭边界','边界重新','翻到了你的聊天记录'],codex_19:['长期关系','稳定伴侣','婚姻纪念日'],
+  codex_20:['数字孤独','AI陪你','视频通话'],codex_21:['内部消息','内部项目'],codex_22:['银发经济','养老项目','保健品','退休金'],
+  codex_23:['平台劳动','平台司机','外卖软件'],codex_24:['性别期待','重男轻女','gender'],
+  codex_25:['职业透明化','招聘软件','薪资','考勤表'],codex_26:['组织身份','单位身份','岗位名称','工龄'],
+  codex_27:['迁移成本','搬家','回家乡','异地'],codex_28:['房产流动性','房贷','首付','房本'],
+  codex_29:['成人灰度','短暂陪伴','双方都有家庭'],codex_30:['晚年自主','独居','遗嘱','照护机构']
+};
 
 const output = {
   ...previous,
-  version:'3.2.0',schemaVersion:4,contentRevision:3,
+  version:'3.2.4',gameVersion:'3.2.4',schemaVersion:4,contentRevision:3,
+  codex:previous.codex.map(entry=>({...entry,triggers:codexTriggers[entry.id]||[]})),
   cards,eventChains:[],events:[...annualBeats,...decisions,...echoes,...blackSwans]
 };
 
