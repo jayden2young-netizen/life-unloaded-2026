@@ -51,7 +51,7 @@ const beatCatalog = {
   youth: [
     '宿舍抢到下铺，你把运气用在了开学。','校园卡余额只够一顿，工资明天到账。','专业课老师说行业很好，学长正在转行。','你第一次签合同，最后一页没有人提醒。','合租房押一付三，自由先交了四个月。',
     '你在招聘软件上被已读，没被回复。','实习证明很完整，工资部分保持留白。','同事买错奶茶，你喝到了本月最贵的一杯。','公司发工牌，也发了一份保密协议。','人才补贴到账前，你补了六次材料。',
-    '你第一次涨薪，房东同月更新了租金。','考公群每天有人上岸，也每天有人退群。','你在夜班公交上记住了每个红灯。','旧账号多了几十个关注，你先怀疑机器人。','外包工牌颜色很好认，权限也很好认。',
+    '你第一次涨薪，房东同月更新了租金。','考公群每天有人上岸，也每天有人退群。','你跑完夜里最后一单，回程公交记住了每个红灯。','旧账号多了几十个关注，你先怀疑机器人。','外包工牌颜色很好认，权限也很好认。',
     'AI帮你省下两小时，公司替你安排了三小时新活。','团建要求自愿报名，名单提前打印好了。','你搬家三次，纸箱终于比家具耐用。','恋爱周年遇上加班，你们改点了外卖。','第一次体检异常，复查费比焦虑便宜。',
     '你买了健身年卡，最常去的是洗澡。','父母寄来的腊肉占了冰箱一半。','大学同学结婚，群聊突然恢复活跃。','你在相亲软件填完资料，像投了第二份简历。','副业课程承诺月入过万，先收你三千。',
     '你第一次辞职，门禁卡当晚就失效。','新公司说扁平管理，领导坐在最高一层。','你在凌晨收到面试邀请，岗位写着弹性工作。','信用卡账单比工资更早提醒你。','朋友借钱时先发来一段很长的近况。',
@@ -63,7 +63,7 @@ const beatCatalog = {
   adult: [
     '房贷扣款成功，银行发来温馨祝贺。','公司宣布不裁员，随后取消了岗位名称。','你把副业做成第二份全职，没有第二份睡眠。','婚宴座次排了三晚，朋友只看菜够不够。','孩子入园第一天，家长群先布置了作业。',
     '你第一次腰疼，搜索结果从拉伸跳到重病。','房子账面涨了，附近仍没有买家。','AI接管重复劳动，你开始审核AI的重复错误。','父母体检单拍得很糊，语气倒很轻松。','你的工龄增加，年假申请仍需要勇气。',
-    '平台给你年度账单，感谢你持续消费。','相亲时双方交换了工作、房产和家庭病史。','朋友生二胎后，群里发言只剩凌晨。','你给家里换了智能门锁，老人保留了钥匙。','物业费涨了，电梯照旧停在奇怪楼层。',
+    '平台给你年度接单账单，感谢你持续在线。','相亲时双方交换了工作、房产和家庭病史。','朋友生二胎后，群里发言只剩凌晨。','你给家里换了智能门锁，老人保留了钥匙。','物业费涨了，电梯照旧停在奇怪楼层。',
     '公司搬到更远的园区，称为战略升级。','你终于有了书房，里面主要晾衣服。','体检套餐逐年变贵，检查项目逐年认识你。','父母开始问你退休打算，你还在试用期。','孩子的兴趣班，比你的兴趣更有考勤。',
     '你在工作群撤回一句话，领导已经回复。','老同学做直播，开口先叫家人们。','家里讨论彩礼，计算器比谁都冷静。','你拒绝一次加班，第二天会议提前到八点。','同事离职请奶茶，备注写前程似锦。',
     '你买了保险，条款比合同更懂你的身体。','短视频说三十岁重启人生，课程限时下单。','父母把小病拖成住院，理由是怕花钱。','你第一次请护工，价格按小时解释孝心。','公司组织健康挑战，冠军连续熬夜打卡。',
@@ -93,7 +93,7 @@ const beatCatalog = {
     '你开始清理订阅，发现为焦虑付费多年。','返乡的高铁更快，熟悉的人更少。','社区体检免费，后续项目很有商业热情。','你给父母办完后事，第一次睡到中午。','旧爱发来问候，先确认你有没有认错人。',
     '单位让你带新人，权限却已提前收回。','你把一项技能教给年轻人，对方真的学会了。','楼下新开老年食堂，菜单比外卖诚实。','你第一次拒绝带孙，周末突然变长。','伴侣退休后，你们重新分配厨房。',
     '房产中介说现在适合置换，每个月都这么说。','你整理家庭账本，发现口头借款最耐久。','医生建议适量运动，短视频建议挑战极限。','你在社区合唱团站最后一排，照样跑调。','一位老同事去世，群里第一次没人发表情。',
-    '你开始学习新手机，旧手机负责提供勇气。','孩子远程管理你的账号，你要求保留密码。','你试着做小生意，第一单来自邻居。','退休前最后一次年会，你没参加抽奖。','你把工作邮箱清空，系统提示无法撤销。',
+    '你开始学习新手机，旧手机负责提供勇气。','孩子远程管理你的账号，你要求保留密码。','你的小生意收到今年第一单，仍然来自邻居。','退休前最后一次年会，你没参加抽奖。','你把工作邮箱清空，系统提示无法撤销。',
     '六十五岁生日，平台开始推送养老社区。','你学会用AI修旧照片，父母重新年轻了一次。','老朋友说走就走，最后还是先挂号。','你终于不用请假，却仍在周日晚上焦虑。','退休证办好那天，窗口叫了你三次名字。'
   ],
   elder: [
@@ -135,20 +135,35 @@ function inferTone(text){
   return 'reality';
 }
 
-function inferRequirements(text){
+function inferRequirements(text,stage){
   const req={};
-  if(/孩子|家长群|带孙|孙辈/.test(text))req.facts={childrenMin:1};
-  if(/伴侣|婚姻纪念日|晚年恋爱/.test(text))req.facts={...(req.facts||{}),relationshipAny:['partnered','married']};
-  if(/公司|同事|工牌|工资|领导|部门|单位|年会|项目/.test(text))req.facts={...(req.facts||{}),jobAny:['employed','gig','retired']};
+  const adultChildContext=stages[stage][0]>=19;
+  if(adultChildContext&&/孩子|家长群|带孙|孙辈/.test(text))req.facts={childrenMin:1};
+  if(adultChildContext&&/入园|幼儿园/.test(text))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[2,6]};
+  if(adultChildContext&&/补课|兴趣班|检查作业|家长群/.test(text))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[6,18]};
+  if(adultChildContext&&/孩子毕业|子女毕业/.test(text))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[18,30]};
+  if(adultChildContext&&/带孙|孙辈/.test(text))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[25,60]};
+  if(/伴侣|婚姻纪念日|晚年恋爱/.test(text))req.facts={...(req.facts||{}),relationshipAny:['dating','partnered','married']};
+  if(/^公司|^领导|^单位|同事|工牌|部门|年会|团建|绩效|年假|门禁卡|试用期|工资到账|第一次涨薪/.test(text))req.facts={...(req.facts||{}),jobAny:['employed']};
+  if(/接单|跑单|灵活就业/.test(text))req.facts={...(req.facts||{}),jobAny:['gig']};
+  if(/你把副业做成第二份全职|你的小生意/.test(text))req.facts={...(req.facts||{}),jobAny:['selfEmployed']};
+  if(/招聘软件|面试邀请|招聘网站|再就业培训|求职/.test(text))req.facts={...(req.facts||{}),jobAny:['unemployed']};
+  if(/请护工，价格按小时|父母住院排班/.test(text))req.facts={...(req.facts||{}),jobAny:['careLeave']};
+  if(stage==='youth'&&/校园卡|宿舍|专业课|期末|社团/.test(text))req.facts={...(req.facts||{}),jobAny:['student']};
+  if(/退休后|养老金|退休账户/.test(text))req.facts={...(req.facts||{}),jobAny:['retired']};
   return req;
 }
 
+function intensityFor(index){return index<25?'low':index<43?'medium':'high'}
+
 function beatEffects(theme,index){
-  if(index%3!==0)return {};
+  const intensity=intensityFor(index);
+  const scale=intensity==='low'?1:intensity==='medium'?2:4;
+  const cash=intensity==='low'?1200:intensity==='medium'?6000:24000;
   const map={
-    health:{resources:{health:index%2?-1:1},pressures:{body:index%2?1:-1}},
-    money:{resources:{cash:index%2?-300:300},pressures:{money:index%2?1:-1}},
-    relationship:{resources:{relation:index%2?1:-1},pressures:{family:index%2?-1:1}},
+    health:{resources:{health:index%2?-scale:scale},pressures:{body:index%2?scale:-scale}},
+    money:{resources:{cash:index%2?-cash:cash},pressures:{money:index%2?scale:-scale}},
+    relationship:{relationships:{network:index%2?scale:-scale},pressures:{family:index%2?-scale:scale}},
     digital:{lifeFacts:{digitalExperience:1}}, career:{lifeFacts:{workExperience:1}},
     education:{lifeFacts:{learningExperience:1}}, family:{resources:{relation:1}},
     peer:{resources:{relation:1}}, city:{pressures:{money:1}}, elder:{resources:{spirit:1}},
@@ -173,7 +188,8 @@ const annualBeats = Object.entries(beatCatalog).flatMap(([stage,texts])=>texts.m
   return {
     id,kind:'beat',stage:[stage],ageMin,ageMax,
     icon:icons[(index+Object.keys(stages).indexOf(stage)*3)%icons.length],text,theme,themes:[theme],tone:inferTone(text),
-    requirements:inferRequirements(text),effects:beatEffects(theme,index),weight:10+(index%4),contentRevision:3
+    intensity:intensityFor(index),tags:[theme,stage],relevantAttrs:theme==='health'?['physique']:theme==='career'?['ambition','stability']:theme==='relationship'?['social']:theme==='education'?['intellect']:theme==='money'?['stability','ambition']:[],
+    requirements:inferRequirements(text,stage),effects:beatEffects(theme,index),weight:10+(index%4),contentRevision:4
   };
 }));
 
@@ -182,24 +198,58 @@ const O=(text,result,hint,impact)=>({text,result,hint,impact});
 const D=(stage,ageMin,ageMax,prompt,options,theme,echo,major=false)=>({stage,ageMin,ageMax,prompt,options,theme,echo,major});
 
 const impactEffects={
-  cashDown:{resources:{cash:-2500},pressures:{money:2}}, cashUp:{resources:{cash:3200},pressures:{money:-1}},
-  relationUp:{resources:{relation:4},pressures:{loneliness:-2}}, relationDown:{resources:{relation:-5},pressures:{family:2}},
+  cashDown:{resources:{cash:-6000},pressures:{money:4}}, cashUp:{resources:{cash:8000},pressures:{money:-3}},
+  relationUp:{relationships:{network:5},pressures:{loneliness:-4}}, relationDown:{relationships:{network:-6},pressures:{family:4}},
   spiritUp:{resources:{spirit:4},pressures:{loneliness:-1}}, spiritDown:{resources:{spirit:-4},pressures:{loneliness:1}},
   healthDown:{resources:{health:-4},pressures:{body:3}}, healthUp:{resources:{health:3},pressures:{body:-2}},
   riskUp:{pressures:{money:2,career:2},lifeFacts:{riskExposure:1}}, skill:{lifeFacts:{skills:1},resources:{spirit:1}},
-  study:{lifeFacts:{educationProgress:1},pressures:{career:-1}}, career:{lifeFacts:{jobStatus:'employed',workExperience:2},resources:{cash:4500}},
-  gig:{lifeFacts:{jobStatus:'gig',workExperience:1},resources:{cash:2500},pressures:{career:2}}, quit:{lifeFacts:{jobStatus:'unemployed'},resources:{cash:-1800},pressures:{career:3}},
-  move:{lifeFacts:{moved:1},resources:{cash:-3000},pressures:{family:1}}, stay:{lifeFacts:{stayed:1},pressures:{career:1}},
-  partner:{lifeFacts:{relationship:'partnered'},resources:{relation:5}}, single:{lifeFacts:{relationship:'single'},resources:{spirit:2}},
-  child:{lifeFacts:{children:1},resources:{cash:-5000,relation:4},pressures:{family:3}}, noChild:{lifeFacts:{childfree:1},resources:{spirit:2},pressures:{family:1}},
-  debt:{lifeFacts:{debt:1},resources:{cash:8000,debt:8000},pressures:{money:5}}, housing:{lifeFacts:{housing:'owned',debt:1},resources:{cash:-8000,assets:120000,debt:90000},pressures:{money:4}},
-  boundary:{lifeFacts:{boundaries:1},resources:{relation:-1,spirit:3}}, truth:{lifeFacts:{honesty:1},resources:{relation:2,spirit:-1}},
+  study:{lifeFacts:{educationProgress:1},pressures:{career:-2}}, career:{employment:{status:'employed'},lifeFacts:{workExperience:2},resources:{cash:12000}},
+  gig:{employment:{status:'gig'},lifeFacts:{workExperience:1},resources:{cash:6000},pressures:{career:4}}, quit:{employment:{status:'unemployed'},resources:{cash:-5000},pressures:{career:6}},
+  move:{lifeFacts:{moved:1},resources:{cash:-8000},pressures:{family:2}}, stay:{lifeFacts:{stayed:1},pressures:{career:2}},
+  partner:{relationships:{partnerStatus:'partnered',partnerBond:8}}, single:{relationships:{partnerStatus:'none'},resources:{spirit:2}},
+  child:{relationships:{addChild:1,childBond:6},resources:{cash:-12000},pressures:{family:5}}, noChild:{flagsAdd:['childfree'],resources:{spirit:2},pressures:{family:2}},
+  debt:{resources:{cash:15000,debt:15000},pressures:{money:8}}, housing:{lifeFacts:{housing:'owned'},resources:{cash:-20000,assets:180000,debt:120000},pressures:{money:7}},
+  boundary:{lifeFacts:{boundaries:1},relationships:{network:-1},resources:{spirit:3}}, truth:{lifeFacts:{honesty:1},relationships:{network:2},resources:{spirit:-1}},
   lie:{lifeFacts:{lies:1},resources:{spirit:-1},pressures:{family:1}}, care:{lifeFacts:{careDuty:1},resources:{relation:3,spirit:-2},pressures:{family:3}},
   digital:{lifeFacts:{digitalExperience:2},resources:{spirit:1}}, legal:{lifeFacts:{legalAwareness:1},resources:{cash:-800},pressures:{career:-1}},
-  save:{lifeFacts:{savings:1},resources:{cash:1800}}, spend:{lifeFacts:{consumption:1},resources:{cash:-1800,spirit:2}},
+  save:{lifeFacts:{savings:1},resources:{cash:4000}}, spend:{lifeFacts:{consumption:1},resources:{cash:-4000,spirit:2}},
   network:{lifeFacts:{network:1},resources:{relation:3}}, evidence:{lifeFacts:{evidenceHabit:1},resources:{spirit:1}},
   compromise:{lifeFacts:{compromises:1},resources:{relation:2,spirit:-2}}, refuse:{lifeFacts:{refusals:1},resources:{spirit:2,relation:-2}}
 };
+
+const desireEffects={
+  cashDown:{wealth:-5,security:-4},cashUp:{wealth:6,security:4},relationUp:{love:6,familyBelonging:3},relationDown:{love:-6,familyBelonging:-3},
+  spiritUp:{peace:5},spiritDown:{peace:-5},healthDown:{body:-6,peace:-2},healthUp:{body:6,peace:3},riskUp:{exploration:4,security:-5},
+  skill:{achievement:6,recognition:2},study:{achievement:5,exploration:2},career:{achievement:6,status:4},gig:{freedom:5,stability:-4},quit:{freedom:3,stability:-6},
+  move:{exploration:6,familyBelonging:-2},stay:{stability:5,exploration:-2},partner:{love:8},single:{freedom:4,love:-3},child:{familyBelonging:7,care:6,freedom:-3},
+  noChild:{freedom:7,familyBelonging:-2},debt:{security:-7},housing:{security:8,freedom:-3},boundary:{freedom:7,familyBelonging:-2},truth:{love:3,peace:2},
+  lie:{peace:-4},care:{care:7,achievement:-2},digital:{exploration:3,achievement:2},legal:{security:3},save:{security:5,wealth:3},spend:{peace:3,wealth:-3},
+  network:{recognition:3,love:3},evidence:{security:3},compromise:{familyBelonging:3,freedom:-3},refuse:{freedom:5,familyBelonging:-3}
+};
+
+function relationshipTarget(prompt){
+  if(/伴侣|婚姻|恋人|喜欢的人|前任|现任|旧爱|共同生活/.test(prompt))return 'partnerBond';
+  if(/孩子|子女|带孙|孙辈/.test(prompt))return 'childBond';
+  if(/父母|母亲|父亲|家里/.test(prompt))return 'parentsBond';
+  return 'network';
+}
+
+function decisionRequirements(row){
+  const req={};const prompt=row.prompt;
+  if(/伴侣|婚姻纪念日|恋人|现任/.test(prompt))req.facts={relationshipAny:['dating','partnered','married']};
+  if(/一位新朋友想和你共同生活/.test(prompt))req.facts={relationshipAny:['none','divorced','widowed']};
+  if(/旧爱重新联系|前任深夜/.test(prompt))req.facts={relationshipAny:['dating','partnered','married']};
+  if(/婚房还差/.test(prompt))req.facts={relationshipAny:['dating','partnered']};
+  if(/孩子|子女/.test(prompt)&&!/想要孩子/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1};
+  if(/孩子.*兴趣班|孩子.*补习|补习.*孩子/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[6,18]};
+  if(/孩子毕业/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[18,30]};
+  if(/带孙/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1,childAgeAny:[25,60]};
+  if(/伴侣想要孩子/.test(prompt))req.facts={...(req.facts||{}),relationshipAny:['partnered','married'],childrenMax:0,flagsNone:['childfree']};
+  if(/^公司|^领导|^单位|裁员名单|外包合同|劝退自己带出的徒弟/.test(prompt))req.facts={...(req.facts||{}),jobAny:['employed']};
+  if(/退休后有人请你/.test(prompt))req.facts={...(req.facts||{}),jobAny:['retired']};
+  if(/成年子女要你帮忙付首付|卖房搬去同住/.test(prompt))req.facts={...(req.facts||{}),childrenMin:1,housingAny:['owned']};
+  return req;
+}
 
 const decisionRows=[
   D('childhood',7,9,'饭卡丢了，下午还有两节课。',[O('找同桌借五块','同桌把饭卡推过来，让你下次请。','关系↑','network'),O('去窗口挂失','旧卡停了，补卡费花掉零食钱。','现金↓','cashDown'),O('饿到放学','最后一节课，你只听见自己的肚子。','精神↓','spiritDown')],'peer','多年后，同桌还记得那顿午饭。'),
@@ -312,37 +362,86 @@ const decisionRows=[
 
 if(decisionRows.length!==100)throw new Error(`Expected 100 decisions, got ${decisionRows.length}`);
 
-function decisionEffects(impact){return structuredClone(impactEffects[impact]||{});}
+function decisionEffects(impact,row){
+  const effects=structuredClone(impactEffects[impact]||{});
+  effects.outcomeTagsAdd=[impact,row.theme];
+  effects.desires=structuredClone(desireEffects[impact]||{});
+  const target=relationshipTarget(row.prompt);
+  if(effects.relationships?.network&&target!=='network'){
+    effects.relationships[target]=(effects.relationships[target]||0)+effects.relationships.network;
+    delete effects.relationships.network;
+  }
+  if(impact==='single'&&!/伴侣|恋人|喜欢的人|前任|分开住|共同生活/.test(row.prompt)){
+    delete effects.relationships;
+    effects.resources={...(effects.resources||{}),spirit:4};
+    effects.outcomeTagsAdd=[row.theme==='career'?'careerExit':'independent','peace'];
+    effects.desires={peace:5,stability:-2};
+  }
+  return effects;
+}
 
 const decisions=decisionRows.map((row,index)=>{
   const id=`decision_${String(index+1).padStart(3,'0')}`;
   return {id,kind:'decision',stage:[row.stage],ageMin:row.ageMin,ageMax:row.ageMax,icon:stageMeta[row.stage].icon,
     title:row.prompt.split('，')[0].replace(/[。？！]/g,''),prompt:row.prompt,text:row.prompt,theme:row.theme,themes:[row.theme],
-    stakes:row.major?'major':'medium',requirements:{},weight:14+(index%5),contentRevision:3,
+    stakes:row.major?'major':'medium',intensity:row.major?'high':'medium',tags:[row.theme],relevantAttrs:row.theme==='career'?['ambition','stability']:row.theme==='relationship'?(/喜欢的人|一位新朋友/.test(row.prompt)?['social','looks']:['social']):row.theme==='health'?['physique']:row.theme==='education'?['intellect']:row.theme==='money'?['stability','ambition']:[],requirements:decisionRequirements(row),weight:14+(index%5),contentRevision:4,
     choices:row.options.map((option,choiceIndex)=>({id:`${id}_c${choiceIndex+1}`,text:option.text,resultText:option.result,
-      consequenceHints:[option.hint],effects:decisionEffects(option.impact),memoryKey:`${id}_c${choiceIndex+1}`})),echoText:row.echo};
+      consequenceHints:[option.hint],effects:decisionEffects(option.impact,row),memoryKey:`${id}_c${choiceIndex+1}`})),echoText:row.echo};
 });
 
-const echoes=decisions.slice(0,80).map((decision,index)=>({
-  id:`echo_${String(index+1).padStart(3,'0')}`,kind:'echo',stage:[decisionRows[index].stage],
-  ageMin:Math.min(100,decision.ageMin+6),ageMax:Math.min(105,decision.ageMax+32),icon:'↩️',text:decision.echoText,
-  theme:decision.theme,themes:[decision.theme,'echo'],requirements:{memoriesAny:decision.choices.map(choice=>choice.memoryKey)},
-  effects:index%3===0?{resources:{spirit:index%2?2:-1}}:{},weight:12,contentRevision:3
-}));
+const echoes=decisions.slice(0,80).map((decision,index)=>{
+  const ageMin=Math.min(100,decision.ageMin+4),ageMax=Math.min(105,decision.ageMax+24);
+  const echoStages=Object.entries(stages).filter(([,range])=>Math.max(range[0],ageMin)<=Math.min(range[1],ageMax)).map(([stage])=>stage);
+  const echoId=`echo_${String(index+1).padStart(3,'0')}`;
+  for(const choice of decision.choices)choice.effects.scheduleEcho={eventId:echoId,delayMin:4,delayMax:Math.max(6,Math.min(18,ageMax-decision.ageMin)),chance:decision.stakes==='major'?1:.55};
+  return {id:echoId,sourceDecisionId:decision.id,kind:'echo',stage:echoStages,
+    ageMin,ageMax,icon:'↩️',text:decision.echoText,
+    theme:decision.theme,themes:[decision.theme,'echo'],intensity:decision.stakes==='major'?'high':'medium',requirements:{memoriesAny:decision.choices.map(choice=>choice.memoryKey)},
+    choiceOutcomes:Object.fromEntries(decision.choices.map((choice,choiceIndex)=>[choice.memoryKey,{text:`${decision.echoText}${choiceIndex===0?' 当年的决定先给出了回报。':choiceIndex===1?' 代价和余地一起留下。':' 你仍认得当时为何这样选。'}`,effects:{resources:{spirit:choiceIndex===0?3:choiceIndex===1?1:-2},desires:choice.effects.desires,outcomeTagsAdd:['echo',...choice.effects.outcomeTagsAdd]}}])),
+    effects:{resources:{spirit:index%2?2:-1},pressures:{loneliness:index%2?-1:1}},weight:12,contentRevision:4};
+});
 
-const blackSwanTexts=[
-  ['一张旧彩票中了小奖，兑奖点已经搬家。','money'],['暴雨淹了车库，最先漂起来的是健身器材。','weather'],
-  ['公司老板突然失联，工作群仍要求日报。','career'],['你被陌生账号认成网红，粉丝多了三百。','digital'],
-  ['小区拆迁传闻成真，亲戚开始主动联系。','house'],['航班取消，你和陌生人拼车成了朋友。','relationship'],
-  ['一项旧技能突然成了行业稀缺能力。','career'],['体检机器故障，复查反而发现了早期问题。','health'],
-  ['旧房墙里掉出一封没有寄出的信。','family'],['你随手拍的视频被转了十万次。','digital'],
-  ['中奖短信是真的，你先当骗子删掉了。','money'],['社区停电一晚，邻居第一次互相认识。','relationship'],
-  ['多年没卖掉的收藏突然有人高价求购。','money'],['一场行业禁令让你的岗位一夜消失。','career'],
-  ['你误入一场婚宴，吃完才发现没人认识。','absurd'],['老同学成了窗口负责人，也只能让你取号。','institution'],
-  ['AI把你的名字写进表彰材料，事迹属于别人。','digital'],['家族群误发遗产表格，春节提前进入结算。','family'],
-  ['直播间买的树苗真的结果，全小区来拍照。','light'],['一场小病让你避开了那趟出事的车。','health']
+const decisionById=new Map(decisions.map(decision=>[decision.id,decision]));
+function setEmployment(id,choiceIndex,status,career,sector){const effects=decisionById.get(id).choices[choiceIndex].effects;effects.employment={...(effects.employment||{}),status,...(career?{career}:{}),...(sector?{sector}:{})};effects.outcomeTagsAdd=[...new Set([...(effects.outcomeTagsAdd||[]),status])];}
+function setPartner(id,choiceIndex,status,bond){const effects=decisionById.get(id).choices[choiceIndex].effects;effects.relationships={...(effects.relationships||{}),partnerStatus:status,...(bond===undefined?{}:{partnerBond:bond})};effects.outcomeTagsAdd=[...new Set([...(effects.outcomeTagsAdd||[]),status])];}
+
+setEmployment('decision_036',0,'employed');setEmployment('decision_036',1,'unemployed','备考与求职','public');setEmployment('decision_036',2,'employed');
+setEmployment('decision_042',0,'selfEmployed','合伙小店','retail');setEmployment('decision_042',1,'gig','周末店务','retail');
+setEmployment('decision_050',0,'selfEmployed','自主经营','independent');
+setEmployment('decision_051',0,'careLeave');setEmployment('decision_064',0,'careLeave');
+setEmployment('decision_079',0,'retired','退休生活','retired');setEmployment('decision_079',1,'employed');setEmployment('decision_079',2,'gig','顾问','consulting');
+delete decisionById.get('decision_060').choices[2].effects.employment;decisionById.get('decision_060').choices[2].effects.outcomeTagsAdd=['cashUp','housing'];
+
+setPartner('decision_024',0,'dating',8);setPartner('decision_024',1,'none');
+setPartner('decision_041',0,'partnered',4);setPartner('decision_041',2,'separated',-5);
+const exReply=decisionById.get('decision_044').choices[0].effects;exReply.relationships={partnerBond:-5};exReply.outcomeTagsAdd=['lie','relationship'];
+setPartner('decision_045',0,'married',5);setPartner('decision_045',1,'married',6);setPartner('decision_045',2,'separated',-8);
+setPartner('decision_053',2,'divorced',-10);setPartner('decision_066',0,'separated',-4);setPartner('decision_066',2,'divorced',-10);setPartner('decision_084',2,'separated',-4);
+
+const S=(band,ageMin,ageMax,text,theme,effects,requirements={})=>({band,ageMin,ageMax,text,theme,effects,requirements});
+const blackSwanRows=[
+  S('work',23,65,'一张旧彩票中了小奖，兑奖点已经搬家。','money',{resources:{cash:12000},pressures:{money:-5},outcomeTagsAdd:['swanGain','cashUp']}),
+  S('elder',45,90,'暴雨淹了车库，最先漂起来的是健身器材。','weather',{resources:{assets:-30000},pressures:{money:8},outcomeTagsAdd:['swanLoss','weather']},{facts:{housingAny:['owned']}}),
+  S('work',23,60,'公司老板突然失联，工作群仍要求日报。','career',{employment:{status:'unemployed'},resources:{cash:-20000},pressures:{career:12,money:8},outcomeTagsAdd:['swanLoss','quit']},{facts:{jobAny:['employed']}}),
+  S('youth',18,30,'你被陌生账号认成网红，私信和骚扰一起多了三百条。','digital',{relationships:{network:-6},lifeFacts:{digitalExperience:3},resources:{spirit:-8},pressures:{loneliness:8},outcomeTagsAdd:['swanLoss','digital']}),
+  S('work',25,65,'小区拆迁传闻成真，亲戚开始主动联系。','house',{resources:{cash:40000,assets:160000},relationships:{parentsBond:-6},pressures:{family:8},outcomeTagsAdd:['swanMixed','housing']},{facts:{housingAny:['owned']}}),
+  S('youth',18,30,'航班取消，你和陌生人拼车成了朋友。','relationship',{relationships:{network:10},resources:{spirit:4},outcomeTagsAdd:['swanGain','network']}),
+  S('work',23,65,'一项旧技能突然成了行业稀缺能力。','career',{employment:{status:'employed'},resources:{cash:24000},pressures:{career:-8},outcomeTagsAdd:['swanGain','skill']},{facts:{skillsMin:1,jobAny:['employed','gig','selfEmployed','unemployed']}}),
+  S('work',25,65,'体检机器故障，复查反而发现了早期问题。','health',{resources:{health:12,spirit:-3},pressures:{body:-10},outcomeTagsAdd:['swanMixed','healthUp']}),
+  S('childhood',7,17,'旧房墙里掉出一封没有寄出的信。','family',{relationships:{parentsBond:8},desires:{familyBelonging:6},resources:{spirit:-2},outcomeTagsAdd:['swanMixed','family']}),
+  S('youth',18,30,'你随手拍的视频被转了十万次。','digital',{resources:{cash:15000,spirit:6},lifeFacts:{digitalExperience:4},outcomeTagsAdd:['swanGain','recognition']}),
+  S('work',23,65,'中奖短信是真的，你先当骗子删掉了。','money',{resources:{spirit:-5},pressures:{money:4},desires:{wealth:-4},outcomeTagsAdd:['swanLoss','evidence']}),
+  S('childhood',7,17,'社区停电一晚，邻居第一次互相认识。','relationship',{relationships:{network:8},resources:{spirit:3},outcomeTagsAdd:['swanGain','network']}),
+  S('elder',45,90,'多年没卖掉的收藏突然有人高价求购。','money',{resources:{cash:45000},pressures:{money:-10},outcomeTagsAdd:['swanGain','cashUp']}),
+  S('work',23,60,'一场行业禁令让你的岗位一夜消失。','career',{employment:{status:'unemployed'},resources:{cash:-30000},pressures:{career:15,money:10},outcomeTagsAdd:['swanLoss','quit']},{facts:{jobAny:['employed']}}),
+  S('youth',18,30,'你误入一场婚宴，吃完才发现没人认识。','absurd',{relationships:{network:4},resources:{spirit:5},outcomeTagsAdd:['swanGain','light']}),
+  S('elder',45,90,'老同学成了窗口负责人，也只能让你取号。','institution',{resources:{spirit:-6},pressures:{body:4},lifeFacts:{evidenceHabit:1},outcomeTagsAdd:['swanLoss','institution']}),
+  S('work',23,65,'AI把你的名字写进表彰材料，事迹属于别人。','digital',{resources:{spirit:-8},pressures:{career:6},desires:{recognition:-8},outcomeTagsAdd:['swanLoss','digital']}),
+  S('elder',55,95,'伴侣突然离世，家里安静得连钟声都变大。','relationship',{relationships:{partnerStatus:'widowed',partnerBond:-15},resources:{spirit:-12},pressures:{family:12,loneliness:15},outcomeTagsAdd:['swanLoss','widowed']},{facts:{relationshipAny:['partnered','married']}}),
+  S('youth',18,30,'直播间买的树苗真的结果，全小区来拍照。','light',{relationships:{network:6},resources:{spirit:8},outcomeTagsAdd:['swanGain','light']}),
+  S('elder',45,95,'一场小病让你避开了那趟出事的车。','health',{resources:{health:-5,spirit:8},pressures:{body:5},outcomeTagsAdd:['swanMixed','health']})
 ];
-const blackSwans=blackSwanTexts.map(([text,theme],index)=>({id:`swan_${String(index+1).padStart(2,'0')}`,kind:'blackSwan',stage:Object.keys(stages),ageMin:7,ageMax:100,icon:'🪐',text,theme,themes:[theme,'blackSwan'],requirements:{},effects:{},weight:1,contentRevision:3}));
+const blackSwans=blackSwanRows.map((row,index)=>({id:`swan_${String(index+1).padStart(2,'0')}`,kind:'blackSwan',stage:Object.entries(stages).filter(([,range])=>Math.max(range[0],row.ageMin)<=Math.min(range[1],row.ageMax)).map(([stage])=>stage),ageMin:row.ageMin,ageMax:row.ageMax,icon:'🪐',text:row.text,theme:row.theme,themes:[row.theme,'blackSwan'],swanBand:row.band,intensity:'high',requirements:row.requirements,effects:row.effects,weight:1,contentRevision:4}));
 
 const mechanicHints={
   network:'关系 +3；关系事件更常出现，一次再加 +2。',
@@ -350,16 +449,16 @@ const mechanicHints={
   healthUp:'健康 +3；身体压力 -2，一次健康损失减半。',
   skill:'技能经验 +1，精神 +1。',
   digital:'数字经验 +2，精神 +1；数字事件更常出现。',
-  save:'现金 +1800；一次金钱或住房损失减半。',
-  relationUp:'关系 +4，孤独压力 -2。',
+  save:'现金 +4000；一次金钱或住房损失减半。',
+  relationUp:'关系 +5，孤独压力 -4。',
   spiritUp:'精神 +4，孤独压力 -1。',
   truth:'关系 +2，精神 -1；留下诚实记录。',
   legal:'现金 -800；留下法律意识记录。',
-  gig:'进入灵活就业；现金 +2500，职业压力 +2。',
-  partner:'进入稳定关系，关系 +5。',
+  gig:'进入灵活就业；现金 +6000，职业压力 +4。',
+  partner:'进入稳定关系，伴侣关系 +8。',
   boundary:'边界经验 +1；精神 +3，关系 -1。',
   care:'照护责任 +1；关系 +3，精神 -2，家庭压力 +3。',
-  cashUp:'现金 +3200，金钱压力 -1。'
+  cashUp:'现金 +8000，金钱压力 -3。'
 };
 
 const cardRows={
@@ -408,32 +507,72 @@ const cardRows={
 };
 
 function buildCards(rows,kind){return rows.map(([displayName,,impact],index)=>{const effectHint=mechanicHints[impact];if(!effectHint)throw new Error(`Missing mechanic hint for ${impact}`);return{
-  id:`${kind}_${String(index+1).padStart(2,'0')}`,kind,displayName,title:displayName,effectHint,text:effectHint,
-  omenIcon:icons[(index+(kind==='stage'?4:kind==='adversity'?9:0))%icons.length],mechanic:impact,effects:decisionEffects(impact),contentRevision:3
+  id:`${kind}_${String(index+1).padStart(2,'0')}`,displayName,effectHint,
+  omenIcon:icons[(index+(kind==='stage'?4:kind==='adversity'?9:0))%icons.length],mechanic:impact,effects:decisionEffects(impact,{theme:'card',prompt:''}),contentRevision:4
 };});}
 const cards={innate:buildCards(cardRows.innate,'innate'),stage:buildCards(cardRows.stage,'stage'),adversity:buildCards(cardRows.adversity,'adversity')};
 
-const codexTriggers={
-  codex_01:['AI提效','AI接管','AI能力','AI汇报'],codex_02:['组织优化','优化通知','裁员名单'],
-  codex_03:['灵活就业','平台司机'],codex_04:['账面财富','账面涨','账面资产'],codex_05:['稳定','国企'],
-  codex_06:['人情债','担保','欠人情'],codex_07:['情绪价值','认真听过'],codex_08:['学历门槛','高考','志愿表','职校'],
-  codex_09:['副业','接到广告','小生意'],codex_10:['婚恋审计','相亲','彩礼','婚房'],codex_11:['健康资产','体检','住院'],
-  codex_12:['熟人浓度','熟人社会','家里有人'],codex_13:['注意力市场','短视频','直播间','涨粉'],
-  codex_14:['照护责任','陪护','护工','带孙'],codex_15:['风险敞口','内部项目','高风险投资'],
-  codex_16:['工牌颜色','外包工牌','外包合同'],codex_17:['现金流','信用卡账单','工资到账'],
-  codex_18:['家庭边界','边界重新','翻到了你的聊天记录'],codex_19:['长期关系','稳定伴侣','婚姻纪念日'],
-  codex_20:['数字孤独','AI陪你','视频通话'],codex_21:['内部消息','内部项目'],codex_22:['银发经济','养老项目','保健品','退休金'],
-  codex_23:['平台劳动','平台司机','外卖软件'],codex_24:['性别期待','重男轻女','gender'],
-  codex_25:['职业透明化','招聘软件','薪资','考勤表'],codex_26:['组织身份','单位身份','岗位名称','工龄'],
-  codex_27:['迁移成本','搬家','回家乡','异地'],codex_28:['房产流动性','房贷','首付','房本'],
-  codex_29:['成人灰度','短暂陪伴','双方都有家庭'],codex_30:['晚年自主','独居','遗嘱','照护机构']
+function tagAdvantage(text){if(/关系|有人/.test(text))return'support';if(/规则|证据/.test(text))return'evidence';if(/经验|技能/.test(text))return'skill';if(/波动|承受/.test(text))return'resilience';return'resource'}
+function tagRisk(text){if(/边界|控制/.test(text))return'family';if(/现金流|债|钱/.test(text))return'money';if(/照护/.test(text))return'care';if(/组织|评价/.test(text))return'career';return'pressure'}
+const familyArchetypes=previous.familyArchetypes.map(({chainAffinity,...family})=>({...family,advantageTags:family.advantages.map(tagAdvantage),riskTags:family.hiddenRisks.map(tagRisk),contentRevision:4}));
+
+function secretTheme(secret){if(/债|现金流|生意|担保/.test(secret.name))return'money';if(/房|土地|宅基地|产权/.test(secret.name))return'house';if(/病|健康/.test(secret.name))return'health';return'family'}
+const familySecrets=previous.familySecrets.map((source,index)=>{
+  const secret=index===43?{id:'secret_44',name:'迟到的收养证明',age:28,text:'一张迟到的证明解释了家里多年不肯说清的称呼。',effects:{resources:{cash:-6000},hidden:{familyBurden:5,selfEsteem:-3},desires:{security:-4,familyBelonging:6}}}:source;
+  const resources={...(secret.effects?.resources||{})},relation=Number(resources.relation||0);delete resources.relation;
+  if(Math.abs(Number(resources.assets||0))>=50000&&Math.abs(Number(resources.assets))<80000)resources.assets=Math.sign(resources.assets)*80000;
+  if(Math.abs(Number(resources.debt||0))>=50000&&Math.abs(Number(resources.debt))<80000)resources.debt=Math.sign(resources.debt)*80000;
+  const debt=Number(resources.debt||0),cash=Number(resources.cash||0),familyClasses=debt>0||Number(resources.assets||0)>0?['middle','affluent']:cash<0?['working','precarious']:['middle','working','affluent','precarious'];
+  return {...secret,age:Math.max(15,Math.min(65,secret.age)),icon:'🔒',theme:secretTheme(secret),familyClasses,contentRevision:4,effects:{resources,relationships:{parentsBond:relation},pressures:{family:Math.max(-3,Math.min(10,Number(secret.effects?.hidden?.familyBurden||0))),money:debt||cash<0?6:-1},desires:{...(secret.effects?.desires||{})},outcomeTagsAdd:['familySecret',secretTheme(secret)]}};
+});
+
+const endingProfiles=[
+  ['autonomy',['boundary','refuse']],['family_care',['care','family']],['lasting_love',['partner','relationUp']],['rebuilt_love',['single','partner']],
+  ['childfree',['noChild','boundary']],['care_sacrifice',['care','compromise']],['organization_life',['career','stay']],['reinvention',['quit','skill']],
+  ['gig_survival',['gig','cashUp']],['risk_taker',['riskUp','cashUp']],['debt_recovery',['debt','save']],['rooted_home',['housing','stay']],
+  ['migration',['move','skill']],['health_first',['healthUp','boundary']],['lifelong_learning',['study','skill']],['survivor',['healthDown','recovery']]
+].map(([id,signals])=>({id,signals,minSignals:2}));
+const endingTitleCatalog={
+  autonomy:['终于不再证明','边界以内的人生','把钥匙留在自己手里','没有按他们写的走'],
+  family_care:['一家人的长期值班','把饭桌留到最后','照护没有标准答案','总有人记得你回过家'],
+  lasting_love:['两把没有收回的钥匙','菜价代替过很多问候','一起把晚饭吃完','关系没有按时下班'],
+  rebuilt_love:['第二次学会靠近','旧门关上以后','后来的人仍然来了','独自生活不是结案'],
+  childfree:['没有复制的人生','把时间还给自己','家庭还有别的写法','不生也不是空白'],
+  care_sacrifice:['排班表里的人生','先照顾完所有人','你的时间被很多人用过','爱留下了工时'],
+  organization_life:['工牌服务终身会员','在组织里慢慢变旧','流程正确的一生','退休邮件抄送全员'],
+  reinvention:['被裁以后仍有名字','从零开始不是归零','旧技能重新报价','下一份工作没有清空你'],
+  gig_survival:['没有工位也在上班','自由职业不太自由','平台之外还有生活','现金流自己打卡'],
+  risk_taker:['把筹码留在桌上','风险也曾支付利息','没有稳赚的人生','下注之后仍要生活'],
+  debt_recovery:['账单终于不再追赶','把欠下的年份还完','债务协商成功案例','现金流重新学会呼吸'],
+  rooted_home:['房本之外的地址','住下也是一种选择','钥匙比地图更重','最后仍认得回家的路'],
+  migration:['行李箱没有白收','换过城市也换过自己','地址变了很多次','离开与回来之间'],
+  health_first:['身体终于拥有投票权','把睡眠排进日程','没有继续硬撑','活着不是绩效'],
+  lifelong_learning:['旧专业留下的余料','一直在重新入门','学会的东西带得走','人生没有毕业答辩'],
+  survivor:['坏运没有拿走全部','危机以后仍有日常','从谷底保留一件东西','没有被那一年定义']
 };
+const endingTitles=endingProfiles.flatMap((profile,profileIndex)=>endingTitleCatalog[profile.id].map((title,index)=>({id:`ending_${String(profileIndex*4+index+1).padStart(2,'0')}`,title,profileId:profile.id,contentRevision:4})));
+
+const fragmentSignals=['boundary','care','partner','single','noChild','compromise','career','quit','gig','riskUp','debt','housing','move','healthUp','study','recovery'];
+function fragmentText(value){return typeof value==='string'?value:fragmentText(value?.text||'')}
+const endingFragments=Object.fromEntries(Object.entries(previous.endingFragments).map(([group,items])=>[group,items.map((source,index)=>{
+  const text=fragmentText(source);
+  const requirements=group==='origins'?{locationAny:[previous.locations[index%previous.locations.length].id]}:group==='conflicts'?{conflictAny:[previous.mainConflicts[index%previous.mainConflicts.length].id]}:group==='judgments'?{endingProfileAny:[endingProfiles[index%endingProfiles.length].id]}:{outcomeTagsAny:[fragmentSignals[index%fragmentSignals.length]]};
+  return{id:`fragment_${group}_${String(index+1).padStart(2,'0')}`,text,requirements,contentRevision:4};
+})]));
+
+const codexRules=[
+  ['digital'],['quit'],['gig'],['housing'],['stay'],['debt'],['relationUp'],['study'],['cashUp'],['partner'],
+  ['healthUp'],['network'],['recognition'],['care'],['riskUp'],['compromise'],['save'],['boundary'],['partner','care'],['digital','single'],
+  ['evidence'],['retired'],['gig','career'],['familySecret'],['career'],['stay','career'],['move'],['housing','debt'],['lie'],['refuse','healthUp']
+];
+const codex=previous.codex.map(({triggers,...entry},index)=>({...entry,category:['工作','家庭','经济','关系','健康','数字'][index%6],lockedHint:`经历一次与${['工作','家庭','经济','关系','健康','数字'][index%6]}有关的转折`,unlockRules:{outcomeTagsAny:codexRules[index]},contentRevision:4}));
+
+const publishEvent=event=>{const copy=structuredClone(event);delete copy.tags;delete copy.themes;if(copy.kind==='decision'){delete copy.title;delete copy.text;delete copy.stakes;delete copy.echoText}if(copy.kind==='echo')delete copy.weight;return copy};
 
 const output = {
-  ...previous,
-  version:'3.2.4',gameVersion:'3.2.4',schemaVersion:4,contentRevision:3,
-  codex:previous.codex.map(entry=>({...entry,triggers:codexTriggers[entry.id]||[]})),
-  cards,eventChains:[],events:[...annualBeats,...decisions,...echoes,...blackSwans]
+  version:'4.0.0',gameVersion:'4.0.0',schemaVersion:5,contentRevision:4,
+  stages,locations:previous.locations,familyArchetypes,familySecrets,attributes:previous.attributes,desires:previous.desires,mainConflicts:previous.mainConflicts,
+  cards,events:[...annualBeats,...decisions,...echoes,...blackSwans].map(publishEvent),endingProfiles,endingTitles,endingFragments,codex
 };
 
 fs.writeFileSync(dataPath, JSON.stringify(output,null,2)+'\n');

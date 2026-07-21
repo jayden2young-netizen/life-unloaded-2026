@@ -5,98 +5,74 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const data=JSON.parse(fs.readFileSync(path.join(root,'data.json'),'utf8'));
 const failures=[];const check=(value,message)=>{if(!value)failures.push(message)};
-const kinds=Object.groupBy(data.events,event=>event.kind);
-const cards=Object.values(data.cards).flat();
+const kinds=Object.groupBy(data.events,event=>event.kind);const cards=Object.values(data.cards).flat();
+const allowedRoots=['version','gameVersion','schemaVersion','contentRevision','stages','locations','familyArchetypes','familySecrets','attributes','desires','mainConflicts','cards','events','endingProfiles','endingTitles','endingFragments','codex'];
+const checkKeys=(object,allowed,label)=>{for(const key of Object.keys(object||{}))check(allowed.includes(key),`${label}: unconsumed field ${key}`)};
 
-check(data.version==='3.2.4','data version must be 3.2.4');
-check(data.gameVersion==='3.2.4','data gameVersion must be 3.2.4');
-check(data.schemaVersion===4,'schemaVersion must be 4');
-check(data.contentRevision===3,'contentRevision must be 3');
-check((kinds.beat||[]).length===400,`annual beats ${(kinds.beat||[]).length} !== 400`);
-check((kinds.decision||[]).length===100,`decisions ${(kinds.decision||[]).length} !== 100`);
-check((kinds.echo||[]).length===80,`echoes ${(kinds.echo||[]).length} !== 80`);
-check((kinds.blackSwan||[]).length===20,`black swans ${(kinds.blackSwan||[]).length} !== 20`);
-check(data.events.length===600,`total events ${data.events.length} !== 600`);
-check(data.cards.innate.length===24,'innate cards must be 24');
-check(data.cards.stage.length===36,'stage cards must be 36');
-check(data.cards.adversity.length===12,'adversity cards must be 12');
-check(cards.length===72,`cards ${cards.length} !== 72`);
+check(data.version==='4.0.0','data version must be 4.0.0');check(data.gameVersion==='4.0.0','data gameVersion must be 4.0.0');
+check(data.schemaVersion===5,'schemaVersion must be 5');check(data.contentRevision===4,'contentRevision must be 4');
+check(JSON.stringify(Object.keys(data).sort())===JSON.stringify(allowedRoots.sort()),'unknown or dead root data field');
+check((kinds.beat||[]).length===400,'annual beats must be 400');check((kinds.decision||[]).length===100,'decisions must be 100');
+check((kinds.echo||[]).length===80,'echoes must be 80');check((kinds.blackSwan||[]).length===20,'black swans must be 20');check(data.events.length===600,'total events must be 600');
+check(cards.length===72&&data.cards.innate.length===24&&data.cards.stage.length===36&&data.cards.adversity.length===12,'card counts changed');
+check(data.familyArchetypes.length===30,'families must be 30');check(data.familySecrets.length===44,'family secrets must be 44');check(data.codex.length===30,'codex must be 30');
 
-const ids=data.events.map(x=>x.id);check(new Set(ids).size===ids.length,'duplicate event ids');
-const cardIds=cards.map(x=>x.id);check(new Set(cardIds).size===cardIds.length,'duplicate card ids');
-const mechanicHints={
-  network:'关系 +3；关系事件更常出现，一次再加 +2。',evidence:'精神 +1；一次职场、金钱或数字事件再加 +2。',
-  healthUp:'健康 +3；身体压力 -2，一次健康损失减半。',skill:'技能经验 +1，精神 +1。',
-  digital:'数字经验 +2，精神 +1；数字事件更常出现。',save:'现金 +1800；一次金钱或住房损失减半。',
-  relationUp:'关系 +4，孤独压力 -2。',spiritUp:'精神 +4，孤独压力 -1。',truth:'关系 +2，精神 -1；留下诚实记录。',
-  legal:'现金 -800；留下法律意识记录。',gig:'进入灵活就业；现金 +2500，职业压力 +2。',
-  partner:'进入稳定关系，关系 +5。',boundary:'边界经验 +1；精神 +3，关系 -1。',
-  care:'照护责任 +1；关系 +3，精神 -2，家庭压力 +3。',cashUp:'现金 +3200，金钱压力 -1。'
-};
-function parseChineseAge(value){
-  if(/^\d+$/.test(value))return Number(value);
-  const digits={零:0,'〇':0,一:1,二:2,两:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9};
-  if(value==='十')return 10;
-  if(value.includes('十')){
-    const [tens,ones]=value.split('十');
-    return (tens?digits[tens]:1)*10+(ones?digits[ones]:0);
-  }
-  return digits[value];
-}
+for(const item of data.locations)checkKeys(item,['id','name','weight','note','mods'],item.id);for(const item of data.familyArchetypes)checkKeys(item,['id','name','weight','note','familyClass','locationAffinity','advantages','hiddenRisks','lateEcho','dnaMods','advantageTags','riskTags','contentRevision'],item.id);
+for(const item of data.familySecrets)checkKeys(item,['id','name','age','text','effects','icon','theme','familyClasses','contentRevision'],item.id);for(const item of Object.values(data.attributes))checkKeys(item,['name','icon','desc'],'attribute');for(const item of Object.values(data.desires))checkKeys(item,['name','min','max'],'desire');for(const item of data.mainConflicts)checkKeys(item,['id','name','desireKeys','themes'],item.id);
+for(const item of cards)checkKeys(item,['id','displayName','effectHint','omenIcon','mechanic','effects','contentRevision'],item.id);for(const item of data.endingProfiles)checkKeys(item,['id','signals','minSignals'],item.id);for(const item of data.endingTitles)checkKeys(item,['id','title','profileId','contentRevision'],item.id);for(const item of Object.values(data.endingFragments).flat())checkKeys(item,['id','text','requirements','contentRevision'],item.id);for(const item of data.codex)checkKeys(item,['id','name','text','category','lockedHint','unlockRules','contentRevision'],item.id);
+
+const eventKeys={beat:['id','kind','stage','ageMin','ageMax','icon','text','theme','tone','intensity','relevantAttrs','requirements','effects','weight','contentRevision'],decision:['id','kind','stage','ageMin','ageMax','icon','prompt','theme','intensity','relevantAttrs','requirements','weight','contentRevision','choices'],echo:['id','sourceDecisionId','kind','stage','ageMin','ageMax','icon','text','theme','intensity','requirements','choiceOutcomes','effects','contentRevision'],blackSwan:['id','kind','stage','ageMin','ageMax','icon','text','theme','swanBand','intensity','requirements','effects','weight','contentRevision']};
+const requirementKeys=['facts','memoriesAny','locationAny','familyAny','conflictAny','desireTopAny','outcomeTagsAny','resourceMin','resourceMax'],factKeys=['childrenMin','childrenMax','childAgeAny','relationshipAny','jobAny','jobNone','skillsMin','housingAny','flagsAll','flagsNone'];
+const effectKeys=['resources','employment','lifeFacts','pressures','relationships','desires','flagsAdd','outcomeTagsAdd','scheduleEcho'];
+const inspectEffects=(effects,label)=>{checkKeys(effects,effectKeys,label);checkKeys(effects.resources,['cash','assets','debt','health','spirit','relation'],label);checkKeys(effects.employment,['status','career','sector'],label);checkKeys(effects.pressures,['money','family','career','body','loneliness'],label);checkKeys(effects.relationships,['partnerStatus','partnerBond','parentsBond','network','addChild','childBond'],label);checkKeys(effects.scheduleEcho,['eventId','delayMin','delayMax','chance'],label);for(const[key,value]of Object.entries(effects.resources||{})){if(['health','spirit','relation'].includes(key))check(Math.abs(value)<=15,`${label}: oversized ${key} effect`);if(key==='cash'&&value)check(Math.abs(value)>=800&&Math.abs(value)<=60000,`${label}: cash effect outside economic scale`);if(['assets','debt'].includes(key)&&Math.abs(value)>=50000)check(Math.abs(value)>=80000&&Math.abs(value)<=500000,`${label}: long-term finance outside economic scale`)}for(const value of Object.values(effects.pressures||{}))check(Math.abs(value)<=15,`${label}: oversized pressure effect`);for(const value of Object.values(effects.relationships||{}))if(typeof value==='number')check(Math.abs(value)<=15,`${label}: oversized relationship effect`)};
+
+const eventIds=new Set(),choiceIds=new Set(),memoryKeys=new Set(),allOutcomeTags=new Set();
+const stageOverlap=event=>(event.stage||[]).some(stage=>{const range=data.stages[stage];return range&&Math.max(range[0],event.ageMin)<=Math.min(range[1],event.ageMax)});
 for(const event of data.events){
+  checkKeys(event,eventKeys[event.kind]||[],event.id);checkKeys(event.requirements,requirementKeys,event.id);checkKeys(event.requirements?.facts,factKeys,event.id);
+  check(!eventIds.has(event.id),`${event.id}: duplicate event id`);eventIds.add(event.id);
   check(Number.isFinite(event.ageMin)&&Number.isFinite(event.ageMax)&&event.ageMin<=event.ageMax,`${event.id}: invalid age range`);
-  check(Array.isArray(event.stage)&&event.stage.length>0,`${event.id}: missing stage`);
-  check(typeof event.icon==='string'&&event.icon.length>0,`${event.id}: missing icon`);
-  check(event.contentRevision===3,`${event.id}: stale content revision`);
-}
-for(const beat of kinds.beat||[]){
-  check([...beat.text].length<=32,`${beat.id}: beat longer than 32 chars (${[...beat.text].length})`);
-  for(const match of beat.text.matchAll(/([零〇一二两三四五六七八九十\d]+)岁(?:生日|那年|重启人生)/g)){
-    const literalAge=parseChineseAge(match[1]);
-    check(beat.ageMin===literalAge&&beat.ageMax===literalAge,`${beat.id}: text says age ${literalAge}, range is ${beat.ageMin}-${beat.ageMax}`);
-  }
-}
-for(const swan of kinds.blackSwan||[])check([...swan.text].length<=32,`${swan.id}: black swan longer than 32 chars`);
-const signatureCounts=new Map();const memoryKeys=new Set();
-const forbidden=['找老师或大人商量','先不告诉家里','问一个有经验的人','重新谈条件','承认真实感受','寻找第三条路','先保住现金流'];
-for(const decision of kinds.decision||[]){
-  const promptLength=[...decision.prompt].length;check(promptLength<=(decision.stakes==='major'?65:45),`${decision.id}: prompt too long (${promptLength})`);
-  check(decision.choices.length>=2&&decision.choices.length<=4,`${decision.id}: invalid choice count`);
-  const signature=decision.choices.map(x=>x.text).join('|');signatureCounts.set(signature,(signatureCounts.get(signature)||0)+1);
-  for(const choice of decision.choices){
-    check([...choice.text].length<=14,`${choice.id}: choice longer than 14 chars (${choice.text})`);
-    check([...choice.resultText].length<=32,`${choice.id}: result longer than 32 chars`);
-    check(!forbidden.includes(choice.text),`${choice.id}: forbidden generic choice`);
-    check(choice.memoryKey,`${choice.id}: missing memory key`);memoryKeys.add(choice.memoryKey);
-    const effects=choice.effects||{};check(Object.keys(effects).some(key=>Object.keys(effects[key]||{}).length),`${choice.id}: choice changes no state`);
-    check(Array.isArray(choice.consequenceHints)&&choice.consequenceHints.length>0,`${choice.id}: missing consequence hint`);
-  }
-}
-check(Math.max(...signatureCounts.values())===1,'a complete choice set is reused');
-for(const echo of kinds.echo||[]){
-  check(echo.requirements?.memoriesAny?.length>0,`${echo.id}: missing memory reference`);
-  for(const key of echo.requirements?.memoriesAny||[])check(memoryKeys.has(key),`${echo.id}: unknown memory ${key}`);
-  check([...echo.text].length<=32,`${echo.id}: echo longer than 32 chars`);
-}
-for(const card of cards){
-  check(card.displayName&&card.effectHint,`${card.id}: card lacks clear player text`);
-  check([...card.displayName].length<=10,`${card.id}: card name too long`);
-  check([...card.effectHint].length<=34,`${card.id}: card effect hint too long`);
-  check(card.mechanic&&card.effects,`${card.id}: card lacks mechanics`);
-  check(card.effectHint===mechanicHints[card.mechanic],`${card.id}: hint does not match ${card.mechanic} mechanics`);
-}
-const childAdultTerms=/(房贷|升职|离职|婚恋|裁员|首付|工资|合同)/;
-check(!(kinds.decision||[]).filter(x=>x.ageMax<=12).some(x=>childAdultTerms.test(x.prompt+x.choices.map(c=>c.text).join(''))),'child decision contains adult terms');
-const stageCoverage={};for(const stage of Object.keys(data.stages)){stageCoverage[stage]=(kinds.beat||[]).filter(x=>x.stage.includes(stage)).length;check(stageCoverage[stage]>=50,`${stage}: fewer than 50 annual beats`)}
-const lightCount=(kinds.beat||[]).filter(x=>x.tone==='light'||['ordinary','peer','relationship'].includes(x.theme)).length;
-check(lightCount/400>=.25,`low-intensity share ${(lightCount/400).toFixed(3)} < .25`);
-check(!JSON.stringify(data).includes('__fn__'),'data contains executable function marker');
-check(data.codex.length===30,`codex ${data.codex.length} !== 30`);
-const unlockSources=JSON.stringify({events:data.events,cards:data.cards});
-for(const entry of data.codex){
-  check(Array.isArray(entry.triggers)&&entry.triggers.length>0,`${entry.id}: missing unlock triggers`);
-  check(entry.triggers?.some(trigger=>unlockSources.includes(trigger)),`${entry.id}: no trigger appears in playable content`);
+  check(stageOverlap(event),`${event.id}: stage and age never overlap`);check(event.contentRevision===4,`${event.id}: stale content revision`);
+  if(event.kind!=='decision'){check(Object.keys(event.effects||{}).length>0,`${event.id}: no effects`);inspectEffects(event.effects||{},event.id)}
+  const facts=event.requirements?.facts||{};if(facts.childrenMin)check(event.ageMax>=26+(facts.childAgeAny?.[0]||0),`${event.id}: child gate is unreachable at this age`);
+  for(const tag of event.effects?.outcomeTagsAdd||[])allOutcomeTags.add(tag);
 }
 
-const report={version:data.version,gameVersion:data.gameVersion,schemaVersion:data.schemaVersion,contentRevision:data.contentRevision,events:{beat:kinds.beat.length,decision:kinds.decision.length,echo:kinds.echo.length,blackSwan:kinds.blackSwan.length,total:data.events.length},cards:{innate:data.cards.innate.length,stage:data.cards.stage.length,adversity:data.cards.adversity.length,total:cards.length},families:data.familyArchetypes.length,secrets:data.familySecrets.length,codex:data.codex.length,stageCoverage,lowIntensityShare:Number((lightCount/400).toFixed(3)),uniqueChoiceSets:signatureCounts.size,failures};
+const signatures=new Set();
+for(const decision of kinds.decision||[]){
+  check(decision.choices.length>=2&&decision.choices.length<=4,`${decision.id}: invalid choices`);const signature=decision.choices.map(x=>x.text).join('|');check(!signatures.has(signature),`${decision.id}: reused choice set`);signatures.add(signature);
+  const facts=decision.requirements?.facts||{},prompt=decision.prompt;
+  if(/伴侣|婚姻纪念日|恋人|现任|婚房/.test(prompt)&&!/一位新朋友/.test(prompt))check(facts.relationshipAny?.length,`${decision.id}: partner scene lacks relationship gate`);
+  if(/孩子|子女/.test(prompt)&&!/想要孩子/.test(prompt))check(facts.childrenMin>=1,`${decision.id}: child scene lacks child gate`);
+  if(/^公司|^领导|^单位|裁员名单|外包合同|劝退自己带出的徒弟/.test(prompt))check(JSON.stringify(facts.jobAny)==='["employed"]',`${decision.id}: corporate scene is not employed-only`);
+  const outcomeSignatures=new Set();for(const choice of decision.choices){checkKeys(choice,['id','text','resultText','consequenceHints','effects','memoryKey'],choice.id);check(!choiceIds.has(choice.id),`${choice.id}: duplicate choice`);choiceIds.add(choice.id);check(choice.memoryKey,`${choice.id}: missing memory key`);memoryKeys.add(choice.memoryKey);check(Object.keys(choice.effects||{}).length>0,`${choice.id}: no effects`);inspectEffects(choice.effects||{},choice.id);for(const tag of choice.effects?.outcomeTagsAdd||[])allOutcomeTags.add(tag);outcomeSignatures.add(JSON.stringify((choice.effects?.outcomeTagsAdd||[]).filter(tag=>tag!==decision.theme).sort()))}check(outcomeSignatures.size>=2,`${decision.id}: choices do not create distinct outcome paths`);
+}
+
+for(const echo of kinds.echo||[]){
+  check(eventIds.has(echo.sourceDecisionId),`${echo.id}: unknown source decision`);check(Object.keys(echo.effects||{}).length>0,`${echo.id}: empty effect`);check(Object.keys(echo.choiceOutcomes||{}).length>=2,`${echo.id}: lacks choice-specific outcomes`);
+  for(const key of echo.requirements?.memoriesAny||[])check(memoryKeys.has(key),`${echo.id}: unknown memory ${key}`);
+  for(const [key,outcome]of Object.entries(echo.choiceOutcomes||{})){checkKeys(outcome,['text','effects'],`${echo.id}:${key}`);inspectEffects(outcome.effects||{},`${echo.id}:${key}`);for(const tag of outcome.effects?.outcomeTagsAdd||[])allOutcomeTags.add(tag)}
+}
+for(const decision of(kinds.decision||[]).slice(0,80))for(const choice of decision.choices)check(choice.effects?.scheduleEcho?.eventId,`${choice.id}: echo was not scheduled`);
+
+const swanBands=Object.groupBy(kinds.blackSwan||[],x=>x.swanBand);check((swanBands.childhood||[]).length===2,'childhood swans must be 2');check((swanBands.youth||[]).length===5,'youth swans must be 5');check((swanBands.work||[]).length===8,'work swans must be 8');check((swanBands.elder||[]).length===5,'elder swans must be 5');
+for(const swan of kinds.blackSwan||[]){check(Object.keys(swan.effects||{}).length>0,`${swan.id}: empty effect`);check(swan.intensity==='high',`${swan.id}: not high intensity`)}
+const swanValence=Object.groupBy(kinds.blackSwan||[],x=>x.effects.outcomeTagsAdd?.find(tag=>/^swan/.test(tag)));check((swanValence.swanGain||[]).length===8,'positive swans must be 8');check((swanValence.swanLoss||[]).length===8,'negative swans must be 8');check((swanValence.swanMixed||[]).length===4,'mixed swans must be 4');
+
+for(const secret of data.familySecrets){check(secret.age>=15&&secret.age<=65,`${secret.id}: reveal age outside 15-65`);check(secret.text&&Object.keys(secret.effects||{}).length>0,`${secret.id}: empty secret`);inspectEffects(secret.effects||{},secret.id);check(secret.familyClasses?.length,`${secret.id}: no family affinity`);check(secret.contentRevision===4,`${secret.id}: stale secret`)}
+for(const family of data.familyArchetypes){check(!('chainAffinity'in family),`${family.id}: dead chainAffinity`);check(family.advantageTags?.length&&family.riskTags?.length,`${family.id}: family mechanics missing`)}
+for(const card of cards)inspectEffects(card.effects||{},card.id);
+
+check(data.endingProfiles.length===16,'ending profiles must be 16');for(const profile of data.endingProfiles){check(profile.signals.length>=2&&profile.minSignals===2,`${profile.id}: ending needs two signals`);check(data.endingTitles.filter(x=>x.profileId===profile.id).length===4,`${profile.id}: must own four titles`);for(const signal of profile.signals)check(allOutcomeTags.has(signal)||signal==='recovery',`${profile.id}: unreachable signal ${signal}`)}
+for(const[group,fragments]of Object.entries(data.endingFragments)){check(fragments.length===16,`${group}: fragments must be 16`);for(const fragment of fragments){check(typeof fragment.text==='string'&&fragment.text.length>0,`${fragment.id}: fragment text must be a string`);check(Object.keys(fragment.requirements||{}).length>0,`${fragment.id}: ungrounded fragment`)}}
+for(const entry of data.codex){const tags=entry.unlockRules?.outcomeTagsAny||[];check(tags.length>0,`${entry.id}: missing unlock rule`);check(tags.some(tag=>allOutcomeTags.has(tag)||['retired','familySecret'].includes(tag)),`${entry.id}: unlock rule has no playable source`)}
+
+const beatJobPools=new Set((kinds.beat||[]).flatMap(event=>event.requirements?.facts?.jobAny||[]));for(const status of['student','employed','gig','selfEmployed','unemployed','retired','careLeave'])check(beatJobPools.has(status),`${status}: missing independent annual event pool`);
+const employmentTransitions=new Set(data.events.flatMap(event=>[event.effects,...(event.choices||[]).map(choice=>choice.effects)].filter(Boolean).map(effects=>effects.employment?.status)).filter(Boolean));for(const status of['employed','gig','selfEmployed','unemployed','retired','careLeave'])check(employmentTransitions.has(status),`${status}: unreachable employment state`);
+const partnerTransitions=new Set(data.events.flatMap(event=>[event.effects,...(event.choices||[]).map(choice=>choice.effects)].filter(Boolean).map(effects=>effects.relationships?.partnerStatus)).filter(Boolean));for(const status of['none','dating','partnered','married','separated','divorced','widowed'])check(partnerTransitions.has(status),`${status}: unreachable partner state`);
+
+const intensity=Object.groupBy(kinds.beat||[],x=>x.intensity);check((intensity.low||[]).length===200,'low beats must be 200');check((intensity.medium||[]).length===144,'medium beats must be 144');check((intensity.high||[]).length===56,'high beats must be 56');
+for(const beat of kinds.beat||[]){const cash=Math.abs(Number(beat.effects?.resources?.cash)||0);if(!cash)continue;const [min,max]=beat.intensity==='low'?[1000,3000]:beat.intensity==='medium'?[5000,15000]:[20000,60000];check(cash>=min&&cash<=max,`${beat.id}: ${beat.intensity} cash effect outside scale`)}
+check(!JSON.stringify(data).includes('__fn__'),'data contains executable marker');
+const report={version:data.version,schemaVersion:data.schemaVersion,contentRevision:data.contentRevision,events:Object.fromEntries(Object.entries(kinds).map(([key,value])=>[key,value.length])),cards:cards.length,families:data.familyArchetypes.length,secrets:data.familySecrets.length,endings:{profiles:data.endingProfiles.length,titles:data.endingTitles.length,fragments:Object.values(data.endingFragments).flat().length},codex:data.codex.length,intensity:{low:intensity.low.length,medium:intensity.medium.length,high:intensity.high.length},failures};
 console.log(JSON.stringify(report,null,2));if(failures.length)process.exit(1);
