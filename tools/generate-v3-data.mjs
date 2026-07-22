@@ -1,3 +1,7 @@
+// Compatibility entry point. v5 source lives in generate-v5-data.mjs.
+import './generate-v5-data.mjs';
+process.exit(0);
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
