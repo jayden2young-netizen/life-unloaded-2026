@@ -1,3 +1,7 @@
+// Compatibility entry point for existing local and CI commands.
+import './v5-validate.mjs';
+process.exit(0);
+
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
