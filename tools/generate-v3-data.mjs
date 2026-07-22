@@ -155,6 +155,7 @@ function inferRequirements(text,stage){
 }
 
 const beatRequirementOverrides={
+  beat_infancy_38:{facts:{siblingMin:1}},
   beat_elder_13:{facts:{childrenMax:0,relationshipAny:['none','divorced','widowed']}},
   beat_elder_18:{facts:{childrenMax:0,relationshipAny:['partnered','married']}}
 };
@@ -194,9 +195,75 @@ const annualBeats = Object.entries(beatCatalog).flatMap(([stage,texts])=>texts.m
     id,kind:'beat',stage:[stage],ageMin,ageMax,
     icon:icons[(index+Object.keys(stages).indexOf(stage)*3)%icons.length],text,theme,themes:[theme],tone:inferTone(text),
     intensity:intensityFor(index),tags:[theme,stage],relevantAttrs:theme==='health'?['physique']:theme==='career'?['ambition','stability']:theme==='relationship'?['social']:theme==='education'?['intellect']:theme==='money'?['stability','ambition']:[],
-    requirements:beatRequirementOverrides[id]||inferRequirements(text,stage),effects:beatEffects(theme,index),weight:10+(index%4),contentRevision:4
+    requirements:beatRequirementOverrides[id]||inferRequirements(text,stage),effects:beatEffects(theme,index),weight:10+(index%4),contentRevision:5
   };
 }));
+
+const storylineBeatRows={
+  familyMoney:[
+    ['beat_youth_01',1,'continue','旅行预算写在父亲递来的信封背面。','money',{storyline:{id:'familyMoney',statusAny:['active'],stepMin:1}},{resources:{cash:2000},familyFinance:{reportingPressure:2},outcomeTagsAdd:['familyMoneyDaily']}],
+    ['beat_adult_02',2,'continue','家庭群里多了一张每月收支表。','family',{storyline:{id:'familyMoney',statusAny:['active'],stepMin:2}},{familyFinance:{transparency:2,reportingPressure:1},pressures:{family:1},outcomeTagsAdd:['familyLedger']}],
+    ['beat_midlife_08',3,'continue','父亲把银行卡密码写在药盒背面。','family',{storyline:{id:'familyMoney',statusAny:['active','resolved'],stepMin:3}},{relationships:{parentsBond:1},familyFinance:{transparency:2},outcomeTagsAdd:['familyLedger']}],
+    ['beat_elder_04',4,'resolve','孩子的旅行预算，也写在旧信封背面。','family',{facts:{childrenMin:1,childAgeAny:[18,25]},storyline:{id:'familyMoney',statusAny:['resolved','abandoned']}},{relationships:{childBond:1},outcomeTagsAdd:['intergenerationalMirror']}],
+    ['beat_youth_29',1,'continue','父亲问完预算，又把转账退回重发。','money',{storyline:{id:'familyMoney',statusAny:['active'],stepMin:1}},{resources:{spirit:-2},pressures:{family:3},familyFinance:{reportingPressure:4},outcomeTagsAdd:['conditionalSupport']}],
+    ['beat_adult_35',2,'continue','弟妹的志愿表旁，放着家庭欠款清单。','family',{facts:{siblingMin:1},storyline:{id:'familyMoney',statusAny:['active'],stepMin:2}},{relationships:{parentsBond:-2},pressures:{family:4},familyFinance:{businessStress:3},outcomeTagsAdd:['siblingRouteControl']}],
+    ['beat_midlife_37',3,'continue','你核对流水时，母亲把晚饭热了两遍。','family',{storyline:{id:'familyMoney',statusAny:['active'],stepMin:3}},{resources:{spirit:-2},relationships:{parentsBond:1},familyFinance:{businessStress:3},outcomeTagsAdd:['becameFamilyBookkeeper']}],
+    ['beat_preRetire_36',4,'resolve','旧账本最后一页，写着各自能承担的数。','money',{storyline:{id:'familyMoney',statusAny:['resolved','abandoned']}},{pressures:{family:-3,money:-2},familyFinance:{transparency:3},outcomeTagsAdd:['financialBoundaryAftermath']}],
+    ['beat_elder_38',4,'resolve','孩子说用兼职钱旅行，你先问了出发日期。','family',{facts:{childrenMin:1,childAgeAny:[18,25]},storyline:{id:'familyMoney',statusAny:['resolved','abandoned']}},{relationships:{childBond:3},desires:{familyBelonging:2},outcomeTagsAdd:['brokeFinancialCycle']}],
+    ['beat_youth_44',2,'continue','家庭账目翻到担保栏，房间突然没人说话。','money',{storyline:{id:'familyMoney',statusAny:['active'],stepMin:2}},{resources:{spirit:-6},pressures:{family:9,money:8},familyFinance:{businessStress:8,transparency:8},outcomeTagsAdd:['familyBusinessDebt']}],
+    ['beat_adult_45',3,'continue','催款电话打来时，父亲仍问你晚饭吃没。','family',{storyline:{id:'familyMoney',statusAny:['active'],stepMin:3}},{resources:{cash:-20000,spirit:-5},pressures:{money:9,family:7},familyFinance:{businessStress:8},outcomeTagsAdd:['familyBusinessDebt']}],
+    ['beat_elder_47',4,'resolve','孩子复述“一家人的钱”，你听见了父亲。','family',{facts:{childrenMin:1,childAgeAny:[18,25]},storyline:{id:'familyMoney',statusAny:['resolved','abandoned']}},{resources:{spirit:-5},relationships:{childBond:-6},pressures:{family:8},outcomeTagsAdd:['copiedFinancialCycle']}]
+  ],
+  splitShift:[
+    ['beat_youth_08',1,'continue','午后空档够吃饭，不够回家。','career',{storyline:{id:'splitShift',statusAny:['active'],stepMin:1}},{pressures:{body:1},outcomeTagsAdd:['fragmentedTime']}],
+    ['beat_adult_09',1,'continue','下午三点，休息室一起刷起短视频。','career',{storyline:{id:'splitShift',statusAny:['active'],stepMin:1}},{resources:{spirit:1},relationships:{network:1},outcomeTagsAdd:['splitGapDaily']}],
+    ['beat_midlife_05',2,'continue','两段班之间，你替同事取了快递。','career',{storyline:{id:'splitShift',statusAny:['active'],stepMin:2}},{relationships:{network:1},pressures:{career:1},outcomeTagsAdd:['fragmentedTime']}],
+    ['beat_preRetire_15',3,'continue','排班表用三种颜色，仍没人看懂周末。','career',{storyline:{id:'splitShift',statusAny:['active'],stepMin:3}},{resources:{spirit:1},outcomeTagsAdd:['scheduleControl']}],
+    ['beat_youth_28',1,'continue','招聘页写八小时，括号里藏着两头班。','career',{storyline:{id:'splitShift',statusAny:['active'],stepMin:1}},{pressures:{career:3,body:2},employment:{scheduleDelta:{stability:-3,splitGapHours:1}},outcomeTagsAdd:['fragmentedTime']}],
+    ['beat_adult_30',2,'continue','休息日被拆开，电影票改签了两次。','relationship',{storyline:{id:'splitShift',statusAny:['active'],stepMin:2}},{relationships:{partnerBond:-3,network:-2},pressures:{family:3},outcomeTagsAdd:['unstableWeekend']}],
+    ['beat_midlife_35',2,'continue','朋友问真实排班，你删了招聘海报。','relationship',{storyline:{id:'splitShift',statusAny:['active'],stepMin:2}},{resources:{spirit:-2},pressures:{career:3},outcomeTagsAdd:['warnedFriendHonestly']}],
+    ['beat_preRetire_31',3,'continue','你把最难的两头班排给了自己。','career',{storyline:{id:'splitShift',statusAny:['active'],stepMin:3}},{pressures:{body:4,career:2},employment:{scheduleDelta:{stability:2}},outcomeTagsAdd:['becameScheduler']}],
+    ['beat_elder_36',4,'resolve','退休后第一顿完整午饭，你吃到天黑。','health',{storyline:{id:'splitShift',statusAny:['resolved','abandoned']}},{resources:{spirit:3},pressures:{body:-3},outcomeTagsAdd:['exitedSplitShift']}],
+    ['beat_youth_45',2,'continue','被推荐的朋友站在门口，手里攥着两张班表。','relationship',{storyline:{id:'splitShift',statusAny:['active'],stepMin:2},outcomeTagsAny:['referredFriend']},{relationships:{network:-8},resources:{spirit:-5},pressures:{career:7},outcomeTagsAdd:['referralBacklash']}],
+    ['beat_adult_46',3,'continue','连续两头班后，体检箭头第一次变红。','health',{storyline:{id:'splitShift',statusAny:['active'],stepMin:3}},{resources:{health:-7},pressures:{body:10},outcomeTagsAdd:['chronicFatigue']}],
+    ['beat_midlife_47',4,'resolve','排班软件弹出警告，你的身体先点了拒绝。','health',{storyline:{id:'splitShift',statusAny:['active','resolved'],stepMin:4}},{resources:{health:-8,spirit:-4},pressures:{body:10,family:5},outcomeTagsAdd:['chronicFatigue']}]
+  ],
+  remoteNomad:[
+    ['beat_youth_14',1,'continue','视频会议结束，窗外正好有人收摊。','digital',{facts:{jobAny:['employed','gig','selfEmployed']},storyline:{id:'remoteNomad',statusAny:['active'],stepMin:1}},{resources:{spirit:1},mobility:{rootlessness:1},outcomeTagsAdd:['remoteIncome']}],
+    ['beat_adult_11',1,'continue','省下的通勤钱，买成了更好的耳机。','money',{storyline:{id:'remoteNomad',statusAny:['active'],stepMin:1}},{resources:{cash:2000},outcomeTagsAdd:['remoteSavings']}],
+    ['beat_midlife_22',2,'continue','民宿老板记得你的会议时区。','city',{storyline:{id:'remoteNomad',statusAny:['active'],stepMin:2}},{relationships:{network:1},mobility:{rootlessness:1},outcomeTagsAdd:['domesticNomad']}],
+    ['beat_preRetire_22',4,'resolve','固定书桌装好后，你第一次没找插座。','city',{storyline:{id:'remoteNomad',statusAny:['resolved','abandoned']}},{resources:{spirit:3},mobility:{rootlessness:-3},outcomeTagsAdd:['choseHomeBase']}],
+    ['beat_youth_32',1,'continue','客户按在线绿点，计算你是否在工作。','digital',{storyline:{id:'remoteNomad',statusAny:['active'],stepMin:1}},{pressures:{career:4},mobility:{platformDependence:3},outcomeTagsAdd:['platformDependence']}],
+    ['beat_adult_39',2,'continue','换汇到账时，房租也按新汇率重算。','money',{storyline:{id:'remoteNomad',statusAny:['active'],stepMin:2},facts:{mobilityModeAny:['overseasNomad']}},{resources:{cash:-6000},pressures:{money:4},mobility:{visaPressure:3},outcomeTagsAdd:['overseasNomad']}],
+    ['beat_midlife_40',2,'continue','咖啡馆停电，三份合同一起失去自由。','digital',{storyline:{id:'remoteNomad',statusAny:['active'],stepMin:2}},{resources:{cash:-6000,spirit:-2},mobility:{platformDependence:3},outcomeTagsAdd:['platformDependence']}],
+    ['beat_preRetire_39',3,'continue','凌晨客户说早上好，你关掉了窗帘。','health',{storyline:{id:'remoteNomad',statusAny:['active'],stepMin:3}},{resources:{health:-3},pressures:{body:4,loneliness:3},employment:{scheduleDelta:{timezoneLoad:5}},outcomeTagsAdd:['timezoneWork']}],
+    ['beat_elder_35',4,'resolve','旧账号还在更新，地址栏终于不再变。','digital',{storyline:{id:'remoteNomad',statusAny:['resolved','abandoned']}},{resources:{spirit:2},mobility:{rootlessness:-2},outcomeTagsAdd:['choseHomeBase']}],
+    ['beat_youth_48',2,'continue','签证邮件到期，客户催稿也在同一小时。','city',{storyline:{id:'remoteNomad',statusAny:['active'],stepMin:2},facts:{mobilityModeAny:['overseasNomad']}},{resources:{cash:-20000,spirit:-5},pressures:{career:8,body:6},mobility:{visaPressure:10,rootlessness:6},outcomeTagsAdd:['overseasNomad']}],
+    ['beat_adult_48',3,'continue','平台冻结结算，房东照常敲门。','money',{storyline:{id:'remoteNomad',statusAny:['active'],stepMin:3}},{resources:{cash:-22000,spirit:-5},pressures:{money:10,career:7},mobility:{platformDependence:10},outcomeTagsAdd:['platformDependence']}],
+    ['beat_midlife_49',4,'resolve','你拍完“自由的一天”，又剪到凌晨三点。','digital',{storyline:{id:'remoteNomad',statusAny:['active','resolved'],stepMin:4}},{resources:{health:-6,spirit:-5},pressures:{body:8,loneliness:7},mobility:{rootlessness:6},outcomeTagsAdd:['contentizedLife']}]
+  ],
+  franchise:[
+    ['beat_youth_24',1,'continue','样板店的灯很亮，后厨没有开火。','money',{storyline:{id:'franchise',statusAny:['active'],stepMin:1}},{business:{brandLockin:1},outcomeTagsAdd:['sampleStore']}],
+    ['beat_adult_15',1,'continue','亲戚轮流叫你老板，只有收银机没开口。','family',{storyline:{id:'franchise',statusAny:['active'],stepMin:1}},{resources:{spirit:1},relationships:{network:1},outcomeTagsAdd:['franchiseDream']}],
+    ['beat_midlife_16',2,'continue','培训课教微笑，没教怎么看日流水。','career',{storyline:{id:'franchise',statusAny:['active'],stepMin:2}},{business:{operatingSkill:1},outcomeTagsAdd:['sampleStore']}],
+    ['beat_preRetire_13',4,'resolve','旧招牌拆下后，被邻居拿去垫桌脚。','ordinary',{storyline:{id:'franchise',statusAny:['resolved','abandoned']}},{resources:{spirit:2},business:{sunkCost:-2},outcomeTagsAdd:['timelyExit']}],
+    ['beat_youth_33',1,'continue','总部发来装修清单，插座也指定了型号。','money',{storyline:{id:'franchise',statusAny:['active'],stepMin:1}},{resources:{cash:-6000},business:{brandLockin:4,capitalInvested:6000},outcomeTagsAdd:['supplierLockin']}],
+    ['beat_adult_34',2,'continue','原料车晚到，门口仍挂着今日售罄。','career',{storyline:{id:'franchise',statusAny:['active'],stepMin:2}},{resources:{cash:-6000},pressures:{career:3},business:{brandLockin:3},outcomeTagsAdd:['supplierLockin']}],
+    ['beat_midlife_33',3,'continue','家庭群把投流账单当成了营业额。','family',{storyline:{id:'franchise',statusAny:['active'],stepMin:3}},{relationships:{parentsBond:-2},pressures:{family:4},familyFinance:{businessStress:4},business:{sunkCost:3},outcomeTagsAdd:['hiddenBusinessLoss']}],
+    ['beat_preRetire_43',3,'continue','总部复盘写着坚持不足，房租照常扣款。','money',{storyline:{id:'franchise',statusAny:['active'],stepMin:3}},{resources:{cash:-10000},pressures:{money:5,career:3},business:{sunkCost:5},outcomeTagsAdd:['sunkCost']}],
+    ['beat_elder_42',4,'resolve','独立小店只剩三张桌，熟客仍来吃面。','ordinary',{storyline:{id:'franchise',statusAny:['resolved']},outcomeTagsAny:['independentShop','franchiseSurvivor']},{resources:{cash:5000,spirit:2},relationships:{network:2},outcomeTagsAdd:['independentShop']}],
+    ['beat_youth_47',2,'continue','合同翻到担保页，父亲把笔推到你面前。','money',{storyline:{id:'franchise',statusAny:['active'],stepMin:2}},{resources:{cash:-20000,debt:80000,spirit:-5},pressures:{money:10,family:8},business:{capitalInvested:20000,sunkCost:8},outcomeTagsAdd:['personalGuarantee']}],
+    ['beat_adult_49',3,'continue','装修款付完，卷帘门还差一次消防验收。','money',{storyline:{id:'franchise',statusAny:['active'],stepMin:3}},{resources:{cash:-30000,debt:80000},pressures:{money:10,career:7},business:{capitalInvested:30000,brandLockin:8,sunkCost:8},outcomeTagsAdd:['supplierLockin']}],
+    ['beat_midlife_48',4,'resolve','最后一次投流结束，后台只多了三个收藏。','money',{storyline:{id:'franchise',statusAny:['active','resolved'],stepMin:4}},{resources:{cash:-25000,spirit:-6},pressures:{money:10,family:7},business:{sunkCost:10},outcomeTagsAdd:['sunkCost']}]
+  ]
+};
+
+const storylineBeatById=new Map(Object.entries(storylineBeatRows).flatMap(([storylineId,rows])=>rows.map(row=>[row[0],{storylineId,row}])));
+for(const beat of annualBeats){
+  const replacement=storylineBeatById.get(beat.id);if(!replacement)continue;
+  const [id,step,role,text,theme,requirements,effects]=replacement.row;
+  Object.assign(beat,{id,text,theme,relevantAttrs:theme==='health'?['physique']:theme==='career'?['ambition','stability']:theme==='relationship'?['social']:theme==='money'?['stability','ambition']:[],requirements,effects,storyline:{id:replacement.storylineId,step,role,priority:6},contentRevision:5});
+}
 
 // Decision rows are authored per scene. No age-band action or result templates are used.
 const O=(text,result,hint,impact)=>({text,result,hint,impact});
@@ -389,12 +456,106 @@ const decisions=decisionRows.map((row,index)=>{
   const id=`decision_${String(index+1).padStart(3,'0')}`;
   return {id,kind:'decision',stage:[row.stage],ageMin:row.ageMin,ageMax:row.ageMax,icon:stageMeta[row.stage].icon,
     title:row.prompt.split('，')[0].replace(/[。？！]/g,''),prompt:row.prompt,text:row.prompt,theme:row.theme,themes:[row.theme],
-    stakes:row.major?'major':'medium',intensity:row.major?'high':'medium',tags:[row.theme],relevantAttrs:row.theme==='career'?['ambition','stability']:row.theme==='relationship'?(/喜欢的人|一位新朋友/.test(row.prompt)?['social','looks']:['social']):row.theme==='health'?['physique']:row.theme==='education'?['intellect']:row.theme==='money'?['stability','ambition']:[],requirements:decisionRequirements(row),weight:14+(index%5),contentRevision:4,
+    stakes:row.major?'major':'medium',intensity:row.major?'high':'medium',tags:[row.theme],relevantAttrs:row.theme==='career'?['ambition','stability']:row.theme==='relationship'?(/喜欢的人|一位新朋友/.test(row.prompt)?['social','looks']:['social']):row.theme==='health'?['physique']:row.theme==='education'?['intellect']:row.theme==='money'?['stability','ambition']:[],requirements:decisionRequirements(row),weight:14+(index%5),contentRevision:5,
     choices:row.options.map((option,choiceIndex)=>({id:`${id}_c${choiceIndex+1}`,text:option.text,resultText:option.result,
       consequenceHints:[option.hint],effects:decisionEffects(option.impact,row),memoryKey:`${id}_c${choiceIndex+1}`})),echoText:row.echo};
 });
 
+const C=(text,result,hint,effects)=>({text,result,hint,effects});
+const storylineDecisionRows={
+  familyMoney:[
+    {id:'decision_029',step:1,role:'start',ageMin:19,ageMax:26,prompt:'朋友约你旅行，钱是自己兼职攒的；父亲问完预算，说可以补给你。',theme:'money',requirements:{facts:{siblingMin:1}},choices:[
+      C('接受父亲的钱','转账很快到账，预算表也被要了过去。','现金↑ · 边界收紧',{resources:{cash:6000},relationships:{parentsBond:2},familyFinance:{boundary:'shared',reportingPressure:8},outcomeTagsAdd:['acceptedConditionalSupport']}),
+      C('坚持花自己的钱','你照原预算出发，父亲沉默了半天。','现金↓ · 边界↑',{resources:{cash:-6000},relationships:{parentsBond:-2},familyFinance:{boundary:'separate',reportingPressure:-2},lifeFacts:{boundaries:1},outcomeTagsAdd:['claimedPersonalIncome']}),
+      C('取消旅行','车票没买，钱留在账户里，期待也一起撤回。','精神↓ · 现金保留',{resources:{spirit:-3},pressures:{family:2},familyFinance:{boundary:'shared'},outcomeTagsAdd:['selfSacrificeForFamily']}),
+      C('先看家庭账目','父亲把手机递来，几个欠款备注没有解释。','真相↑ · 家庭压力↑',{resources:{cash:-1000,spirit:-2},familyFinance:{boundary:'negotiated',transparency:12,businessStress:6},pressures:{family:5},outcomeTagsAdd:['openedFamilyLedger']})]},
+    {id:'decision_035',step:2,role:'continue',ageMin:21,ageMax:32,prompt:'父亲要看你上一年的收入和支出汇总，说一家人的钱不分你我。',theme:'family',choices:[
+      C('把明细全部发给他','表格被逐项问过，你也第一次看清家庭缺口。','透明↑ · 压力↑',{relationships:{parentsBond:2},familyFinance:{boundary:'shared',transparency:10,reportingPressure:10},pressures:{family:4},outcomeTagsAdd:['acceptedConditionalSupport']}),
+      C('只汇报可共同承担的部分','你们为每个分类争了很久，最后写下边界。','边界↑ · 关系拉扯',{relationships:{parentsBond:-1},familyFinance:{boundary:'negotiated',transparency:7,reportingPressure:-2},lifeFacts:{boundaries:1},outcomeTagsAdd:['claimedPersonalIncome']}),
+      C('拒绝交个人流水','父亲说不再管你，晚饭仍给你留着。','边界↑ · 关系↓',{relationships:{parentsBond:-5},resources:{spirit:2},familyFinance:{boundary:'separate',reportingPressure:-6},pressures:{family:5},outcomeTagsAdd:['claimedPersonalIncome']})]},
+    {id:'decision_048',step:3,role:'continue',ageMin:23,ageMax:38,prompt:'家里想让弟妹选军校、编制或别的低风险路线，要你一起劝。',theme:'family',requirements:{facts:{siblingMin:1}},choices:[
+      C('一起强调稳定','弟妹点头了，志愿表却一直没合上。','家庭关系↑ · 自由↓',{relationships:{parentsBond:3},pressures:{family:3},outcomeTagsAdd:['siblingRouteControl']}),
+      C('把真实成本也说清','饭桌变成了信息会，最后由弟妹自己填表。','真相↑ · 关系拉扯',{relationships:{parentsBond:-2},resources:{spirit:1},familyFinance:{transparency:5},outcomeTagsAdd:['openedFamilyLedger']}),
+      C('明确不替弟妹决定','父亲说你不顾家，弟妹把草稿发给了你。','边界↑ · 家庭压力↑',{relationships:{parentsBond:-5},lifeFacts:{boundaries:1},pressures:{family:5},outcomeTagsAdd:['brokeFinancialCycle']})]},
+    {id:'decision_070',step:4,role:'resolve',ageMin:26,ageMax:52,prompt:'家庭生意恶化，父母要你接管账目、提供担保或延后自己的计划。',theme:'money',choices:[
+      C('接管账目但不担保','你拿到全部流水，也接下了每周的电话。','透明↑ · 时间↓',{relationships:{parentsBond:2},resources:{spirit:-4},pressures:{family:6},familyFinance:{boundary:'negotiated',transparency:12,businessStress:8},outcomeTagsAdd:['becameFamilyBookkeeper']}),
+      C('签下家庭担保','银行盖章后，父亲第一次承认生意撑不住。','债务↑ · 关系↑',{resources:{cash:20000,debt:80000,spirit:-5},relationships:{parentsBond:3},pressures:{money:10,family:8},familyFinance:{boundary:'shared',businessStress:12,transparency:8},outcomeTagsAdd:['familyBusinessDebt']}),
+      C('延后自己的计划','家里的缺口小了一点，你的日历空了一块。','家庭压力↓ · 自我推迟',{resources:{cash:-15000,spirit:-4},relationships:{parentsBond:4},pressures:{family:-2},familyFinance:{businessStress:-4},outcomeTagsAdd:['selfSacrificeForFamily']}),
+      C('拒绝担保并协助关账','父亲气得摔了笔，第二天仍把合同发给你看。','边界↑ · 关系↓',{relationships:{parentsBond:-6},resources:{cash:-3000,spirit:2},pressures:{family:6},familyFinance:{boundary:'separate',transparency:8,businessStress:-6},lifeFacts:{boundaries:1},outcomeTagsAdd:['brokeFinancialCycle']})]}
+  ],
+  splitShift:[
+    {id:'decision_031',step:1,role:'start',ageMin:20,ageMax:42,prompt:'岗位写着上五休二、八小时制，面试官补充可能排九点到一点、五点到九点。',theme:'career',requirements:{facts:{jobAny:['employed']}},choices:[
+      C('接受稳定收入','工牌拿到了，完整的白天没有了。','现金↑ · 身体压力↑',{employment:{status:'employed',arrangement:'splitShift',schedule:{stability:62,splitGapHours:4,timezoneLoad:0}},resources:{cash:12000},pressures:{body:5},outcomeTagsAdd:['fragmentedTime']}),
+      C('追问补贴和排班标准','对方删掉一句含糊承诺，把补贴写进了邮件。','证据↑ · 机会收窄',{employment:{status:'employed',arrangement:'splitShift',schedule:{stability:74,splitGapHours:3,timezoneLoad:0}},resources:{cash:6000},lifeFacts:{evidenceHabit:1},pressures:{career:2},outcomeTagsAdd:['scheduleControl']}),
+      C('拒绝，继续找工作','你保住完整时间，也继续面对余额。','现金↓ · 时间完整',{employment:{status:'unemployed',arrangement:'onsite',career:'继续求职'},resources:{cash:-5000},pressures:{money:5,career:4},outcomeTagsAdd:['exitedSplitShift']}),
+      C('接受并利用空档做副业','两段班中间多了接单，休息被再切一刀。','现金↑ · 身体压力↑',{employment:{status:'employed',arrangement:'splitShift',schedule:{stability:55,splitGapHours:5,timezoneLoad:0}},resources:{cash:8000},pressures:{body:7,career:4},outcomeTagsAdd:['fragmentedTime','gig']})]},
+    {id:'decision_038',step:2,role:'continue',ageMin:21,ageMax:46,prompt:'排班公布后，两天休息被拆开，和朋友或伴侣的安排全撞了。',theme:'relationship',choices:[
+      C('照班表走','约会和饭局逐个取消，工资没有迟到。','关系↓ · 稳定',{relationships:{partnerBond:-4,network:-3},pressures:{family:4},outcomeTagsAdd:['unstableWeekend']}),
+      C('和同事互换连休','你欠下两次代班，换回一个完整周末。','关系↑ · 人情债',{relationships:{network:3},employment:{scheduleDelta:{stability:4}},pressures:{career:2},outcomeTagsAdd:['scheduleControl']}),
+      C('固定保留一天不接班','主管不高兴，但日历终于有一格不移动。','边界↑ · 职业压力↑',{resources:{spirit:3},lifeFacts:{boundaries:1},pressures:{career:5},employment:{scheduleDelta:{stability:6}},outcomeTagsAdd:['exitedSplitShift']})]},
+    {id:'decision_046',step:3,role:'continue',ageMin:22,ageMax:48,prompt:'公司给内部推荐奖金，你想到一个正在失业的朋友。',theme:'relationship',requirements:{facts:{jobAny:['employed']}},choices:[
+      C('推荐但不讲两头班','奖金到账前，朋友先收到了排班表。','现金↑ · 关系风险',{resources:{cash:5000},relationships:{network:-3},outcomeTagsAdd:['referredFriend']}),
+      C('把真实排班先说清','朋友仍投了简历，说至少知道要换什么。','关系↑ · 奖金不确定',{relationships:{network:4},resources:{cash:1000},outcomeTagsAdd:['warnedFriendHonestly']}),
+      C('不推荐这份工作','你没拿奖金，也没把那张班表转给他。','现金机会↓ · 边界↑',{resources:{spirit:2},pressures:{money:2},outcomeTagsAdd:['refusedReferral']})]},
+    {id:'decision_063',step:4,role:'resolve',ageMin:24,ageMax:52,prompt:'你开始替别人排班，或者身体已经不肯继续这种生活。',theme:'career',choices:[
+      C('接下排班权','你把最讨厌的表格做得更公平，也更懂它有多窄。','权力↑ · 压力↑',{employment:{arrangement:'splitShift',schedule:{stability:72,splitGapHours:3}},pressures:{career:5,body:3},outcomeTagsAdd:['becameScheduler','scheduleControl']}),
+      C('辞掉两头班','时间重新完整，收入先缺了一块。','时间↑ · 现金↓',{employment:{status:'unemployed',arrangement:'onsite',career:'离开两头班'},resources:{cash:-10000},pressures:{money:6,career:3,body:-5},outcomeTagsAdd:['exitedSplitShift']}),
+      C('降时长转灵活排班','收入更波动，但一天不再被切成两次出门。','自由↑ · 稳定↓',{employment:{status:'gig',arrangement:'hybrid',career:'灵活排班'},resources:{cash:-5000},pressures:{career:3,body:-3},outcomeTagsAdd:['exitedSplitShift','gig']})]}
+  ],
+  remoteNomad:[
+    {id:'decision_034',step:1,role:'start',ageMin:22,ageMax:48,prompt:'一份远程工作或自由职业机会来了，合同只保证三个月。',theme:'digital',requirements:{facts:{jobAny:['employed','gig','selfEmployed','unemployed']},factsAny:[{skillsMin:1},{digitalExperienceMin:1}]},choices:[
+      C('凭可迁移技能独立接下','你定了报价，也独自承担空档。','自由↑ · 波动↑',{employment:{status:'gig',arrangement:'remote',career:'独立远程工作',sector:'digital',schedule:{stability:68,splitGapHours:0,timezoneLoad:12}},mobility:{mode:'home',platformDependence:18},resources:{cash:8000},outcomeTagsAdd:['portableSkill','remoteIncome']}),
+      C('先靠平台接单','订单很快出现，规则和抽成也一起出现。','现金↑ · 平台依赖↑',{employment:{status:'gig',arrangement:'remote',career:'平台自由职业',sector:'digital',schedule:{stability:45,splitGapHours:0,timezoneLoad:18}},mobility:{mode:'home',platformDependence:65},resources:{cash:6000},pressures:{career:4},outcomeTagsAdd:['platformDependence','remoteIncome']}),
+      C('继续保留本地工作','远程窗口关了，社保和通勤仍按原样。','稳定↑ · 探索↓',{employment:{arrangement:'onsite'},resources:{spirit:1},desires:{exploration:-3},outcomeTagsAdd:['choseHomeBase']})]},
+    {id:'decision_050',step:2,role:'continue',ageMin:23,ageMax:55,prompt:'远程收入能维持生活，你要长期居家、国内旅居还是去海外住一阵。',theme:'city',choices:[
+      C('长期居家','省下搬家费，客厅逐渐兼任全部生活。','现金↑ · 孤独↑',{employment:{arrangement:'remote'},mobility:{mode:'home',rootlessness:8},resources:{cash:6000},pressures:{loneliness:5},outcomeTagsAdd:['homeboundRemote']}),
+      C('国内低成本旅居','行李变少，押金和车票反复出现。','探索↑ · 稳定↓',{employment:{arrangement:'remote'},mobility:{mode:'domesticNomad',rootlessness:12},resources:{cash:-8000},outcomeTagsAdd:['domesticNomad']}),
+      C('海外旅居','地址换了国家，客户时区没有跟着你。','探索↑ · 时差压力↑',{employment:{arrangement:'remote',schedule:{timezoneLoad:55}},mobility:{mode:'overseasNomad',visaPressure:18,rootlessness:15},resources:{cash:-15000},pressures:{body:4},outcomeTagsAdd:['overseasNomad','timezoneWork']})]},
+    {id:'decision_058',step:3,role:'continue',ageMin:24,ageMax:58,prompt:'时差、客户和平台把生活边界挤到一起，你需要决定先保哪一块。',theme:'digital',choices:[
+      C('设固定在线时段','丢了两个急单，睡眠第一次按自己的钟走。','现金↓ · 边界↑',{resources:{cash:-5000,spirit:3},employment:{scheduleDelta:{stability:8,timezoneLoad:-15}},mobility:{platformDependence:-8},lifeFacts:{boundaries:1},outcomeTagsAdd:['portableSkill']}),
+      C('继续跟着客户时区','续约保住了，夜里也继续亮着绿点。','现金↑ · 身体压力↑',{resources:{cash:10000},employment:{scheduleDelta:{stability:3,timezoneLoad:18}},pressures:{body:7,loneliness:4},outcomeTagsAdd:['timezoneWork']}),
+      C('把漂流生活做成内容','平台多了一份收入，你的晚饭也变成素材。','收入来源↑ · 生活边界↓',{resources:{cash:6000,spirit:-2},mobility:{platformDependence:8,rootlessness:5},lifeFacts:{digitalExperience:2},outcomeTagsAdd:['contentizedLife']})]},
+    {id:'decision_069',step:4,role:'resolve',ageMin:26,ageMax:62,prompt:'你要继续漂流、建立固定基地、回本地工作，还是把生活继续做成内容。',theme:'city',choices:[
+      C('继续漂流但减少客户','收入少一点，地图仍在变化。','自由↑ · 现金↓',{resources:{cash:-8000,spirit:2},mobility:{rootlessness:4,platformDependence:-8},outcomeTagsAdd:['domesticNomad']}),
+      C('建立固定基地','行李箱塞进床底，合同仍来自远方。','稳定↑ · 成本↑',{employment:{arrangement:'hybrid',scheduleDelta:{stability:10,timezoneLoad:-12}},mobility:{mode:'home',rootlessness:-18},resources:{cash:-10000},outcomeTagsAdd:['choseHomeBase']}),
+      C('转回本地工作','通勤回来了，平台抽成停了。','稳定↑ · 自由↓',{employment:{status:'employed',arrangement:'onsite',career:'本地数字岗位',sector:'digital',schedule:{stability:78,splitGapHours:0,timezoneLoad:0}},mobility:{mode:'home',platformDependence:-30,rootlessness:-15},outcomeTagsAdd:['choseHomeBase']}),
+      C('继续把生活做成内容','镜头成了第二个客户，风景也要按时交稿。','现金↑ · 根lessness↑',{resources:{cash:12000},mobility:{platformDependence:12,rootlessness:10},pressures:{loneliness:5},outcomeTagsAdd:['contentizedLife','platformDependence']})]}
+  ],
+  franchise:[
+    {id:'decision_042',step:1,role:'start',ageMin:24,ageMax:55,prompt:'父亲、伴侣或朋友提出加盟一家正热门的餐饮品牌。',theme:'money',requirements:{facts:{jobNone:['student']},resourceMin:{cash:5000}},choices:[
+      C('先去总部和真实门店看看','你买了车票，没有先交意向金。','现金↓ · 证据↑',{resources:{cash:-3000},business:{mode:'franchise',status:'testing',capitalInvested:3000,operatingSkill:4},lifeFacts:{evidenceHabit:1},outcomeTagsAdd:['sampleStore']}),
+      C('和家人共同投资','每个人都少投一点，也都开始叫你老板。','资金↑ · 家庭压力↑',{resources:{cash:15000},familyFinance:{boundary:'shared',businessStress:8},business:{mode:'franchise',status:'testing',capitalInvested:15000,brandLockin:15},pressures:{family:5},outcomeTagsAdd:['familyInvestment','franchiseDream']}),
+      C('高息借款直接加盟','开店速度快了，利息也从第一天营业。','债务↑ · 速度↑',{resources:{cash:20000,debt:80000},business:{mode:'franchise',status:'testing',capitalInvested:20000,brandLockin:35,sunkCost:12},pressures:{money:9},outcomeTagsAdd:['personalGuarantee','franchiseDream']}),
+      C('拒绝先签担保','亲戚说你错过风口，你保住了签名。','机会↓ · 边界↑',{resources:{spirit:2},lifeFacts:{boundaries:1},business:{mode:'none',status:'none'},outcomeTagsAdd:['timelyExit']})]},
+    {id:'decision_055',step:2,role:'continue',ageMin:25,ageMax:60,prompt:'总部考察只有样板间，成功门店的真实流水一直无法核实。',theme:'money',choices:[
+      C('自己联系三家门店','两家沉默，一家把进货单拍给了你。','证据↑ · 热情↓',{resources:{cash:-1000,spirit:-1},business:{operatingSkill:10,brandLockin:-5},lifeFacts:{evidenceHabit:1},outcomeTagsAdd:['sampleStore','smallScaleTrial']}),
+      C('相信总部的演示','镜头转了一圈，合同先翻到签字页。','推进快 · 锁定↑',{business:{brandLockin:12,sunkCost:5},outcomeTagsAdd:['sampleStore','supplierLockin']}),
+      C('只租临时档口测试','招牌小一点，日流水第一次能自己核对。','成本↓ · 技能↑',{resources:{cash:-6000},business:{status:'testing',capitalInvested:6000,operatingSkill:12,brandLockin:-8},outcomeTagsAdd:['smallScaleTrial']})]},
+    {id:'decision_068',step:3,role:'continue',ageMin:26,ageMax:63,prompt:'装修、设备、原料和投流报价到齐，你必须决定怎样开门。',theme:'money',choices:[
+      C('低成本再测试一个月','旺日和平日都记了流水，积蓄少了一块。','现金↓ · 信息↑',{resources:{cash:-12000},employment:{status:'selfEmployed',career:'加盟试营店',sector:'retail'},business:{mode:'franchise',status:'operating',capitalInvested:12000,operatingSkill:10,sunkCost:4},outcomeTagsAdd:['smallScaleTrial']}),
+      C('家庭共同投资正式加盟','卷帘门升起时，全家都站在门口。','现金↓ · 家庭绑定↑',{resources:{cash:-20000},employment:{status:'selfEmployed',career:'加盟门店',sector:'retail'},familyFinance:{boundary:'shared',businessStress:12},business:{mode:'franchise',status:'operating',capitalInvested:20000,brandLockin:18,sunkCost:10},outcomeTagsAdd:['familyInvestment','supplierLockin']}),
+      C('追加高息借款直接开店','设备一次到齐，第一张账单也到了。','债务↑ · 锁定↑',{resources:{cash:20000,debt:80000},employment:{status:'selfEmployed',career:'加盟门店',sector:'retail'},business:{mode:'franchise',status:'operating',capitalInvested:20000,brandLockin:20,sunkCost:15},pressures:{money:10},outcomeTagsAdd:['personalGuarantee','supplierLockin']}),
+      C('拒绝担保，暂停开店','朋友圈的老板照没发出去，订金也没全退。','损失可控 · 面子↓',{resources:{cash:-5000,spirit:-2},business:{status:'closed',sunkCost:6},pressures:{family:4},outcomeTagsAdd:['timelyExit']})]},
+    {id:'decision_075',step:4,role:'resolve',ageMin:27,ageMax:66,prompt:'经营持续亏损，总部建议继续投流，并把问题归因于执行力和坚持。',theme:'money',choices:[
+      C('再投一次但拒绝扩店','现金缓冲变薄，你把每一笔流水重新核对。','现金↓ · 生存窄门',{resources:{cash:-20000},business:{status:'operating',operatingSkill:6,sunkCost:10},pressures:{money:7,career:4},outcomeTagsAdd:['franchiseSurvivor']}),
+      C('关店及时止损','装修带不走，钥匙终于交回房东。','现金↓ · 压力回落',{resources:{cash:-5000,spirit:2},business:{status:'closed',sunkCost:8},familyFinance:{businessStress:-8},pressures:{money:-4,family:3},outcomeTagsAdd:['timelyExit']}),
+      C('脱离品牌独立经营','菜单变短，供货自由了，客人要重新找。','自由↑ · 收入波动',{resources:{cash:-10000},employment:{status:'selfEmployed',career:'独立小店',sector:'retail'},business:{mode:'independent',status:'operating',brandLockin:-25,operatingSkill:8,sunkCost:5},pressures:{career:5},outcomeTagsAdd:['independentShop']}),
+      C('继续投流和装修','朋友圈仍叫你老板，账本只剩借款能填。','债务↑ · 沉没成本↑',{resources:{cash:20000,debt:80000,spirit:-6},business:{status:'operating',capitalInvested:20000,brandLockin:15,sunkCost:15},familyFinance:{businessStress:10},pressures:{money:10,family:8},outcomeTagsAdd:['sunkCost','hiddenBusinessLoss']})]}
+  ]
+};
+
+for(const [storylineId,rows] of Object.entries(storylineDecisionRows))for(const row of rows){
+  const index=Number(row.id.slice(-3))-1,id=row.id,stage=Object.entries(stages).filter(([,range])=>Math.max(range[0],row.ageMin)<=Math.min(range[1],row.ageMax)).map(([name])=>name);
+  const decision={id,kind:'decision',stage,ageMin:row.ageMin,ageMax:row.ageMax,icon:'⌁',prompt:row.prompt,theme:row.theme,intensity:'high',relevantAttrs:row.theme==='money'?['stability','ambition']:row.theme==='career'?['ambition','stability']:row.theme==='digital'?['intellect','ambition']:['social'],requirements:row.requirements||{},weight:18,contentRevision:5,storyline:{id:storylineId,step:row.step,role:row.role,priority:10},choices:row.choices.map((choice,choiceIndex)=>{
+    const status=row.role==='resolve'?'resolved':choice.effects.outcomeTagsAdd?.includes('timelyExit')||choice.effects.outcomeTagsAdd?.includes('exitedSplitShift')&&row.step===1||choice.effects.outcomeTagsAdd?.includes('choseHomeBase')&&row.step===1?'abandoned':'active';
+    const route=choice.effects.outcomeTagsAdd?.[0]||null,nextStep=row.role==='resolve'?row.step:row.step+1;
+    return{id:`${id}_c${choiceIndex+1}`,text:choice.text,resultText:choice.result,consequenceHints:[choice.hint],memoryKey:`${id}_c${choiceIndex+1}`,effects:{...choice.effects,storylineAdvance:{id:storylineId,nextStep,status,route,delayMin:3,delayMax:3},outcomeTagsAdd:[storylineId,...(choice.effects.outcomeTagsAdd||[])]}};
+  })};
+  decisions[index]=decision;
+}
+
 const decisionById=new Map(decisions.map(decision=>[decision.id,decision]));
+decisionById.get('decision_012').requirements={facts:{siblingMin:1}};
 decisionById.get('decision_037').stage=['youth','adult'];decisionById.get('decision_037').requirements={memoriesAny:['decision_036_c2','decision_036_c3'],facts:{jobAny:['employed','unemployed']}};
 decisionById.get('decision_095').requirements={facts:{childrenMax:0,relationshipAny:['partnered','married']}};
 for(const [id,stage,ageMin,ageMax,childAgeAny] of [
@@ -407,6 +568,13 @@ for(const [id,stage,ageMin,ageMax,childAgeAny] of [
   const decision=decisionById.get(id);decision.stage=stage;decision.ageMin=ageMin;decision.ageMax=ageMax;
   decision.requirements={...(decision.requirements||{}),facts:{...(decision.requirements?.facts||{}),childrenMin:1,childAgeAny}};
 }
+for(const [id,step,role,nextStep,status] of [
+  ['decision_054',1,'start',2,'active'],['decision_065',2,'continue',3,'active'],['decision_073',3,'continue',4,'active'],
+  ['decision_080',4,'continue',5,'active'],['decision_086',5,'resolve',5,'resolved']
+]){
+  const decision=decisionById.get(id);decision.storyline={id:'childLife',step,role,priority:8};
+  for(const choice of decision.choices)choice.effects.storylineAdvance={id:'childLife',nextStep,status,route:choice.effects.outcomeTagsAdd?.[0]||'childLife',delayMin:2,delayMax:4};
+}
 
 const echoes=decisions.slice(0,80).map((decision,index)=>{
   const ageMin=Math.min(100,decision.ageMin+4),ageMax=Math.min(105,decision.ageMax+24);
@@ -417,7 +585,7 @@ const echoes=decisions.slice(0,80).map((decision,index)=>{
     ageMin,ageMax,icon:'↩️',text:decision.echoText,
     theme:decision.theme,themes:[decision.theme,'echo'],intensity:decision.stakes==='major'?'high':'medium',requirements:{memoriesAny:decision.choices.map(choice=>choice.memoryKey)},
     choiceOutcomes:Object.fromEntries(decision.choices.map((choice,choiceIndex)=>[choice.memoryKey,{text:`${decision.echoText}${choiceIndex===0?' 当年的决定先给出了回报。':choiceIndex===1?' 代价和余地一起留下。':' 你仍认得当时为何这样选。'}`,effects:{resources:{spirit:choiceIndex===0?3:choiceIndex===1?1:-2},desires:choice.effects.desires,outcomeTagsAdd:['echo',...choice.effects.outcomeTagsAdd]}}])),
-    effects:{resources:{spirit:index%2?2:-1},pressures:{loneliness:index%2?-1:1}},weight:12,contentRevision:4};
+    effects:{resources:{spirit:index%2?2:-1},pressures:{loneliness:index%2?-1:1}},weight:12,contentRevision:5};
 });
 
 function setEmployment(id,choiceIndex,status,career,sector){const effects=decisionById.get(id).choices[choiceIndex].effects;effects.employment={...(effects.employment||{}),status,...(career?{career}:{}),...(sector?{sector}:{})};effects.outcomeTagsAdd=[...new Set([...(effects.outcomeTagsAdd||[]),status])];}
@@ -425,8 +593,6 @@ function setPartner(id,choiceIndex,status,bond){const effects=decisionById.get(i
 
 setEmployment('decision_036',0,'employed');setEmployment('decision_036',1,'unemployed','备考与求职','public');setEmployment('decision_036',2,'employed');
 setEmployment('decision_037',0,'employed','基层公务员','public');setEmployment('decision_037',1,'employed');setEmployment('decision_037',2,'unemployed','继续备考','public');
-setEmployment('decision_042',0,'selfEmployed','合伙小店','retail');setEmployment('decision_042',1,'gig','周末店务','retail');
-setEmployment('decision_050',0,'selfEmployed','自主经营','independent');
 setEmployment('decision_051',0,'careLeave');setEmployment('decision_064',0,'careLeave');
 setEmployment('decision_079',0,'retired','退休生活','retired');setEmployment('decision_079',1,'employed');setEmployment('decision_079',2,'gig','顾问','consulting');
 delete decisionById.get('decision_060').choices[2].effects.employment;decisionById.get('decision_060').choices[2].effects.outcomeTagsAdd=['cashUp','housing'];
@@ -479,6 +645,32 @@ echoById.get('echo_080').choiceOutcomes={
   decision_080_c3:{text:'孩子后来自己凑齐首付，你们都记得那次拒绝并没有结束关系。',effects:{relationships:{childBond:2},resources:{spirit:2},desires:{security:3},outcomeTagsAdd:['echo','adultChild','refuse']}}
 };
 
+const storylineEchoTexts={
+  decision_029:['旅行回来后，父亲问的第一句是总共花了多少。','你用自己的钱回来，父亲把没转出的那笔钱留给了家里。','朋友发来海边照片时，你正在替家里核对余额。','账目里的担保项，让这趟旅行从此不只是旅行。'],
+  decision_035:['完整流水换来一次救急，也让每笔消费都有了旁观者。','分类账保留了共同责任，也保留了你的私人一栏。','父亲几个月没再问收入，后来先问你最近累不累。'],
+  decision_048:['弟妹走上稳妥路线后，仍会问那是不是自己的选择。','那场饭桌信息会留下了一份由弟妹亲手填的志愿。','你退出劝说后，弟妹第一次直接告诉家里自己的打算。'],
+  decision_070:['账目终于完整，你也成了家庭生意每次出问题先被拨通的人。','担保进入征信后，父亲不再说那只是临时周转。','家里撑过一阵，你延后的计划需要重新排队。','关账时损失没有消失，但下一代不用再靠含糊承担。'],
+  decision_031:['第一笔工资准时到账，休息室也成了你最常待的第二个工位。','写进邮件的补贴真的发了，班表仍把一天切成两半。','下一份面试晚了两周，你却第一次有完整下午。','副业赚到一点钱，两个空档都不再属于休息。'],
+  decision_038:['被取消的约会没有回来，下一张班表又到了。','同事后来还了代班，你们终于各有一个完整周末。','固定休息日保住了，主管也把你从一次好班里挪开。'],
+  decision_046:['朋友入职第三天，把两张班表拍在你面前。','朋友仍然入职，却说提前知道真相让他能先安排退路。','朋友后来找到别的工作，你们没有因为奖金多一笔账。'],
+  decision_063:['你成为排班者后，第一次把最碎的班留给了没人说话的人。','离职后的第一个周末没有收入提醒，只有一顿完整晚饭。','灵活排班更不稳定，但一天终于只需要出门一次。'],
+  decision_034:['三个月合同续了一次，你的报价也第一次由自己写下。','平台改了抽成规则，那份自由开始按订单排名。','本地工作的社保继续缴着，远程机会只留在收藏夹。'],
+  decision_050:['居家第六个月，外卖员成了你见得最规律的人。','国内旅居省下房租，也让每次关系都从自我介绍开始。','签证续期那天，你在凌晨给另一个时区交了稿。'],
+  decision_058:['固定在线时段赶走急单，却把睡眠还给了你。','续约邮件到达时，你的身体仍停在客户的白天。','一条生活视频爆了，第二天的早餐先等你拍完。'],
+  decision_069:['客户减少后，漂流第一次像生活而不是逃跑。','固定基地多了一把钥匙，也多了一群知道你住哪的人。','回到本地岗位后，通勤和稳定一起重新出现。','观众记住了风景，你开始分不清哪顿饭没有拍过。'],
+  decision_042:['真实门店的进货单，比总部的灯光更早让你冷静。','家庭投资到账后，每个人都开始问今天卖了多少。','第一期利息在开业前扣走，老板称呼仍很新鲜。','风口过去后，那支没签担保的笔还在抽屉里。'],
+  decision_055:['三家门店的回答不一致，反而让成本第一次可以核对。','样板间转完三百六十度，合同里的采购锁定没有入镜。','临时档口没赚大钱，却给了你一张真实日流水。'],
+  decision_068:['测试月结束时，你知道什么时段真的有人进店。','全家站在开业照里，也一起站进了每月账单。','借款让店准时开门，也让每天第一单先付利息。','暂停开店损失了订金，却没有损失下一套房的担保权。'],
+  decision_075:['拒绝扩店后，低租金和现金缓冲让小店勉强活了下来。','关店照片发出后，朋友圈终于不再叫你老板。','脱离品牌后，熟客先记住了你自己的菜单。','又一次投流结束，后台把失败继续归给执行力。']
+};
+
+for(const [storylineId,rows] of Object.entries(storylineDecisionRows))for(const row of rows){
+  const echo=echoById.get(`echo_${row.id.slice(-3)}`),decision=decisionById.get(row.id);if(!echo)throw new Error(`${row.id} must retain an echo slot`);
+  echo.ageMin=Math.min(100,decision.ageMin+1);echo.ageMax=Math.min(105,decision.ageMax+10);echo.stage=Object.entries(stages).filter(([,range])=>Math.max(range[0],echo.ageMin)<=Math.min(range[1],echo.ageMax)).map(([name])=>name);echo.text=`${row.prompt}的后续回来了。`;echo.storyline={id:storylineId,step:row.step,role:'continue',priority:12};echo.contentRevision=5;
+  echo.choiceOutcomes=Object.fromEntries(decision.choices.map((choice,index)=>[choice.memoryKey,{text:storylineEchoTexts[row.id][index],effects:{resources:{spirit:[2,1,-2,1][index]||1},pressures:{family:storylineId==='familyMoney'?(index===1?-1:2):0,career:['splitShift','remoteNomad','franchise'].includes(storylineId)?(index===1?-1:2):0},storylineAdvance:{...choice.effects.storylineAdvance,delayMin:0,delayMax:1},outcomeTagsAdd:['echo',storylineId,...choice.effects.outcomeTagsAdd.filter(tag=>tag!==storylineId)]}}]));
+  for(const choice of decision.choices)choice.effects.scheduleEcho={eventId:echo.id,delayMin:1,delayMax:3,chance:1};
+}
+
 const S=(band,ageMin,ageMax,text,theme,effects,requirements={})=>({band,ageMin,ageMax,text,theme,effects,requirements});
 const blackSwanRows=[
   S('work',23,65,'一张旧彩票中了小奖，兑奖点已经搬家。','money',{resources:{cash:12000},pressures:{money:-5},outcomeTagsAdd:['swanGain','cashUp']}),
@@ -502,7 +694,7 @@ const blackSwanRows=[
   S('youth',18,30,'直播间买的树苗真的结果，全小区来拍照。','light',{relationships:{network:6},resources:{spirit:8},outcomeTagsAdd:['swanGain','light']}),
   S('elder',45,95,'一场小病让你避开了那趟出事的车。','health',{resources:{health:-5,spirit:8},pressures:{body:5},outcomeTagsAdd:['swanMixed','health']})
 ];
-const blackSwans=blackSwanRows.map((row,index)=>({id:`swan_${String(index+1).padStart(2,'0')}`,kind:'blackSwan',stage:Object.entries(stages).filter(([,range])=>Math.max(range[0],row.ageMin)<=Math.min(range[1],row.ageMax)).map(([stage])=>stage),ageMin:row.ageMin,ageMax:row.ageMax,icon:'🪐',text:row.text,theme:row.theme,themes:[row.theme,'blackSwan'],swanBand:row.band,intensity:'high',requirements:row.requirements,effects:row.effects,weight:1,contentRevision:4}));
+const blackSwans=blackSwanRows.map((row,index)=>({id:`swan_${String(index+1).padStart(2,'0')}`,kind:'blackSwan',stage:Object.entries(stages).filter(([,range])=>Math.max(range[0],row.ageMin)<=Math.min(range[1],row.ageMax)).map(([stage])=>stage),ageMin:row.ageMin,ageMax:row.ageMax,icon:'🪐',text:row.text,theme:row.theme,themes:[row.theme,'blackSwan'],swanBand:row.band,intensity:'high',requirements:row.requirements,effects:row.effects,weight:1,contentRevision:5}));
 
 const mechanicHints={
   network:'关系 +3；关系事件更常出现，一次再加 +2。',
@@ -569,13 +761,13 @@ const cardRows={
 
 function buildCards(rows,kind){return rows.map(([displayName,,impact],index)=>{const effectHint=mechanicHints[impact];if(!effectHint)throw new Error(`Missing mechanic hint for ${impact}`);return{
   id:`${kind}_${String(index+1).padStart(2,'0')}`,displayName,effectHint,
-  omenIcon:icons[(index+(kind==='stage'?4:kind==='adversity'?9:0))%icons.length],mechanic:impact,effects:decisionEffects(impact,{theme:'card',prompt:''}),contentRevision:4
+  omenIcon:icons[(index+(kind==='stage'?4:kind==='adversity'?9:0))%icons.length],mechanic:impact,effects:decisionEffects(impact,{theme:'card',prompt:''}),contentRevision:5
 };});}
 const cards={innate:buildCards(cardRows.innate,'innate'),stage:buildCards(cardRows.stage,'stage'),adversity:buildCards(cardRows.adversity,'adversity')};
 
 function tagAdvantage(text){if(/关系|有人/.test(text))return'support';if(/规则|证据/.test(text))return'evidence';if(/经验|技能/.test(text))return'skill';if(/波动|承受/.test(text))return'resilience';return'resource'}
 function tagRisk(text){if(/边界|控制/.test(text))return'family';if(/现金流|债|钱/.test(text))return'money';if(/照护/.test(text))return'care';if(/组织|评价/.test(text))return'career';return'pressure'}
-const familyArchetypes=previous.familyArchetypes.map(({chainAffinity,...family})=>({...family,advantageTags:family.advantages.map(tagAdvantage),riskTags:family.hiddenRisks.map(tagRisk),contentRevision:4}));
+const familyArchetypes=previous.familyArchetypes.map(({chainAffinity,...family})=>({...family,advantageTags:family.advantages.map(tagAdvantage),riskTags:family.hiddenRisks.map(tagRisk),contentRevision:5}));
 
 function secretTheme(secret){if(/债|现金流|生意|担保/.test(secret.name))return'money';if(/房|土地|宅基地|产权/.test(secret.name))return'house';if(/病|健康/.test(secret.name))return'health';return'family'}
 const familySecrets=previous.familySecrets.map((source,index)=>{
@@ -584,7 +776,7 @@ const familySecrets=previous.familySecrets.map((source,index)=>{
   if(Math.abs(Number(resources.assets||0))>=50000&&Math.abs(Number(resources.assets))<80000)resources.assets=Math.sign(resources.assets)*80000;
   if(Math.abs(Number(resources.debt||0))>=50000&&Math.abs(Number(resources.debt))<80000)resources.debt=Math.sign(resources.debt)*80000;
   const debt=Number(resources.debt||0),cash=Number(resources.cash||0),familyClasses=debt>0||Number(resources.assets||0)>0?['middle','affluent']:cash<0?['working','precarious']:['middle','working','affluent','precarious'];
-  return {...secret,age:Math.max(15,Math.min(65,secret.age)),icon:'🔒',theme:secretTheme(secret),familyClasses,contentRevision:4,effects:{resources,relationships:{parentsBond:relation},pressures:{family:Math.max(-3,Math.min(10,Number(secret.effects?.hidden?.familyBurden||0))),money:debt||cash<0?6:-1},desires:{...(secret.effects?.desires||{})},outcomeTagsAdd:['familySecret',secretTheme(secret)]}};
+  return {...secret,age:Math.max(15,Math.min(65,secret.age)),icon:'🔒',theme:secretTheme(secret),familyClasses,contentRevision:5,effects:{resources,relationships:{parentsBond:relation},pressures:{family:Math.max(-3,Math.min(10,Number(secret.effects?.hidden?.familyBurden||0))),money:debt||cash<0?6:-1},desires:{...(secret.effects?.desires||{})},outcomeTagsAdd:['familySecret',secretTheme(secret)]}};
 });
 
 const endingProfiles=[
@@ -611,27 +803,53 @@ const endingTitleCatalog={
   lifelong_learning:['旧专业留下的余料','一直在重新入门','学会的东西带得走','人生没有毕业答辩'],
   survivor:['坏运没有拿走全部','危机以后仍有日常','从谷底保留一件东西','没有被那一年定义']
 };
-const endingTitles=endingProfiles.flatMap((profile,profileIndex)=>endingTitleCatalog[profile.id].map((title,index)=>({id:`ending_${String(profileIndex*4+index+1).padStart(2,'0')}`,title,profileId:profile.id,contentRevision:4})));
+const endingTitles=endingProfiles.flatMap((profile,profileIndex)=>endingTitleCatalog[profile.id].map((title,index)=>({id:`ending_${String(profileIndex*4+index+1).padStart(2,'0')}`,title,profileId:profile.id,contentRevision:5})));
 
 const fragmentSignals=['boundary','care','partner','single','noChild','compromise','career','quit','gig','riskUp','debt','housing','move','healthUp','study','recovery'];
 function fragmentText(value){return typeof value==='string'?value:fragmentText(value?.text||'')}
 const endingFragments=Object.fromEntries(Object.entries(previous.endingFragments).map(([group,items])=>[group,items.map((source,index)=>{
   const text=fragmentText(source);
   const requirements=group==='origins'?{locationAny:[previous.locations[index%previous.locations.length].id]}:group==='conflicts'?{conflictAny:[previous.mainConflicts[index%previous.mainConflicts.length].id]}:group==='judgments'?{endingProfileAny:[endingProfiles[index%endingProfiles.length].id]}:{outcomeTagsAny:[fragmentSignals[index%fragmentSignals.length]]};
-  return{id:`fragment_${group}_${String(index+1).padStart(2,'0')}`,text,requirements,contentRevision:4};
+  return{id:`fragment_${group}_${String(index+1).padStart(2,'0')}`,text,requirements,contentRevision:5};
 })]));
+
+const storylineFragmentRows={
+  turns:[
+    ['familyMoney','你后来又说出“一家人的钱不分你我”，才发现旧循环借了你的声音。',{outcomeTagsAll:['copiedFinancialCycle'],storyline:{id:'familyMoney',statusAny:['resolved','abandoned']}}],
+    ['splitShift','你成为排班者后，终于看见那张表怎样把代价推给最少说话的人。',{outcomeTagsAll:['becameScheduler','fragmentedTime'],storyline:{id:'splitShift',statusAny:['resolved']}}],
+    ['remoteNomad','你把漂流做成内容，镜头外的工作仍占用了每一处风景。',{outcomeTagsAll:['contentizedLife','platformDependence'],storyline:{id:'remoteNomad',statusAny:['resolved']}}],
+    ['franchise','朋友圈里的老板称呼留得最久，账本里的亏损却更早成为事实。',{outcomeTagsAll:['sunkCost','hiddenBusinessLoss'],storyline:{id:'franchise',statusAny:['resolved']}}]
+  ],
+  gains:[
+    ['familyMoney','你付出过争吵和疏远，换来下一代不必用含糊证明爱。',{outcomeTagsAll:['brokeFinancialCycle'],storyline:{id:'familyMoney',statusAny:['resolved']}}],
+    ['splitShift','离开两头班后，收入先变薄，一整天却重新属于同一张日历。',{outcomeTagsAll:['exitedSplitShift'],storyline:{id:'splitShift',statusAny:['resolved','abandoned']}}],
+    ['remoteNomad','你结束时差生活，承认固定地址不是失败，而是一种昂贵的选择。',{outcomeTagsAll:['choseHomeBase','timezoneWork'],storyline:{id:'remoteNomad',statusAny:['resolved']}}],
+    ['franchise','及时关店没有退回全部投入，却保住了下一次不靠担保开始的可能。',{outcomeTagsAll:['timelyExit'],storyline:{id:'franchise',statusAny:['resolved','abandoned']}}]
+  ],
+  judgments:[
+    ['familyMoney','你没有彻底离开家庭账本，只把能共同承担和必须自己决定的部分写清。',{outcomeTagsAll:['becameFamilyBookkeeper'],storyline:{id:'familyMoney',statusAny:['resolved']}}],
+    ['splitShift','你没能让排班变得自由，只让不稳定的周末少伤害一个人。',{outcomeTagsAll:['scheduleControl','fragmentedTime'],storyline:{id:'splitShift',statusAny:['resolved']}}],
+    ['remoteNomad','可迁移技能给了你余地，合同波动也从未允许你把任何地方只当生活。',{outcomeTagsAll:['portableSkill','remoteIncome'],storyline:{id:'remoteNomad',statusAny:['resolved']}}],
+    ['franchise','小店活了下来，不靠扩店神话，只靠低租金、现金缓冲和不再追加担保。',{outcomeTagsAll:['franchiseSurvivor'],storyline:{id:'franchise',statusAny:['resolved']}}]
+  ]
+};
+for(const [group,rows] of Object.entries(storylineFragmentRows))rows.forEach(([,text,requirements],index)=>{endingFragments[group][12+index]={id:`fragment_${group}_${String(13+index).padStart(2,'0')}`,text,requirements,contentRevision:5}});
 
 const codexRules=[
   ['digital'],['quit'],['gig'],['housing'],['stay'],['debt'],['relationUp'],['study'],['cashUp'],['partner'],
   ['healthUp'],['network'],['recognition'],['care'],['riskUp'],['compromise'],['save'],['boundary'],['partner','care'],['digital','single'],
   ['evidence'],['retired'],['gig','career'],['familySecret'],['career'],['stay','career'],['move'],['housing','debt'],['lie'],['refuse','healthUp']
 ];
-const codex=previous.codex.map(({triggers,...entry},index)=>({...entry,category:['工作','家庭','经济','关系','健康','数字'][index%6],lockedHint:`经历一次与${['工作','家庭','经济','关系','健康','数字'][index%6]}有关的转折`,unlockRules:{outcomeTagsAny:codexRules[index]},contentRevision:4}));
+const codex=previous.codex.map(({triggers,...entry},index)=>({...entry,category:['工作','家庭','经济','关系','健康','数字'][index%6],lockedHint:`经历一次与${['工作','家庭','经济','关系','健康','数字'][index%6]}有关的转折`,unlockRules:{outcomeTagsAny:codexRules[index]},contentRevision:5}));
+Object.assign(codex[17],{name:'家庭共同财务',text:'爱与共同承担不等于自动放弃个人收入边界；透明、审计和担保会留下不同的家庭后果。',category:'家庭',lockedHint:'看清一次家庭支持背后的账单',unlockRules:{outcomeTagsAny:['openedFamilyLedger','familyBusinessDebt','brokeFinancialCycle']},contentRevision:5});
+Object.assign(codex[24],{name:'碎片化工时',text:'八小时可以被拆成两次出勤；中间的空档既不是工资，也很难成为完整生活。',category:'工作',lockedHint:'经历一份把一天切开的排班',unlockRules:{outcomeTagsAny:['fragmentedTime','unstableWeekend','chronicFatigue']},contentRevision:5});
+Object.assign(codex[26],{name:'远程漂流',text:'省掉通勤不等于获得自由；平台、时差、签证和客户仍能占用任何地点。',category:'数字',lockedHint:'在远程收入与固定生活之间作出取舍',unlockRules:{outcomeTagsAny:['remoteIncome','overseasNomad','choseHomeBase']},contentRevision:5});
+Object.assign(codex[14],{name:'快招加盟',text:'加盟费之外还有装修、设备、原料、投流和担保；老板称呼往往比真实流水来得早。',category:'经济',lockedHint:'核对一次加盟样板间之外的流水',unlockRules:{outcomeTagsAny:['sampleStore','supplierLockin','timelyExit']},contentRevision:5});
 
 const publishEvent=event=>{const copy=structuredClone(event);delete copy.tags;delete copy.themes;if(copy.kind==='decision'){delete copy.title;delete copy.text;delete copy.stakes;delete copy.echoText}if(copy.kind==='echo')delete copy.weight;return copy};
 
 const output = {
-  version:'4.0.1',gameVersion:'4.0.1',schemaVersion:5,contentRevision:4,
+  version:'4.1.0',gameVersion:'4.1.0',schemaVersion:6,contentRevision:5,
   stages,locations:previous.locations,familyArchetypes,familySecrets,attributes:previous.attributes,desires:previous.desires,mainConflicts:previous.mainConflicts,
   cards,events:[...annualBeats,...decisions,...echoes,...blackSwans].map(publishEvent),endingProfiles,endingTitles,endingFragments,codex
 };

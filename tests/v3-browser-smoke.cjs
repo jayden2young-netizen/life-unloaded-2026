@@ -1,4 +1,4 @@
-const {chromium}=require('playwright');
+require('./v4.1-browser-smoke.cjs');/* legacy v4.0.1 core path retained below for release archaeology
 const fs=require('node:fs');const path=require('node:path');
 const baseUrl=process.argv[2]||'http://127.0.0.1:8765/';
 const out=path.resolve(__dirname,'..','test-results','v4.0.1-state-chain-fixes');fs.mkdirSync(out,{recursive:true});
@@ -69,4 +69,4 @@ const assert=(value,message)=>{if(!value)throw new Error(message)};
   const save=await page.evaluate(()=>JSON.parse(localStorage.getItem('life-unloaded-2026-v1')));assert(save.schemaVersion===5&&save.gameVersion==='4.0.1','save version wrong');assert(save.run.ending?.id&&save.run.ending?.profileId,'combination ending missing');assert(save.run.echoCount>=1,'echo count missing');assert(save.meta.codex.length>=1,'codex did not unlock');assert(save.run.decisionCount>=10&&save.run.decisionCount<=15,`forced-age path decision count ${save.run.decisionCount}`);
   await page.screenshot({path:path.join(out,'390-ending.png'),fullPage:true});assert(errors.length===0,`console errors: ${errors.join(' | ')}`);
   console.log(JSON.stringify({version:'4.0.1',age:save.run.age,events:save.run.timeline.length,decisions:save.run.decisionCount,echoes:save.run.echoCount,secretVerified,ending:save.run.ending.profileId,codexUnlocked:save.meta.codex.length,errors},null,2));await browser.close();
-})().catch(error=>{console.error(error);process.exit(1)});
+})().catch(error=>{console.error(error);process.exit(1)});*/

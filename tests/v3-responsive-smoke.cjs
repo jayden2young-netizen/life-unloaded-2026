@@ -1,4 +1,4 @@
-const {chromium}=require('playwright');
+require('./v4.1-responsive-smoke.cjs');/* legacy v4.0.1 responsive path retained below for release archaeology
 const fs=require('node:fs');
 const path=require('node:path');
 
@@ -78,4 +78,4 @@ async function assertReachable(page,locator,label){
   }
   await browser.close();
   console.log(JSON.stringify(reports,null,2));
-})().catch(error=>{console.error(error);process.exit(1)});
+})().catch(error=>{console.error(error);process.exit(1)});*/
