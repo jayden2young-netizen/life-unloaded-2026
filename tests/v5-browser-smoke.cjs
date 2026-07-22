@@ -80,7 +80,7 @@ let browser;
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
   assert.equal(migrated.state.schemaVersion, 7);
-  assert.equal(migrated.state.gameVersion, '5.0.1');
+  assert.equal(migrated.state.gameVersion, '5.0.2');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
@@ -105,9 +105,17 @@ let browser;
   assert.ok(run.people.filter(person => person.relation === 'sibling' && person.alive).every(person => run.age >= person.bornAt));
 
   await page.locator('[data-act="birth-next"]').click();
-  for (const key of ['intellect', 'physique', 'stability', 'social']) {
-    for (let i = 0; i < 5; i++) await page.locator(`[data-attr="${key}"][data-delta="1"]`).click();
-  }
+  await page.waitForTimeout(320);
+  assert.equal(await page.locator('[data-act="random-attributes"]').count(), 1);
+  await page.locator('[data-act="random-attributes"]').click();
+  await page.waitForTimeout(320);
+  run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
+  assert.equal(run.points, 0);
+  assert.equal(Object.values(run.attrs).reduce((sum, value) => sum + value, 0), 26);
+  assert.ok(Object.values(run.attrs).every(value => value >= 1 && value <= 10));
+  assert.equal(await page.locator('[data-act="attributes-done"]:not([disabled])').count(), 1);
+  await fit(page, 'random-attributes-360x773');
+  await page.screenshot({ path: path.join(OUT, 'random-attributes-360x773.png'), fullPage: true });
   await page.locator('[data-act="attributes-done"]').click();
   await page.locator('[data-card]').first().click();
 

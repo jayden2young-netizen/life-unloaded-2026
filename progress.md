@@ -111,3 +111,8 @@ Original prompt: Implement the approved 《人生尚未加载 · 2026》v3.0 人
 - 2026-07-23: Restored the missing “清除全部数据” action in Settings with an explicit irreversible confirmation. It removes only `life-unloaded-2026-*` storage owned by this game, including the active life, cross-run records, and legacy snapshots.
 - 2026-07-23: Changed release migration policy: a game-version or schema change now clears the old active life and removes raw legacy snapshots while retaining normalized life records, codex unlocks, settings, statistics, seen-content freshness, and recent seeds. Same-release refreshes still resume the current life normally.
 - 2026-07-23: Generator output remained stable across two runs and all static/state-contract checks passed. One browser core path verified record-only migration, legacy snapshot cleanup, the visible Settings action, irreversible clear behavior, normal gameplay/ending continuity, 360×773 layout, and zero console errors.
+
+## v5.0.2 初始属性随机分配修复
+
+- 2026-07-23: Restored the missing “随机分配” action on the initial attribute screen. It resets all six attributes to their minimum, spends all 20 points through the seeded RNG without exceeding the current cap of 10, and recalculates the derived portable-skill and employability values before confirmation.
+- 2026-07-23: Generator output was stable across two runs; static validation and state contracts passed. One browser core path confirmed a 26-point final attribute total, 1–10 bounds, enabled confirmation, visible controls at 360×773, normal downstream play, and zero console errors. The randomized attribute screenshot was visually inspected after the page animation completed.

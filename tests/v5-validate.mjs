@@ -27,7 +27,7 @@ const inspectPredicates=(requirements,label)=>{keys(requirements,['all','any','n
 const inspectCommands=(commands,label)=>{check(Array.isArray(commands),`${label}: effects must be command array`);for(const command of commands||[]){keys(command,commandFields,label);check(commandTypes.includes(command.type),`${label}: unknown command ${command.type}`);if(command.type!=='tag'&&command.type!=='createPerson'&&command.type!=='claimDesire')check(pathAllowed(command.target),`${label}: unsupported command target ${command.target}`);if(command.type==='add'&&command.target==='finance.cash'&&command.value)check(Math.abs(command.value)<=70000,`${label}: ordinary cash delta exceeds 70000`);if(command.type==='set'&&command.target==='employment.status')check(employmentStates.includes(command.value),`${label}: invalid employment state ${command.value}`);if(command.type==='set'&&command.target==='habits.stage')check(habitStages.includes(command.value),`${label}: invalid habit stage ${command.value}`);if(command.type==='addLiability'){check(command.value>0,`${label}: nonpositive liability`);check(command.rate>0&&command.rate<=.2,`${label}: unrealistic liability rate`)}}};
 
 keys(data,rootFields,'root');
-check(data.version==='5.0.1'&&data.gameVersion==='5.0.1','version is not 5.0.1');
+check(data.version==='5.0.2'&&data.gameVersion==='5.0.2','version is not 5.0.2');
 check(data.schemaVersion===7,'schemaVersion is not 7');
 check(data.contentRevision===6,'contentRevision is not 6');
 check((kinds.beat||[]).length===400,'annual beats must remain 400');
