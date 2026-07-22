@@ -7,7 +7,6 @@ const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(ROOT, 'test-results', 'v5-browser');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY = 'life-unloaded-2026-v1';
-const BACKUP_KEY = 'life-unloaded-2026-v4.1.0-backup';
 fs.mkdirSync(OUT, { recursive: true });
 
 async function waitBoot(page) {
@@ -54,7 +53,12 @@ let browser;
   const legacy = {
     schemaVersion: 6,
     gameVersion: '4.1.0',
-    meta: { histories: [], codex: [], settings: { haptic: false }, stats: { runs: 2 } },
+    meta: {
+      histories: [{ title: '保留的人生记录', age: 72, seed: 'finished-life' }],
+      codex: ['codex_01'], settings: { haptic: false }, stats: { runs: 2 },
+      seen: { events: { beat_001: 1 }, cards: {}, families: {}, endings: {} },
+      recentSeeds: ['finished-life']
+    },
     run: {
       schemaVersion: 6, seed: 'migration-fixture', age: 24, phase: 'playing', decisionCount: 3,
       res: { cash: 18000, assets: 9000, debt: 12000, health: 74, spirit: 68 },
@@ -64,18 +68,29 @@ let browser;
       timeline: [{ age: 23, id: 'legacy-event', kind: 'beat', text: '旧人生仍被保留。' }]
     }
   };
-  await page.addInitScript(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), { key: SAVE_KEY, value: legacy });
+  await page.addInitScript(({ key, value }) => {
+    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem('life-unloaded-2026-v4.1.0-backup', 'legacy-backup');
+  }, { key: SAVE_KEY, value: legacy });
   await page.goto(URL, { waitUntil: 'domcontentloaded' });
   await waitBoot(page);
-  const migrated = await page.evaluate(({ key, backup }) => ({
-    state: JSON.parse(localStorage.getItem(key)), backup: JSON.parse(localStorage.getItem(backup)),
+  const migrated = await page.evaluate(key => ({
+    state: JSON.parse(localStorage.getItem(key)),
+    legacyKeys: Object.keys(localStorage).filter(item => item.startsWith('life-unloaded-2026-') && item !== key),
     run: window.__LIFE_DEBUG__.snapshot()
-  }), { key: SAVE_KEY, backup: BACKUP_KEY });
+  }), SAVE_KEY);
   assert.equal(migrated.state.schemaVersion, 7);
-  assert.equal(migrated.backup.gameVersion, '4.1.0');
-  assert.equal(migrated.run.age, 24);
-  assert.equal(migrated.run.employment.status, 'employed');
-  assert.equal(migrated.run.finance.totalDebt, 12000);
+  assert.equal(migrated.state.gameVersion, '5.0.1');
+  assert.equal(migrated.run, null, 'old active life should not survive a version update');
+  assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
+  assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
+  assert.deepEqual(migrated.state.meta.codex, ['codex_01']);
+  assert.equal(migrated.state.meta.settings.haptic, false);
+  assert.equal(migrated.state.meta.stats.runs, 2);
+  assert.equal(migrated.state.meta.seen.events.beat_001, 1);
+  assert.deepEqual(migrated.state.meta.recentSeeds, ['finished-life']);
+  assert.equal(await page.locator('[data-act="new"]').count(), 1);
+  assert.match(await page.locator('.migration-note').innerText(), /旧版本的活动人生已结束/);
 
   await context.close();
   context = await browser.newContext({ viewport: { width: 360, height: 773 }, deviceScaleFactor: 1 });
@@ -159,8 +174,27 @@ let browser;
     await fit(page, `ending-${width}x${height}`);
     await page.screenshot({ path: path.join(OUT, `ending-${width}x${height}.png`), fullPage: true });
   }
+
+  await page.setViewportSize({ width: 360, height: 773 });
+  await page.locator('[data-act="new"]').click();
+  await page.locator('[data-nav="home"]').click();
+  await page.locator('[data-nav="settings"]').click();
+  await page.waitForTimeout(320);
+  assert.equal(await page.locator('[data-act="clear-data"]').count(), 1);
+  await fit(page, 'settings-360x773');
+  await page.screenshot({ path: path.join(OUT, 'settings-clear-data-360x773.png'), fullPage: true });
+  await page.evaluate(() => localStorage.setItem('life-unloaded-2026-v4.1.0-backup', 'legacy-backup'));
+  page.once('dialog', dialog => dialog.accept());
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+    page.locator('[data-act="clear-data"]').click()
+  ]);
+  await waitBoot(page);
+  const remainingGameKeys = await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('life-unloaded-2026-')));
+  assert.deepEqual(remainingGameKeys, []);
+  assert.equal(await page.locator('[data-act="new"]').count(), 1);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ ok: true, migration: true, consequence: due.eventId, ending: ending.title, screenshots: fs.readdirSync(OUT).sort(), errors }, null, 2));
+  console.log(JSON.stringify({ ok: true, migration: { recordsPreserved: true, activeRunCleared: true, backupsRemoved: true }, clearData: true, consequence: due.eventId, ending: ending.title, screenshots: fs.readdirSync(OUT).sort(), errors }, null, 2));
   await browser.close();
   browser = null;
 })().catch(error => {
