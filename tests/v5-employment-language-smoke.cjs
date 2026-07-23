@@ -55,7 +55,7 @@ fs.mkdirSync(OUT,{recursive:true});
 
     await page.locator('[data-act="open-drawer"]').click();
     const drawer=await page.locator('.drawer').innerText();
-    for(const label of['现在在干嘛','手里净资产','习惯与依赖','还有几件事没完'])assert.match(drawer,new RegExp(label));
+    for(const label of['现在在干嘛','手里净资产','成瘾与戒断','还有几件事没完'])assert.match(drawer,new RegExp(label));
     const geometry=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,innerWidth}));
     assert.ok(geometry.scrollWidth<=geometry.innerWidth+1,'horizontal overflow');
     assert.deepEqual(errors,[]);

@@ -11,14 +11,14 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前开发版本：v0.5.3
-- 上一个已发布版本：v0.5.2
+- 当前开发版本：v0.5.4
+- 上一个已发布版本：v0.5.3
 - `schemaVersion`：7
-- `contentRevision`：10
+- `contentRevision`：11
 - localStorage 键：`life-unloaded-2026-v1`
-- `main` 交接基线：`1ed002ac89a6def75f216bceae2efd80b6907653`
-- 基线提交说明：`Merge v0.5.2 native Chinese rewrite`
-- 标签：`v0.5.2`
+- `main` 交接基线：`61dfe3f365ce6ee8020323583199c96920e2ae6b`
+- 基线提交说明：`Merge pull request #12 from jayden2young-netizen/codex/v0.5.3-card-rewrite`
+- 标签：`v0.5.3`
 
 交接前核验时，`main` 与 `origin/main` 一致，工作区原本干净。本交接文件随玩家版 README 一起维护；是否已经提交、当前分支是否变化，以新窗口现场执行的 Git 检查为准。
 
@@ -79,8 +79,8 @@ tests/                            静态、状态、语言与浏览器检查
 当前内容规模：
 
 - 400 个年度事件
-- 100 个选择事件
-- 100 个选择特定长期后果
+- 107 个选择事件
+- 107 个选择特定长期后果
 - 20 个黑天鹅
 - 72 张卡牌
 - 30 种家庭画像
@@ -102,6 +102,14 @@ tests/                            静态、状态、语言与浏览器检查
 72张卡牌已移动到 `content/zh-CN/cards.mjs`，按0、18、35、55岁分成12／20／20／20四个池。每张卡都有独立名称、生活化说明、`drawAge` 和至少一项实际状态效果。
 
 运行时只从当前年龄对应的池中抽三张牌。旧的“起步／转折／中段／回稳／余生”后缀和不可达的 `adversity` 池已删除。四次抽卡仍发生在0、18、35、55岁，72张总量和底部弹层交互不变。
+
+## v0.5.4 成瘾清晰化
+
+内部存档键继续使用 `habits`，界面名称统一为“成瘾与戒断”。`habits.type` 现在明确区分赌博、酒精、游戏、消费和药物；每类各有接触、功能受损、治疗／恢复三步选择，普通饮酒、游戏、购物和遵医嘱用药都可以不进入持续问题。
+
+五类内容共有32个年度事件、15个选择和15个选择特定回响。依赖或失控只能在反复行为、控制受损和现实功能损害之后出现；药物链要求已有真实健康治疗状态，并区分必要处方、身体依赖、误用与成瘾。状态抽屉显示“赌博·追损失控”“酒精·治疗中”“游戏·恢复2年”等具体状态。
+
+研究档案位于 `docs/research/v0.5.4-addiction-clarity.md`。数据仍由生成器产生，schema 保持7，内容修订升至11。v0.5.5 的 `episodes` 和 `sceneQueue` 尚未引入。
 
 ## 尚未完成
 

@@ -80,7 +80,7 @@ let browser;
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
   assert.equal(migrated.state.schemaVersion, 7);
-  assert.equal(migrated.state.gameVersion, '0.5.3');
+  assert.equal(migrated.state.gameVersion, '0.5.4');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
@@ -119,13 +119,13 @@ let browser;
   await page.locator('[data-act="attributes-done"]').click();
   await page.locator('[data-card]').first().click();
 
-  run = await forceChoice(page, 'decision_097', 0);
+  run = await forceChoice(page, 'decision_104', 0);
   assert.ok(Object.values(run.desires).some(value => value && typeof value === 'object' && value.claimed));
-  run = await forceChoice(page, 'decision_099', 1);
+  run = await forceChoice(page, 'decision_106', 1);
   assert.equal(run.employment.status, 'employed');
-  assert.ok(run.scheduledConsequences.some(item => item.sourceDecisionId === 'decision_099'));
+  assert.ok(run.scheduledConsequences.some(item => item.sourceDecisionId === 'decision_106'));
 
-  const due = run.scheduledConsequences.find(item => item.sourceDecisionId === 'decision_099');
+  const due = run.scheduledConsequences.find(item => item.sourceDecisionId === 'decision_106');
   await page.evaluate(schedule => window.__LIFE_DEBUG__.patchRun({ cardAges: [0, 18, 35, 55], scheduledConsequences: [schedule] }), due);
   await page.evaluate(age => window.__LIFE_DEBUG__.forceAge(age), due.dueAge);
   await page.evaluate(() => window.__LIFE_DEBUG__.advance());
@@ -141,7 +141,8 @@ let browser;
   run = await forceChoice(page, 'decision_058', 0);
   assert.equal(run.relationships.childCount, 1);
   run = await forceChoice(page, 'decision_081', 2);
-  assert.equal(run.habits.stage, 'dependent');
+  assert.equal(run.habits.type, 'gambling');
+  assert.equal(run.habits.stage, 'repeating');
   run = await forceChoice(page, 'decision_041', 0);
   assert.equal(run.activity.mode, 'sabbatical');
   run = await forceChoice(page, 'decision_025', 0);
@@ -157,7 +158,7 @@ let browser;
   await waitBoot(page);
   run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
   assert.equal(run.relationships.childCount, 1);
-  assert.equal(run.habits.stage, 'dependent');
+  assert.equal(run.habits.stage, 'repeating');
   assert.ok(run.scheduledConsequences.length >= 1);
 
   await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({
