@@ -11,15 +11,15 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前开发版本：v0.5.6
-- 上一个已发布版本：v0.5.5
+- 当前开发版本：v0.5.7
+- 上一个已发布版本：v0.5.6
 - `schemaVersion`：8
-- `contentRevision`：13
+- `contentRevision`：14
 - localStorage 键：`life-unloaded-2026-v1`
-- `main` 开发基线：`8eb74fbc9d252a333dcff1fa9a2576f039d41610`
-- 基线提交说明：`Merge v0.5.5 episode engine`
-- 开发分支：`codex/v0.5.6-career-episodes`
-- 基线版本：`v0.5.5`
+- `main` 开发基线：`ae7d720fda8e16540e6da2bb392914cd8535f5cd`
+- 基线提交说明：`Merge pull request #15 from jayden2young-netizen/codex/v0.5.6-career-episodes`
+- 开发分支：`codex/v0.5.7-crisis-recovery`
+- 基线版本：`v0.5.6`
 
 交接前核验时，`main` 与 `origin/main` 一致，工作区原本干净。本交接文件随玩家版 README 一起维护；是否已经提交、当前分支是否变化，以新窗口现场执行的 Git 检查为准。
 
@@ -129,6 +129,14 @@ Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案
 三个轨道上其余尚未迁移的选择文案仍保留，但不再组成旧四节点长链；长期公共职业、一般受雇工作和不工作状态继续由普通事件表达。公务员招录与裁员再就业共用 `career` lane，不能并行；主动不工作使用 `lifestyle` lane，仍受同时最多两个事件簇的总限制。
 
 运行时增加三类事件簇名称、招聘单位／原用人单位绑定、明确的超期与状态失效结尾，并让强制结尾时间线回到真实内容轨道。版本仍为 Schema 8，内容修订升至 13；根据现行发布策略，v0.5.5 的未完成人生会在版本变化时清除，跨局记录继续保留。研究档案位于 `docs/research/v0.5.6-事业转换.md`。
+
+## v0.5.7 危机与恢复事件簇
+
+本版新增 `guarantee_recourse` 与 `acute_illness`，并把五类成瘾分别拆成形成、治疗、复发三个短事件簇。担保按签署、违约、追偿推进，三年内以追回、书面重组、关系破裂或债务失败收口；急性疾病按检查、治疗、康复、结果推进，四年内落到治愈、管理、功能受限或退出治疗。
+
+成瘾事件共15簇、30个选择：首次接触不直接诊断，治疗入口要求已有控制受损或功能损害，复发入口要求已有至少一年恢复记录。状态抽屉使用具体中文名称，超期与状态失效都有物件和动作明确的替代结尾。版本仍为 Schema 8，内容修订升至14；v0.5.6 未完成人生会按版本策略清除，跨局记录保留。研究档案位于 `docs/research/v0.5.7-危机与恢复.md`。
+
+验证结果：生成器连续两次 SHA-256 均为 `BF31FE903107BAAD50D37892211C3FA7F228F4FF1599C019958383FCCEB80397`；662节点数据契约、状态门槛、语言检查和一条系统 Chrome 核心路径通过。浏览器路径覆盖三种窄屏、同龄三卡、刷新恢复、lane 互斥、担保与疾病全部结尾、五类成瘾三簇代表结尾及三类强制结尾，控制台错误为0；没有运行批量人生模拟。
 
 ## 尚未完成
 
