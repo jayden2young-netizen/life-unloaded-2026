@@ -11,14 +11,15 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前开发版本：v0.5.4
-- 上一个已发布版本：v0.5.3
-- `schemaVersion`：7
-- `contentRevision`：11
+- 当前开发版本：v0.5.5
+- 上一个已发布版本：v0.5.4
+- `schemaVersion`：8
+- `contentRevision`：12
 - localStorage 键：`life-unloaded-2026-v1`
-- `main` 交接基线：`61dfe3f365ce6ee8020323583199c96920e2ae6b`
-- 基线提交说明：`Merge pull request #12 from jayden2young-netizen/codex/v0.5.3-card-rewrite`
-- 标签：`v0.5.3`
+- `main` 开发基线：`08753ab3332b903705be3b8bdb5906478f12e9f1`
+- 基线提交说明：`Merge pull request #13 from jayden2young-netizen/codex/v0.5.4-addiction-clarity`
+- 开发分支：`codex/v0.5.5-episode-engine`
+- 基线版本：`v0.5.4`
 
 交接前核验时，`main` 与 `origin/main` 一致，工作区原本干净。本交接文件随玩家版 README 一起维护；是否已经提交、当前分支是否变化，以新窗口现场执行的 Git 检查为准。
 
@@ -79,8 +80,8 @@ tests/                            静态、状态、语言与浏览器检查
 当前内容规模：
 
 - 400 个年度事件
-- 107 个选择事件
-- 107 个选择特定长期后果
+- 106 个选择事件
+- 106 个选择特定长期后果
 - 20 个黑天鹅
 - 72 张卡牌
 - 30 种家庭画像
@@ -109,7 +110,17 @@ tests/                            静态、状态、语言与浏览器检查
 
 五类内容共有32个年度事件、15个选择和15个选择特定回响。依赖或失控只能在反复行为、控制受损和现实功能损害之后出现；药物链要求已有真实健康治疗状态，并区分必要处方、身体依赖、误用与成瘾。状态抽屉显示“赌博·追损失控”“酒精·治疗中”“游戏·恢复2年”等具体状态。
 
-研究档案位于 `docs/research/v0.5.4-addiction-clarity.md`。数据仍由生成器产生，schema 保持7，内容修订升至11。v0.5.5 的 `episodes` 和 `sceneQueue` 尚未引入。
+研究档案位于 `docs/research/v0.5.4-addiction-clarity.md`。数据仍由生成器产生，schema 保持7，内容修订升至11。
+
+## v0.5.5 事件簇引擎与开店样板
+
+运行时新增 `run.episodes` 和 `run.sceneQueue`。带 `episode` 接口的选择不再走普通年度选择流程：每阶段依次显示情况卡、选择卡和结果卡，三张卡保持同一年龄；结果确认后只写一条时间线，再完成年度结算。队列和当前选择会写入 localStorage，刷新后恢复到正确卡片且不重复应用效果。
+
+`shop_opening` 使用 `decision_033`—`decision_035` 三个阶段：考察与资金、开业与真实流水、明确收尾。最终路线为 `survived`、`independent`、`stop_loss` 和 `debt_failure`。簇开始时绑定具体经营单位，最多五年；单位提前失效或超过截止年龄时播放包含退租、设备、库存或品牌支持变化的具体结尾。
+
+活动事件簇同时最多两个且不能占用同一领域；旧 `arcs` 仍保留给尚未迁移的轨道，事件簇与旧链不能同时占用同一 lane。融资扩张和财富顶点继续留在旧经营链，未并入本轮开店簇。
+
+Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案、图鉴、设置、统计、已见内容和最近种子。研究档案位于 `docs/research/v0.5.5-shop-episodes.md`。
 
 ## 尚未完成
 

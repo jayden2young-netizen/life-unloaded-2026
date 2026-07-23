@@ -4,7 +4,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.HABITS_SMOKE_OUT||path.join(ROOT,'test-results','v0.5.4-habits');
+const OUT=process.env.HABITS_SMOKE_OUT||path.join(ROOT,'test-results','v0.5.5-habits');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 fs.mkdirSync(OUT,{recursive:true});
@@ -62,13 +62,13 @@ async function assertDrawer(page,label,filename){
     let {context,page}=session;
     await openPlayable(page);
     const startAge=18;
-    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceDecision('decision_081')),'decision_081');
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceDecision('decision_080')),'decision_080');
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({}));
     const prompt=await page.locator('.choice-sheet h2').innerText();
     const ageBeforeRefresh=(await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age;
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
-    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).currentDecision.id,'decision_081');
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).currentDecision.id,'decision_080');
     assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age,ageBeforeRefresh);
     assert.equal(await page.locator('.choice-sheet h2').innerText(),prompt);
     assert.equal(await page.locator('[data-choice]').count(),3);
@@ -78,11 +78,11 @@ async function assertDrawer(page,label,filename){
     assert.deepEqual({type:run.habits.type,stage:run.habits.stage},{type:'gambling',stage:'repeating'});
     await assertDrawer(page,'赌博·反复下注','gambling-repeating-360x773.png');
     await page.locator('button[data-act="close-drawer"]').click();
-    run=await forceChoice(page,'decision_082',2);
+    run=await forceChoice(page,'decision_081',2);
     assert.equal(run.habits.stage,'uncontrolled');
     await assertDrawer(page,'赌博·追损失控','gambling-uncontrolled-360x773.png');
     await page.locator('button[data-act="close-drawer"]').click();
-    run=await forceChoice(page,'decision_083',0);
+    run=await forceChoice(page,'decision_082',0);
     assert.equal(run.habits.stage,'recovery');
     assert.equal(run.arcs.habits_gambling.status,'resolved');
     assert.ok(run.age-startAge<=5,'gambling arc exceeds five years');
@@ -102,7 +102,7 @@ async function assertDrawer(page,label,filename){
     }
 
     assert.deepEqual(errors,[]);
-    console.log(JSON.stringify({ok:true,refreshDecision:'decision_081',resolvedArc:'habits_gambling',viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));
+    console.log(JSON.stringify({ok:true,refreshDecision:'decision_080',resolvedArc:'habits_gambling',viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));
   }finally{
     await browser.close();
   }

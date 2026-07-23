@@ -53,10 +53,10 @@ const stateText = page => page.evaluate(() => JSON.parse(window.render_game_to_t
   await page.screenshot({ path: path.join(OUT, 'ending.png'), fullPage: true });
   assert.equal(errors.length, 0, errors.join(' | '));
   assert(!snapshots.some(item => item.age < 18 && item.debt > 0), 'natural run created personal debt before adulthood');
-  const healthDecisionAges = run.decisionHistory.filter(item => /^decision_07[3-9]$|^decision_080$/.test(item.eventId)).map(item => item.age);
+  const healthDecisionAges = run.decisionHistory.filter(item => /^decision_07[2-9]$/.test(item.eventId)).map(item => item.age);
   const firstHealthDecisionAge = healthDecisionAges[0] ?? null;
   if (firstHealthDecisionAge !== null) {
-    const before = run.decisionHistory.find(item => item.age === firstHealthDecisionAge && /^decision_07[3-9]$|^decision_080$/.test(item.eventId));
+    const before = run.decisionHistory.find(item => item.age === firstHealthDecisionAge && /^decision_07[2-9]$/.test(item.eventId));
     assert(before, 'health decision lacks decision history');
   }
   const crisisTag = run.ending.tags.includes('健康危机');

@@ -74,7 +74,7 @@ const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
   assert.equal(strongRecovery.status, 'well', 'reachable treatment route did not cure a strong-constitution character');
   const healthStartIds = await page.evaluate(() => {
     window.__LIFE_DEBUG__.patchRun({ health: { status: 'well', conditionSeverity: 0, disability: 'none' }, usedEvents: [], arcs: {}, arcSlots: { career: null, family: null, personal: null } });
-    return window.__LIFE_DEBUG__.eligibleIds('decision').filter(id => ['decision_073', 'decision_077'].includes(id));
+    return window.__LIFE_DEBUG__.eligibleIds('decision').filter(id => ['decision_072', 'decision_076'].includes(id));
   });
   assert.deepEqual(healthStartIds, [], 'healthy character can start an illness arc');
   assert(!(await page.evaluate(() => window.__LIFE_DEBUG__.routeTags())).includes('健康危机'), 'cured character still receives health-crisis route tag');

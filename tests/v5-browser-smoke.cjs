@@ -16,7 +16,9 @@ async function waitBoot(page) {
 async function forceChoice(page, id, index) {
   const forced = await page.evaluate(idValue => window.__LIFE_DEBUG__.forceDecision(idValue), id);
   assert.equal(forced, id, `cannot force ${id}`);
+  if (await page.locator('[data-act="episode-next"]').count()) await page.locator('[data-act="episode-next"]').click();
   await page.locator(`[data-choice="${index}"]`).click();
+  if (await page.locator('[data-act="episode-next"]').count()) await page.locator('[data-act="episode-next"]').click();
   await page.waitForTimeout(240);
   return page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
 }
@@ -51,8 +53,8 @@ let browser;
   let page = await preparePage(context);
 
   const legacy = {
-    schemaVersion: 6,
-    gameVersion: '0.4.1',
+    schemaVersion: 7,
+    gameVersion: '0.5.4',
     meta: {
       histories: [{ title: '保留的人生记录', age: 72, seed: 'finished-life' }],
       codex: ['codex_01'], settings: { haptic: false }, stats: { runs: 2 },
@@ -60,7 +62,7 @@ let browser;
       recentSeeds: ['finished-life']
     },
     run: {
-      schemaVersion: 6, seed: 'migration-fixture', age: 24, phase: 'playing', decisionCount: 3,
+      schemaVersion: 7, gameVersion: '0.5.4', seed: 'migration-fixture', age: 24, phase: 'playing', decisionCount: 3,
       res: { cash: 18000, assets: 9000, debt: 12000, health: 74, spirit: 68 },
       lifeFacts: { education: '大学毕业' },
       employment: { status: 'employed', career: '行政助理', salary: 52000 },
@@ -79,8 +81,8 @@ let browser;
     legacyKeys: Object.keys(localStorage).filter(item => item.startsWith('life-unloaded-2026-') && item !== key),
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
-  assert.equal(migrated.state.schemaVersion, 7);
-  assert.equal(migrated.state.gameVersion, '0.5.4');
+  assert.equal(migrated.state.schemaVersion, 8);
+  assert.equal(migrated.state.gameVersion, '0.5.5');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
@@ -119,13 +121,13 @@ let browser;
   await page.locator('[data-act="attributes-done"]').click();
   await page.locator('[data-card]').first().click();
 
-  run = await forceChoice(page, 'decision_104', 0);
+  run = await forceChoice(page, 'decision_103', 0);
   assert.ok(Object.values(run.desires).some(value => value && typeof value === 'object' && value.claimed));
-  run = await forceChoice(page, 'decision_106', 1);
+  run = await forceChoice(page, 'decision_105', 1);
   assert.equal(run.employment.status, 'employed');
-  assert.ok(run.scheduledConsequences.some(item => item.sourceDecisionId === 'decision_106'));
+  assert.ok(run.scheduledConsequences.some(item => item.sourceDecisionId === 'decision_105'));
 
-  const due = run.scheduledConsequences.find(item => item.sourceDecisionId === 'decision_106');
+  const due = run.scheduledConsequences.find(item => item.sourceDecisionId === 'decision_105');
   await page.evaluate(schedule => window.__LIFE_DEBUG__.patchRun({ cardAges: [0, 18, 35, 55], scheduledConsequences: [schedule] }), due);
   await page.evaluate(age => window.__LIFE_DEBUG__.forceAge(age), due.dueAge);
   await page.evaluate(() => window.__LIFE_DEBUG__.advance());
@@ -133,17 +135,17 @@ let browser;
   run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
   assert.ok(run.usedConsequences.includes(due.id), `scheduled consequence did not return: ${JSON.stringify({ age: run.age, phase: run.phase, yearStarted: run.yearStarted, queue: run.yearQueue.map(item => item.id), schedule: run.scheduledConsequences, timeline: run.timeline.slice(-3) })}`);
 
-  run = await forceChoice(page, 'decision_049', 0);
+  run = await forceChoice(page, 'decision_048', 0);
   assert.equal(run.relationships.partnerStatus, 'dating');
-  run = await forceChoice(page, 'decision_057', 0);
+  run = await forceChoice(page, 'decision_056', 0);
   assert.equal(run.relationships.parenthoodIntent, 'planned');
   assert.equal(run.relationships.childCount, 0);
-  run = await forceChoice(page, 'decision_058', 0);
+  run = await forceChoice(page, 'decision_057', 0);
   assert.equal(run.relationships.childCount, 1);
-  run = await forceChoice(page, 'decision_081', 2);
+  run = await forceChoice(page, 'decision_080', 2);
   assert.equal(run.habits.type, 'gambling');
   assert.equal(run.habits.stage, 'repeating');
-  run = await forceChoice(page, 'decision_041', 0);
+  run = await forceChoice(page, 'decision_040', 0);
   assert.equal(run.activity.mode, 'sabbatical');
   run = await forceChoice(page, 'decision_025', 0);
   assert.equal(run.employment.arrangement, 'remote');
