@@ -16,7 +16,7 @@ export const UI_COPY={
   consequenceLabel:'以前的事又回来了',
   activityField:'现在在干嘛',
   netWorthField:'手里净资产',
-  habitField:'习惯与依赖',
+  habitField:'成瘾与戒断',
   activeArcsTitle:'还有几件事没完',
   noActiveArcs:'眼下没有拖着没完的事',
   coreConflictLabel:'这一生最难两全的事',

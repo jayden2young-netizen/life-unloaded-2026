@@ -64,7 +64,7 @@ const forbidden=[
   '这会改变事件权重与结局解释',
   '这项现实已经由本局状态或选择真实解锁'
 ];
-const verticalText=JSON.stringify({ui:UI_COPY,employment:EMPLOYMENT_COPY});
+const verticalText=JSON.stringify({ui:UI_COPY,employment:EMPLOYMENT_COPY,habits:TRACK_COPY.habits});
 for(const phrase of forbidden)check(!verticalText.includes(phrase),`vertical copy contains forbidden template: ${phrase}`);
 
 const exactDuplicates=list=>list.filter((text,index)=>list.indexOf(text)!==index);
@@ -105,9 +105,13 @@ for(const phrase of forbidden){
 }
 for(const [trackId,copy] of Object.entries(TRACK_COPY)){
   check(copy.beats.length===32,`${trackId}: authored beat count is not 32`);
-  check(copy.decisions.length===8,`${trackId}: authored decision count is not 8`);
+  const expectedDecisions=trackId==='habits'?15:8;
+  check(copy.decisions.length===expectedDecisions,`${trackId}: authored decision count is not ${expectedDecisions}`);
   check(copy.decisions.every(item=>item.choices.length===3),`${trackId}: every decision must keep three choices`);
 }
+const habitVisible=JSON.stringify(TRACK_COPY.habits);
+for(const vague of['一种习惯','旧入口','多年后如何讲述'])check(!habitVisible.includes(vague),`habits copy contains vague or displaced phrase: ${vague}`);
+for(const type of['gambling','alcohol','gaming','shopping','medication'])check(TRACK_COPY.habits.decisions.filter(item=>item.type===type).length===3,`${type}: must have three authored decisions`);
 
 const report={
   employment:{beats:beats.length,decisions:decisions.length,choiceResults:resultTexts.length,consequences:consequences.length,choiceSpecificConsequences:consequenceTexts.length},
