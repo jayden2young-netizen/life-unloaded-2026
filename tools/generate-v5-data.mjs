@@ -6,7 +6,7 @@ import {TRACK_COPY} from '../content/zh-CN/tracks/index.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const output=path.join(here,'..','data.json');
-const VERSION='0.5.6',SCHEMA_VERSION=8,CONTENT_REVISION=13;
+const VERSION='0.5.7',SCHEMA_VERSION=8,CONTENT_REVISION=14;
 const stages={infancy:[0,5],childhood:[6,12],adolescence:[13,18],youth:[19,29],establishment:[30,44],midlife:[45,59],later:[60,74],elder:[75,105]};
 const stageNames=Object.keys(stages);
 const stageFor=(min,max)=>stageNames.filter(name=>Math.max(min,stages[name][0])<=Math.min(max,stages[name][1]));
@@ -196,10 +196,17 @@ const EPISODE_ROUTES={
   shop_opening:{1:['verified','independent_test','guaranteed'],2:['lean','independent_plan','double_down'],3:['survived','independent','stop_loss','debt_failure']},
   public_exam:{1:['applied','retargeted','withdrawn'],2:['appointed','retake','market_exit','withdrawn']},
   layoff_reemployment:{1:['documented_exit','internal_transfer','reviewed_exit'],2:['same_field','bridge_job','retrained','long_search']},
-  career_break:{1:['self_funded','family_funded','project_funded'],2:['on_budget','shrinking','overrun'],3:['continue','low_intensity','full_time','forced_return']}
+  career_break:{1:['self_funded','family_funded','project_funded'],2:['on_budget','shrinking','overrun'],3:['continue','low_intensity','full_time','forced_return']},
+  guarantee_recourse:{1:['declined','limited_guarantee','joint_guarantee'],2:['verified_claim','direct_negotiation','new_borrowing'],3:['recovered','restructured','relationship_break','default_failure']},
+  acute_illness:{1:['confirmed','scheduled_review','delayed'],2:['treated','adapted','worsened'],3:['rehabilitated','assisted','setback'],4:['cured','managed','limited','treatment_exit']}
 };
+const habitEpisodeRoutes=(episode,kind)=>({
+  formation:{1:['ordinary_exit','monitoring','repeating'],2:['stopped','exposed','dependent','uncontrolled']},
+  treatment:{1:['assessed','monitored','declined'],2:['recovery','continuing','support_exit','uncontrolled']},
+  relapse:{1:['reported','restricted','hidden'],2:['recovery_reset','treatment_return','lapse_only','relapse']}
+}[kind]?.[episode.phase]);
 const decisionEffects=(id,index,option,authoredDecision)=>{
-  const episode=authoredDecision?.episode,route=episode?EPISODE_ROUTES[episode.id]?.[episode.phase]?.[option]:['deliberate','negotiated','risk'][option],effects=[c('tag','history',`${id}:${route}`),c('add','agency',[4,3,2,1][option])],add=(path,value)=>effects.push(c('add',path,value)),set=(path,value)=>value!==undefined&&effects.push(c('set',path,value));
+  const episode=authoredDecision?.episode,episodeRoutes=episode?(EPISODE_ROUTES[episode.id]?.[episode.phase]||habitEpisodeRoutes(episode,authoredDecision.habitKind)):null,route=episode?episodeRoutes?.[option]:['deliberate','negotiated','risk'][option],effects=[c('tag','history',`${id}:${route}`),c('add','agency',[4,3,2,1][option])],add=(path,value)=>effects.push(c('add',path,value)),set=(path,value)=>value!==undefined&&effects.push(c('set',path,value));
   if(id==='education'){add('capabilities.skill',[3,2,1][option]);add('finance.cash',[-8000,-3000,2000][option]);if(index===0)set('education.path',['academic','evaluating','vocational'][option]);if(index===2&&option===2){set('education.status','interrupted');set('activity.mode','work')}}
   if(id==='employment'&&!episode){const states=[['employed','employed','unemployed'],['employed','employed','employed'],['employed','unemployed','unemployed'],['employed','employed','employed'],['employed','employed','employed'],['employed','employed','employed'],['employed','employed','unemployed'],['employed','selfEmployed','retired']][index],modes=[['work','work','seeking'],['work','work','work'],['work','seeking','seeking'],['work','work','work'],['work','work','work'],['work','work','work'],['study','work','seeking'],['work','flexible','retired']][index],salaryChanges=[[3000,5000,0],[10000,5000,0],[0,0,0],[12000,5000,0],[0,0,0],[16000,4000,0],[0,0,0],[5000,2000,0]][index];set('employment.status',states[option]);set('activity.mode',modes[option]);add('employment.salary',salaryChanges[option]);add('pressures.career',[4,1,-2][option])}
   if(id==='public'&&!episode){const states=[['employed','unemployed','unemployed'],['employed','unemployed','unemployed'],['employed','employed','unemployed'],['employed','employed','employed'],['employed','employed','unemployed'],['employed','employed','unemployed'],['employed','careLeave','unemployed'],['employed','retired','retired']][index],modes=states.map(value=>value==='employed'?'work':value==='careLeave'?'flexible':value==='retired'?'retired':'seeking');set('employment.status',states[option]);set('activity.mode',modes[option]);set('employment.employerType',states[option]==='employed'?'public':option===2?'private':'none');set('employment.sector',states[option]==='employed'?'public':'general');add('capabilities.publicCredential',[2,1,0][option]);add('pressures.career',[3,1,-2][option])}
@@ -251,36 +258,73 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
   }
   if(id==='partnership'){const states=[['dating','dating','none'],['partnered','partnered','dating'],['married','partnered','separated'],['partnered','partnered','partnered'],['partnered','partnered','separated'],['partnered','separated','divorced'],['divorced','dating','none'],['partnered','dating','none']][index];set('relationships.partnerStatus',states[option]);add('relationships.partnerBond',[5,2,-6][option]);add('pressures.family',option===2?4:-1)}
   if(id==='children'){if(index===0)set('relationships.parenthoodIntent',['planned','adoption','childfree'][option]);if(index===1&&option<2)effects.push(c('createPerson','people',1,{relation:option===0?'child':'adoptedChild'}));add('relationships.childBond',[4,1,-3][option]);add('pressures.family',[-1,4,2][option]);if(index>1)add('finance.cash',option===2?0:-6000)}
-  if(id==='finance'){add('finance.cash',[-6000,-15000,8000][option]);add('pressures.money',[-3,1,6][option]);if((index===0&&option===1)||(index===1&&option>0)||(index===2&&option>0))effects.push(c('addLiability','finance.liabilities',index===0?260000:option===2?120000:40000,{kind:index===0?'mortgage':'consumer',rate:option===2?.12:.06,guaranteed:index===1}));if(index===0)set('housing.status',['renting','mortgaged','family'][option]);if(index===3&&option===0)effects.push(c('repayDebt','finance.liabilities',30000));if(index===3&&option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045}));if(index===4&&option<2)effects.push(c('restructureDebt','finance.liabilities',1,{rate:option===0?.055:.04}));if(index===4&&option===2)effects.push(c('addLiability','finance.liabilities',20000,{kind:'consumer',rate:.12}));if(index===5&&option===0)effects.push(c('repayDebt','finance.liabilities',80000));if(index===5&&option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045}));if(index===5&&option===2)effects.push(c('addLiability','finance.liabilities',60000,{kind:'consumer',rate:.12}))}
-  if(id==='health'){
+  if(episode?.id==='guarantee_recourse'){
+    if(episode.phase===1){
+      add('relationships.originBond',[0,-1,-3][option]);add('pressures.money',[-2,1,3][option]);
+    }
+    if(episode.phase===2){
+      effects.push(c('addLiability','finance.liabilities',[60000,80000,120000][option],{kind:'guarantee',rate:[.06,.065,.12][option],guaranteed:true}));
+      add('finance.cash',[-8000,-12000,-25000][option]);add('pressures.money',[4,5,10][option]);add('relationships.originBond',[-2,-1,-5][option]);
+    }
+    if(episode.phase===3){
+      if(option===0)effects.push(c('repayDebt','finance.liabilities',50000));
+      if(option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045}));
+      if(option===2)effects.push(c('repayDebt','finance.liabilities',30000));
+      if(option===3)effects.push(c('addLiability','finance.liabilities',50000,{kind:'consumer',rate:.12}));
+      add('finance.cash',[-12000,-4000,-18000,-30000][option]);add('pressures.money',[-5,-7,-2,12][option]);add('relationships.originBond',[0,-2,-12,-8][option]);
+    }
+  }
+  if(id==='finance'&&!episode){add('finance.cash',[-6000,-15000,8000][option]);add('pressures.money',[-3,1,6][option]);if((index===0&&option===1)||(index===1&&option>0)||(index===2&&option>0))effects.push(c('addLiability','finance.liabilities',index===0?260000:option===2?120000:40000,{kind:index===0?'mortgage':'consumer',rate:option===2?.12:.06,guaranteed:index===1}));if(index===0)set('housing.status',['renting','mortgaged','family'][option]);if(index===3&&option===0)effects.push(c('repayDebt','finance.liabilities',30000));if(index===3&&option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045}));if(index===4&&option<2)effects.push(c('restructureDebt','finance.liabilities',1,{rate:option===0?.055:.04}));if(index===4&&option===2)effects.push(c('addLiability','finance.liabilities',20000,{kind:'consumer',rate:.12}));if(index===5&&option===0)effects.push(c('repayDebt','finance.liabilities',80000));if(index===5&&option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045}));if(index===5&&option===2)effects.push(c('addLiability','finance.liabilities',60000,{kind:'consumer',rate:.12}))}
+  if(episode?.id==='acute_illness'){
+    const recoveryByPhase={1:[7,5,-9],2:[16,11,-14],3:[18,12,-12],4:[30,16,8,-5]},recovery=recoveryByPhase[episode.phase][option];
+    if(recovery>0)effects.push(c('healthRecovery','health',recovery,{resolve:episode.phase===4&&option===0}));
+    else effects.push(c('healthIncident','health',Math.abs(recovery),{condition:episode.phase===1?'delayedAssessment':episode.phase===2?'treatmentDelay':episode.phase===3?'rehabSetback':'treatmentExit'}));
+    add('health.mental',({1:[2,1,-3],2:[3,1,-4],3:[4,2,-4],4:[5,2,0,-2]}[episode.phase])[option]);
+    add('pressures.body',({1:[-3,-1,5],2:[-5,-2,7],3:[-6,-3,7],4:[-6,-3,2,4]}[episode.phase])[option]);
+    add('finance.cash',({1:[-3000,-1000,0],2:[-9000,-5000,-2000],3:[-6000,-4000,-1000],4:[-2000,-1800,-5000,0]}[episode.phase])[option]);
+    if(episode.phase===4&&option===1)set('health.status','managed');
+    if(episode.phase===4&&option===2){set('health.status','limited');set('health.disability','persistent')}
+    if(episode.phase===4&&option===3)set('health.status','treating');
+  }
+  if(id==='health'&&!episode){
     const recovery=[[14,8,-8],[16,10,-10],[18,11,-9],[26,14,-10],[17,9,-12],[15,9,-10],[18,10,-11],[24,13,-12]][index][option];
     if(recovery>0)effects.push(c('healthRecovery','health',recovery,{resolve:index===3||index===7}));else effects.push(c('healthIncident','health',Math.abs(recovery),{condition:index>=4?'limitation':'setback'}));
     add('health.mental',[3,1,-3][option]);add('pressures.body',[-5,-2,6][option]);add('finance.cash',[-8000,-3000,0][option]);
     if(index===3&&option===1)set('health.status','managed');if(index===3&&option===2)set('health.status','managed');if(index===4&&option===2){set('health.disability','persistent');set('health.status','limited')}if(index===7&&option===1)set('health.status','managed');
   }
   if(id==='habits'){
-    const phase=authoredDecision.phase,type=authoredDecision.type,stages={1:['none','exposed','repeating'],2:['treatment','dependent','uncontrolled'],3:['recovery','treatment','relapse']}[phase],risk={1:[-8,2,8],2:[-12,5,15],3:[-15,-6,12]}[phase];
-    set('habits.type',phase===1&&option===0?'none':type);set('habits.stage',stages[option]);set('habits.recoveryYears',0);add('habits.risk',risk[option]);
+    const type=authoredDecision.type,kind=authoredDecision.habitKind,phase=episode.phase,stages={
+      formation:{1:['none','exposed','repeating'],2:['none','exposed','dependent','uncontrolled']},
+      treatment:{1:['treatment','dependent','uncontrolled'],2:['recovery','treatment','dependent','uncontrolled']},
+      relapse:{1:['treatment','recovery','relapse'],2:['recovery','treatment','recovery','relapse']}
+    }[kind][phase],risk={
+      formation:{1:[-8,2,8],2:[-12,1,7,15]},
+      treatment:{1:[-12,3,12],2:[-15,-6,2,14]},
+      relapse:{1:[-8,-4,10],2:[-14,-7,-4,14]}
+    }[kind][phase],stage=stages[option],harm=['dependent','uncontrolled','relapse'].includes(stage)?(stage==='uncontrolled'||stage==='relapse'?3:2):stage==='treatment'?1:0;
+    set('habits.type',stage==='none'?'none':type);set('habits.stage',stage);
+    if(!(kind==='relapse'&&phase===2&&option===2))set('habits.recoveryYears',0);
+    add('habits.risk',risk[option]);
     if(type==='gambling'){
-      add('finance.cash',({1:[0,-500,-3000],2:[-1000,-2500,-12000],3:[-4000,-1500,-10000]}[phase])[option]);add('pressures.money',({1:[-1,1,4],2:[-3,3,8],3:[-5,-2,7]}[phase])[option]);
-      if(phase===2&&option===2)effects.push(c('addLiability','finance.liabilities',40000,{kind:'habit',rate:.14}));
+      add('finance.cash',[-500,-2500,-6000,-12000][Math.min(option,3)]*(harm||1));add('pressures.money',harm*3-(stage==='none'||stage==='recovery'?4:0));
+      if(stage==='uncontrolled'||stage==='relapse')effects.push(c('addLiability','finance.liabilities',40000,{kind:'habit',rate:.14}));
     }
     if(type==='alcohol'){
-      add('health.physical',({1:[0,-1,-2],2:[0,-2,-5],3:[2,1,-4]}[phase])[option]);add('health.mental',({1:[1,0,-1],2:[2,-1,-4],3:[4,2,-4]}[phase])[option]);add('pressures.body',({1:[-1,1,3],2:[-3,2,7],3:[-5,-2,6]}[phase])[option]);if(phase>1)add('finance.cash',phase===2?[-2000,0,0][option]:[-3000,-1000,0][option]);
+      add('health.physical',stage==='recovery'?3:stage==='none'?0:-Math.max(1,harm*2));add('health.mental',stage==='recovery'?4:stage==='treatment'?2:-Math.max(0,harm));add('pressures.body',stage==='recovery'?-5:stage==='treatment'?-3:harm*2);if(kind!=='formation'||phase===2)add('finance.cash',stage==='recovery'?-2500:stage==='treatment'?-1800:-800*harm);
     }
     if(type==='gaming'){
-      add('health.mental',({1:[1,0,-1],2:[2,-1,-4],3:[3,3,-4]}[phase])[option]);add('pressures.body',({1:[-1,1,3],2:[-3,2,6],3:[-4,-4,6]}[phase])[option]);add('pressures.career',({1:[-1,1,3],2:[-4,2,8],3:[-5,-3,8]}[phase])[option]);add('pressures.loneliness',({1:[-1,0,2],2:[-2,1,5],3:[-3,-4,5]}[phase])[option]);
+      add('health.mental',stage==='recovery'?3:stage==='treatment'?2:-harm);add('pressures.body',stage==='recovery'?-4:stage==='treatment'?-2:harm*2);add('pressures.career',stage==='recovery'?-5:stage==='treatment'?-3:harm*3);add('pressures.loneliness',stage==='recovery'?-3:stage==='treatment'?-2:harm*2);
     }
     if(type==='shopping'){
-      add('finance.cash',({1:[0,-300,-2500],2:[-1000,-3000,-10000],3:[-1000,-500,-9000]}[phase])[option]);add('pressures.money',({1:[-1,1,3],2:[-4,2,8],3:[-5,-3,7]}[phase])[option]);add('pressures.family',({1:[0,0,1],2:[-2,2,6],3:[-4,-2,6]}[phase])[option]);
-      if(phase===2&&option===2)effects.push(c('addLiability','finance.liabilities',30000,{kind:'consumer',rate:.12}));
+      add('finance.cash',stage==='recovery'?-1000:stage==='treatment'?-1500:-Math.max(300,harm*3500));add('pressures.money',stage==='recovery'?-5:stage==='treatment'?-3:harm*3);add('pressures.family',stage==='recovery'?-4:stage==='treatment'?-2:harm*2);
+      if(stage==='uncontrolled'||stage==='relapse')effects.push(c('addLiability','finance.liabilities',30000,{kind:'consumer',rate:.12}));
     }
     if(type==='medication'){
-      add('health.physical',({1:[0,0,-2],2:[0,1,-5],3:[3,1,-4]}[phase])[option]);add('health.mental',({1:[1,0,-1],2:[2,1,-4],3:[3,2,-4]}[phase])[option]);add('pressures.body',({1:[-1,1,3],2:[-3,-1,7],3:[-4,-2,6]}[phase])[option]);if(option<2)add('finance.cash',-1500);
+      add('health.physical',stage==='recovery'?3:stage==='treatment'?1:-harm*2);add('health.mental',stage==='recovery'?3:stage==='treatment'?2:-harm);add('pressures.body',stage==='recovery'?-4:stage==='treatment'?-2:harm*2);if(['recovery','treatment','exposed'].includes(stage))add('finance.cash',-1500);
     }
   }
   if(id==='later'){const modes=index===0?['work','retired','flexible']:index===1?['work','work','retired']:['retired','retired','retired'];set('activity.mode',modes[option]);set('employment.status',modes[option]==='retired'?'retired':modes[option]==='flexible'?'gig':'employed');add('desires.peace.fulfillment',[3,2,-1][option]);add('relationships.network',[2,1,-3][option]);if(index>=6)set('legacy.plan',['documented','partial','none'][option])}
-  const habitStage=authoredDecision?.phase===3?{0:'recovery',1:'treatment',2:'relapse'}[option]:null,outcomeTags=id==='habits'?['habits',`habits:${authoredDecision.type}`,`habits:${route}`,habitStage?`habits:${habitStage}`:'habits:turn',...(habitStage==='recovery'?['recovery']:[])]:episode?[id,`${id}:${route}`,`episode:${episode.id}`]:[id,`${id}:${route}`,index===7?`${id}:legacy`:`${id}:turn`];
+  const habitStage=id==='habits'?effects.find(effect=>effect.type==='set'&&effect.target==='habits.stage')?.value:null,outcomeTags=id==='habits'?['habits',`habits:${authoredDecision.type}`,`habits:${authoredDecision.habitKind}`,`habits:${route}`,habitStage?`habits:${habitStage}`:'habits:turn',`episode:${episode.id}`,...(habitStage==='recovery'?['recovery']:[])]:episode?[id,`${id}:${route}`,`episode:${episode.id}`]:[id,`${id}:${route}`,index===7?`${id}:legacy`:`${id}:turn`];
   return{effects,route,outcomeTags};
 };
 
@@ -299,21 +343,24 @@ for(const id of trackOrder){
     if(id==='leisure'&&authoredDecision.episode?.role==='start')requirements.all.push(p('employment.status','in',['employed','gig','selfEmployed']));
     if(id==='leisure'&&!authoredDecision.episode&&index>0)requirements.all.push(p('activity.mode','in',['sabbatical','leisure']));
     if(id==='habits'){
-      if(authoredDecision.phase===1){
+      const kind=authoredDecision.habitKind,phase=authoredDecision.episode.phase;
+      if(kind==='formation'&&phase===1){
         requirements.all.push(p('habits.type','eq','none'),p('habits.stage','eq','none'));
         if(authoredDecision.type==='medication')requirements.any.push(p('health.status','in',['monitoring','treating','recovering','managed','limited']),p('health.currentCondition','truthy',true));
-      }else{
-        requirements.all.push(p('habits.type','eq',authoredDecision.type),p('habits.risk','gte',1),p('habits.stage','in',authoredDecision.phase===2?['exposed','repeating','dependent']:['repeating','dependent','uncontrolled','treatment','relapse']));
-      }
+      }else if(kind==='formation')requirements.all.push(p('habits.type','eq',authoredDecision.type),p('habits.risk','gte',1),p('habits.stage','in',['exposed','repeating']));
+      else if(kind==='treatment'&&phase===1)requirements.all.push(p('habits.type','eq',authoredDecision.type),p('habits.risk','gte',1),p('habits.stage','in',['dependent','uncontrolled']));
+      else if(kind==='treatment')requirements.all.push(p('habits.type','eq',authoredDecision.type),p('habits.risk','gte',1),p('habits.stage','in',['treatment','dependent','uncontrolled']));
+      else if(kind==='relapse'&&phase===1)requirements.all.push(p('habits.type','eq',authoredDecision.type),p('habits.stage','eq','recovery'),p('habits.recoveryYears','gte',1));
+      else requirements.all.push(p('habits.type','eq',authoredDecision.type),p('habits.stage','in',['treatment','recovery','relapse']));
     }
     if(id==='children')requirements.all.push(p('relationships.childCount',index<=1?'eq':'gte',index<=1?0:1));
     if(id==='partnership'&&index===0)requirements.all.push(p('relationships.partnerStatus','in',['none','divorced','widowed']));
     if(id==='health'&&index===0)requirements.all.push(p('health.status','in',['monitoring','treating','recovering']),p('health.conditionSeverity','gte',5));
     if(id==='health'&&index===4)requirements.any.push(p('health.status','eq','limited'),p('health.conditionSeverity','gte',35),p('health.disability','neq','none'));
-    if(id==='finance'&&index===4)requirements.all.push(p('finance.totalDebt','gte',10000));
+    if(id==='finance'&&index===4&&!authoredDecision.episode)requirements.all.push(p('finance.totalDebt','gte',10000));
     const authoredChoices=authoredDecision.choices;
     const choices=authoredChoices.map((copyItem,option)=>{const text=typeof copyItem==='string'?copyItem:copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`,arcExit=!authoredDecision.episode&&(id==='habits'?authoredDecision.phase===1&&option===0:option===2&&((index===0&&['employment','public','remote','partnership'].includes(id))||(id==='children'&&(index===0||index===1))));if(id==='partnership'&&index===0&&option<2)result.effects.push(c('createPerson','people',1,{relation:'partner'}));return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:[],effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:1+option,delayMax:3+option}],outcomeTags:result.outcomeTags,memoryKey,route:result.route,arcExit};});
-    const arc=authoredDecision.episode||['employment','public','leisure'].includes(id)?null:id==='habits'?{id:`habits_${authoredDecision.type}`,node:authoredDecision.phase,role:authoredDecision.phase===1?'start':authoredDecision.phase===3?'resolve':'continue',lane:spec.lane}:id==='business'?{id:'business_2',node:index-2,role:index===3?'start':index===6?'resolve':'continue',lane:spec.lane}:{id:`${id}_${Math.floor(index/4)+1}`,node:index%4+1,role:index%4===0?'start':index%4===3?'resolve':'continue',lane:spec.lane};
+    const arc=authoredDecision.episode||['employment','public','leisure','finance','health','habits'].includes(id)?null:id==='business'?{id:'business_2',node:index-2,role:index===3?'start':index===6?'resolve':'continue',lane:spec.lane}:{id:`${id}_${Math.floor(index/4)+1}`,node:index%4+1,role:index%4===0?'start':index%4===3?'resolve':'continue',lane:spec.lane};
     decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',prompt:authoredDecision.prompt,requirements,actors,choices,arc,...(authoredDecision.episode?{situation:authoredDecision.situation,episode:authoredDecision.episode}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:16+index%3,contentRevision:CONTENT_REVISION});
     authoredDecisionById.set(eventId,authoredDecision);
   }

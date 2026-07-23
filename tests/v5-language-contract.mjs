@@ -105,13 +105,13 @@ for(const phrase of forbidden){
 }
 for(const [trackId,copy] of Object.entries(TRACK_COPY)){
   check(copy.beats.length===32,`${trackId}: authored beat count is not 32`);
-  const expectedDecisions=trackId==='habits'?15:trackId==='business'?7:8;
+  const expectedDecisions=trackId==='habits'?30:trackId==='business'?7:8;
   check(copy.decisions.length===expectedDecisions,`${trackId}: authored decision count is not ${expectedDecisions}`);
   check(copy.decisions.every(item=>item.choices.length===(item.episode?.role==='resolve'?4:3)),`${trackId}: decision choice count does not match its role`);
 }
 const habitVisible=JSON.stringify(TRACK_COPY.habits);
 for(const vague of['一种习惯','旧入口','多年后如何讲述'])check(!habitVisible.includes(vague),`habits copy contains vague or displaced phrase: ${vague}`);
-for(const type of['gambling','alcohol','gaming','shopping','medication'])check(TRACK_COPY.habits.decisions.filter(item=>item.type===type).length===3,`${type}: must have three authored decisions`);
+for(const type of['gambling','alcohol','gaming','shopping','medication'])check(TRACK_COPY.habits.decisions.filter(item=>item.type===type).length===6,`${type}: must have six authored decisions across formation, treatment, and relapse`);
 
 const report={
   employment:{beats:beats.length,decisions:decisions.length,choiceResults:resultTexts.length,consequences:consequences.length,choiceSpecificConsequences:consequenceTexts.length},
