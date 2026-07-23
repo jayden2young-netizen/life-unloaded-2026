@@ -52,7 +52,7 @@ let browser;
 
   const legacy = {
     schemaVersion: 6,
-    gameVersion: '4.1.0',
+    gameVersion: '0.4.1',
     meta: {
       histories: [{ title: '保留的人生记录', age: 72, seed: 'finished-life' }],
       codex: ['codex_01'], settings: { haptic: false }, stats: { runs: 2 },
@@ -70,7 +70,7 @@ let browser;
   };
   await page.addInitScript(({ key, value }) => {
     localStorage.setItem(key, JSON.stringify(value));
-    localStorage.setItem('life-unloaded-2026-v4.1.0-backup', 'legacy-backup');
+    localStorage.setItem('life-unloaded-2026-v0.4.1-backup', 'legacy-backup');
   }, { key: SAVE_KEY, value: legacy });
   await page.goto(URL, { waitUntil: 'domcontentloaded' });
   await waitBoot(page);
@@ -80,7 +80,7 @@ let browser;
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
   assert.equal(migrated.state.schemaVersion, 7);
-  assert.equal(migrated.state.gameVersion, '5.0.4');
+  assert.equal(migrated.state.gameVersion, '0.5.2');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
@@ -191,7 +191,7 @@ let browser;
   assert.equal(await page.locator('[data-act="clear-data"]').count(), 1);
   await fit(page, 'settings-360x773');
   await page.screenshot({ path: path.join(OUT, 'settings-clear-data-360x773.png'), fullPage: true });
-  await page.evaluate(() => localStorage.setItem('life-unloaded-2026-v4.1.0-backup', 'legacy-backup'));
+  await page.evaluate(() => localStorage.setItem('life-unloaded-2026-v0.4.1-backup', 'legacy-backup'));
   page.once('dialog', dialog => dialog.accept());
   await Promise.all([
     page.waitForNavigation({ waitUntil: 'domcontentloaded' }),

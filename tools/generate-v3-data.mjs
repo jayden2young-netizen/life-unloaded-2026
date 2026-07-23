@@ -1,4 +1,4 @@
-// Compatibility entry point. v5 source lives in generate-v5-data.mjs.
+// Compatibility entry point. The current v0.5 data source keeps its historical filename.
 import './generate-v5-data.mjs';
 process.exit(0);
 
@@ -853,7 +853,7 @@ Object.assign(codex[14],{name:'快招加盟',text:'加盟费之外还有装修�
 const publishEvent=event=>{const copy=structuredClone(event);delete copy.tags;delete copy.themes;if(copy.kind==='decision'){delete copy.title;delete copy.text;delete copy.stakes;delete copy.echoText}if(copy.kind==='echo')delete copy.weight;return copy};
 
 const output = {
-  version:'4.1.0',gameVersion:'4.1.0',schemaVersion:6,contentRevision:5,
+  version:'0.4.1',gameVersion:'0.4.1',schemaVersion:6,contentRevision:5,
   stages,locations:previous.locations,familyArchetypes,familySecrets,attributes:previous.attributes,desires:previous.desires,mainConflicts:previous.mainConflicts,
   cards,events:[...annualBeats,...decisions,...echoes,...blackSwans].map(publishEvent),endingProfiles,endingTitles,endingFragments,codex
 };

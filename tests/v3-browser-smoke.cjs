@@ -1,7 +1,7 @@
-require('./v4.1-browser-smoke.cjs');/* legacy v4.0.1 core path retained below for release archaeology
+require('./v4.1-browser-smoke.cjs');/* legacy v0.4.0.1 core path retained below for release archaeology
 const fs=require('node:fs');const path=require('node:path');
 const baseUrl=process.argv[2]||'http://127.0.0.1:8765/';
-const out=path.resolve(__dirname,'..','test-results','v4.0.1-state-chain-fixes');fs.mkdirSync(out,{recursive:true});
+const out=path.resolve(__dirname,'..','test-results','v0.4.0.1-state-chain-fixes');fs.mkdirSync(out,{recursive:true});
 const assert=(value,message)=>{if(!value)throw new Error(message)};
 
 (async()=>{
@@ -10,7 +10,7 @@ const assert=(value,message)=>{if(!value)throw new Error(message)};
   await page.goto(`${baseUrl}?debug=1`,{waitUntil:'networkidle'});await page.evaluate(()=>localStorage.clear());await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
   const gameState=async()=>JSON.parse(await page.evaluate(()=>window.render_game_to_text()));
 
-  await page.addInitScript(save=>{if(!sessionStorage.getItem('v4-migration-seeded')){localStorage.setItem('life-unloaded-2026-v1',save);sessionStorage.setItem('v4-migration-seeded','1')}},JSON.stringify({schemaVersion:4,gameVersion:'3.2.4',meta:{histories:[{title:'旧人生',age:70,score:50,family:'old'}],codex:[],settings:{haptic:false}},run:{schemaVersion:4,phase:'playing',age:30}}));
+  await page.addInitScript(save=>{if(!sessionStorage.getItem('v4-migration-seeded')){localStorage.setItem('life-unloaded-2026-v1',save);sessionStorage.setItem('v4-migration-seeded','1')}},JSON.stringify({schemaVersion:4,gameVersion:'0.3.2.4',meta:{histories:[{title:'旧人生',age:70,score:50,family:'old'}],codex:[],settings:{haptic:false}},run:{schemaVersion:4,phase:'playing',age:30}}));
   await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
   const migrated=await page.evaluate(()=>({save:JSON.parse(localStorage.getItem('life-unloaded-2026-v1')),backup:localStorage.getItem('life-unloaded-2026-v3.2-backup')}));
   assert(migrated.backup,'v3.2 backup missing');assert((await gameState()).run===null,'old active run was not cleared');assert(migrated.save.schemaVersion===4,'migration mutated old save before player started');
@@ -66,7 +66,7 @@ const assert=(value,message)=>{if(!value)throw new Error(message)};
 
   await page.click('[data-act=status]');await page.screenshot({path:path.join(out,'390-gameplay.png'),fullPage:false});await page.click('.drawer [data-act=closeOverlay]');
   await page.evaluate(()=>window.__LIFE_DEBUG__.autoFinishCurrent());await page.waitForSelector('.ending-review');
-  const save=await page.evaluate(()=>JSON.parse(localStorage.getItem('life-unloaded-2026-v1')));assert(save.schemaVersion===5&&save.gameVersion==='4.0.1','save version wrong');assert(save.run.ending?.id&&save.run.ending?.profileId,'combination ending missing');assert(save.run.echoCount>=1,'echo count missing');assert(save.meta.codex.length>=1,'codex did not unlock');assert(save.run.decisionCount>=10&&save.run.decisionCount<=15,`forced-age path decision count ${save.run.decisionCount}`);
+  const save=await page.evaluate(()=>JSON.parse(localStorage.getItem('life-unloaded-2026-v1')));assert(save.schemaVersion===5&&save.gameVersion==='0.4.0.1','save version wrong');assert(save.run.ending?.id&&save.run.ending?.profileId,'combination ending missing');assert(save.run.echoCount>=1,'echo count missing');assert(save.meta.codex.length>=1,'codex did not unlock');assert(save.run.decisionCount>=10&&save.run.decisionCount<=15,`forced-age path decision count ${save.run.decisionCount}`);
   await page.screenshot({path:path.join(out,'390-ending.png'),fullPage:true});assert(errors.length===0,`console errors: ${errors.join(' | ')}`);
-  console.log(JSON.stringify({version:'4.0.1',age:save.run.age,events:save.run.timeline.length,decisions:save.run.decisionCount,echoes:save.run.echoCount,secretVerified,ending:save.run.ending.profileId,codexUnlocked:save.meta.codex.length,errors},null,2));await browser.close();
+  console.log(JSON.stringify({version:'0.4.0.1',age:save.run.age,events:save.run.timeline.length,decisions:save.run.decisionCount,echoes:save.run.echoCount,secretVerified,ending:save.run.ending.profileId,codexUnlocked:save.meta.codex.length,errors},null,2));await browser.close();
 })().catch(error=>{console.error(error);process.exit(1)});*/

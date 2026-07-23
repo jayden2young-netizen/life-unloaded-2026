@@ -4,7 +4,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'test-results', 'v5.0.4-start-refresh');
+const OUT = path.join(ROOT, 'test-results', 'v0.5.0.4-start-refresh');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?start-refresh=1';
 fs.mkdirSync(OUT, { recursive: true });
 
