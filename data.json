@@ -1,8 +1,8 @@
 {
-  "version": "0.5.2",
-  "gameVersion": "0.5.2",
+  "version": "0.5.3",
+  "gameVersion": "0.5.3",
   "schemaVersion": 7,
-  "contentRevision": 9,
+  "contentRevision": 10,
   "stages": {
     "infancy": [
       0,
@@ -225,7 +225,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_02",
@@ -274,7 +274,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_03",
@@ -322,7 +322,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_04",
@@ -370,7 +370,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_05",
@@ -419,7 +419,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_06",
@@ -468,7 +468,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_07",
@@ -516,7 +516,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_08",
@@ -565,7 +565,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_09",
@@ -614,7 +614,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_10",
@@ -662,7 +662,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_11",
@@ -711,7 +711,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_12",
@@ -760,7 +760,7 @@
         "隐性债务"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_13",
@@ -808,7 +808,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_14",
@@ -857,7 +857,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_15",
@@ -906,7 +906,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_16",
@@ -954,7 +954,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_17",
@@ -1003,7 +1003,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_18",
@@ -1052,7 +1052,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_19",
@@ -1100,7 +1100,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_20",
@@ -1149,7 +1149,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_21",
@@ -1198,7 +1198,7 @@
         "隐性债务"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_22",
@@ -1246,7 +1246,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_23",
@@ -1295,7 +1295,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_24",
@@ -1344,7 +1344,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_25",
@@ -1392,7 +1392,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_26",
@@ -1441,7 +1441,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_27",
@@ -1490,7 +1490,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_28",
@@ -1538,7 +1538,7 @@
         "照护责任"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_29",
@@ -1587,7 +1587,7 @@
         "现金流波动"
       ],
       "lateEcho": "父母留下的一件物品重新定义了你对家的理解。",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "family_30",
@@ -1636,7 +1636,7 @@
         "隐性债务"
       ],
       "lateEcho": "晚年时，旧家庭分工又回到饭桌上。",
-      "contentRevision": 9
+      "contentRevision": 10
     }
   ],
   "familySecrets": [
@@ -1676,7 +1676,7 @@
           "value": "secret:1"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_02",
@@ -1714,7 +1714,7 @@
           "value": "secret:2"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_03",
@@ -1752,7 +1752,7 @@
           "value": "secret:3"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_04",
@@ -1790,7 +1790,7 @@
           "value": "secret:4"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_05",
@@ -1828,7 +1828,7 @@
           "value": "secret:5"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_06",
@@ -1866,7 +1866,7 @@
           "value": "secret:6"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_07",
@@ -1904,7 +1904,7 @@
           "value": "secret:7"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_08",
@@ -1942,7 +1942,7 @@
           "value": "secret:8"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_09",
@@ -1980,7 +1980,7 @@
           "value": "secret:9"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_10",
@@ -2018,7 +2018,7 @@
           "value": "secret:10"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_11",
@@ -2056,7 +2056,7 @@
           "value": "secret:11"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_12",
@@ -2094,7 +2094,7 @@
           "value": "secret:12"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_13",
@@ -2132,7 +2132,7 @@
           "value": "secret:13"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_14",
@@ -2170,7 +2170,7 @@
           "value": "secret:14"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_15",
@@ -2208,7 +2208,7 @@
           "value": "secret:15"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_16",
@@ -2246,7 +2246,7 @@
           "value": "secret:16"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_17",
@@ -2284,7 +2284,7 @@
           "value": "secret:17"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_18",
@@ -2322,7 +2322,7 @@
           "value": "secret:18"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_19",
@@ -2360,7 +2360,7 @@
           "value": "secret:19"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_20",
@@ -2398,7 +2398,7 @@
           "value": "secret:20"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_21",
@@ -2436,7 +2436,7 @@
           "value": "secret:21"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_22",
@@ -2474,7 +2474,7 @@
           "value": "secret:22"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_23",
@@ -2512,7 +2512,7 @@
           "value": "secret:23"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_24",
@@ -2550,7 +2550,7 @@
           "value": "secret:24"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_25",
@@ -2588,7 +2588,7 @@
           "value": "secret:25"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_26",
@@ -2626,7 +2626,7 @@
           "value": "secret:26"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_27",
@@ -2664,7 +2664,7 @@
           "value": "secret:27"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_28",
@@ -2702,7 +2702,7 @@
           "value": "secret:28"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_29",
@@ -2740,7 +2740,7 @@
           "value": "secret:29"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_30",
@@ -2778,7 +2778,7 @@
           "value": "secret:30"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_31",
@@ -2816,7 +2816,7 @@
           "value": "secret:31"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_32",
@@ -2854,7 +2854,7 @@
           "value": "secret:32"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_33",
@@ -2892,7 +2892,7 @@
           "value": "secret:33"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_34",
@@ -2930,7 +2930,7 @@
           "value": "secret:34"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_35",
@@ -2968,7 +2968,7 @@
           "value": "secret:35"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_36",
@@ -3006,7 +3006,7 @@
           "value": "secret:36"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_37",
@@ -3044,7 +3044,7 @@
           "value": "secret:37"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_38",
@@ -3082,7 +3082,7 @@
           "value": "secret:38"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_39",
@@ -3120,7 +3120,7 @@
           "value": "secret:39"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_40",
@@ -3158,7 +3158,7 @@
           "value": "secret:40"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_41",
@@ -3196,7 +3196,7 @@
           "value": "secret:41"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_42",
@@ -3234,7 +3234,7 @@
           "value": "secret:42"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_43",
@@ -3272,7 +3272,7 @@
           "value": "secret:43"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "secret_44",
@@ -3310,15 +3310,16 @@
           "value": "secret:44"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     }
   ],
   "cards": [
     {
       "id": "card_01",
       "kind": "innate",
-      "displayName": "随身工具箱",
-      "text": "你更容易在迁移工作中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "拆开看看",
+      "text": "你小时候总想知道东西为什么会动。",
       "mechanic": "portableSkill",
       "effects": [
         {
@@ -3332,13 +3333,14 @@
           "value": "card:portableSkill"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_02",
       "kind": "innate",
-      "displayName": "留痕习惯",
-      "text": "你更容易在关键争议中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "记得细节",
+      "text": "大人说过的话，你常能记住前后差别。",
       "mechanic": "evidence",
       "effects": [
         {
@@ -3347,18 +3349,24 @@
           "value": 2
         },
         {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:evidence"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_03",
       "kind": "innate",
-      "displayName": "认识一个人",
-      "text": "你更容易在关系断点中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "不怕叫人",
+      "text": "到了陌生地方，你愿意先开口问一句。",
       "mechanic": "network",
       "effects": [
         {
@@ -3367,18 +3375,24 @@
           "value": 2
         },
         {
+          "type": "add",
+          "target": "relationships.network",
+          "value": 2
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:network"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_04",
       "kind": "innate",
-      "displayName": "慢恢复",
-      "text": "你更容易在危机恢复中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "哭完再来",
+      "text": "难过会过去，你通常还能回来接着做。",
       "mechanic": "resilience",
       "effects": [
         {
@@ -3392,13 +3406,14 @@
           "value": "card:resilience"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_05",
       "kind": "innate",
-      "displayName": "备用现金",
-      "text": "你更容易在现金中断中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "备用零钱",
+      "text": "家里给你留了一笔只在急用时动的钱。",
       "mechanic": "cashBuffer",
       "effects": [
         {
@@ -3407,18 +3422,24 @@
           "value": 2
         },
         {
+          "type": "add",
+          "target": "originHousehold.assets",
+          "value": 5000
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:cashBuffer"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_06",
       "kind": "innate",
-      "displayName": "身体说明书",
-      "text": "你更容易在健康选择中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "会说哪里疼",
+      "text": "身体不舒服时，你能把感觉讲明白。",
       "mechanic": "healthLiteracy",
       "effects": [
         {
@@ -3432,13 +3453,14 @@
           "value": "card:healthLiteracy"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_07",
       "kind": "innate",
-      "displayName": "关门能力",
-      "text": "你更容易在家庭边界中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "不想就摇头",
+      "text": "你很早就知道，不愿意也可以说出来。",
       "mechanic": "boundary",
       "effects": [
         {
@@ -3447,18 +3469,29 @@
           "value": 2
         },
         {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "pressures.family",
+          "value": -2
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:boundary"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_08",
       "kind": "innate",
-      "displayName": "重新学习",
-      "text": "你更容易在职业转向中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "学慢一点",
+      "text": "一遍不会，你肯换个办法再学一遍。",
       "mechanic": "learning",
       "effects": [
         {
@@ -3467,18 +3500,24 @@
           "value": 2
         },
         {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:learning"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_09",
       "kind": "innate",
-      "displayName": "先看最坏情况",
-      "text": "你更容易在风险决策中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "先摸摸水温",
+      "text": "别人起哄时，你习惯先看会不会出事。",
       "mechanic": "riskSense",
       "effects": [
         {
@@ -3487,18 +3526,29 @@
           "value": 2
         },
         {
+          "type": "add",
+          "target": "business.operatingSkill",
+          "value": 2
+        },
+        {
+          "type": "add",
+          "target": "pressures.money",
+          "value": -1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:riskSense"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_10",
       "kind": "innate",
-      "displayName": "做点新东西",
-      "text": "你更容易在创作机会中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "随手乱画",
+      "text": "空白纸到了你手里，很少还能保持空白。",
       "mechanic": "creativity",
       "effects": [
         {
@@ -3507,18 +3557,24 @@
           "value": 2
         },
         {
+          "type": "add",
+          "target": "desires.creation.fulfillment",
+          "value": 2
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:creativity"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_11",
       "kind": "innate",
-      "displayName": "照护手册",
-      "text": "你更容易在照护安排中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "记得谁怕冷",
+      "text": "你会留意家里谁忘了带药或外套。",
       "mechanic": "careSkill",
       "effects": [
         {
@@ -3527,18 +3583,29 @@
           "value": 2
         },
         {
+          "type": "add",
+          "target": "relationships.originBond",
+          "value": 2
+        },
+        {
+          "type": "add",
+          "target": "capabilities.healthLiteracy",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:careSkill"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_12",
       "kind": "innate",
-      "displayName": "把条件写下来",
-      "text": "你更容易在合同谈判中保留一个可用选项。",
+      "drawAge": 0,
+      "displayName": "能好好商量",
+      "text": "想要什么时，你愿意把理由说清楚。",
       "mechanic": "negotiation",
       "effects": [
         {
@@ -3547,18 +3614,29 @@
           "value": 2
         },
         {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "relationships.network",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:negotiation"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_13",
       "kind": "stage",
-      "displayName": "随身工具箱 · 起步",
-      "text": "你更容易在迁移工作中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "一份作品集",
+      "text": "你把会做的东西整理成了别人看得懂的作品。",
       "mechanic": "portableSkill",
       "effects": [
         {
@@ -3572,13 +3650,14 @@
           "value": "card:portableSkill"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_14",
       "kind": "stage",
-      "displayName": "留痕习惯 · 起步",
-      "text": "你更容易在关键争议中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "把话写下来",
+      "text": "重要安排说完以后，你会补一条文字确认。",
       "mechanic": "evidence",
       "effects": [
         {
@@ -3587,18 +3666,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:evidence"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_15",
       "kind": "stage",
-      "displayName": "认识一个人 · 起步",
-      "text": "你更容易在关系断点中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "同学通讯录",
+      "text": "毕业以后，仍有几个人愿意互相转发机会。",
       "mechanic": "network",
       "effects": [
         {
@@ -3607,18 +3692,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "relationships.network",
+          "value": 4
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:network"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_16",
       "kind": "stage",
-      "displayName": "慢恢复 · 起步",
-      "text": "你更容易在危机恢复中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "允许考砸",
+      "text": "一次没考好，没有变成你给自己下的定论。",
       "mechanic": "resilience",
       "effects": [
         {
@@ -3632,13 +3723,14 @@
           "value": "card:resilience"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_17",
       "kind": "stage",
-      "displayName": "备用现金 · 起步",
-      "text": "你更容易在现金中断中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "第一笔存款",
+      "text": "兼职挣的钱还剩下一点，没有全花在当月。",
       "mechanic": "cashBuffer",
       "effects": [
         {
@@ -3647,18 +3739,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "finance.cash",
+          "value": 3000
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:cashBuffer"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_18",
       "kind": "stage",
-      "displayName": "身体说明书 · 起步",
-      "text": "你更容易在健康选择中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "会看体检单",
+      "text": "你知道哪些数字要复查，也知道去哪里问。",
       "mechanic": "healthLiteracy",
       "effects": [
         {
@@ -3672,13 +3770,14 @@
           "value": "card:healthLiteracy"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_19",
       "kind": "stage",
-      "displayName": "关门能力 · 起步",
-      "text": "你更容易在家庭边界中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "拒绝代签",
+      "text": "再熟的人找你签字，你也会先把内容看完。",
       "mechanic": "boundary",
       "effects": [
         {
@@ -3687,18 +3786,29 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "pressures.family",
+          "value": -2
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:boundary"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_20",
       "kind": "stage",
-      "displayName": "重新学习 · 起步",
-      "text": "你更容易在职业转向中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "自己找教程",
+      "text": "没人带的时候，你能拆成小步骤慢慢学。",
       "mechanic": "learning",
       "effects": [
         {
@@ -3707,18 +3817,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:learning"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_21",
       "kind": "stage",
-      "displayName": "先看最坏情况 · 起步",
-      "text": "你更容易在风险决策中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "先问违约金",
+      "text": "听到好机会时，你也记得看看退出要付什么。",
       "mechanic": "riskSense",
       "effects": [
         {
@@ -3727,18 +3843,29 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "business.operatingSkill",
+          "value": 2
+        },
+        {
+          "type": "add",
+          "target": "pressures.money",
+          "value": -1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:riskSense"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_22",
       "kind": "stage",
-      "displayName": "做点新东西 · 起步",
-      "text": "你更容易在创作机会中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "做完一件小东西",
+      "text": "你真的完成过一个属于自己的小作品。",
       "mechanic": "creativity",
       "effects": [
         {
@@ -3747,18 +3874,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "desires.creation.fulfillment",
+          "value": 2
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:creativity"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_23",
       "kind": "stage",
-      "displayName": "照护手册 · 起步",
-      "text": "你更容易在照护安排中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "学会照顾自己",
+      "text": "饿了吃饭、病了看诊，不再全靠别人提醒。",
       "mechanic": "careSkill",
       "effects": [
         {
@@ -3767,18 +3900,29 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "relationships.originBond",
+          "value": 2
+        },
+        {
+          "type": "add",
+          "target": "capabilities.healthLiteracy",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:careSkill"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_24",
       "kind": "stage",
-      "displayName": "把条件写下来 · 起步",
-      "text": "你更容易在合同谈判中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "谈清实习工资",
+      "text": "开工之前，你会问清工资、工时和谁来验收。",
       "mechanic": "negotiation",
       "effects": [
         {
@@ -3787,18 +3931,29 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "relationships.network",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:negotiation"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_25",
       "kind": "stage",
-      "displayName": "随身工具箱 · 转折",
-      "text": "你更容易在迁移工作中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "第二套工具",
+      "text": "常用方法失灵时，你还有另一种做法能顶上。",
       "mechanic": "portableSkill",
       "effects": [
         {
@@ -3812,13 +3967,14 @@
           "value": "card:portableSkill"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_26",
       "kind": "stage",
-      "displayName": "留痕习惯 · 转折",
-      "text": "你更容易在关键争议中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "留好聊天记录",
+      "text": "口头承诺落到手机里，日后不必各说各话。",
       "mechanic": "evidence",
       "effects": [
         {
@@ -3827,18 +3983,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:evidence"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_27",
       "kind": "stage",
-      "displayName": "认识一个人 · 转折",
-      "text": "你更容易在关系断点中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "有人会回电话",
+      "text": "真遇到麻烦时，有人愿意接起你的电话。",
       "mechanic": "network",
       "effects": [
         {
@@ -3847,18 +4009,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "relationships.network",
+          "value": 4
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:network"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_28",
       "kind": "stage",
-      "displayName": "慢恢复 · 转折",
-      "text": "你更容易在危机恢复中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "知道可以重来",
+      "text": "选错一次以后，你没有把整条路一起扔掉。",
       "mechanic": "resilience",
       "effects": [
         {
@@ -3872,13 +4040,14 @@
           "value": "card:resilience"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_29",
       "kind": "stage",
-      "displayName": "备用现金 · 转折",
-      "text": "你更容易在现金中断中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "三个月生活费",
+      "text": "你给未来的空档留出了一点喘气的钱。",
       "mechanic": "cashBuffer",
       "effects": [
         {
@@ -3887,18 +4056,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "finance.cash",
+          "value": 3000
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:cashBuffer"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_30",
       "kind": "stage",
-      "displayName": "身体说明书 · 转折",
-      "text": "你更容易在健康选择中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "记得按时复诊",
+      "text": "症状缓下来以后，你仍会把复诊做完。",
       "mechanic": "healthLiteracy",
       "effects": [
         {
@@ -3912,13 +4087,14 @@
           "value": "card:healthLiteracy"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_31",
       "kind": "stage",
-      "displayName": "关门能力 · 转折",
-      "text": "你更容易在家庭边界中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "不把沉默当答应",
+      "text": "别人替你做决定时，你会把自己的话补上。",
       "mechanic": "boundary",
       "effects": [
         {
@@ -3927,18 +4103,29 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "pressures.family",
+          "value": -2
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:boundary"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_32",
       "kind": "stage",
-      "displayName": "重新学习 · 转折",
-      "text": "你更容易在职业转向中保留一个可用选项。",
+      "drawAge": 18,
+      "displayName": "换条路也能学",
+      "text": "原来的办法行不通，你愿意从基础重新来。",
       "mechanic": "learning",
       "effects": [
         {
@@ -3947,438 +4134,461 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:learning"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_33",
       "kind": "stage",
-      "displayName": "先看最坏情况 · 转折",
-      "text": "你更容易在风险决策中保留一个可用选项。",
-      "mechanic": "riskSense",
+      "drawAge": 35,
+      "displayName": "能跨行的本事",
+      "text": "岗位名称变了，你仍有一项本事能带走。",
+      "mechanic": "portableSkill",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.riskSense",
+          "target": "capabilities.portableSkill",
           "value": 1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:riskSense"
+          "value": "card:portableSkill"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_34",
       "kind": "stage",
-      "displayName": "做点新东西 · 转折",
-      "text": "你更容易在创作机会中保留一个可用选项。",
-      "mechanic": "creativity",
+      "drawAge": 35,
+      "displayName": "合同都留底",
+      "text": "工资、租房和合作条款，你都有原件可查。",
+      "mechanic": "evidence",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.creativity",
+          "target": "capabilities.evidence",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "capabilities.skill",
           "value": 1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:creativity"
+          "value": "card:evidence"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_35",
       "kind": "stage",
-      "displayName": "照护手册 · 转折",
-      "text": "你更容易在照护安排中保留一个可用选项。",
-      "mechanic": "careSkill",
+      "drawAge": 35,
+      "displayName": "几个靠谱同行",
+      "text": "行业里有几个人能说真话，也愿意介绍机会。",
+      "mechanic": "network",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.careSkill",
+          "target": "capabilities.network",
           "value": 1
+        },
+        {
+          "type": "add",
+          "target": "relationships.network",
+          "value": 4
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:careSkill"
+          "value": "card:network"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_36",
       "kind": "stage",
-      "displayName": "把条件写下来 · 转折",
-      "text": "你更容易在合同谈判中保留一个可用选项。",
-      "mechanic": "negotiation",
+      "drawAge": 35,
+      "displayName": "失败后的作息",
+      "text": "事情砸了以后，你仍能吃饭、睡觉和处理下一步。",
+      "mechanic": "resilience",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.negotiation",
+          "target": "capabilities.resilience",
           "value": 1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:negotiation"
+          "value": "card:resilience"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_37",
       "kind": "stage",
-      "displayName": "随身工具箱 · 中段",
-      "text": "你更容易在迁移工作中保留一个可用选项。",
-      "mechanic": "portableSkill",
+      "drawAge": 35,
+      "displayName": "半年缓冲金",
+      "text": "不进账的时候，你还有一段时间不用立刻借钱。",
+      "mechanic": "cashBuffer",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.portableSkill",
+          "target": "capabilities.cashBuffer",
           "value": 1
+        },
+        {
+          "type": "add",
+          "target": "finance.cash",
+          "value": 8000
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:portableSkill"
+          "value": "card:cashBuffer"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_38",
       "kind": "stage",
-      "displayName": "留痕习惯 · 中段",
-      "text": "你更容易在关键争议中保留一个可用选项。",
-      "mechanic": "evidence",
+      "drawAge": 35,
+      "displayName": "熟悉自己的指标",
+      "text": "报告上的旧问题和正常波动，你分得清楚。",
+      "mechanic": "healthLiteracy",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.evidence",
+          "target": "capabilities.healthLiteracy",
           "value": 1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:evidence"
+          "value": "card:healthLiteracy"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_39",
       "kind": "stage",
-      "displayName": "认识一个人 · 中段",
-      "text": "你更容易在关系断点中保留一个可用选项。",
-      "mechanic": "network",
+      "drawAge": 35,
+      "displayName": "下班后不回",
+      "text": "不是急事的消息，可以等到第二天再处理。",
+      "mechanic": "boundary",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.network",
+          "target": "capabilities.boundary",
           "value": 1
+        },
+        {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "pressures.family",
+          "value": -2
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:network"
+          "value": "card:boundary"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_40",
       "kind": "stage",
-      "displayName": "慢恢复 · 中段",
-      "text": "你更容易在危机恢复中保留一个可用选项。",
-      "mechanic": "resilience",
+      "drawAge": 35,
+      "displayName": "重新当学生",
+      "text": "离开学校很多年，你仍坐得住一堂入门课。",
+      "mechanic": "learning",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.resilience",
+          "target": "capabilities.learning",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "capabilities.skill",
           "value": 1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:resilience"
+          "value": "card:learning"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_41",
       "kind": "stage",
-      "displayName": "备用现金 · 中段",
-      "text": "你更容易在现金中断中保留一个可用选项。",
-      "mechanic": "cashBuffer",
+      "drawAge": 35,
+      "displayName": "先查真实流水",
+      "text": "别人只讲前景时，你会先看成本和实际进账。",
+      "mechanic": "riskSense",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.cashBuffer",
+          "target": "capabilities.riskSense",
           "value": 1
+        },
+        {
+          "type": "add",
+          "target": "business.operatingSkill",
+          "value": 2
+        },
+        {
+          "type": "add",
+          "target": "pressures.money",
+          "value": -1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:cashBuffer"
+          "value": "card:riskSense"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_42",
       "kind": "stage",
-      "displayName": "身体说明书 · 中段",
-      "text": "你更容易在健康选择中保留一个可用选项。",
-      "mechanic": "healthLiteracy",
+      "drawAge": 35,
+      "displayName": "还在做自己的东西",
+      "text": "工作再忙，你也留过一点时间做喜欢的事。",
+      "mechanic": "creativity",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.healthLiteracy",
+          "target": "capabilities.creativity",
           "value": 1
+        },
+        {
+          "type": "add",
+          "target": "desires.creation.fulfillment",
+          "value": 2
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:healthLiteracy"
+          "value": "card:creativity"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_43",
       "kind": "stage",
-      "displayName": "关门能力 · 中段",
-      "text": "你更容易在家庭边界中保留一个可用选项。",
-      "mechanic": "boundary",
+      "drawAge": 35,
+      "displayName": "会安排照护",
+      "text": "陪诊、买药和休息能排开，不全压在一个人身上。",
+      "mechanic": "careSkill",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.boundary",
+          "target": "capabilities.careSkill",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "relationships.originBond",
+          "value": 2
+        },
+        {
+          "type": "add",
+          "target": "capabilities.healthLiteracy",
           "value": 1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:boundary"
+          "value": "card:careSkill"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_44",
       "kind": "stage",
-      "displayName": "重新学习 · 中段",
-      "text": "你更容易在职业转向中保留一个可用选项。",
-      "mechanic": "learning",
+      "drawAge": 35,
+      "displayName": "能谈职责边界",
+      "text": "接下新任务前，你会问清权责和交付时间。",
+      "mechanic": "negotiation",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.learning",
+          "target": "capabilities.negotiation",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "relationships.network",
           "value": 1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:learning"
+          "value": "card:negotiation"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_45",
       "kind": "stage",
-      "displayName": "先看最坏情况 · 中段",
-      "text": "你更容易在风险决策中保留一个可用选项。",
-      "mechanic": "riskSense",
+      "drawAge": 35,
+      "displayName": "不靠单一平台",
+      "text": "一个账号停掉，你还有别的地方能找到工作。",
+      "mechanic": "portableSkill",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.riskSense",
+          "target": "capabilities.portableSkill",
           "value": 1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:riskSense"
+          "value": "card:portableSkill"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_46",
       "kind": "stage",
-      "displayName": "做点新东西 · 中段",
-      "text": "你更容易在创作机会中保留一个可用选项。",
-      "mechanic": "creativity",
+      "drawAge": 35,
+      "displayName": "重要决定有记录",
+      "text": "借钱、担保和投资都留下了说清楚的凭据。",
+      "mechanic": "evidence",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.creativity",
+          "target": "capabilities.evidence",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "capabilities.skill",
           "value": 1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:creativity"
+          "value": "card:evidence"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_47",
       "kind": "stage",
-      "displayName": "照护手册 · 中段",
-      "text": "你更容易在照护安排中保留一个可用选项。",
-      "mechanic": "careSkill",
+      "drawAge": 35,
+      "displayName": "有人肯说真话",
+      "text": "你身边有人会在你冲动时直接劝你停一下。",
+      "mechanic": "network",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.careSkill",
+          "target": "capabilities.network",
           "value": 1
+        },
+        {
+          "type": "add",
+          "target": "relationships.network",
+          "value": 4
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:careSkill"
+          "value": "card:network"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_48",
       "kind": "stage",
-      "displayName": "把条件写下来 · 中段",
-      "text": "你更容易在合同谈判中保留一个可用选项。",
-      "mechanic": "negotiation",
+      "drawAge": 35,
+      "displayName": "先停下来再处理",
+      "text": "压力顶上来时，你知道先睡一晚不会毁掉一切。",
+      "mechanic": "resilience",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.negotiation",
+          "target": "capabilities.resilience",
           "value": 1
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:negotiation"
+          "value": "card:resilience"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_49",
-      "kind": "adversity",
-      "displayName": "随身工具箱 · 回稳",
-      "text": "你更容易在迁移工作中保留一个可用选项。",
-      "mechanic": "portableSkill",
+      "kind": "stage",
+      "drawAge": 35,
+      "displayName": "一笔不动的钱",
+      "text": "账户里有一部分钱，不拿去撑面子或追涨。",
+      "mechanic": "cashBuffer",
       "effects": [
         {
           "type": "add",
-          "target": "capabilities.portableSkill",
+          "target": "capabilities.cashBuffer",
           "value": 1
+        },
+        {
+          "type": "add",
+          "target": "finance.cash",
+          "value": 8000
         },
         {
           "type": "tag",
           "target": "history",
-          "value": "card:portableSkill"
+          "value": "card:cashBuffer"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "card_50",
-      "kind": "adversity",
-      "displayName": "留痕习惯 · 回稳",
-      "text": "你更容易在关键争议中保留一个可用选项。",
-      "mechanic": "evidence",
-      "effects": [
-        {
-          "type": "add",
-          "target": "capabilities.evidence",
-          "value": 1
-        },
-        {
-          "type": "tag",
-          "target": "history",
-          "value": "card:evidence"
-        }
-      ],
-      "contentRevision": 9
-    },
-    {
-      "id": "card_51",
-      "kind": "adversity",
-      "displayName": "认识一个人 · 回稳",
-      "text": "你更容易在关系断点中保留一个可用选项。",
-      "mechanic": "network",
-      "effects": [
-        {
-          "type": "add",
-          "target": "capabilities.network",
-          "value": 1
-        },
-        {
-          "type": "tag",
-          "target": "history",
-          "value": "card:network"
-        }
-      ],
-      "contentRevision": 9
-    },
-    {
-      "id": "card_52",
-      "kind": "adversity",
-      "displayName": "慢恢复 · 回稳",
-      "text": "你更容易在危机恢复中保留一个可用选项。",
-      "mechanic": "resilience",
-      "effects": [
-        {
-          "type": "add",
-          "target": "capabilities.resilience",
-          "value": 1
-        },
-        {
-          "type": "tag",
-          "target": "history",
-          "value": "card:resilience"
-        }
-      ],
-      "contentRevision": 9
-    },
-    {
-      "id": "card_53",
-      "kind": "adversity",
-      "displayName": "备用现金 · 回稳",
-      "text": "你更容易在现金中断中保留一个可用选项。",
-      "mechanic": "cashBuffer",
-      "effects": [
-        {
-          "type": "add",
-          "target": "capabilities.cashBuffer",
-          "value": 1
-        },
-        {
-          "type": "tag",
-          "target": "history",
-          "value": "card:cashBuffer"
-        }
-      ],
-      "contentRevision": 9
-    },
-    {
-      "id": "card_54",
-      "kind": "adversity",
-      "displayName": "身体说明书 · 回稳",
-      "text": "你更容易在健康选择中保留一个可用选项。",
+      "kind": "stage",
+      "drawAge": 35,
+      "displayName": "敢换一家医院",
+      "text": "解释含糊时，你愿意再找一位医生确认。",
       "mechanic": "healthLiteracy",
       "effects": [
         {
@@ -4392,13 +4602,14 @@
           "value": "card:healthLiteracy"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_55",
-      "kind": "adversity",
-      "displayName": "关门能力 · 回稳",
-      "text": "你更容易在家庭边界中保留一个可用选项。",
+      "id": "card_51",
+      "kind": "stage",
+      "drawAge": 35,
+      "displayName": "不替别人兜底",
+      "text": "亲近的人犯错，也不能自动变成你的债。",
       "mechanic": "boundary",
       "effects": [
         {
@@ -4407,18 +4618,29 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "pressures.family",
+          "value": -2
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:boundary"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_56",
-      "kind": "adversity",
-      "displayName": "重新学习 · 回稳",
-      "text": "你更容易在职业转向中保留一个可用选项。",
+      "id": "card_52",
+      "kind": "stage",
+      "drawAge": 35,
+      "displayName": "能承认不会",
+      "text": "碰到新东西时，你不再用逞强代替学习。",
       "mechanic": "learning",
       "effects": [
         {
@@ -4427,98 +4649,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:learning"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_57",
-      "kind": "adversity",
-      "displayName": "先看最坏情况 · 回稳",
-      "text": "你更容易在风险决策中保留一个可用选项。",
-      "mechanic": "riskSense",
-      "effects": [
-        {
-          "type": "add",
-          "target": "capabilities.riskSense",
-          "value": 1
-        },
-        {
-          "type": "tag",
-          "target": "history",
-          "value": "card:riskSense"
-        }
-      ],
-      "contentRevision": 9
-    },
-    {
-      "id": "card_58",
-      "kind": "adversity",
-      "displayName": "做点新东西 · 回稳",
-      "text": "你更容易在创作机会中保留一个可用选项。",
-      "mechanic": "creativity",
-      "effects": [
-        {
-          "type": "add",
-          "target": "capabilities.creativity",
-          "value": 1
-        },
-        {
-          "type": "tag",
-          "target": "history",
-          "value": "card:creativity"
-        }
-      ],
-      "contentRevision": 9
-    },
-    {
-      "id": "card_59",
-      "kind": "adversity",
-      "displayName": "照护手册 · 回稳",
-      "text": "你更容易在照护安排中保留一个可用选项。",
-      "mechanic": "careSkill",
-      "effects": [
-        {
-          "type": "add",
-          "target": "capabilities.careSkill",
-          "value": 1
-        },
-        {
-          "type": "tag",
-          "target": "history",
-          "value": "card:careSkill"
-        }
-      ],
-      "contentRevision": 9
-    },
-    {
-      "id": "card_60",
-      "kind": "adversity",
-      "displayName": "把条件写下来 · 回稳",
-      "text": "你更容易在合同谈判中保留一个可用选项。",
-      "mechanic": "negotiation",
-      "effects": [
-        {
-          "type": "add",
-          "target": "capabilities.negotiation",
-          "value": 1
-        },
-        {
-          "type": "tag",
-          "target": "history",
-          "value": "card:negotiation"
-        }
-      ],
-      "contentRevision": 9
-    },
-    {
-      "id": "card_61",
-      "kind": "adversity",
-      "displayName": "随身工具箱 · 余生",
-      "text": "你更容易在迁移工作中保留一个可用选项。",
+      "id": "card_53",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "离开岗位也能用",
+      "text": "头衔拿掉以后，你的经验仍能解决实际问题。",
       "mechanic": "portableSkill",
       "effects": [
         {
@@ -4532,13 +4680,14 @@
           "value": "card:portableSkill"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_62",
-      "kind": "adversity",
-      "displayName": "留痕习惯 · 余生",
-      "text": "你更容易在关键争议中保留一个可用选项。",
+      "id": "card_54",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "账目一眼看明白",
+      "text": "收入、欠款和固定支出，你知道数字在哪里。",
       "mechanic": "evidence",
       "effects": [
         {
@@ -4547,18 +4696,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:evidence"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_63",
-      "kind": "adversity",
-      "displayName": "认识一个人 · 余生",
-      "text": "你更容易在关系断点中保留一个可用选项。",
+      "id": "card_55",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "还有人约你吃饭",
+      "text": "不谈工作，也有人愿意来和你坐一会儿。",
       "mechanic": "network",
       "effects": [
         {
@@ -4567,18 +4722,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "relationships.network",
+          "value": 4
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:network"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_64",
-      "kind": "adversity",
-      "displayName": "慢恢复 · 余生",
-      "text": "你更容易在危机恢复中保留一个可用选项。",
+      "id": "card_56",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "接受恢复得慢",
+      "text": "身体需要更多时间，你不再拿年轻时的速度逼它。",
       "mechanic": "resilience",
       "effects": [
         {
@@ -4592,13 +4753,14 @@
           "value": "card:resilience"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_65",
-      "kind": "adversity",
-      "displayName": "备用现金 · 余生",
-      "text": "你更容易在现金中断中保留一个可用选项。",
+      "id": "card_57",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "不急着变现",
+      "text": "手里的积蓄允许你拒绝一次仓促的买卖。",
       "mechanic": "cashBuffer",
       "effects": [
         {
@@ -4607,18 +4769,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "finance.cash",
+          "value": 12000
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:cashBuffer"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_66",
-      "kind": "adversity",
-      "displayName": "身体说明书 · 余生",
-      "text": "你更容易在健康选择中保留一个可用选项。",
+      "id": "card_58",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "记得每次用药",
+      "text": "药名、剂量和复查日期，你都记在同一个地方。",
       "mechanic": "healthLiteracy",
       "effects": [
         {
@@ -4632,13 +4800,14 @@
           "value": "card:healthLiteracy"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_67",
-      "kind": "adversity",
-      "displayName": "关门能力 · 余生",
-      "text": "你更容易在家庭边界中保留一个可用选项。",
+      "id": "card_59",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "不拿孝顺换同意",
+      "text": "家里谈钱和照护时，你允许晚辈有不同意见。",
       "mechanic": "boundary",
       "effects": [
         {
@@ -4647,18 +4816,29 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "pressures.family",
+          "value": -2
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:boundary"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_68",
-      "kind": "adversity",
-      "displayName": "重新学习 · 余生",
-      "text": "你更容易在职业转向中保留一个可用选项。",
+      "id": "card_60",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "还愿意学新软件",
+      "text": "界面全变了，你仍肯从第一个按钮开始试。",
       "mechanic": "learning",
       "effects": [
         {
@@ -4667,18 +4847,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:learning"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_69",
-      "kind": "adversity",
-      "displayName": "先看最坏情况 · 余生",
-      "text": "你更容易在风险决策中保留一个可用选项。",
+      "id": "card_61",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "不追最后一班车",
+      "text": "别人都说再晚就没机会，你也会先看看风险。",
       "mechanic": "riskSense",
       "effects": [
         {
@@ -4687,18 +4873,29 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "business.operatingSkill",
+          "value": 2
+        },
+        {
+          "type": "add",
+          "target": "pressures.money",
+          "value": -1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:riskSense"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_70",
-      "kind": "adversity",
-      "displayName": "做点新东西 · 余生",
-      "text": "你更容易在创作机会中保留一个可用选项。",
+      "id": "card_62",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "有件事只为喜欢",
+      "text": "它不赚钱，也没人点赞，你还是一直在做。",
       "mechanic": "creativity",
       "effects": [
         {
@@ -4707,18 +4904,24 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "desires.creation.fulfillment",
+          "value": 2
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:creativity"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_71",
-      "kind": "adversity",
-      "displayName": "照护手册 · 余生",
-      "text": "你更容易在照护安排中保留一个可用选项。",
+      "id": "card_63",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "照护也会轮班",
+      "text": "你知道照顾人不能靠一个人长期硬撑。",
       "mechanic": "careSkill",
       "effects": [
         {
@@ -4727,18 +4930,29 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "relationships.originBond",
+          "value": 2
+        },
+        {
+          "type": "add",
+          "target": "capabilities.healthLiteracy",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:careSkill"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
-      "id": "card_72",
-      "kind": "adversity",
-      "displayName": "把条件写下来 · 余生",
-      "text": "你更容易在合同谈判中保留一个可用选项。",
+      "id": "card_64",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "把遗嘱谈清楚",
+      "text": "钱、物品和照护安排，你愿意当面说清楚。",
       "mechanic": "negotiation",
       "effects": [
         {
@@ -4747,12 +4961,220 @@
           "value": 1
         },
         {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "relationships.network",
+          "value": 1
+        },
+        {
           "type": "tag",
           "target": "history",
           "value": "card:negotiation"
         }
       ],
-      "contentRevision": 9
+      "contentRevision": 10
+    },
+    {
+      "id": "card_65",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "一张能带走的证书",
+      "text": "离开原单位后，你仍有一项资格可以使用。",
+      "mechanic": "portableSkill",
+      "effects": [
+        {
+          "type": "add",
+          "target": "capabilities.portableSkill",
+          "value": 1
+        },
+        {
+          "type": "tag",
+          "target": "history",
+          "value": "card:portableSkill"
+        }
+      ],
+      "contentRevision": 10
+    },
+    {
+      "id": "card_66",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "旧合同找得到",
+      "text": "多年以前签过的文件，你仍知道放在哪里。",
+      "mechanic": "evidence",
+      "effects": [
+        {
+          "type": "add",
+          "target": "capabilities.evidence",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
+          "type": "tag",
+          "target": "history",
+          "value": "card:evidence"
+        }
+      ],
+      "contentRevision": 10
+    },
+    {
+      "id": "card_67",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "认识靠谱的年轻人",
+      "text": "遇到新工具和新规矩时，有人愿意耐心解释。",
+      "mechanic": "network",
+      "effects": [
+        {
+          "type": "add",
+          "target": "capabilities.network",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "relationships.network",
+          "value": 4
+        },
+        {
+          "type": "tag",
+          "target": "history",
+          "value": "card:network"
+        }
+      ],
+      "contentRevision": 10
+    },
+    {
+      "id": "card_68",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "生活可以重新排",
+      "text": "原来的日程走不通，你愿意换一种过法。",
+      "mechanic": "resilience",
+      "effects": [
+        {
+          "type": "add",
+          "target": "capabilities.resilience",
+          "value": 1
+        },
+        {
+          "type": "tag",
+          "target": "history",
+          "value": "card:resilience"
+        }
+      ],
+      "contentRevision": 10
+    },
+    {
+      "id": "card_69",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "手里留着现金",
+      "text": "临时开销来了，你不用当天卖掉长期资产。",
+      "mechanic": "cashBuffer",
+      "effects": [
+        {
+          "type": "add",
+          "target": "capabilities.cashBuffer",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "finance.cash",
+          "value": 12000
+        },
+        {
+          "type": "tag",
+          "target": "history",
+          "value": "card:cashBuffer"
+        }
+      ],
+      "contentRevision": 10
+    },
+    {
+      "id": "card_70",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "知道何时求助",
+      "text": "疼痛、失眠或情绪失控时，你不会一直拖着。",
+      "mechanic": "healthLiteracy",
+      "effects": [
+        {
+          "type": "add",
+          "target": "capabilities.healthLiteracy",
+          "value": 1
+        },
+        {
+          "type": "tag",
+          "target": "history",
+          "value": "card:healthLiteracy"
+        }
+      ],
+      "contentRevision": 10
+    },
+    {
+      "id": "card_71",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "允许孩子不同意",
+      "text": "关心下一代，不等于替他们把答案写好。",
+      "mechanic": "boundary",
+      "effects": [
+        {
+          "type": "add",
+          "target": "capabilities.boundary",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "agency",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "pressures.family",
+          "value": -2
+        },
+        {
+          "type": "tag",
+          "target": "history",
+          "value": "card:boundary"
+        }
+      ],
+      "contentRevision": 10
+    },
+    {
+      "id": "card_72",
+      "kind": "stage",
+      "drawAge": 55,
+      "displayName": "肯从零开始",
+      "text": "年纪没有让你假装什么都会，你仍能重新学。",
+      "mechanic": "learning",
+      "effects": [
+        {
+          "type": "add",
+          "target": "capabilities.learning",
+          "value": 1
+        },
+        {
+          "type": "add",
+          "target": "capabilities.skill",
+          "value": 1
+        },
+        {
+          "type": "tag",
+          "target": "history",
+          "value": "card:learning"
+        }
+      ],
+      "contentRevision": 10
     }
   ],
   "events": [
@@ -4794,7 +5216,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_002",
@@ -4830,7 +5252,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_003",
@@ -4866,7 +5288,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_004",
@@ -4909,7 +5331,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_005",
@@ -4946,7 +5368,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_006",
@@ -4983,7 +5405,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_007",
@@ -5025,7 +5447,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_008",
@@ -5062,7 +5484,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_009",
@@ -5097,7 +5519,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_010",
@@ -5138,7 +5560,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_011",
@@ -5174,7 +5596,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_012",
@@ -5212,7 +5634,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_013",
@@ -5254,7 +5676,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_014",
@@ -5291,7 +5713,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_015",
@@ -5328,7 +5750,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_016",
@@ -5370,7 +5792,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_017",
@@ -5405,7 +5827,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_018",
@@ -5441,7 +5863,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_019",
@@ -5482,7 +5904,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_020",
@@ -5520,7 +5942,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_021",
@@ -5557,7 +5979,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_022",
@@ -5599,7 +6021,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_023",
@@ -5636,7 +6058,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_024",
@@ -5673,7 +6095,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_025",
@@ -5713,7 +6135,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_026",
@@ -5749,7 +6171,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_027",
@@ -5785,7 +6207,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_028",
@@ -5828,7 +6250,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_029",
@@ -5865,7 +6287,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_030",
@@ -5902,7 +6324,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_031",
@@ -5944,7 +6366,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_032",
@@ -5981,7 +6403,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_033",
@@ -6038,7 +6460,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_034",
@@ -6089,7 +6511,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_035",
@@ -6141,7 +6563,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_036",
@@ -6197,7 +6619,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_037",
@@ -6249,7 +6671,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_038",
@@ -6301,7 +6723,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_039",
@@ -6358,7 +6780,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_040",
@@ -6408,7 +6830,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_041",
@@ -6460,7 +6882,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_042",
@@ -6516,7 +6938,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_043",
@@ -6568,7 +6990,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_044",
@@ -6619,7 +7041,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_045",
@@ -6676,7 +7098,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_046",
@@ -6728,7 +7150,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_047",
@@ -6780,7 +7202,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_048",
@@ -6835,7 +7257,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_049",
@@ -6887,7 +7309,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_050",
@@ -6938,7 +7360,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_051",
@@ -6995,7 +7417,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_052",
@@ -7046,7 +7468,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_053",
@@ -7098,7 +7520,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_054",
@@ -7155,7 +7577,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_055",
@@ -7207,7 +7629,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_056",
@@ -7257,7 +7679,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_057",
@@ -7314,7 +7736,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_058",
@@ -7365,7 +7787,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_059",
@@ -7417,7 +7839,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_060",
@@ -7473,7 +7895,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_061",
@@ -7525,7 +7947,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_062",
@@ -7577,7 +7999,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_063",
@@ -7634,7 +8056,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_064",
@@ -7684,7 +8106,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_065",
@@ -7737,7 +8159,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_066",
@@ -7786,7 +8208,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_067",
@@ -7834,7 +8256,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_068",
@@ -7888,7 +8310,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_069",
@@ -7936,7 +8358,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_070",
@@ -7985,7 +8407,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_071",
@@ -8039,7 +8461,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_072",
@@ -8086,7 +8508,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_073",
@@ -8134,7 +8556,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_074",
@@ -8188,7 +8610,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_075",
@@ -8236,7 +8658,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_076",
@@ -8285,7 +8707,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_077",
@@ -8338,7 +8760,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_078",
@@ -8387,7 +8809,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_079",
@@ -8436,7 +8858,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_080",
@@ -8488,7 +8910,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_081",
@@ -8536,7 +8958,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_082",
@@ -8585,7 +9007,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_083",
@@ -8638,7 +9060,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_084",
@@ -8687,7 +9109,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_085",
@@ -8735,7 +9157,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_086",
@@ -8789,7 +9211,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_087",
@@ -8838,7 +9260,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_088",
@@ -8885,7 +9307,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_089",
@@ -8938,7 +9360,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_090",
@@ -8987,7 +9409,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_091",
@@ -9035,7 +9457,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_092",
@@ -9089,7 +9511,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_093",
@@ -9137,7 +9559,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_094",
@@ -9186,7 +9608,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_095",
@@ -9240,7 +9662,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_096",
@@ -9287,7 +9709,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_097",
@@ -9352,7 +9774,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_098",
@@ -9412,7 +9834,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_099",
@@ -9473,7 +9895,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_100",
@@ -9539,7 +9961,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_101",
@@ -9600,7 +10022,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_102",
@@ -9661,7 +10083,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_103",
@@ -9727,7 +10149,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_104",
@@ -9788,7 +10210,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_105",
@@ -9848,7 +10270,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_106",
@@ -9913,7 +10335,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_107",
@@ -9974,7 +10396,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_108",
@@ -10035,7 +10457,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_109",
@@ -10101,7 +10523,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_110",
@@ -10162,7 +10584,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_111",
@@ -10223,7 +10645,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_112",
@@ -10289,7 +10711,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_113",
@@ -10349,7 +10771,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_114",
@@ -10409,7 +10831,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_115",
@@ -10475,7 +10897,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_116",
@@ -10536,7 +10958,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_117",
@@ -10597,7 +11019,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_118",
@@ -10663,7 +11085,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_119",
@@ -10724,7 +11146,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_120",
@@ -10785,7 +11207,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_121",
@@ -10850,7 +11272,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_122",
@@ -10910,7 +11332,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_123",
@@ -10971,7 +11393,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_124",
@@ -11037,7 +11459,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_125",
@@ -11098,7 +11520,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_126",
@@ -11159,7 +11581,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_127",
@@ -11225,7 +11647,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_128",
@@ -11286,7 +11708,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_129",
@@ -11342,7 +11764,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_130",
@@ -11393,7 +11815,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_131",
@@ -11444,7 +11866,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_132",
@@ -11501,7 +11923,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_133",
@@ -11553,7 +11975,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_134",
@@ -11605,7 +12027,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_135",
@@ -11661,7 +12083,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_136",
@@ -11713,7 +12135,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_137",
@@ -11764,7 +12186,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_138",
@@ -11820,7 +12242,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_139",
@@ -11871,7 +12293,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_140",
@@ -11923,7 +12345,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_141",
@@ -11980,7 +12402,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_142",
@@ -12032,7 +12454,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_143",
@@ -12083,7 +12505,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_144",
@@ -12140,7 +12562,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_145",
@@ -12191,7 +12613,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_146",
@@ -12242,7 +12664,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_147",
@@ -12298,7 +12720,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_148",
@@ -12350,7 +12772,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_149",
@@ -12402,7 +12824,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_150",
@@ -12459,7 +12881,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_151",
@@ -12510,7 +12932,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_152",
@@ -12562,7 +12984,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_153",
@@ -12618,7 +13040,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_154",
@@ -12669,7 +13091,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_155",
@@ -12720,7 +13142,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_156",
@@ -12777,7 +13199,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_157",
@@ -12829,7 +13251,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_158",
@@ -12881,7 +13303,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_159",
@@ -12937,7 +13359,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_160",
@@ -12989,7 +13411,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_161",
@@ -13041,7 +13463,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_162",
@@ -13088,7 +13510,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_163",
@@ -13135,7 +13557,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_164",
@@ -13187,7 +13609,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_165",
@@ -13234,7 +13656,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_166",
@@ -13281,7 +13703,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_167",
@@ -13333,7 +13755,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_168",
@@ -13380,7 +13802,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_169",
@@ -13427,7 +13849,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_170",
@@ -13479,7 +13901,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_171",
@@ -13526,7 +13948,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_172",
@@ -13573,7 +13995,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_173",
@@ -13625,7 +14047,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_174",
@@ -13672,7 +14094,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_175",
@@ -13719,7 +14141,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_176",
@@ -13771,7 +14193,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_177",
@@ -13818,7 +14240,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_178",
@@ -13865,7 +14287,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_179",
@@ -13917,7 +14339,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_180",
@@ -13964,7 +14386,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_181",
@@ -14011,7 +14433,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_182",
@@ -14063,7 +14485,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_183",
@@ -14110,7 +14532,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_184",
@@ -14157,7 +14579,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_185",
@@ -14209,7 +14631,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_186",
@@ -14256,7 +14678,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_187",
@@ -14303,7 +14725,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_188",
@@ -14355,7 +14777,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_189",
@@ -14402,7 +14824,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_190",
@@ -14449,7 +14871,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_191",
@@ -14501,7 +14923,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_192",
@@ -14548,7 +14970,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_193",
@@ -14601,7 +15023,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_194",
@@ -14657,7 +15079,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_195",
@@ -14711,7 +15133,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_196",
@@ -14770,7 +15192,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_197",
@@ -14825,7 +15247,7 @@
         }
       ],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_198",
@@ -14880,7 +15302,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_199",
@@ -14939,7 +15361,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_200",
@@ -14993,7 +15415,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_201",
@@ -15041,7 +15463,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_202",
@@ -15102,7 +15524,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_203",
@@ -15156,7 +15578,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_204",
@@ -15210,7 +15632,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_205",
@@ -15270,7 +15692,7 @@
         }
       ],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_206",
@@ -15325,7 +15747,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_207",
@@ -15379,7 +15801,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_208",
@@ -15438,7 +15860,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_209",
@@ -15486,7 +15908,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_210",
@@ -15542,7 +15964,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_211",
@@ -15601,7 +16023,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_212",
@@ -15655,7 +16077,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_213",
@@ -15710,7 +16132,7 @@
         }
       ],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_214",
@@ -15770,7 +16192,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_215",
@@ -15824,7 +16246,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_216",
@@ -15878,7 +16300,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_217",
@@ -15931,7 +16353,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_218",
@@ -15987,7 +16409,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_219",
@@ -16041,7 +16463,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_220",
@@ -16100,7 +16522,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_221",
@@ -16155,7 +16577,7 @@
         }
       ],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_222",
@@ -16210,7 +16632,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_223",
@@ -16269,7 +16691,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_224",
@@ -16323,7 +16745,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_225",
@@ -16371,7 +16793,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_226",
@@ -16432,7 +16854,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_227",
@@ -16493,7 +16915,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_228",
@@ -16560,7 +16982,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_229",
@@ -16621,7 +17043,7 @@
         }
       ],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_230",
@@ -16682,7 +17104,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_231",
@@ -16749,7 +17171,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_232",
@@ -16810,7 +17232,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_233",
@@ -16853,7 +17275,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_234",
@@ -16919,7 +17341,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_235",
@@ -16980,7 +17402,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_236",
@@ -17042,7 +17464,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_237",
@@ -17108,7 +17530,7 @@
         }
       ],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_238",
@@ -17169,7 +17591,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_239",
@@ -17231,7 +17653,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_240",
@@ -17297,7 +17719,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_241",
@@ -17340,7 +17762,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_242",
@@ -17401,7 +17823,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_243",
@@ -17467,7 +17889,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_244",
@@ -17529,7 +17951,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_245",
@@ -17590,7 +18012,7 @@
         }
       ],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_246",
@@ -17656,7 +18078,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_247",
@@ -17718,7 +18140,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_248",
@@ -17779,7 +18201,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_249",
@@ -17827,7 +18249,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_250",
@@ -17888,7 +18310,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_251",
@@ -17949,7 +18371,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_252",
@@ -18016,7 +18438,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_253",
@@ -18077,7 +18499,7 @@
         }
       ],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_254",
@@ -18138,7 +18560,7 @@
         }
       ],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_255",
@@ -18205,7 +18627,7 @@
         }
       ],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_256",
@@ -18266,7 +18688,7 @@
         }
       ],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_257",
@@ -18310,7 +18732,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_258",
@@ -18354,7 +18776,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_259",
@@ -18392,7 +18814,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_260",
@@ -18441,7 +18863,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_261",
@@ -18480,7 +18902,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_262",
@@ -18525,7 +18947,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_263",
@@ -18575,7 +18997,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_264",
@@ -18618,7 +19040,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_265",
@@ -18657,7 +19079,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_266",
@@ -18706,7 +19128,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_267",
@@ -18744,7 +19166,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_268",
@@ -18788,7 +19210,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_269",
@@ -18832,7 +19254,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_270",
@@ -18877,7 +19299,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_271",
@@ -18922,7 +19344,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_272",
@@ -18970,7 +19392,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_273",
@@ -19009,7 +19431,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_274",
@@ -19053,7 +19475,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_275",
@@ -19096,7 +19518,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_276",
@@ -19140,7 +19562,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_277",
@@ -19179,7 +19601,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_278",
@@ -19229,7 +19651,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_279",
@@ -19274,7 +19696,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_280",
@@ -19317,7 +19739,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_281",
@@ -19361,7 +19783,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_282",
@@ -19405,7 +19827,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_283",
@@ -19443,7 +19865,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_284",
@@ -19492,7 +19914,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_285",
@@ -19531,7 +19953,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_286",
@@ -19576,7 +19998,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_287",
@@ -19626,7 +20048,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_288",
@@ -19669,7 +20091,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_289",
@@ -19704,7 +20126,7 @@
       ],
       "assertions": [],
       "weight": 9,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_290",
@@ -19740,7 +20162,7 @@
       ],
       "assertions": [],
       "weight": 8,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_291",
@@ -19772,7 +20194,7 @@
       ],
       "assertions": [],
       "weight": 7,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_292",
@@ -19811,7 +20233,7 @@
       ],
       "assertions": [],
       "weight": 8,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_293",
@@ -19851,7 +20273,7 @@
       ],
       "assertions": [],
       "weight": 8,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_294",
@@ -19884,7 +20306,7 @@
       ],
       "assertions": [],
       "weight": 7,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_295",
@@ -19921,7 +20343,7 @@
       ],
       "assertions": [],
       "weight": 8,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_296",
@@ -19957,7 +20379,7 @@
       ],
       "assertions": [],
       "weight": 9,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_297",
@@ -19998,7 +20420,7 @@
       ],
       "assertions": [],
       "weight": 2,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_298",
@@ -20040,7 +20462,7 @@
       ],
       "assertions": [],
       "weight": 2,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_299",
@@ -20095,7 +20517,7 @@
       ],
       "assertions": [],
       "weight": 2,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_300",
@@ -20143,7 +20565,7 @@
       ],
       "assertions": [],
       "weight": 4,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_301",
@@ -20186,7 +20608,7 @@
       ],
       "assertions": [],
       "weight": 3,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_302",
@@ -20247,7 +20669,7 @@
       ],
       "assertions": [],
       "weight": 4,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_303",
@@ -20292,7 +20714,7 @@
       ],
       "assertions": [],
       "weight": 1.5,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_304",
@@ -20333,7 +20755,7 @@
       ],
       "assertions": [],
       "weight": 3,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_305",
@@ -20382,7 +20804,7 @@
       ],
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_306",
@@ -20430,7 +20852,7 @@
       ],
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_307",
@@ -20476,7 +20898,7 @@
       ],
       "assertions": [],
       "weight": 20,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_308",
@@ -20529,7 +20951,7 @@
       ],
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_309",
@@ -20579,7 +21001,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_310",
@@ -20631,7 +21053,7 @@
       ],
       "assertions": [],
       "weight": 15,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_311",
@@ -20675,7 +21097,7 @@
       ],
       "assertions": [],
       "weight": 15,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_312",
@@ -20717,7 +21139,7 @@
       ],
       "assertions": [],
       "weight": 20,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_313",
@@ -20771,7 +21193,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_314",
@@ -20824,7 +21246,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_315",
@@ -20878,7 +21300,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_316",
@@ -20935,7 +21357,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_317",
@@ -20988,7 +21410,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_318",
@@ -21040,7 +21462,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_319",
@@ -21091,7 +21513,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_320",
@@ -21141,7 +21563,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_321",
@@ -21190,7 +21612,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_322",
@@ -21235,7 +21657,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_323",
@@ -21280,7 +21702,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_324",
@@ -21330,7 +21752,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_325",
@@ -21375,7 +21797,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_326",
@@ -21421,7 +21843,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_327",
@@ -21472,7 +21894,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_328",
@@ -21516,7 +21938,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_329",
@@ -21560,7 +21982,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_330",
@@ -21610,7 +22032,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_331",
@@ -21655,7 +22077,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_332",
@@ -21700,7 +22122,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_333",
@@ -21750,7 +22172,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_334",
@@ -21796,7 +22218,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_335",
@@ -21842,7 +22264,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_336",
@@ -21891,7 +22313,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_337",
@@ -21935,7 +22357,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_338",
@@ -21980,7 +22402,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_339",
@@ -22030,7 +22452,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_340",
@@ -22075,7 +22497,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_341",
@@ -22120,7 +22542,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_342",
@@ -22171,7 +22593,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_343",
@@ -22217,7 +22639,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_344",
@@ -22261,7 +22683,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_345",
@@ -22310,7 +22732,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_346",
@@ -22355,7 +22777,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_347",
@@ -22400,7 +22822,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_348",
@@ -22450,7 +22872,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_349",
@@ -22495,7 +22917,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_350",
@@ -22541,7 +22963,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_351",
@@ -22592,7 +23014,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_352",
@@ -22636,7 +23058,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_353",
@@ -22678,7 +23100,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_354",
@@ -22715,7 +23137,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_355",
@@ -22752,7 +23174,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_356",
@@ -22794,7 +23216,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_357",
@@ -22831,7 +23253,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_358",
@@ -22868,7 +23290,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_359",
@@ -22910,7 +23332,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_360",
@@ -22946,7 +23368,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_361",
@@ -22983,7 +23405,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_362",
@@ -23025,7 +23447,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_363",
@@ -23062,7 +23484,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_364",
@@ -23099,7 +23521,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_365",
@@ -23141,7 +23563,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_366",
@@ -23178,7 +23600,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_367",
@@ -23215,7 +23637,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_368",
@@ -23256,7 +23678,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_369",
@@ -23293,7 +23715,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_370",
@@ -23330,7 +23752,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_371",
@@ -23372,7 +23794,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_372",
@@ -23409,7 +23831,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_373",
@@ -23446,7 +23868,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_374",
@@ -23488,7 +23910,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_375",
@@ -23525,7 +23947,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_376",
@@ -23561,7 +23983,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_377",
@@ -23603,7 +24025,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_378",
@@ -23640,7 +24062,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_379",
@@ -23677,7 +24099,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_380",
@@ -23719,7 +24141,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_381",
@@ -23756,7 +24178,7 @@
       ],
       "assertions": [],
       "weight": 10,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_382",
@@ -23793,7 +24215,7 @@
       ],
       "assertions": [],
       "weight": 11,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_383",
@@ -23835,7 +24257,7 @@
       ],
       "assertions": [],
       "weight": 12,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_384",
@@ -23871,7 +24293,7 @@
       ],
       "assertions": [],
       "weight": 13,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_385",
@@ -23910,7 +24332,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_386",
@@ -23949,7 +24371,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_387",
@@ -23988,7 +24410,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_388",
@@ -24028,7 +24450,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_389",
@@ -24068,7 +24490,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_390",
@@ -24108,7 +24530,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_391",
@@ -24147,7 +24569,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_392",
@@ -24186,7 +24608,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_393",
@@ -24225,7 +24647,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_394",
@@ -24264,7 +24686,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_395",
@@ -24304,7 +24726,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_396",
@@ -24344,7 +24766,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_397",
@@ -24384,7 +24806,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_398",
@@ -24423,7 +24845,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_399",
@@ -24462,7 +24884,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "beat_400",
@@ -24501,7 +24923,7 @@
       ],
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_001",
@@ -24698,7 +25120,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_002",
@@ -24863,7 +25285,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_003",
@@ -25038,7 +25460,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_004",
@@ -25223,7 +25645,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_005",
@@ -25389,7 +25811,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_006",
@@ -25555,7 +25977,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_007",
@@ -25739,7 +26161,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_008",
@@ -25905,7 +26327,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_009",
@@ -26129,7 +26551,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_010",
@@ -26339,7 +26761,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_011",
@@ -26555,7 +26977,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_012",
@@ -26783,7 +27205,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_013",
@@ -26994,7 +27416,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_014",
@@ -27205,7 +27627,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_015",
@@ -27434,7 +27856,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_016",
@@ -27643,7 +28065,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_017",
@@ -27893,7 +28315,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_018",
@@ -28126,7 +28548,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_019",
@@ -28363,7 +28785,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_020",
@@ -28619,7 +29041,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_021",
@@ -28856,7 +29278,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_022",
@@ -29094,7 +29516,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_023",
@@ -29350,7 +29772,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_024",
@@ -29586,7 +30008,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_025",
@@ -29846,7 +30268,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_026",
@@ -30065,7 +30487,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_027",
@@ -30270,7 +30692,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_028",
@@ -30508,7 +30930,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_029",
@@ -30718,7 +31140,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_030",
@@ -30923,7 +31345,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_031",
@@ -31161,7 +31583,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_032",
@@ -31381,7 +31803,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_033",
@@ -31624,7 +32046,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_034",
@@ -31834,7 +32256,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_035",
@@ -32052,7 +32474,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_036",
@@ -32304,7 +32726,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_037",
@@ -32520,7 +32942,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_038",
@@ -32731,7 +33153,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_039",
@@ -32959,7 +33381,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_040",
@@ -33170,7 +33592,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_041",
@@ -33400,7 +33822,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_042",
@@ -33621,7 +34043,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_043",
@@ -33858,7 +34280,7 @@
         }
       ],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_044",
@@ -34097,7 +34519,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_045",
@@ -34318,7 +34740,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_046",
@@ -34549,7 +34971,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_047",
@@ -34793,7 +35215,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_048",
@@ -35019,7 +35441,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_049",
@@ -35241,7 +35663,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_050",
@@ -35441,7 +35863,7 @@
         }
       ],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_051",
@@ -35639,7 +36061,7 @@
         }
       ],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_052",
@@ -35855,7 +36277,7 @@
         }
       ],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_053",
@@ -36054,7 +36476,7 @@
         }
       ],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_054",
@@ -36253,7 +36675,7 @@
         }
       ],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_055",
@@ -36469,7 +36891,7 @@
         }
       ],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_056",
@@ -36667,7 +37089,7 @@
         }
       ],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_057",
@@ -36872,7 +37294,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_058",
@@ -37056,7 +37478,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_059",
@@ -37261,7 +37683,7 @@
         }
       ],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_060",
@@ -37485,7 +37907,7 @@
         }
       ],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_061",
@@ -37690,7 +38112,7 @@
         }
       ],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_062",
@@ -37895,7 +38317,7 @@
         }
       ],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_063",
@@ -38119,7 +38541,7 @@
         }
       ],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_064",
@@ -38324,7 +38746,7 @@
         }
       ],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_065",
@@ -38533,7 +38955,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_066",
@@ -38716,7 +39138,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_067",
@@ -38899,7 +39321,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_068",
@@ -39095,7 +39517,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_069",
@@ -39288,7 +39710,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_070",
@@ -39474,7 +39896,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_071",
@@ -39660,7 +40082,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_072",
@@ -39826,7 +40248,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_073",
@@ -40063,7 +40485,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_074",
@@ -40267,7 +40689,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_075",
@@ -40470,7 +40892,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_076",
@@ -40701,7 +41123,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_077",
@@ -40930,7 +41352,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_078",
@@ -41132,7 +41554,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_079",
@@ -41351,7 +41773,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_080",
@@ -41555,7 +41977,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_081",
@@ -41770,7 +42192,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_082",
@@ -41974,7 +42396,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_083",
@@ -42178,7 +42600,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_084",
@@ -42400,7 +42822,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_085",
@@ -42604,7 +43026,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_086",
@@ -42816,7 +43238,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_087",
@@ -43046,7 +43468,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_088",
@@ -43256,7 +43678,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_089",
@@ -43470,7 +43892,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_090",
@@ -43666,7 +44088,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_091",
@@ -43862,7 +44284,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_092",
@@ -44076,7 +44498,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_093",
@@ -44272,7 +44694,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_094",
@@ -44468,7 +44890,7 @@
       },
       "assertions": [],
       "weight": 18,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_095",
@@ -44697,7 +45119,7 @@
       },
       "assertions": [],
       "weight": 16,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_096",
@@ -44907,7 +45329,7 @@
       },
       "assertions": [],
       "weight": 17,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_097",
@@ -45034,7 +45456,7 @@
       "assertions": [],
       "priority": 30,
       "weight": 30,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_098",
@@ -45152,7 +45574,7 @@
       "assertions": [],
       "priority": 30,
       "weight": 30,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_099",
@@ -45311,7 +45733,7 @@
       "assertions": [],
       "priority": 30,
       "weight": 30,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "decision_100",
@@ -45439,7 +45861,7 @@
       "assertions": [],
       "priority": 30,
       "weight": 30,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_001",
@@ -45533,7 +45955,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_002",
@@ -45627,7 +46049,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_003",
@@ -45721,7 +46143,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_004",
@@ -45815,7 +46237,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_005",
@@ -45909,7 +46331,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_006",
@@ -46003,7 +46425,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_007",
@@ -46097,7 +46519,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_008",
@@ -46191,7 +46613,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_009",
@@ -46285,7 +46707,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_010",
@@ -46379,7 +46801,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_011",
@@ -46473,7 +46895,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_012",
@@ -46567,7 +46989,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_013",
@@ -46661,7 +47083,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_014",
@@ -46755,7 +47177,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_015",
@@ -46849,7 +47271,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_016",
@@ -46943,7 +47365,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_017",
@@ -47037,7 +47459,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_018",
@@ -47131,7 +47553,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_019",
@@ -47225,7 +47647,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_020",
@@ -47319,7 +47741,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_021",
@@ -47413,7 +47835,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_022",
@@ -47507,7 +47929,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_023",
@@ -47601,7 +48023,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_024",
@@ -47695,7 +48117,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_025",
@@ -47789,7 +48211,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_026",
@@ -47883,7 +48305,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_027",
@@ -47977,7 +48399,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_028",
@@ -48071,7 +48493,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_029",
@@ -48165,7 +48587,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_030",
@@ -48259,7 +48681,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_031",
@@ -48353,7 +48775,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_032",
@@ -48447,7 +48869,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_033",
@@ -48541,7 +48963,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_034",
@@ -48635,7 +49057,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_035",
@@ -48729,7 +49151,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_036",
@@ -48823,7 +49245,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_037",
@@ -48917,7 +49339,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_038",
@@ -49011,7 +49433,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_039",
@@ -49105,7 +49527,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_040",
@@ -49199,7 +49621,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_041",
@@ -49293,7 +49715,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_042",
@@ -49387,7 +49809,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_043",
@@ -49481,7 +49903,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_044",
@@ -49575,7 +49997,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_045",
@@ -49669,7 +50091,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_046",
@@ -49763,7 +50185,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_047",
@@ -49857,7 +50279,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_048",
@@ -49951,7 +50373,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_049",
@@ -50045,7 +50467,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_050",
@@ -50139,7 +50561,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_051",
@@ -50233,7 +50655,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_052",
@@ -50327,7 +50749,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_053",
@@ -50421,7 +50843,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_054",
@@ -50515,7 +50937,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_055",
@@ -50609,7 +51031,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_056",
@@ -50703,7 +51125,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_057",
@@ -50797,7 +51219,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_058",
@@ -50891,7 +51313,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_059",
@@ -50985,7 +51407,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_060",
@@ -51079,7 +51501,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_061",
@@ -51173,7 +51595,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_062",
@@ -51267,7 +51689,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_063",
@@ -51361,7 +51783,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_064",
@@ -51455,7 +51877,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_065",
@@ -51549,7 +51971,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_066",
@@ -51643,7 +52065,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_067",
@@ -51737,7 +52159,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_068",
@@ -51831,7 +52253,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_069",
@@ -51925,7 +52347,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_070",
@@ -52019,7 +52441,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_071",
@@ -52113,7 +52535,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_072",
@@ -52207,7 +52629,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_073",
@@ -52301,7 +52723,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_074",
@@ -52395,7 +52817,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_075",
@@ -52489,7 +52911,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_076",
@@ -52583,7 +53005,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_077",
@@ -52677,7 +53099,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_078",
@@ -52771,7 +53193,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_079",
@@ -52865,7 +53287,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_080",
@@ -52959,7 +53381,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_081",
@@ -53053,7 +53475,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_082",
@@ -53147,7 +53569,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_083",
@@ -53241,7 +53663,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_084",
@@ -53335,7 +53757,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_085",
@@ -53429,7 +53851,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_086",
@@ -53523,7 +53945,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_087",
@@ -53617,7 +54039,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_088",
@@ -53711,7 +54133,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_089",
@@ -53805,7 +54227,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_090",
@@ -53899,7 +54321,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_091",
@@ -53993,7 +54415,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_092",
@@ -54087,7 +54509,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_093",
@@ -54181,7 +54603,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_094",
@@ -54275,7 +54697,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_095",
@@ -54369,7 +54791,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_096",
@@ -54463,7 +54885,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_097",
@@ -54554,7 +54976,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_098",
@@ -54645,7 +55067,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_099",
@@ -54736,7 +55158,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "echo_100",
@@ -54827,7 +55249,7 @@
       },
       "assertions": [],
       "weight": 22,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_01",
@@ -54867,7 +55289,7 @@
       "assertions": [],
       "valence": "mixed",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_02",
@@ -54909,7 +55331,7 @@
       "assertions": [],
       "valence": "loss",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_03",
@@ -54945,7 +55367,7 @@
       "assertions": [],
       "valence": "gain",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_04",
@@ -54982,7 +55404,7 @@
       "assertions": [],
       "valence": "gain",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_05",
@@ -55024,7 +55446,7 @@
       "assertions": [],
       "valence": "loss",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_06",
@@ -55060,7 +55482,7 @@
       "assertions": [],
       "valence": "gain",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_07",
@@ -55101,7 +55523,7 @@
       "assertions": [],
       "valence": "mixed",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_08",
@@ -55138,7 +55560,7 @@
       "assertions": [],
       "valence": "gain",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_09",
@@ -55180,7 +55602,7 @@
       "assertions": [],
       "valence": "loss",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_10",
@@ -55216,7 +55638,7 @@
       "assertions": [],
       "valence": "gain",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_11",
@@ -55258,7 +55680,7 @@
       "assertions": [],
       "valence": "loss",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_12",
@@ -55301,7 +55723,7 @@
       "assertions": [],
       "valence": "loss",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_13",
@@ -55338,7 +55760,7 @@
       "assertions": [],
       "valence": "gain",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_14",
@@ -55380,7 +55802,7 @@
       "assertions": [],
       "valence": "mixed",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_15",
@@ -55416,7 +55838,7 @@
       "assertions": [],
       "valence": "gain",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_16",
@@ -55458,7 +55880,7 @@
       "assertions": [],
       "valence": "loss",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_17",
@@ -55494,7 +55916,7 @@
       "assertions": [],
       "valence": "gain",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_18",
@@ -55536,7 +55958,7 @@
       "assertions": [],
       "valence": "loss",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_19",
@@ -55577,7 +55999,7 @@
       "assertions": [],
       "valence": "mixed",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "swan_20",
@@ -55612,7 +56034,7 @@
       "assertions": [],
       "valence": "gain",
       "weight": 1,
-      "contentRevision": 9
+      "contentRevision": 10
     }
   ],
   "endingProfiles": [
@@ -55624,7 +56046,7 @@
         "lifeEnded",
         "decisionDiversity"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "freeLife",
@@ -55634,7 +56056,7 @@
         "leisure:deliberate",
         "freedom"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "driftedLife",
@@ -55644,7 +56066,7 @@
         "remote:risk",
         "leisure:risk"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "familyCycle",
@@ -55654,7 +56076,7 @@
         "children:negotiated",
         "familyControlCycle"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "cycleBreaker",
@@ -55664,7 +56086,7 @@
         "children:deliberate",
         "cycleBroken"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "publicDuty",
@@ -55674,7 +56096,7 @@
         "public:deliberate",
         "public:legacy"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "fragmentedWorker",
@@ -55684,7 +56106,7 @@
         "employment:risk",
         "health"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "rootedRemote",
@@ -55694,7 +56116,7 @@
         "remote:deliberate",
         "later"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "founder",
@@ -55704,7 +56126,7 @@
         "business:deliberate",
         "business:legacy"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "wealthApex",
@@ -55714,7 +56136,7 @@
         "business",
         "wealthApex"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "debtLegacy",
@@ -55724,7 +56146,7 @@
         "finance:risk",
         "debtCrisis"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "recovered",
@@ -55734,7 +56156,7 @@
         "habits:deliberate",
         "recovery"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "lostControl",
@@ -55744,7 +56166,7 @@
         "habits:risk",
         "debtCrisis"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "parentLegacy",
@@ -55754,7 +56176,7 @@
         "children:deliberate",
         "children:legacy"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "childfree",
@@ -55764,7 +56186,7 @@
         "children:risk",
         "peace"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "earlyExit",
@@ -55774,7 +56196,7 @@
         "earlyDeath",
         "lifeEnded"
       ],
-      "contentRevision": 9
+      "contentRevision": 10
     }
   ],
   "endingTitles": [
@@ -55782,385 +56204,385 @@
       "id": "ending_ordinaryContent_1",
       "profileId": "ordinaryContent",
       "title": "够用的人生",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_ordinaryContent_2",
       "profileId": "ordinaryContent",
       "title": "没有登上热搜的一生",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_ordinaryContent_3",
       "profileId": "ordinaryContent",
       "title": "把灯按时关掉",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_ordinaryContent_4",
       "profileId": "ordinaryContent",
       "title": "日子终于不欠谁",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_freeLife_1",
       "profileId": "freeLife",
       "title": "星期一也没有闹钟",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_freeLife_2",
       "profileId": "freeLife",
       "title": "主动退出排行榜",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_freeLife_3",
       "profileId": "freeLife",
       "title": "无工牌生活实验",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_freeLife_4",
       "profileId": "freeLife",
       "title": "时间重新属于自己",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_driftedLife_1",
       "profileId": "driftedLife",
       "title": "所有地址都可退订",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_driftedLife_2",
       "profileId": "driftedLife",
       "title": "有 Wi-Fi 的地方",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_driftedLife_3",
       "profileId": "driftedLife",
       "title": "任何地方都在工作",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_driftedLife_4",
       "profileId": "driftedLife",
       "title": "行李箱没有故乡",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_familyCycle_1",
       "profileId": "familyCycle",
       "title": "账本换了封面",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_familyCycle_2",
       "profileId": "familyCycle",
       "title": "所有退路都还在",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_familyCycle_3",
       "profileId": "familyCycle",
       "title": "一家人的钱",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_familyCycle_4",
       "profileId": "familyCycle",
       "title": "报表传到了下一代",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_cycleBreaker_1",
       "profileId": "cycleBreaker",
       "title": "最后一张家庭报表",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_cycleBreaker_2",
       "profileId": "cycleBreaker",
       "title": "担保止于此处",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_cycleBreaker_3",
       "profileId": "cycleBreaker",
       "title": "你把密码还给自己",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_cycleBreaker_4",
       "profileId": "cycleBreaker",
       "title": "下一代不必交账",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_publicDuty_1",
       "profileId": "publicDuty",
       "title": "窗口灯熄灭以后",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_publicDuty_2",
       "profileId": "publicDuty",
       "title": "编制里的漫长四季",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_publicDuty_3",
       "profileId": "publicDuty",
       "title": "号码牌背面的人",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_publicDuty_4",
       "profileId": "publicDuty",
       "title": "稳定也有重量",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_fragmentedWorker_1",
       "profileId": "fragmentedWorker",
       "title": "被切开的白天",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_fragmentedWorker_2",
       "profileId": "fragmentedWorker",
       "title": "八小时以外",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_fragmentedWorker_3",
       "profileId": "fragmentedWorker",
       "title": "空档不算生活",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_fragmentedWorker_4",
       "profileId": "fragmentedWorker",
       "title": "排班表上的人",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_rootedRemote_1",
       "profileId": "rootedRemote",
       "title": "有网，也有门牌",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_rootedRemote_2",
       "profileId": "rootedRemote",
       "title": "关机后的城市",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_rootedRemote_3",
       "profileId": "rootedRemote",
       "title": "远程的固定地址",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_rootedRemote_4",
       "profileId": "rootedRemote",
       "title": "把时区留在门外",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_founder_1",
       "profileId": "founder",
       "title": "老板称呼退潮以后",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_founder_2",
       "profileId": "founder",
       "title": "真实流水",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_founder_3",
       "profileId": "founder",
       "title": "样板店之外",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_founder_4",
       "profileId": "founder",
       "title": "小店活过了品牌",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_wealthApex_1",
       "profileId": "wealthApex",
       "title": "数字失去单位",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_wealthApex_2",
       "profileId": "wealthApex",
       "title": "全球估值的孤岛",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_wealthApex_3",
       "profileId": "wealthApex",
       "title": "控制权稀释之前",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_wealthApex_4",
       "profileId": "wealthApex",
       "title": "世界首富没有下班",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_debtLegacy_1",
       "profileId": "debtLegacy",
       "title": "遗嘱和欠款",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_debtLegacy_2",
       "profileId": "debtLegacy",
       "title": "最后一位担保人",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_debtLegacy_3",
       "profileId": "debtLegacy",
       "title": "百万负债说明书",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_debtLegacy_4",
       "profileId": "debtLegacy",
       "title": "余额不足的一生",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_recovered_1",
       "profileId": "recovered",
       "title": "复发没有成为结局",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_recovered_2",
       "profileId": "recovered",
       "title": "重新拿回银行卡",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_recovered_3",
       "profileId": "recovered",
       "title": "清醒日历",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_recovered_4",
       "profileId": "recovered",
       "title": "承认之后",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_lostControl_1",
       "profileId": "lostControl",
       "title": "下一次没有回来",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_lostControl_2",
       "profileId": "lostControl",
       "title": "被隐藏的账单",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_lostControl_3",
       "profileId": "lostControl",
       "title": "赔率吞掉清晨",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_lostControl_4",
       "profileId": "lostControl",
       "title": "失控留下的空位",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_parentLegacy_1",
       "profileId": "parentLegacy",
       "title": "孩子没有复述你",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_parentLegacy_2",
       "profileId": "parentLegacy",
       "title": "旅行不需要报表",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_parentLegacy_3",
       "profileId": "parentLegacy",
       "title": "代际回声停下",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_parentLegacy_4",
       "profileId": "parentLegacy",
       "title": "家不是审计",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_childfree_1",
       "profileId": "childfree",
       "title": "空房间不是空人生",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_childfree_2",
       "profileId": "childfree",
       "title": "没有后代的晚餐",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_childfree_3",
       "profileId": "childfree",
       "title": "照护另有名字",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_childfree_4",
       "profileId": "childfree",
       "title": "把晚年交给协议",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_earlyExit_1",
       "profileId": "earlyExit",
       "title": "句号来得太早",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_earlyExit_2",
       "profileId": "earlyExit",
       "title": "没有活到模板年龄",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_earlyExit_3",
       "profileId": "earlyExit",
       "title": "短人生的完整证据",
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "ending_earlyExit_4",
       "profileId": "earlyExit",
       "title": "时间没有保证书",
-      "contentRevision": 9
+      "contentRevision": 10
     }
   ],
   "codex": [
@@ -56176,7 +56598,7 @@
           "education:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_02",
@@ -56189,7 +56611,7 @@
           "echo:education"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_03",
@@ -56203,7 +56625,7 @@
           "employment:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_04",
@@ -56216,7 +56638,7 @@
           "echo:employment"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_05",
@@ -56230,7 +56652,7 @@
           "public:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_06",
@@ -56243,7 +56665,7 @@
           "echo:public"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_07",
@@ -56257,7 +56679,7 @@
           "remote:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_08",
@@ -56270,7 +56692,7 @@
           "echo:remote"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_09",
@@ -56284,7 +56706,7 @@
           "business:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_10",
@@ -56297,7 +56719,7 @@
           "echo:business"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_11",
@@ -56311,7 +56733,7 @@
           "leisure:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_12",
@@ -56324,7 +56746,7 @@
           "echo:leisure"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_13",
@@ -56338,7 +56760,7 @@
           "partnership:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_14",
@@ -56351,7 +56773,7 @@
           "echo:partnership"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_15",
@@ -56365,7 +56787,7 @@
           "children:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_16",
@@ -56378,7 +56800,7 @@
           "echo:children"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_17",
@@ -56392,7 +56814,7 @@
           "finance:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_18",
@@ -56405,7 +56827,7 @@
           "echo:finance"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_19",
@@ -56419,7 +56841,7 @@
           "health:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_20",
@@ -56432,7 +56854,7 @@
           "echo:health"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_21",
@@ -56446,7 +56868,7 @@
           "habits:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_22",
@@ -56459,7 +56881,7 @@
           "echo:habits"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_23",
@@ -56473,7 +56895,7 @@
           "later:risk"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_24",
@@ -56486,7 +56908,7 @@
           "echo:later"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_25",
@@ -56502,7 +56924,7 @@
           }
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_26",
@@ -56523,7 +56945,7 @@
           }
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_27",
@@ -56535,7 +56957,7 @@
           "leisure:deliberate"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_28",
@@ -56548,7 +56970,7 @@
           "recovery"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_29",
@@ -56561,7 +56983,7 @@
           "cycleBroken"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     },
     {
       "id": "codex_30",
@@ -56573,7 +56995,7 @@
           "earlyDeath"
         ]
       },
-      "contentRevision": 9
+      "contentRevision": 10
     }
   ],
   "realityRules": {

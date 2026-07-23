@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {CARD_COPY} from '../content/zh-CN/cards.mjs';
 import {TRACK_COPY} from '../content/zh-CN/tracks/index.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const output=path.join(here,'..','data.json');
-const VERSION='0.5.2',SCHEMA_VERSION=7,CONTENT_REVISION=9;
+const VERSION='0.5.3',SCHEMA_VERSION=7,CONTENT_REVISION=10;
 const stages={infancy:[0,5],childhood:[6,12],adolescence:[13,18],youth:[19,29],establishment:[30,44],midlife:[45,59],later:[60,74],elder:[75,105]};
 const stageNames=Object.keys(stages);
 const stageFor=(min,max)=>stageNames.filter(name=>Math.max(min,stages[name][0])<=Math.min(max,stages[name][1]));
@@ -238,10 +239,22 @@ const swanRows=[
 ];
 const blackSwans=swanRows.map((row,index)=>{const[min,max,text,track,valence]=row,effects=valence==='gain'?[c('add',track==='finance'?'finance.cash':track==='business'?'business.equity':'health.mental',track==='finance'?60000:track==='business'?200000:8)]:valence==='loss'?(track==='health'?[c('healthIncident','health',28,{condition:'blackSwan'}),c('add','pressures.body',8)]:[c('add','finance.cash',-60000),c('add','pressures.body',8)]):[c('add','health.mental',-3),c('add','relationships.network',3)];effects.push(c('tag','history',`swan:${valence}`));return{id:`swan_${String(index+1).padStart(2,'0')}`,kind:'blackSwan',track,stage:stageFor(min,max),ageMin:min,ageMax:max,icon:'✦',text,intensity:'high',requirements:{all:[],any:[],none:[]},actors:[],effects,assertions:[],valence,weight:1,contentRevision:CONTENT_REVISION}});
 
-const mechanics=['portableSkill','evidence','network','resilience','cashBuffer','healthLiteracy','boundary','learning','riskSense','creativity','careSkill','negotiation'];
-const cardNames=['随身工具箱','留痕习惯','认识一个人','慢恢复','备用现金','身体说明书','关门能力','重新学习','先看最坏情况','做点新东西','照护手册','把条件写下来'];
+function cardEffects(mechanic,drawAge){
+  const effects=[c('add',`capabilities.${mechanic}`,drawAge===0?2:1)];
+  if(mechanic==='evidence')effects.push(c('add','capabilities.skill',1));
+  if(mechanic==='network')effects.push(c('add','relationships.network',drawAge===0?2:4));
+  if(mechanic==='cashBuffer')effects.push(c('add',drawAge===0?'originHousehold.assets':'finance.cash',drawAge===0?5000:drawAge===18?3000:drawAge===35?8000:12000));
+  if(mechanic==='boundary')effects.push(c('add','agency',1),c('add','pressures.family',-2));
+  if(mechanic==='learning')effects.push(c('add','capabilities.skill',1));
+  if(mechanic==='riskSense')effects.push(c('add','business.operatingSkill',2),c('add','pressures.money',-1));
+  if(mechanic==='creativity')effects.push(c('add','desires.creation.fulfillment',2));
+  if(mechanic==='careSkill')effects.push(c('add','relationships.originBond',2),c('add','capabilities.healthLiteracy',1));
+  if(mechanic==='negotiation')effects.push(c('add','agency',1),c('add','relationships.network',1));
+  effects.push(c('tag','history',`card:${mechanic}`));
+  return effects;
+}
 const cards=[];
-for(let round=0;round<6;round++)for(let index=0;index<12;index++)cards.push({id:`card_${String(cards.length+1).padStart(2,'0')}`,kind:round===0?'innate':round<4?'stage':'adversity',displayName:`${cardNames[index]}${round?` · ${['起步','转折','中段','回稳','余生'][round-1]}`:''}`,text:`你更容易在${['迁移工作','关键争议','关系断点','危机恢复','现金中断','健康选择','家庭边界','职业转向','风险决策','创作机会','照护安排','合同谈判'][index]}中保留一个可用选项。`,mechanic:mechanics[index],effects:[c('add',`capabilities.${mechanics[index]}`,round===0?2:1),c('tag','history',`card:${mechanics[index]}`)],contentRevision:CONTENT_REVISION});
+for(const drawAge of[0,18,35,55])for(const authored of CARD_COPY[drawAge])cards.push({id:`card_${String(cards.length+1).padStart(2,'0')}`,kind:drawAge===0?'innate':'stage',drawAge,displayName:authored.displayName,text:authored.text,mechanic:authored.mechanic,effects:cardEffects(authored.mechanic,drawAge),contentRevision:CONTENT_REVISION});
 
 const endingProfiles=[
   ['ordinaryContent','你没有赢下所有比较，但日子最终适合自己。','常见',['lifeEnded','decisionDiversity']],

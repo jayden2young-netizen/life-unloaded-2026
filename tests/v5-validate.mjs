@@ -27,9 +27,9 @@ const inspectPredicates=(requirements,label)=>{keys(requirements,['all','any','n
 const inspectCommands=(commands,label)=>{check(Array.isArray(commands),`${label}: effects must be command array`);for(const command of commands||[]){keys(command,commandFields,label);check(commandTypes.includes(command.type),`${label}: unknown command ${command.type}`);if(command.type!=='tag'&&command.type!=='createPerson'&&command.type!=='claimDesire')check(pathAllowed(command.target),`${label}: unsupported command target ${command.target}`);if(command.type==='add'&&command.target==='finance.cash'&&command.value)check(Math.abs(command.value)<=70000,`${label}: ordinary cash delta exceeds 70000`);if(command.type==='set'&&command.target==='employment.status')check(employmentStates.includes(command.value),`${label}: invalid employment state ${command.value}`);if(command.type==='set'&&command.target==='habits.stage')check(habitStages.includes(command.value),`${label}: invalid habit stage ${command.value}`);if(command.type==='addLiability'){check(command.value>0,`${label}: nonpositive liability`);check(command.rate>0&&command.rate<=.2,`${label}: unrealistic liability rate`)}}};
 
 keys(data,rootFields,'root');
-check(data.version==='0.5.2'&&data.gameVersion==='0.5.2','version is not 0.5.2');
+check(data.version==='0.5.3'&&data.gameVersion==='0.5.3','version is not 0.5.3');
 check(data.schemaVersion===7,'schemaVersion is not 7');
-check(data.contentRevision===9,'contentRevision is not 9');
+check(data.contentRevision===10,'contentRevision is not 10');
 check((kinds.beat||[]).length===400,'annual beats must remain 400');
 check((kinds.decision||[]).length===100,'decisions must remain 100');
 check((kinds.consequence||[]).length===100,'every major decision must own a consequence');
@@ -43,7 +43,7 @@ check(data.codex.length===30,'codex must remain 30');
 
 const eventIds=new Set(),choiceIds=new Set(),memoryKeys=new Set(),texts=new Set();
 for(const event of data.events){
-  keys(event,eventFields[event.kind]||[],event.id);check(!eventIds.has(event.id),`${event.id}: duplicate event id`);eventIds.add(event.id);check(Number.isFinite(event.ageMin)&&Number.isFinite(event.ageMax)&&event.ageMin<=event.ageMax,`${event.id}: invalid age range`);check(stageOverlap(event),`${event.id}: stage and age do not overlap`);check(event.contentRevision===9,`${event.id}: stale content revision`);inspectPredicates(event.requirements,event.id);
+  keys(event,eventFields[event.kind]||[],event.id);check(!eventIds.has(event.id),`${event.id}: duplicate event id`);eventIds.add(event.id);check(Number.isFinite(event.ageMin)&&Number.isFinite(event.ageMax)&&event.ageMin<=event.ageMax,`${event.id}: invalid age range`);check(stageOverlap(event),`${event.id}: stage and age do not overlap`);check(event.contentRevision===10,`${event.id}: stale content revision`);inspectPredicates(event.requirements,event.id);
   for(const actor of event.actors||[]){keys(actor,actorFields,`${event.id}:actor`);check(actor.slot,`${event.id}: actor missing slot`);check(actor.relation||actor.relationAny,`${event.id}: actor missing relation query`)}
   const visible=event.text||event.prompt;check(typeof visible==='string'&&visible.length>0,`${event.id}: missing visible text`);if(event.kind==='beat'){check(!texts.has(visible),`${event.id}: duplicate beat text`);texts.add(visible)}
   if(event.kind==='beat'||event.kind==='blackSwan')inspectCommands(event.effects,event.id);
@@ -79,7 +79,17 @@ for(const decision of kinds.decision||[]){if(decision.track==='remote'&&decision
 
 const secretTexts=new Set();for(const secret of data.familySecrets){check(secret.age>=15&&secret.age<=65,`${secret.id}: reveal age outside range`);check(secret.familyClasses.length===2,`${secret.id}: family affinity missing`);check(!secretTexts.has(secret.text),`${secret.id}: duplicate secret text`);secretTexts.add(secret.text);inspectCommands(secret.effects,secret.id)}
 for(const family of data.familyArchetypes){for(const field of['parentCount','siblingRange','housingOptions','assetRange','debtRange','parentJobs','advantages','risks'])check(family[field]!==undefined,`${family.id}: missing ${field}`);check(family.parentCount>=1&&family.parentCount<=2,`${family.id}: invalid parent count`);check(family.siblingRange[0]<=family.siblingRange[1],`${family.id}: invalid sibling range`)}
-for(const card of data.cards){keys(card,['id','kind','displayName','text','mechanic','effects','contentRevision'],card.id);inspectCommands(card.effects,card.id);check(card.contentRevision===9,`${card.id}: stale revision`)}
+const cardNames=new Set(),cardTexts=new Set(),cardAges=new Map([0,18,35,55].map(age=>[age,0])),deadCardCapabilities=new Set(['evidence','network','cashBuffer','boundary','learning','riskSense','creativity','careSkill','negotiation']);
+for(const card of data.cards){
+  keys(card,['id','kind','drawAge','displayName','text','mechanic','effects','contentRevision'],card.id);inspectCommands(card.effects,card.id);check(card.contentRevision===10,`${card.id}: stale revision`);
+  check(cardAges.has(card.drawAge),`${card.id}: invalid draw age`);cardAges.set(card.drawAge,(cardAges.get(card.drawAge)||0)+1);
+  check(card.kind===(card.drawAge===0?'innate':'stage'),`${card.id}: kind does not match draw age`);
+  check(!/[·・]\s*(起步|转折|中段|回稳|余生)|你更容易在|保留一个可用选项/.test(`${card.displayName}${card.text}`),`${card.id}: leaks generated card language`);
+  check(!cardNames.has(card.displayName),`${card.id}: duplicate display name`);cardNames.add(card.displayName);
+  check(!cardTexts.has(card.text),`${card.id}: duplicate card text`);cardTexts.add(card.text);
+  if(deadCardCapabilities.has(card.mechanic))check(card.effects.some(effect=>effect.type==='add'&&effect.target!==`capabilities.${card.mechanic}`),`${card.id}: card mechanic has no practical state effect`);
+}
+check(cardAges.get(0)===12,'birth card pool must contain 12 cards');for(const age of[18,35,55])check(cardAges.get(age)===20,`age ${age} card pool must contain 20 cards`);
 for(const profile of data.endingProfiles){check(profile.signals.length===2,`${profile.id}: ending must require two facts`);check(['常见','少见','罕见','极罕','传奇'].includes(profile.rarity),`${profile.id}: invalid rarity`);check(data.endingTitles.filter(title=>title.profileId===profile.id).length===4,`${profile.id}: needs four curated titles`)}
 for(const entry of data.codex){const rule=entry.unlockRules||{};check(rule.outcomeTagsAny?.length||rule.stateAny?.length||rule.stateAll?.length,`${entry.id}: missing structured unlock`);for(const predicate of[...(rule.stateAny||[]),...(rule.stateAll||[])]){check(pathAllowed(predicate.path),`${entry.id}: invalid state path`);check(ops.includes(predicate.op),`${entry.id}: invalid state op`)}}
 check(Object.keys(data.realityRules).sort().join(',')==='debt,education,employment,family,franchise,platform,retirement','reality rules are incomplete');

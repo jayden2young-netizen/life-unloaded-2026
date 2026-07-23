@@ -1,5 +1,5 @@
 Original prompt: Implement the approved 《人生尚未加载 · 2026》v0.3.0 人生叙事重构 plan in the existing four-file static GitHub Pages game. Preserve the mobile black UI, offline/localStorage/seed flow, add schema migration, gender, life DNA, desires, family archetypes, conflicts, weighted event selection, event chains, cross-run freshness, richer cards/endings, 320+ base events, 48 chains, 536+ total nodes, tests, and publish through a reviewed branch. Run only five automated life simulations, not 200.
-Current prompt (2026-07-23): Establish an independent zh-CN content layer and use the employment track as the first native-Chinese vertical slice. Preserve mechanics and numbers; rewrite 32 annual beats, eight decisions, their immediate results and choice-specific consequences, plus related interface copy. Do not bulk-rewrite all 620 nodes yet.
+Current prompt (2026-07-23): 修复卡牌中的“起步／转折／中段”等内部阶段词、重复卡和不可达卡牌，让72张卡按真实年龄池出现，并使用玩家能理解的名称与说明。其他人生事件、数值和界面保持不变。
 
 ## Progress
 
@@ -150,3 +150,12 @@ Current prompt (2026-07-23): Establish an independent zh-CN content layer and us
 - 2026-07-23: 保持 400 个年度事件、100 个选择、100 个选择特定后果和 20 个黑天鹅，共 620 个事件节点；机制、数值、条件与事件数量未改。
 - 2026-07-23: 静态数据校验、12 条轨道状态契约和语言禁用模板检查通过。家庭秘密、卡牌说明和结局判词仍属于后续非事件内容批次。
 - 2026-07-23: 项目仍处于早期开发阶段，历史展示版本统一重编号：v3 系列对应 v0.3，v4 系列对应 v0.4，v5 系列对应 v0.5。Git SHA、旧兼容分支名和脚本文件名不做历史重写。
+
+## v0.5.3 人生卡牌重写
+
+- 2026-07-23: 删除卡牌标题中的“起步／转折／中段／回稳／余生”等内部轮次词。72张卡现在都有独立名称和具体生活说明，不再用“保留一个可用选项”解释机制。
+- 2026-07-23: 卡牌按0、18、35、55岁分成12／20／20／20四个抽取池。运行时按 `drawAge` 取牌，原先永远抽不到的24张 `adversity` 卡已接入正常流程。
+- 2026-07-23: 每张卡除保留能力记录外，至少写入一项实际运行状态。现金、人际支持、家庭压力、学习、健康、经营经验和欲望满足等效果不再只停留在未消费的能力字段。
+- 2026-07-23: 四个年龄使用不同的卡牌提问；卡牌标题与说明改为分行显示。没有改变弹层尺寸、颜色、抽卡次数或72张总量。
+- 2026-07-23: 新增卡牌池、重复文案、内部阶段词、可达性和实际效果校验。生成器连续运行两次结果一致，静态数据、状态契约和语言检查通过。
+- 2026-07-23: 一次360×773浏览器路径检查了四个年龄池、选择持久化、时间线记录、横向溢出和控制台错误。最终截图已人工确认标题与说明分行清楚。

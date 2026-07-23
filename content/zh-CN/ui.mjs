@@ -6,7 +6,12 @@ export const UI_COPY={
   attributesTitle:'你天生更靠什么',
   attributesLead:'起点不能选，但这二十点花在哪儿，由你。',
   attributesConfirm:'就这样出生',
-  cardPrompt:'这些年，你慢慢练出了什么？',
+  cardPrompts:{
+    0:'你带着什么开始这一生？',
+    18:'成年时，你最先学会了什么？',
+    35:'这些年，什么成了你的底气？',
+    55:'走到这里，你留下了哪样本事？'
+  },
   streamEmpty:'点一下，第一年开始。',
   consequenceLabel:'以前的事又回来了',
   activityField:'现在在干嘛',
