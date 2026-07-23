@@ -105,9 +105,10 @@ for(const phrase of forbidden){
 }
 for(const [trackId,copy] of Object.entries(TRACK_COPY)){
   check(copy.beats.length===32,`${trackId}: authored beat count is not 32`);
-  const expectedDecisions=trackId==='habits'?30:trackId==='business'?7:8;
+  const expectedDecisions={habits:30,business:7,remote:7,partnership:10,children:10}[trackId]||8;
   check(copy.decisions.length===expectedDecisions,`${trackId}: authored decision count is not ${expectedDecisions}`);
-  check(copy.decisions.every(item=>item.choices.length===(item.episode?.role==='resolve'?4:3)),`${trackId}: decision choice count does not match its role`);
+  const episodeCounts=Object.groupBy(copy.decisions.filter(item=>item.episode),item=>item.episode.id);
+  check(copy.decisions.every(item=>item.choices.length===(item.episode&&(item.episode.role==='resolve'||episodeCounts[item.episode.id]?.length===1)?4:3)),`${trackId}: decision choice count does not match its role`);
 }
 const habitVisible=JSON.stringify(TRACK_COPY.habits);
 for(const vague of['一种习惯','旧入口','多年后如何讲述'])check(!habitVisible.includes(vague),`habits copy contains vague or displaced phrase: ${vague}`);
