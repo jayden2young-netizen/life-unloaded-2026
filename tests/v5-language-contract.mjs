@@ -105,7 +105,7 @@ for(const phrase of forbidden){
 }
 for(const [trackId,copy] of Object.entries(TRACK_COPY)){
   check(copy.beats.length===32,`${trackId}: authored beat count is not 32`);
-  const expectedDecisions={habits:30,business:7,remote:7,partnership:10,children:10}[trackId]||8;
+  const expectedDecisions={education:7,habits:30,business:8,remote:7,partnership:10,children:10,later:9}[trackId]||8;
   check(copy.decisions.length===expectedDecisions,`${trackId}: authored decision count is not ${expectedDecisions}`);
   const episodeCounts=Object.groupBy(copy.decisions.filter(item=>item.episode),item=>item.episode.id);
   check(copy.decisions.every(item=>item.choices.length===(item.episode&&(item.episode.role==='resolve'||episodeCounts[item.episode.id]?.length===1)?4:3)),`${trackId}: decision choice count does not match its role`);

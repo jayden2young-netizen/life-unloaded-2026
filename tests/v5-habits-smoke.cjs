@@ -7,6 +7,8 @@ const ROOT=path.resolve(__dirname,'..');
 const OUT=process.env.HABITS_SMOKE_OUT||path.join(ROOT,'test-results','v0.5.5-habits');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
+const eventId=(episodeId,phase)=>data.events.find(event=>event.episode?.id===episodeId&&event.episode.phase===phase)?.id;
 fs.mkdirSync(OUT,{recursive:true});
 
 async function openPlayable(page){
@@ -21,8 +23,12 @@ async function openPlayable(page){
 
 async function forceChoice(page,id,index){
   assert.equal(await page.evaluate(value=>window.__LIFE_DEBUG__.forceDecision(value),id),id);
+  const start=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+  if(start.sceneQueue?.[0]?.kind==='situation')await page.locator('[data-act="episode-next"]').click();
   await page.locator(`[data-choice="${index}"]`).click();
   await page.waitForTimeout(240);
+  const result=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+  if(result.sceneQueue?.[0]?.kind==='result')await page.locator('[data-act="episode-next"]').click();
   return page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
 }
 
@@ -61,31 +67,38 @@ async function assertDrawer(page,label,filename){
     let session=await makePage({width:360,height:773});
     let {context,page}=session;
     await openPlayable(page);
-    const startAge=18;
-    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceDecision('decision_080')),'decision_080');
+    let startAge;
+    const formationStart=eventId('habit_gambling_formation',1),formationEnd=eventId('habit_gambling_formation',2),treatmentStart=eventId('habit_gambling_treatment',1),treatmentEnd=eventId('habit_gambling_treatment',2);
+    assert.equal(await page.evaluate(value=>window.__LIFE_DEBUG__.forceDecision(value),formationStart),formationStart);
+    startAge=(await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age;
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({}));
     const prompt=await page.locator('.choice-sheet h2').innerText();
     const ageBeforeRefresh=(await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age;
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
-    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).currentDecision.id,'decision_080');
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).currentDecision.id,formationStart);
     assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age,ageBeforeRefresh);
     assert.equal(await page.locator('.choice-sheet h2').innerText(),prompt);
     assert.equal(await page.locator('[data-choice]').count(),3);
+    await page.locator('[data-act="episode-next"]').click();
     await page.locator('[data-choice="2"]').click();
     await page.waitForTimeout(240);
+    await page.locator('[data-act="episode-next"]').click();
     let run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
     assert.deepEqual({type:run.habits.type,stage:run.habits.stage},{type:'gambling',stage:'repeating'});
     await assertDrawer(page,'赌博·反复下注','gambling-repeating-360x773.png');
     await page.locator('button[data-act="close-drawer"]').click();
-    run=await forceChoice(page,'decision_081',2);
+    run=await forceChoice(page,formationEnd,3);
     assert.equal(run.habits.stage,'uncontrolled');
     await assertDrawer(page,'赌博·追损失控','gambling-uncontrolled-360x773.png');
     await page.locator('button[data-act="close-drawer"]').click();
-    run=await forceChoice(page,'decision_082',0);
+    run=await forceChoice(page,treatmentStart,0);
+    assert.equal(run.habits.stage,'treatment');
+    run=await forceChoice(page,treatmentEnd,0);
     assert.equal(run.habits.stage,'recovery');
-    assert.equal(run.arcs.habits_gambling.status,'resolved');
-    assert.ok(run.age-startAge<=5,'gambling arc exceeds five years');
+    assert.equal(run.episodes.habit_gambling_formation.status,'abandoned');
+    assert.equal(run.episodes.habit_gambling_treatment.status,'resolved');
+    assert.ok(run.age-startAge<=5,'gambling formation and treatment exceed five years');
     await assertDrawer(page,'赌博·恢复(?:中|1年)','gambling-recovery-360x773.png');
     await context.close();
 

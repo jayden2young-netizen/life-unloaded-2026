@@ -6,7 +6,7 @@ import {TRACK_COPY} from '../content/zh-CN/tracks/index.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const output=path.join(here,'..','data.json');
-const VERSION='0.5.8',SCHEMA_VERSION=8,CONTENT_REVISION=15;
+const VERSION='0.5.9',SCHEMA_VERSION=8,CONTENT_REVISION=16;
 const stages={infancy:[0,5],childhood:[6,12],adolescence:[13,18],youth:[19,29],establishment:[30,44],midlife:[45,59],later:[60,74],elder:[75,105]};
 const stageNames=Object.keys(stages);
 const stageFor=(min,max)=>stageNames.filter(name=>Math.max(min,stages[name][0])<=Math.min(max,stages[name][1]));
@@ -58,18 +58,18 @@ TRACKS.habits=track('成瘾与戒断','personal',[13,90],[],[],[],[],[]);
 TRACKS.later=track('退休与身后','personal',[55,105],[],['社保记录里的缴费月份','退休证旁的新门禁卡','返聘合同上的结束日期','社区活动室的报名表','父母留下的钥匙串','养老机构的费用清单','公证处装订好的遗嘱','孩子或朋友保存的语音'],['让未来第一次有了数字。','比年龄更早改变身份。','旁边列着可以求助的人。','后来成为别人记住你的方式。'],['退休年龄临近，但缴费和储蓄并不完整。','单位提出返聘，你也想保留自己的时间。','正式工作结束后，一周突然空了下来。','父母离世后留下资产、债务和未完成的关系。','你开始需要持续照护。','伴侣或朋友提出共同养老安排。','你需要决定遗产、债务和医疗意愿。','身体已接近终点，你还能留下最后一项安排。'],[['继续工作补足缴费','降低生活成本按期退休','转向灵活工作'],['短期返聘并写明期限','长期返聘保持收入','拒绝返聘开始退休'],['建立固定兴趣和社交','照护家人填满时间','把日子交给屏幕'],['核对遗产和债务','只保留有纪念意义的物品','拒绝处理交给亲属'],['购买专业照护','与家人明确分工','独自承担减少求助'],['签订共同生活和费用协议','保持往来但分别生活','拒绝任何共同安排'],['完成公证并列明债务','只做口头交代','暂不处理'],['留下真实的告别和授权','只处理财务文件','不再做新的安排']]);
 
 const TRACK_NODE_AGES={
-  education:[[14,17],[17,23],[18,26],[18,45],[16,30],[22,52],[24,58],[35,70]],
+  education:[[14,17],[18,28],[18,29],[18,65],[18,66],[25,70],[26,72],[35,75]],
   employment:[[18,45],[21,58],[21,62],[22,58],[20,62],[25,62],[25,66],[55,72]],
   public:[[18,42],[18,45],[20,48],[20,62],[25,58],[25,62],[25,62],[55,72]],
   remote:[[20,65],[22,70],[22,72],[23,70],[23,72],[25,78],[25,80],[28,82]],
-  business:[[24,55],[24,58],[24,58],[25,62],[25,65],[28,68],[32,72],[38,78]],
+  business:[[24,55],[24,58],[24,58],[28,68],[29,70],[30,72],[38,80],[39,82]],
   leisure:[[18,55],[18,55],[20,60],[20,62],[20,62],[22,65],[24,68],[25,72]],
   partnership:[[16,55],[17,58],[20,72],[21,74],[22,75],[23,77],[30,80],[31,82],[55,94],[56,95]],
   children:[[20,50],[21,52],[25,60],[26,62],[27,64],[25,72],[30,75],[31,77],[38,90],[39,92]],
   finance:[[18,65],[20,70],[20,70],[22,72],[22,75],[25,78],[25,82],[50,105]],
   health:[[3,80],[4,85],[6,90],[8,95],[12,90],[16,95],[25,100],[45,105]],
   habits:[[13,55],[14,60],[16,65],[16,68],[18,72],[18,78],[18,80],[35,90]],
-  later:[[55,75],[55,78],[55,85],[55,90],[55,100],[55,100],[55,105],[60,105]]
+  later:[[55,80],[56,82],[35,100],[36,102],[55,105],[56,105],[57,105],[50,105],[51,105]]
 };
 const trackOrder=Object.keys(TRACKS);
 
@@ -85,6 +85,7 @@ const episodeActorsFor=authored=>{
   if(id==='relationship_start'&&phase===1)return[];
   if(['relationship_start','marriage_crisis','divorce','late_companionship','becoming_parent','adoption_process'].includes(id))return[{slot:'partner',relation:'partner',alive:true,personIdPath:'relationships.activePartnerId',optional:false}];
   if(id==='reconciliation')return[{slot:'partner',relation:'exPartner',alive:true,personIdPath:'relationships.lastPartnerId',optional:false}];
+  if(id==='parental_inheritance')return[{slot:'parent',relationAny:['father','mother'],alive:false,optional:false}];
   const ages={school_entry:[5,7],adolescence_boundary:[10,19],adult_child_boundary:[18,40]}[id];
   return ages?[{slot:'child',relationAny:['child','adoptedChild','stepChild'],alive:true,ageMin:ages[0],ageMax:ages[1],optional:false}]:[];
 };
@@ -219,6 +220,16 @@ const EPISODE_ROUTES={
   platform_dependence:{1:['diversified','buffered','concentrated'],2:['independent','coexist','exited','invalidated']},
   overseas_visa:{1:['prepared','adjusted','risky'],2:['approved','limited','withdrawn','invalidated']},
   establish_base:{1:['rooted','dual','drifting'],2:['rooted','dual','returned','invalidated']}
+  ,secondary_diversion:{1:['academic','vocational','employment','invalidated']}
+  ,university_interruption:{1:['leave','transfer','formal_exit'],2:['resumed','alternate_completed','working_exit','invalidated']}
+  ,professional_certification:{1:['verified','skill_route','invalid_offer'],2:['passed','retake','alternative_skill','withdrawn']}
+  ,adult_reeducation:{1:['enrolled','reduced','declined'],2:['completed','low_intensity','non_degree','forced_exit']}
+  ,business_expansion:{1:['validated','limited_test','not_ready'],2:['internal_cash','debt_finance','equity_finance'],3:['scaled','downsized','sold','debt_failure']}
+  ,wealth_peak:{1:['reviewed','partial_exit','declined'],2:['controlled','cashed_out','management_exit','invalidated']}
+  ,retirement_transition:{1:['reviewed','phased','delayed'],2:['retired','semi_retired','continued','forced']}
+  ,parental_inheritance:{1:['inventoried','delegated','planned_renunciation'],2:['accepted','limited','renounced','disputed']}
+  ,long_term_care:{1:['assessed','adapted','refused'],2:['combined','institutional','family_only'],3:['stable','changed','minimum_support','family_break']}
+  ,will_planning:{1:['inventoried','separated','debt_first'],2:['documented','partial','deferred','invalidated']}
 };
 const EPISODE_CATALOG={
   relationship_start:{label:'关系建立',bindActivePartnerAfterChoice:true,abandonedRoutes:['exited','ended'],deadline:'两年后，备用钥匙和共同账单仍没有形成一致安排。你们结清支出、归还物品，让这段关系在当前边界结束。',invalidated:'下一阶段前，绑定的人已经不再是当前伴侣。备用钥匙装回信封，共同日历停止共享，这次关系建立到此结束。'},
@@ -234,7 +245,17 @@ const EPISODE_CATALOG={
   first_remote_contract:{label:'第一份远程合同',organization:'本轮远程用工方',abandonedRoutes:['declined','invalidated'],deadline:'合同确认期已经结束。没有写清的工作地、时段和结算不再继续等待，这份合同以不签结束。',invalidated:'签约前岗位、用工方或工作地条件已经撤回。你保存撤回邮件，这份远程合同结束。'},
   platform_dependence:{label:'平台依赖',organization:'本轮接单平台',abandonedRoutes:['exited','invalidated'],deadline:'两年内平台集中风险必须有结论。你保存收入与申诉记录，按当前收入结构退出或降低依赖。',invalidated:'下一阶段前，平台已经停权、关闭地区或失去工作入口。停权邮件归档，这次平台路线结束。'},
   overseas_visa:{label:'海外许可',organization:'本轮申请机构',abandonedRoutes:['withdrawn','invalidated'],deadline:'两年申请期到了。许可、税务与工作安排仍不相容，你取消当前计划并保留返程与材料记录。',invalidated:'下一阶段前，许可、雇主或申请条件已经失效。退件通知装进材料夹，这次跨境计划结束。'},
-  establish_base:{label:'建立基地',abandonedRoutes:['returned','invalidated'],deadline:'三年试住期结束。住所、医疗和工作边界必须固定，你按当前条件保留主基地或完成退租返回。',invalidated:'下一阶段前，收入、许可、健康或住处已经失效。退租清单和返程安排让这次基地计划明确结束。'}
+  establish_base:{label:'建立基地',abandonedRoutes:['returned','invalidated'],deadline:'三年试住期结束。住所、医疗和工作边界必须固定，你按当前条件保留主基地或完成退租返回。',invalidated:'下一阶段前，收入、许可、健康或住处已经失效。退租清单和返程安排让这次基地计划明确结束。'},
+  secondary_diversion:{label:'中考分流',ageBound:true,abandonedRoutes:['employment','invalidated'],deadline:'志愿办理窗口已经结束。你按仍可办理的学校或就业准备路径完成登记，这次分流不再悬置。',invalidated:'原志愿的学校、名额或材料已经失效。你保留招生简章和退件记录，改走仍能办理的明确去处。'},
+  university_interruption:{label:'大学中断',abandonedRoutes:['formal_exit','working_exit','invalidated'],deadline:'两年学籍复核期到了。你领取现有成绩与结案材料，按当前工作和生活正式结束原学籍。',invalidated:'下一阶段前，学籍、学校规则或返校条件已经失效。你领取已有记录，让这次中断以可说明的状态结束。'},
+  professional_certification:{label:'职业考证',organization:'本轮发证与培训机构',abandonedRoutes:['invalid_offer','withdrawn'],deadline:'两年考试周期已经结束。你停止续费，保留成绩与核验记录，这次考证按当前结果收尾。',invalidated:'下一阶段前，资格目录、报考条件或考试安排已经变化。你保存通知，不购买替代“内部证”。'},
+  adult_reeducation:{label:'成年再教育',organization:'本轮继续教育项目',abandonedRoutes:['declined','forced_exit'],deadline:'三年学习窗口已经到期。你完成现有课程记录并停止继续欠费，这次成年学习按当前进度收尾。',invalidated:'下一阶段前，项目、排班或家庭条件已无法继续。课程和退费材料归档，这次再教育结束。'},
+  business_expansion:{label:'企业扩张',organization:'本轮扩张单元',abandonedRoutes:['not_ready','debt_failure'],deadline:'四年扩张窗口已到。你停止新增固定成本，完成低效单元清货、员工结算和设备交接，让这轮扩张明确收口。',invalidated:'下一阶段前，原企业已经关闭或不再具备经营条件。第二地点意向书作废，已投入项目按现状完成交接。'},
+  wealth_peak:{label:'财富顶点',organization:'本轮交易方',abandonedRoutes:['declined','invalidated'],deadline:'两年交易窗口已结束。未完成的估值不再当作个人现金，你终止排他安排并收回临时权限。',invalidated:'下一阶段前，企业规模、买方或交易条件已经失效。尽调资料归档，本轮交易停止。'},
+  retirement_transition:{label:'退休转换',abandonedRoutes:['forced'],deadline:'两年转换期到了。你按当前资格和资源固定为退休、半退休或继续工作状态，不再无限延后结论。',invalidated:'下一阶段前，岗位、资格或健康条件已经改变。原测算表停止使用，你按当前条件完成交接。'},
+  parental_inheritance:{label:'父母遗产',abandonedRoutes:['renounced','disputed'],deadline:'两年遗产处理期到了。你保留资产、债务和往来清单，把未决项转入正式程序，这次继承不再占着全部生活。',invalidated:'下一阶段前，绑定父母、遗产范围或文件条件已经失效。旧钥匙和清点表归档，本轮处理按现状结束。'},
+  long_term_care:{label:'长期照护',abandonedRoutes:['family_break'],deadline:'四年照护复盘期到了。你按当前功能固定最低可持续服务与紧急联系人，长期状态不再作为未完事件悬着。',invalidated:'下一阶段前，健康、服务或住处条件已经改变。原排班表停止续期，新的照护入口按当前状态接手。'},
+  will_planning:{label:'遗嘱规划',abandonedRoutes:['deferred','invalidated'],deadline:'两年文件整理期到了。你标明已完成与未完成项目，未签署内容不再被当作正式遗嘱。',invalidated:'下一阶段前，身份、账户或见证条件已经变化。旧稿明确作废并回收，这次规划重新归档。'}
 };
 const habitEpisodeRoutes=(episode,kind)=>({
   formation:{1:['ordinary_exit','monitoring','repeating'],2:['stopped','exposed','dependent','uncontrolled']},
@@ -243,9 +264,30 @@ const habitEpisodeRoutes=(episode,kind)=>({
 }[kind]?.[episode.phase]);
 const decisionEffects=(id,index,option,authoredDecision)=>{
   const episode=authoredDecision?.episode,episodeRoutes=episode?(EPISODE_ROUTES[episode.id]?.[episode.phase]||habitEpisodeRoutes(episode,authoredDecision.habitKind)):null,route=episode?episodeRoutes?.[option]:['deliberate','negotiated','risk'][option],effects=[c('tag','history',`${id}:${route}`),c('add','agency',[4,3,2,1][option])],add=(path,value)=>effects.push(c('add',path,value)),set=(path,value)=>value!==undefined&&effects.push(c('set',path,value));
-  if(id==='education'){add('capabilities.skill',[3,2,1][option]);add('finance.cash',[-8000,-3000,2000][option]);if(index===0)set('education.path',['academic','evaluating','vocational'][option]);if(index===2&&option===2){set('education.status','interrupted');set('activity.mode','work')}}
-  if(id==='employment'&&!episode){const states=[['employed','employed','unemployed'],['employed','employed','employed'],['employed','unemployed','unemployed'],['employed','employed','employed'],['employed','employed','employed'],['employed','employed','employed'],['employed','employed','unemployed'],['employed','selfEmployed','retired']][index],modes=[['work','work','seeking'],['work','work','work'],['work','seeking','seeking'],['work','work','work'],['work','work','work'],['work','work','work'],['study','work','seeking'],['work','flexible','retired']][index],salaryChanges=[[3000,5000,0],[10000,5000,0],[0,0,0],[12000,5000,0],[0,0,0],[16000,4000,0],[0,0,0],[5000,2000,0]][index];set('employment.status',states[option]);set('activity.mode',modes[option]);add('employment.salary',salaryChanges[option]);add('pressures.career',[4,1,-2][option])}
-  if(id==='public'&&!episode){const states=[['employed','unemployed','unemployed'],['employed','unemployed','unemployed'],['employed','employed','unemployed'],['employed','employed','employed'],['employed','employed','unemployed'],['employed','employed','unemployed'],['employed','careLeave','unemployed'],['employed','retired','retired']][index],modes=states.map(value=>value==='employed'?'work':value==='careLeave'?'flexible':value==='retired'?'retired':'seeking');set('employment.status',states[option]);set('activity.mode',modes[option]);set('employment.employerType',states[option]==='employed'?'public':option===2?'private':'none');set('employment.sector',states[option]==='employed'?'public':'general');add('capabilities.publicCredential',[2,1,0][option]);add('pressures.career',[3,1,-2][option])}
+  if(episode?.id==='secondary_diversion'){
+    const paths=['highSchool','vocational','middleSchool','highSchool'],statuses=['enrolled','enrolled','completed','enrolled'];
+    effects.push(c('transition','education',paths[option],{status:statuses[option]}));add('capabilities.skill',[2,3,1,1][option]);add('pressures.family',[-1,-1,1,2][option]);
+    if(option===2)set('activity.mode','seeking');
+  }
+  if(episode?.id==='university_interruption'){
+    if(episode.phase===1){
+      set('education.status',['interrupted','enrolled','interrupted'][option]);set('activity.mode',['flexible','study','work'][option]);add('finance.cash',[-1000,-3000,1000][option]);add('pressures.career',[1,2,3][option]);
+      if(option===2){set('employment.status','gig');set('employment.career','过渡工作')}
+    }else{
+      set('education.status',['enrolled','completed','interrupted','interrupted'][option]);set('activity.mode',['study','seeking','work','work'][option]);add('capabilities.skill',[4,3,2,1][option]);add('pressures.career',[-2,-1,1,3][option]);
+    }
+  }
+  if(episode?.id==='professional_certification'){
+    add('capabilities.skill',episode.phase===1?[2,3,0][option]:[5,2,4,0][option]);add('finance.cash',episode.phase===1?[-1500,-2500,0][option]:[-2500,-1800,-1200,0][option]);add('pressures.career',episode.phase===1?[-1,-1,2][option]:[-3,1,-1,2][option]);
+    if(episode.phase===2&&option===0)add('capabilities.employability',4);
+  }
+  if(episode?.id==='adult_reeducation'){
+    if(episode.phase===1){set('education.status',option===2?'completed':'enrolled');set('activity.mode',option===2?'work':'study')}
+    if(episode.phase===2){set('education.status',['completed','enrolled','completed','interrupted'][option]);set('activity.mode',['seeking','study','work','work'][option])}
+    add('capabilities.skill',episode.phase===1?[3,2,0][option]:[5,3,3,1][option]);add('finance.cash',episode.phase===1?[-6000,-3000,0][option]:[-4000,-2500,-1200,1000][option]);add('pressures.career',episode.phase===1?[1,0,-1][option]:[-2,0,-1,2][option]);
+  }
+  if(id==='employment'&&!episode){const states=[['employed','employed','unemployed'],['employed','employed','employed'],['employed','unemployed','unemployed'],['employed','employed','employed'],['employed','employed','employed'],['employed','employed','employed'],['employed','employed','unemployed'],['employed','selfEmployed','unemployed']][index],modes=[['work','work','seeking'],['work','work','work'],['work','seeking','seeking'],['work','work','work'],['work','work','work'],['work','work','work'],['study','work','seeking'],['work','flexible','seeking']][index],salaryChanges=[[3000,5000,0],[10000,5000,0],[0,0,0],[12000,5000,0],[0,0,0],[16000,4000,0],[0,0,0],[5000,2000,0]][index];set('employment.status',states[option]);set('activity.mode',modes[option]);add('employment.salary',salaryChanges[option]);add('pressures.career',[4,1,-2][option])}
+  if(id==='public'&&!episode){const states=[['employed','unemployed','unemployed'],['employed','unemployed','unemployed'],['employed','employed','unemployed'],['employed','employed','employed'],['employed','employed','unemployed'],['employed','employed','unemployed'],['employed','careLeave','unemployed'],['employed','employed','unemployed']][index],modes=states.map(value=>value==='employed'?'work':value==='careLeave'?'flexible':value==='retired'?'retired':'seeking');set('employment.status',states[option]);set('activity.mode',modes[option]);set('employment.employerType',states[option]==='employed'?'public':option===2?'private':'none');set('employment.sector',states[option]==='employed'?'public':'general');add('capabilities.publicCredential',[2,1,0][option]);add('pressures.career',[3,1,-2][option])}
   if(episode?.id==='public_exam'){
     if(episode.phase===1){
       add('capabilities.publicCredential',[2,2,0][option]);add('pressures.career',[2,1,-3][option]);
@@ -295,7 +337,24 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
       if(option===3)effects.push(c('addLiability','finance.liabilities',120000,{kind:'business',rate:.12,guaranteed:true}));
     }
   }
-  if(id==='business'&&!authoredDecision?.episode){const originalIndex=index+1,statuses=[['testing','testing','operating'],['testing','testing','closed'],['operating','operating','operating'],['closed','operating','operating'],['operating','operating','operating'],['operating','operating','operating'],['operating','operating','operating'],['operating','operating','closed']][originalIndex],cash=[[-5000,-2000,-60000],[-2000,0,0],[-20000,-40000,-60000],[-10000,-15000,-50000],[-3000,-8000,-15000],[0,0,0],[-20000,-60000,0],[0,0,0]][originalIndex];set('business.status',statuses[option]);if(originalIndex===4&&option===0)set('business.mode','independent');add('business.operatingSkill',[4,2,0][option]);add('business.equity',originalIndex>=5?[50000,120000,600000][option]:0);add('finance.cash',cash[option])}
+  if(episode?.id==='business_expansion'){
+    if(episode.phase===1){add('business.operatingSkill',[6,4,1][option]);add('finance.cash',[-3000,-6000,0][option]);if(option===2)set('business.scale','local')}
+    if(episode.phase===2){
+      add('finance.cash',[-30000,20000,90000][option]);add('business.control',[0,-2,-18][option]);
+      if(option===1)effects.push(c('addLiability','finance.liabilities',80000,{kind:'business',rate:.08,guaranteed:true}));
+    }
+    if(episode.phase===3){
+      set('business.status',option===3?'closed':'operating');set('business.scale',['regional','local','local','none'][option]);add('business.equity',[300000,50000,-80000,-150000][option]);add('finance.cash',[25000,-12000,80000,-50000][option]);add('business.control',[0,2,-12,-8][option]);
+      if(option===3)effects.push(c('addLiability','finance.liabilities',160000,{kind:'business',rate:.11,guaranteed:true}));
+    }
+  }
+  if(episode?.id==='wealth_peak'){
+    if(episode.phase===1){add('business.control',[1,0,2][option]);add('finance.cash',[-10000,250000,0][option]);if(option===1)add('business.equity',-200000)}
+    if(episode.phase===2){
+      add('business.control',[3,-8,-100,0][option]);add('finance.cash',[0,800000,2400000,0][option]);add('business.equity',[250000,-500000,-2000000,0][option]);
+      if(option===2)set('business.status','sold');if(option<3)effects.push(c('tag','history','wealthApex'));
+    }
+  }
   if(id==='leisure'&&!episode){const modes=[['sabbatical','leisure','flexible'],['sabbatical','leisure','leisure'],['care','leisure','seeking'],['leisure','leisure','seeking'],['sabbatical','leisure','leisure'],['flexible','leisure','work'],['study','work','leisure'],['flexible','work','leisure']][index],funding=[['self','self','mixed'],['family','family','self'],['partner','partner','self'],['self','debt','self'],['self','self','self'],['mixed','self','self'],['self','self','family'],['mixed','self','family']][index];set('activity.mode',modes[option]);set('activity.funding',funding[option]);if(index===5&&option===0)set('employment.status','gig');if(index===5&&option===2)set('employment.status','selfEmployed');if(index===6&&option===1||index===7&&option===1)set('employment.status','employed');add('desires.freedom.fulfillment',[4,6,-1][option]);add('capabilities.employability',[-1,-4,2][option]);add('finance.cash',[-5000,-9000,2000][option])}
   if(episode?.id==='career_break'){
     if(episode.phase===1){
@@ -412,7 +471,27 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
       add('health.physical',stage==='recovery'?3:stage==='treatment'?1:-harm*2);add('health.mental',stage==='recovery'?3:stage==='treatment'?2:-harm);add('pressures.body',stage==='recovery'?-4:stage==='treatment'?-2:harm*2);if(['recovery','treatment','exposed'].includes(stage))add('finance.cash',-1500);
     }
   }
-  if(id==='later'){const modes=index===0?['work','retired','flexible']:index===1?['work','work','retired']:['retired','retired','retired'];set('activity.mode',modes[option]);set('employment.status',modes[option]==='retired'?'retired':modes[option]==='flexible'?'gig':'employed');add('desires.peace.fulfillment',[3,2,-1][option]);add('relationships.network',[2,1,-3][option]);if(index>=6)set('legacy.plan',['documented','partial','none'][option])}
+  if(episode?.id==='retirement_transition'){
+    if(episode.phase===1)set('later.retirement',['reviewing','phased','delayed'][option]);
+    else{set('later.retirement',['retired','semiRetired','working','forced'][option]);set('activity.mode',['retired','flexible','work','retired'][option]);set('employment.status',['retired','gig','employed','retired'][option])}
+    add('desires.peace.fulfillment',episode.phase===1?[1,2,-1][option]:[5,3,0,-2][option]);add('pressures.career',episode.phase===1?[-1,-2,2][option]:[-4,-2,1,4][option]);
+  }
+  if(episode?.id==='parental_inheritance'){
+    if(episode.phase===1)set('later.inheritance',['inventory','delegated','renouncing'][option]);
+    else{set('later.inheritance',['accepted','limited','renounced','disputed'][option]);add('finance.cash',[50000,12000,0,-8000][option])}
+    add('pressures.family',episode.phase===1?[2,1,0][option]:[-2,1,-1,8][option]);
+  }
+  if(episode?.id==='long_term_care'){
+    if(episode.phase===1){set('later.care',['assessed','adapted','refused'][option]);if(option<2)set('health.careNeed',Math.max(1,option+1))}
+    if(episode.phase===2)set('later.care',['homeCombined','institutional','familyOnly'][option]);
+    if(episode.phase===3)set('later.care',['stable','changed','minimum','familyBreak'][option]);
+    add('finance.cash',({1:[-1500,-500,0],2:[-9000,-18000,-2000],3:[-7000,-12000,-3000,-6000]}[episode.phase])[option]);add('pressures.family',({1:[-1,0,4],2:[-4,-3,5],3:[-4,-2,1,8]}[episode.phase])[option]);add('pressures.body',({1:[-2,-1,6],2:[-4,-3,2],3:[-4,-2,0,3]}[episode.phase])[option]);
+  }
+  if(episode?.id==='will_planning'){
+    if(episode.phase===1){set('later.will',['inventory','partial','debtFirst'][option]);if(option===1)set('legacy.medicalDirective','discussed')}
+    else{set('later.will',['documented','partial','deferred','invalidated'][option]);set('legacy.plan',['documented','partial','none','none'][option])}
+    add('desires.peace.fulfillment',episode.phase===1?[2,1,0][option]:[5,2,-1,-1][option]);add('pressures.family',episode.phase===1?[-1,0,1][option]:[-3,-1,2,3][option]);
+  }
   const habitStage=id==='habits'?effects.find(effect=>effect.type==='set'&&effect.target==='habits.stage')?.value:null,outcomeTags=id==='habits'?['habits',`habits:${authoredDecision.type}`,`habits:${authoredDecision.habitKind}`,`habits:${route}`,habitStage?`habits:${habitStage}`:'habits:turn',`episode:${episode.id}`,...(habitStage==='recovery'?['recovery']:[])]:episode?[id,`${id}:${route}`,`episode:${episode.id}`]:[id,`${id}:${route}`,index===7?`${id}:legacy`:`${id}:turn`];
   return{effects,route,outcomeTags};
 };
@@ -456,27 +535,33 @@ for(const id of trackOrder){
     }
     if(authoredDecision.episode?.id==='platform_dependence'&&authoredDecision.episode.phase===1)requirements.all.push(p('mobility.platformDependence','gte',8));
     if(authoredDecision.episode?.id==='establish_base'&&authoredDecision.episode.phase===1)requirements.all.push(p('mobility.mode','in',['domesticNomad','overseasNomad']));
+    if(authoredDecision.episode?.id==='secondary_diversion')requirements.all.push(p('education.level','eq',2),p('education.status','eq','completed'));
+    if(authoredDecision.episode?.id==='university_interruption'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.path','eq','college'),p('education.status','eq','enrolled'));
+    if(authoredDecision.episode?.id==='professional_certification'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.status','notIn',['notStarted','enrolled']));
+    if(authoredDecision.episode?.id==='adult_reeducation'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.status','notIn',['notStarted','enrolled']));
+    if(authoredDecision.episode?.id==='business_expansion'&&authoredDecision.episode.phase===1)requirements.all.push(p('business.status','eq','operating'),p('business.operatingSkill','gte',45),p('business.equity','gte',30000));
+    if(authoredDecision.episode?.id==='wealth_peak'&&authoredDecision.episode.phase===1)requirements.all.push(p('business.status','eq','operating'),p('business.scale','in',['national','global']),p('business.equity','gte',1e8));
+    if(authoredDecision.episode?.id==='retirement_transition'&&authoredDecision.episode.phase===1)requirements.all.push(p('employment.status','in',['employed','gig','selfEmployed']));
+    if(authoredDecision.episode?.id==='long_term_care'&&authoredDecision.episode.phase===1)requirements.any.push(p('health.careNeed','gte',1),p('health.status','eq','limited'),p('health.disability','neq','none'));
     if(id==='health'&&index===0)requirements.all.push(p('health.status','in',['monitoring','treating','recovering']),p('health.conditionSeverity','gte',5));
     if(id==='health'&&index===4)requirements.any.push(p('health.status','eq','limited'),p('health.conditionSeverity','gte',35),p('health.disability','neq','none'));
     if(id==='finance'&&index===4&&!authoredDecision.episode)requirements.all.push(p('finance.totalDebt','gte',10000));
     const authoredChoices=authoredDecision.choices;
-    const choices=authoredChoices.map((copyItem,option)=>{const text=typeof copyItem==='string'?copyItem:copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`,arcExit=!authoredDecision.episode&&(id==='habits'?authoredDecision.phase===1&&option===0:option===2&&((index===0&&['employment','public','remote','partnership'].includes(id))||(id==='children'&&(index===0||index===1))));if(id==='partnership'&&!authoredDecision.episode&&index===0&&option<2)result.effects.push(c('createPerson','people',1,{relation:'partner'}));return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:[],effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:1+option,delayMax:3+option}],outcomeTags:result.outcomeTags,memoryKey,route:result.route,arcExit};});
-    const arc=authoredDecision.episode||['employment','public','leisure','finance','health','habits'].includes(id)?null:id==='business'?{id:'business_2',node:index-2,role:index===3?'start':index===6?'resolve':'continue',lane:spec.lane}:{id:`${id}_${Math.floor(index/4)+1}`,node:index%4+1,role:index%4===0?'start':index%4===3?'resolve':'continue',lane:spec.lane};
-    decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',prompt:authoredDecision.prompt,requirements,actors,choices,arc,...(authoredDecision.episode?{situation:authoredDecision.situation,episode:authoredDecision.episode}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:16+index%3,contentRevision:CONTENT_REVISION});
+    const choices=authoredChoices.map((copyItem,option)=>{const text=typeof copyItem==='string'?copyItem:copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`;if(id==='partnership'&&!authoredDecision.episode&&index===0&&option<2)result.effects.push(c('createPerson','people',1,{relation:'partner'}));return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:[],effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:1+option,delayMax:3+option}],outcomeTags:result.outcomeTags,memoryKey,route:result.route};});
+    decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{situation:authoredDecision.situation,episode:authoredDecision.episode}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:16+index%3,contentRevision:CONTENT_REVISION});
     authoredDecisionById.set(eventId,authoredDecision);
   }
 }
 
 const globalRows=[
   {track:'identity',age:[14,17],prompt:'你第一次认真决定，这一生最不愿失去什么。',verbs:['哪怕不稳，也要自由','先保住安稳','把重要的人留身边'],results:['你把远方写进计划，也知道没人替你兜底。','你先选了能站稳的地方，没有急着往远处走。','你开始把别人的需要算进自己的决定。'],echoText:'少年时最不愿失去的东西又来敲门。',consequences:['后来一次搬家，你没等所有人同意就买了票。','机会和风险同时到来时，你还是先看账户余额。','真正要分别时，你为留下多承担了一段日子。'],desire:[['freedom','exploration'],['security','achievement'],['love','familyBelonging']]},
-  {track:'education',age:[15,17],prompt:'义务教育结束后，三条路都需要你签字。',verbs:['读普高继续考','去职校学一门手艺','先工作，以后再读'],results:['志愿确认后，你开始按下一场考试准备。','实训课表发下来，文化课不再占满每天。','你签下第一份用工表，把继续学习留在以后。'],echoText:'那张分流志愿表后来又有了下文。',consequences:['高考结束时，这几年都浓缩在一张成绩单上。','第一次领实习工资，你已经会独立完成一段工序。','岗位卡学历那天，你重新查起成人教育报名。'],education:['highSchool','vocational','middleSchool']},
   {track:'education',age:[18,22],prompt:'成年后的第一条去向，不再由年龄自动替你决定。',verbs:['继续去读大学','接下一份正式工作','做零工慢慢找方向'],results:['录取材料寄出，你把开学日圈在日历上。','劳动合同签好，报到时间写在周一早上。','你注册了两个接单平台，先让自己有收入。'],echoText:'成年后的第一条去向开始显出重量。',consequences:['毕业求职时，专业和学费一起成了已经发生的事。','同龄人毕业那年，你已经有了几年工龄。','零工让你见过不少行业，也让社保断断续续。'],education:['college','highSchool','highSchool']},
   {track:'identity',age:[30,55],prompt:'你发现早年最想要的东西，已经不完全适合现在。',verbs:['重新排一次轻重','继续守住原来的目标','不再只认一个答案'],results:['你取消一项旧计划，把时间留给身体和安静。','你没有换目标，只调整了到达它的速度。','你允许几件事同时重要，不再排唯一名次。'],echoText:'那次重新排序后来改变了一天的用法。',consequences:['下一次加码之前，你先看自己还能不能睡好觉。','旧目标终于接近时，你仍认得当年为什么出发。','有一条路停下后，另一件在意的事接住了你。'],desire:[['peace','body'],['achievement','security'],['freedom','creation']],reclaim:true}
 ];
 for(const row of globalRows){
   const id=`decision_${String(decisions.length+1).padStart(3,'0')}`;
   const choices=row.verbs.map((text,index)=>{const educationStatus=row.age[0]===18?(index===0?'enrolled':'completed'):(index===2?'completed':'enrolled'),effects=[row.education?c('transition','education',row.education[index],{status:educationStatus}):c('claimDesire','desires',row.desire[index],{replace:Boolean(row.reclaim)})];if(row.age[0]===18&&index===1)effects.push(c('set','employment.status','employed'),c('set','employment.career','基层岗位'),c('set','employment.sector','services'),c('set','activity.mode','work'));if(row.age[0]===18&&index===2)effects.push(c('set','employment.status','gig'),c('set','employment.career','灵活就业'),c('set','employment.sector','platform'),c('set','activity.mode','work'));return{id:`${id}_choice_${index+1}`,text,resultText:row.results[index],hints:[],requirements:[],effects,commitments:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:2,delayMax:5}],outcomeTags:[row.track,index===0?'chosenA':index===1?'chosenB':'chosenC'],memoryKey:`${id}_c${index+1}`,route:['deliberate','stable','open'][index]}});
-  decisions.push({id,kind:'decision',track:row.track,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'◎',prompt:row.prompt,requirements:{all:[row.reclaim?p('desires.reclaimed','eq',false):p('age','gte',row.age[0])],any:[],none:[]},actors:[],choices,arc:null,assertions:[],priority:30,weight:30,contentRevision:CONTENT_REVISION});
+  decisions.push({id,kind:'decision',track:row.track,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'◎',prompt:row.prompt,requirements:{all:[row.reclaim?p('desires.reclaimed','eq',false):p('age','gte',row.age[0])],any:[],none:[]},actors:[],choices,assertions:[],priority:30,weight:30,contentRevision:CONTENT_REVISION});
   authoredDecisionById.set(id,{echoText:row.echoText,choices:row.consequences.map(consequenceText=>({consequenceText}))});
 }
 
@@ -543,7 +628,7 @@ codex.push(
 );
 
 const realityRules={education:'义务教育与后续学历使用独立在读、完成和中断状态；职业资格另行记录。',employment:'裁员、晋升和排班只适用于真实受雇者；求职、退出劳动市场与主动休闲不得混用。',retirement:'退休取决于出生年代、单位类型、缴费年限和个人选择，不用固定年龄覆盖。',debt:'个人债务逐笔计息；生活缺口合并记录，担保、逾期、重组和遗产处理保留独立状态。',family:'伴侣与子女是带年龄、存亡、关系和法律身份的人物实体。',platform:'远程与旅居需要可迁移能力或真实远程收入，平台依赖增加波动。',franchise:'加盟成本包含品牌、装修、设备、原料、投流和担保，成功需要技能、现金缓冲与低锁定。'};
-const trackCoverage=Object.fromEntries(trackOrder.map(id=>[id,{beats:annualBeats.filter(event=>event.track===id).length,decisions:decisions.filter(event=>event.track===id&&event.arc).length,transitions:decisions.filter(event=>event.track===id&&!event.arc).length,roles:['entry','development','daily','conflict','crisis','recovery','exit','legacy']} ]));
+const trackCoverage=Object.fromEntries(trackOrder.map(id=>[id,{beats:annualBeats.filter(event=>event.track===id).length,episodes:decisions.filter(event=>event.track===id&&event.episode).length,transitions:decisions.filter(event=>event.track===id&&!event.episode).length,roles:['entry','development','daily','conflict','crisis','recovery','exit','legacy']} ]));
 const data={version:VERSION,gameVersion:VERSION,schemaVersion:SCHEMA_VERSION,contentRevision:CONTENT_REVISION,stages,locations,desires,conflicts,familyArchetypes,familySecrets,cards,events:[...annualBeats,...decisions,...echoes,...blackSwans],episodeCatalog:EPISODE_CATALOG,endingProfiles,endingTitles,codex,realityRules,trackCoverage};
 fs.writeFileSync(output,`${JSON.stringify(data,null,2)}\n`,'utf8');
 console.log(JSON.stringify({version:VERSION,events:{beat:annualBeats.length,decision:decisions.length,consequence:echoes.length,blackSwan:blackSwans.length,total:data.events.length},cards:cards.length,families:familyArchetypes.length,secrets:familySecrets.length,endings:endingTitles.length,codex:codex.length},null,2));
