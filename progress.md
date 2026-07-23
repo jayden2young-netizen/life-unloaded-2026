@@ -126,3 +126,8 @@ Original prompt: Implement the approved 《人生尚未加载 · 2026》v3.0 人
 - 2026-07-23: Corrected signed net-worth handling in ending safety, made health/debt route tags depend on final state, added recovered/managed alternatives, and tightened family-cycle endings with current debt, arrears, and child-relationship facts.
 - 2026-07-23: Generator output remained hash-stable at 400 beats, 100 decisions, 100 consequences, 20 black swans, 72 cards, 30 families, 44 secrets, 16 ending profiles, 64 titles, and 30 codex entries. Static validation, 25 state guards, the focused browser regression, and the existing v5 browser core path passed with zero console errors.
 - 2026-07-23: One genuine random browser life used no fixed seed, debug forcing, or scripted branch choice. It ended naturally at age 87 with 19 decisions spread through age 75, no health arc, final physical/mental 84/73, no health-crisis tag, zero personal debt before 18, and final debt of 61,603 instead of runaway compounding. The 360×773 ending screenshot and updated state drawer were visually inspected. No batch simulation or probability tuning was run.
+
+## v5.0.4 开局刷新恢复修复
+
+- 2026-07-23: Fixed same-release save restoration so `birth` and `attributes` phases reopen their actual setup screens instead of being forced into an unplayable age-zero timeline. The home “continue” action now uses the same phase-to-view mapping, and returning from attributes persists the restored birth phase.
+- 2026-07-23: A focused 360×773 browser regression verified birth refresh, home→continue, attribute refresh, return navigation, Settings access, and the clear-data action with zero console errors. Both restored setup screenshots were visually inspected; no gameplay, data balance, or UI styling was changed.

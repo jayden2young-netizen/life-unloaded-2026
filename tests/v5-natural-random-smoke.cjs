@@ -4,7 +4,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'test-results', 'v5.0.3-natural-random');
+const OUT = path.join(ROOT, 'test-results', 'v5.0.4-natural-random');
 const URL = process.env.LIFE_URL || `http://127.0.0.1:8765/?natural=${Date.now()}`;
 fs.mkdirSync(OUT, { recursive: true });
 
