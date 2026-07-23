@@ -17,7 +17,7 @@
 - `contentRevision`：11
 - localStorage 键：`life-unloaded-2026-v1`
 - `main` 交接基线：`61dfe3f365ce6ee8020323583199c96920e2ae6b`
-- 基线提交说明：`Merge pull request #7 from jayden2young-netizen/codex/v0.5.3-life-cards`
+- 基线提交说明：`Merge pull request #12 from jayden2young-netizen/codex/v0.5.3-card-rewrite`
 - 标签：`v0.5.3`
 
 交接前核验时，`main` 与 `origin/main` 一致，工作区原本干净。本交接文件随玩家版 README 一起维护；是否已经提交、当前分支是否变化，以新窗口现场执行的 Git 检查为准。
