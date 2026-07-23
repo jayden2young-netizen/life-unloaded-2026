@@ -13,7 +13,7 @@ const kinds=Object.groupBy(data.events,event=>event.kind);const cards=Object.val
 const allowedRoots=['version','gameVersion','schemaVersion','contentRevision','stages','locations','familyArchetypes','familySecrets','attributes','desires','mainConflicts','cards','events','endingProfiles','endingTitles','endingFragments','codex'];
 const checkKeys=(object,allowed,label)=>{for(const key of Object.keys(object||{}))check(allowed.includes(key),`${label}: unconsumed field ${key}`)};
 
-check(data.version==='4.1.0','data version must be 4.1.0');check(data.gameVersion==='4.1.0','data gameVersion must be 4.1.0');
+check(data.version==='0.4.1','data version must be 0.4.1');check(data.gameVersion==='0.4.1','data gameVersion must be 0.4.1');
 check(data.schemaVersion===6,'schemaVersion must be 6');check(data.contentRevision===5,'contentRevision must be 5');
 check(JSON.stringify(Object.keys(data).sort())===JSON.stringify(allowedRoots.sort()),'unknown or dead root data field');
 check((kinds.beat||[]).length===400,'annual beats must be 400');check((kinds.decision||[]).length===100,'decisions must be 100');

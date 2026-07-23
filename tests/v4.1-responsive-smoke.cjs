@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 
 const baseUrl=process.argv[2]||'http://127.0.0.1:8765/';
-const out=path.resolve(__dirname,'..','test-results','v4.1.0-responsive-ui');
+const out=path.resolve(__dirname,'..','test-results','v0.4.1-responsive-ui');
 const viewports=[{name:'s26',width:360,height:773},{name:'short-browser',width:360,height:640},{name:'small-phone',width:320,height:568}];
 const assert=(value,message)=>{if(!value)throw new Error(message)};
 fs.mkdirSync(out,{recursive:true});
@@ -21,5 +21,5 @@ async function reachable(page,locator,label){await locator.scrollIntoViewIfNeede
     await page.evaluate(()=>window.__LIFE_DEBUG__.forceStoryline('familyMoney',1));const choices=page.locator('[data-choice]');assert(await choices.count()===4,`${viewport.name}: four branch choices missing`);await reachable(page,choices.last(),`${viewport.name}: last choice`);await page.screenshot({path:path.join(out,`${viewport.name}-choice.png`),fullPage:false});await choices.last().click();await page.waitForTimeout(240);
     await page.evaluate(()=>window.__LIFE_DEBUG__.autoFinishCurrent());await page.waitForSelector('.ending-review');assert(!await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth),`${viewport.name}: ending overflow`);await page.screenshot({path:path.join(out,`${viewport.name}-ending.png`),fullPage:true});assert(errors.length===0,`${viewport.name}: ${errors.join(' | ')}`);reports.push({viewport,errors,screenshots:['timeline','status','choice','ending']});await context.close();
   }
-  await browser.close();console.log(JSON.stringify({version:'4.1.0',reports,output:out},null,2));
+  await browser.close();console.log(JSON.stringify({version:'0.4.1',reports,output:out},null,2));
 })().catch(error=>{console.error(error);process.exit(1)});

@@ -46,11 +46,11 @@ const adolescentParent=structuredClone(base);adolescentParent.age=45;adolescentP
 check(!decisions.filter(event=>/成年孩子|兼职收入/.test(event.prompt)).some(event=>eligible(event,parent)),'young child reaches adult-child decision');
 const age40=structuredClone(employed);age40.age=40;check(!decisions.filter(event=>/退休|返聘/.test(event.prompt)).some(event=>eligible(event,age40)),'retirement decision reaches a 40-year-old');
 const firstJob=decisionBy(/录用通知/);check(sets(firstJob.choices[2],'employment.status','unemployed'),'rejecting first job does not remain unemployed');
-const rehire=decisionBy(/单位提出返聘/);check(sets(rehire.choices[0],'employment.status','employed')&&sets(rehire.choices[1],'employment.status','employed')&&sets(rehire.choices[2],'employment.status','retired'),'rehire choices write contradictory work states');
-const parenthood=decisionBy(/讨论要不要成为父母/);check(parenthood.choices.every(choice=>!choice.effects.some(effect=>effect.type==='createPerson')),'parenthood discussion creates a child immediately');
+const rehire=decisionBy(/返聘/);check(sets(rehire.choices[0],'employment.status','employed')&&sets(rehire.choices[1],'employment.status','employed')&&sets(rehire.choices[2],'employment.status','retired'),'rehire choices write contradictory work states');
+const parenthood=decisionBy(/要不要成为父母/);check(parenthood.choices.every(choice=>!choice.effects.some(effect=>effect.type==='createPerson')),'parenthood discussion creates a child immediately');
 const fertility=decisionBy(/生育计划遇到/);check(fertility.choices.slice(0,2).every(choice=>choice.effects.some(effect=>effect.type==='createPerson'))&&fertility.choices[2].arcExit===true,'fertility branch cannot create or explicitly end a child route');
 const sampleStore=decisionBy(/样板店/);check(sampleStore.choices[2].arcExit===true&&!sampleStore.choices[2].effects.some(effect=>effect.type==='addLiability'),'ending a sample-store inspection creates debt or leaves arc active');
-const partnerSupport=decisionBy(/伴侣可以承担开支/);check(partnerSupport.actors.some(actor=>actor.relation==='partner'&&actor.statusAny.includes('partnered')),'partner-funded leisure lacks partner actor');
+const partnerSupport=decisionBy(/伴侣能承担房租/);check(partnerSupport.actors.some(actor=>actor.relation==='partner'&&actor.statusAny.includes('partnered')),'partner-funded leisure lacks partner actor');
 for(const decision of decisions){const consequence=consequences.find(event=>event.sourceDecisionId===decision.id);check(Boolean(consequence),`${decision.id}: missing consequence`);for(const choice of decision.choices)check(Boolean(consequence?.choiceOutcomes?.[choice.memoryKey]),`${choice.id}: missing option-specific consequence`)}
 const divergent=decisions.every(decision=>new Set(decision.choices.map(choice=>JSON.stringify(choice.effects))).size>=2);check(divergent,'one or more decisions have identical state effects');
 
