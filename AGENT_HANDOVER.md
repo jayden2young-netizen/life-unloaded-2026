@@ -1,6 +1,6 @@
 # 《人生尚未加载 · 2026》开发交接
 
-更新时间：2026-07-23
+更新时间：2026-07-24
 
 这份文件用于下一次 Codex 窗口接手项目。开始工作前仍要重新检查本地文件和 GitHub；下面记录的是交接时已经核对过的状态，不代替现场核验。
 
@@ -11,15 +11,15 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前开发版本：v0.5.5
-- 上一个已发布版本：v0.5.4
+- 当前开发版本：v0.5.6
+- 上一个已发布版本：v0.5.5
 - `schemaVersion`：8
-- `contentRevision`：12
+- `contentRevision`：13
 - localStorage 键：`life-unloaded-2026-v1`
-- `main` 开发基线：`08753ab3332b903705be3b8bdb5906478f12e9f1`
-- 基线提交说明：`Merge pull request #13 from jayden2young-netizen/codex/v0.5.4-addiction-clarity`
-- 开发分支：`codex/v0.5.5-episode-engine`
-- 基线版本：`v0.5.4`
+- `main` 开发基线：`8eb74fbc9d252a333dcff1fa9a2576f039d41610`
+- 基线提交说明：`Merge v0.5.5 episode engine`
+- 开发分支：`codex/v0.5.6-career-episodes`
+- 基线版本：`v0.5.5`
 
 交接前核验时，`main` 与 `origin/main` 一致，工作区原本干净。本交接文件随玩家版 README 一起维护；是否已经提交、当前分支是否变化，以新窗口现场执行的 Git 检查为准。
 
@@ -121,6 +121,14 @@ tests/                            静态、状态、语言与浏览器检查
 活动事件簇同时最多两个且不能占用同一领域；旧 `arcs` 仍保留给尚未迁移的轨道，事件簇与旧链不能同时占用同一 lane。融资扩张和财富顶点继续留在旧经营链，未并入本轮开店簇。
 
 Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案、图鉴、设置、统计、已见内容和最近种子。研究档案位于 `docs/research/v0.5.5-shop-episodes.md`。
+
+## v0.5.6 事业转换事件簇
+
+`public_exam` 使用 `decision_017`—`decision_018` 表达报名资格、笔试面试及录用／再考／退出，截止期为两年。`layoff_reemployment` 使用 `decision_011`—`decision_012` 表达解除材料与重新落脚，覆盖内部转岗、同领域再就业、过渡工作、培训转岗和长期求职，截止期为两年。`career_break` 使用 `decision_040`—`decision_042` 表达资金来源、一年后生活与继续／低强度收入／返工，截止期为三年。
+
+三个轨道上其余尚未迁移的选择文案仍保留，但不再组成旧四节点长链；长期公共职业、一般受雇工作和不工作状态继续由普通事件表达。公务员招录与裁员再就业共用 `career` lane，不能并行；主动不工作使用 `lifestyle` lane，仍受同时最多两个事件簇的总限制。
+
+运行时增加三类事件簇名称、招聘单位／原用人单位绑定、明确的超期与状态失效结尾，并让强制结尾时间线回到真实内容轨道。版本仍为 Schema 8，内容修订升至 13；根据现行发布策略，v0.5.5 的未完成人生会在版本变化时清除，跨局记录继续保留。研究档案位于 `docs/research/v0.5.6-事业转换.md`。
 
 ## 尚未完成
 

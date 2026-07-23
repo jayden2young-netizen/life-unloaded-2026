@@ -29,14 +29,14 @@ const inspectPredicates=(requirements,label)=>{keys(requirements,['all','any','n
 const inspectCommands=(commands,label)=>{check(Array.isArray(commands),`${label}: effects must be command array`);for(const command of commands||[]){keys(command,commandFields,label);check(commandTypes.includes(command.type),`${label}: unknown command ${command.type}`);if(command.type!=='tag'&&command.type!=='createPerson'&&command.type!=='claimDesire')check(pathAllowed(command.target),`${label}: unsupported command target ${command.target}`);if(command.type==='add'&&command.target==='finance.cash'&&command.value)check(Math.abs(command.value)<=70000,`${label}: ordinary cash delta exceeds 70000`);if(command.type==='set'&&command.target==='employment.status')check(employmentStates.includes(command.value),`${label}: invalid employment state ${command.value}`);if(command.type==='set'&&command.target==='habits.stage')check(habitStages.includes(command.value),`${label}: invalid habit stage ${command.value}`);if(command.type==='set'&&command.target==='habits.type')check(habitTypes.includes(command.value),`${label}: invalid habit type ${command.value}`);if(command.type==='addLiability'){check(command.value>0,`${label}: nonpositive liability`);check(command.rate>0&&command.rate<=.2,`${label}: unrealistic liability rate`)}}};
 
 keys(data,rootFields,'root');
-check(data.version==='0.5.5'&&data.gameVersion==='0.5.5','version is not 0.5.5');
+check(data.version==='0.5.6'&&data.gameVersion==='0.5.6','version is not 0.5.6');
 check(data.schemaVersion===8,'schemaVersion is not 8');
-check(data.contentRevision===12,'contentRevision is not 12');
+check(data.contentRevision===13,'contentRevision is not 13');
 check((kinds.beat||[]).length===400,'annual beats must remain 400');
-check((kinds.decision||[]).length===106,'v0.5.5 must contain 106 decisions');
+check((kinds.decision||[]).length===106,'v0.5.6 must contain 106 decisions');
 check((kinds.consequence||[]).length===106,'every major decision must own a consequence');
 check((kinds.blackSwan||[]).length===20,'black swans must remain 20');
-check(data.events.length===632,'v0.5.5 causal coverage must total 632 nodes');
+check(data.events.length===632,'v0.5.6 causal coverage must total 632 nodes');
 check(data.cards.length===72,'cards must remain 72');
 check(data.familyArchetypes.length===30,'families must remain 30');
 check(data.familySecrets.length===44,'secrets must remain 44');
@@ -45,8 +45,8 @@ check(data.codex.length===30,'codex must remain 30');
 
 const eventIds=new Set(),choiceIds=new Set(),memoryKeys=new Set(),texts=new Set();
 for(const event of data.events){
-  keys(event,eventFields[event.kind]||[],event.id);check(!eventIds.has(event.id),`${event.id}: duplicate event id`);eventIds.add(event.id);check(Number.isFinite(event.ageMin)&&Number.isFinite(event.ageMax)&&event.ageMin<=event.ageMax,`${event.id}: invalid age range`);check(stageOverlap(event),`${event.id}: stage and age do not overlap`);check(event.contentRevision===12,`${event.id}: stale content revision`);inspectPredicates(event.requirements,event.id);
-  if(event.episode){keys(event.episode,episodeFields,`${event.id}:episode`);check(event.episode.id&&['career','family','personal'].includes(event.episode.lane),`${event.id}: invalid episode identity or lane`);check(Number.isInteger(event.episode.phase)&&event.episode.phase>=1,`${event.id}: invalid episode phase`);check(['start','continue','resolve'].includes(event.episode.role),`${event.id}: invalid episode role`);check(Number.isInteger(event.episode.delayYears)&&event.episode.delayYears>=0,`${event.id}: invalid episode delay`);check(Number.isInteger(event.episode.deadlineYears)&&event.episode.deadlineYears>=1&&event.episode.deadlineYears<=5,`${event.id}: invalid episode deadline`);check(typeof event.situation==='string'&&event.situation.length>0,`${event.id}: episode situation missing`);check(event.arc===null,`${event.id}: episode cannot also be an arc`)}
+  keys(event,eventFields[event.kind]||[],event.id);check(!eventIds.has(event.id),`${event.id}: duplicate event id`);eventIds.add(event.id);check(Number.isFinite(event.ageMin)&&Number.isFinite(event.ageMax)&&event.ageMin<=event.ageMax,`${event.id}: invalid age range`);check(stageOverlap(event),`${event.id}: stage and age do not overlap`);check(event.contentRevision===13,`${event.id}: stale content revision`);inspectPredicates(event.requirements,event.id);
+  if(event.episode){keys(event.episode,episodeFields,`${event.id}:episode`);check(event.episode.id&&['career','family','personal','lifestyle'].includes(event.episode.lane),`${event.id}: invalid episode identity or lane`);check(Number.isInteger(event.episode.phase)&&event.episode.phase>=1,`${event.id}: invalid episode phase`);check(['start','continue','resolve'].includes(event.episode.role),`${event.id}: invalid episode role`);check(Number.isInteger(event.episode.delayYears)&&event.episode.delayYears>=0,`${event.id}: invalid episode delay`);check(Number.isInteger(event.episode.deadlineYears)&&event.episode.deadlineYears>=1&&event.episode.deadlineYears<=5,`${event.id}: invalid episode deadline`);check(typeof event.situation==='string'&&event.situation.length>0,`${event.id}: episode situation missing`);check(event.arc===null,`${event.id}: episode cannot also be an arc`)}
   for(const actor of event.actors||[]){keys(actor,actorFields,`${event.id}:actor`);check(actor.slot,`${event.id}: actor missing slot`);check(actor.relation||actor.relationAny,`${event.id}: actor missing relation query`)}
   const visible=event.text||event.prompt;check(typeof visible==='string'&&visible.length>0,`${event.id}: missing visible text`);if(event.kind==='beat'){check(!texts.has(visible),`${event.id}: duplicate beat text`);texts.add(visible)}
   if(event.kind==='beat'||event.kind==='blackSwan')inspectCommands(event.effects,event.id);
@@ -54,7 +54,7 @@ for(const event of data.events){
 }
 
 for(const track of tracks){
-  const beats=(kinds.beat||[]).filter(event=>event.track===track),decisions=(kinds.decision||[]).filter(event=>event.track===track&&event.arc),expectedDecisions=track==='habits'?15:track==='business'?4:8;check(beats.length===32,`${track}: needs 32 authored beats`);check(decisions.length===expectedDecisions,`${track}: needs ${expectedDecisions} legacy arc decisions`);check(JSON.stringify(data.trackCoverage[track]?.roles)==='["entry","development","daily","conflict","crisis","recovery","exit","legacy"]',`${track}: incomplete coverage roles`);
+  const beats=(kinds.beat||[]).filter(event=>event.track===track),decisions=(kinds.decision||[]).filter(event=>event.track===track&&event.arc),expectedDecisions=track==='habits'?15:track==='business'?4:['employment','public','leisure'].includes(track)?0:8;check(beats.length===32,`${track}: needs 32 authored beats`);check(decisions.length===expectedDecisions,`${track}: needs ${expectedDecisions} legacy arc decisions`);check(JSON.stringify(data.trackCoverage[track]?.roles)==='["entry","development","daily","conflict","crisis","recovery","exit","legacy"]',`${track}: incomplete coverage roles`);
   const intensities=Object.groupBy(beats,event=>event.intensity);check((intensities.low||[]).length===8&&(intensities.medium||[]).length===16&&(intensities.high||[]).length===8,`${track}: intensity coverage must be 8/16/8`);
   const arcs=Object.groupBy(decisions,event=>event.arc?.id);for(const [id,events]of Object.entries(arcs)){const expectedNodes=track==='habits'?[1,2,3]:[1,2,3,4];check(events.length===expectedNodes.length,`${id}: arc must have ${expectedNodes.length} nodes`);check(JSON.stringify(events.map(event=>event.arc.node))===JSON.stringify(expectedNodes),`${id}: arc nodes must be sequential`);check(events[0].arc.role==='start'&&events.at(-1).arc.role==='resolve',`${id}: arc lacks explicit start/resolve`);check(events.every((event,index)=>index===0||event.ageMin>=events[index-1].ageMin),`${id}: later node can start younger than its source`)}}
 
@@ -71,6 +71,18 @@ check(JSON.stringify(shopEpisodes.map(event=>event.episode.phase))==='[1,2,3]','
 check(shopEpisodes[0]?.episode.role==='start'&&shopEpisodes[1]?.episode.role==='continue'&&shopEpisodes[2]?.episode.role==='resolve','shop episode lacks start/continue/resolve');
 check(shopEpisodes.every(event=>event.episode.deadlineYears===5),'shop episode must end within five years');
 check(JSON.stringify(shopEpisodes[2]?.choices.map(choice=>choice.route))==='["survived","independent","stop_loss","debt_failure"]','shop episode endings are incomplete');
+const episodeExpectations={
+  public_exam:{ids:['decision_017','decision_018'],roles:['start','resolve'],deadline:2,routes:['appointed','retake','market_exit','withdrawn']},
+  layoff_reemployment:{ids:['decision_011','decision_012'],roles:['start','resolve'],deadline:2,routes:['same_field','bridge_job','retrained','long_search']},
+  career_break:{ids:['decision_040','decision_041','decision_042'],roles:['start','continue','resolve'],deadline:3,routes:['continue','low_intensity','full_time','forced_return']}
+};
+for(const[id,expected]of Object.entries(episodeExpectations)){
+  const events=(kinds.decision||[]).filter(event=>event.episode?.id===id).sort((a,b)=>a.episode.phase-b.episode.phase);
+  check(JSON.stringify(events.map(event=>event.id))===JSON.stringify(expected.ids),`${id}: event IDs shifted`);
+  check(JSON.stringify(events.map(event=>event.episode.role))===JSON.stringify(expected.roles),`${id}: roles are incomplete`);
+  check(events.every(event=>event.episode.deadlineYears===expected.deadline),`${id}: deadline is incorrect`);
+  check(JSON.stringify(events.at(-1)?.choices.map(choice=>choice.route))===JSON.stringify(expected.routes),`${id}: endings are incomplete`);
+}
 
 for(const event of kinds.beat||[]){
   if(event.track==='employment')check(hasPredicate(event,'employment.status','eq','employed'),`${event.id}: workplace beat can hit nonworker`);
@@ -91,7 +103,7 @@ const secretTexts=new Set();for(const secret of data.familySecrets){check(secret
 for(const family of data.familyArchetypes){for(const field of['parentCount','siblingRange','housingOptions','assetRange','debtRange','parentJobs','advantages','risks'])check(family[field]!==undefined,`${family.id}: missing ${field}`);check(family.parentCount>=1&&family.parentCount<=2,`${family.id}: invalid parent count`);check(family.siblingRange[0]<=family.siblingRange[1],`${family.id}: invalid sibling range`)}
 const cardNames=new Set(),cardTexts=new Set(),cardAges=new Map([0,18,35,55].map(age=>[age,0])),deadCardCapabilities=new Set(['evidence','network','cashBuffer','boundary','learning','riskSense','creativity','careSkill','negotiation']);
 for(const card of data.cards){
-  keys(card,['id','kind','drawAge','displayName','text','mechanic','effects','contentRevision'],card.id);inspectCommands(card.effects,card.id);check(card.contentRevision===12,`${card.id}: stale revision`);
+  keys(card,['id','kind','drawAge','displayName','text','mechanic','effects','contentRevision'],card.id);inspectCommands(card.effects,card.id);check(card.contentRevision===13,`${card.id}: stale revision`);
   check(cardAges.has(card.drawAge),`${card.id}: invalid draw age`);cardAges.set(card.drawAge,(cardAges.get(card.drawAge)||0)+1);
   check(card.kind===(card.drawAge===0?'innate':'stage'),`${card.id}: kind does not match draw age`);
   check(!/[·・]\s*(起步|转折|中段|回稳|余生)|你更容易在|保留一个可用选项/.test(`${card.displayName}${card.text}`),`${card.id}: leaks generated card language`);

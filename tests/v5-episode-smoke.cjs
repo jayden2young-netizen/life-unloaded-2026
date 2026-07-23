@@ -68,7 +68,7 @@ async function forceEpisode(page,id,index){
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
     assert.equal(migrated.schemaVersion,8);
-    assert.equal(migrated.gameVersion,'0.5.5');
+    assert.equal(migrated.gameVersion,'0.5.6');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'上一版完整人生');
     assert.deepEqual(migrated.meta.codex,['codex_01']);
@@ -101,7 +101,7 @@ async function forceEpisode(page,id,index){
     assert.equal(run.sceneQueue[0].kind,'choice');
     const savedChoice=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
     assert.equal(savedChoice.schemaVersion,8);
-    assert.equal(savedChoice.gameVersion,'0.5.5');
+    assert.equal(savedChoice.gameVersion,'0.5.6');
     assert.equal(savedChoice.run.sceneQueue[0].kind,'choice');
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);

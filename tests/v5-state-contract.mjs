@@ -73,8 +73,24 @@ check(shopEpisodes[0].choices[2].effects.some(effect=>effect.type==='addLiabilit
 check(shopEpisodes[1].choices.every(choice=>sets(choice,'business.status','operating')),'opening phase does not enter real operation');
 check(shopEpisodes[2].choices.map(choice=>choice.route).join(',')==='survived,independent,stop_loss,debt_failure','shop episode lacks success, independent, exit, or debt failure ending');
 check(sets(shopEpisodes[2].choices[2],'business.status','closed')&&sets(shopEpisodes[2].choices[3],'business.status','closed'),'shop closure routes leave the store operating');
-const partnerSupport=decisionBy(/伴侣能承担房租/);check(partnerSupport.actors.some(actor=>actor.relation==='partner'&&actor.statusAny.includes('partnered')),'partner-funded leisure lacks partner actor');
+const publicExam=decisions.filter(event=>event.episode?.id==='public_exam').sort((a,b)=>a.episode.phase-b.episode.phase);
+check(publicExam.length===2&&publicExam.map(event=>event.episode.role).join(',')==='start,resolve','public exam is not a two-phase episode');
+check(publicExam[1].choices.map(choice=>choice.route).join(',')==='appointed,retake,market_exit,withdrawn','public exam lacks appointment, retake, market exit, or withdrawal');
+check(publicExam[0].choices.every(choice=>!choice.effects.some(effect=>effect.type==='set'&&effect.target.startsWith('employment.'))),'public exam registration incorrectly ends or replaces current employment');
+check(sets(publicExam[1].choices[0],'employment.employerType','public')&&sets(publicExam[1].choices[0],'employment.status','employed'),'appointment route does not enter public employment');
+check(!publicExam[1].choices[1].effects.some(effect=>effect.type==='set'&&effect.target.startsWith('employment.'))&&sets(publicExam[1].choices[2],'employment.employerType','private')&&!publicExam[1].choices[3].effects.some(effect=>effect.type==='set'&&effect.target.startsWith('employment.')),'public exam exits do not preserve the current employment state');
+check(!eligible(publicExam[0],publicWorker),'existing public employee can restart recruitment episode');
+const layoffEpisode=decisions.filter(event=>event.episode?.id==='layoff_reemployment').sort((a,b)=>a.episode.phase-b.episode.phase);
+check(layoffEpisode.length===2&&layoffEpisode.map(event=>event.episode.role).join(',')==='start,resolve','layoff is not a two-phase episode');
+check(!eligible(layoffEpisode[0],base)&&eligible(layoffEpisode[0],employed),'layoff start is not restricted to current employment');
+check(layoffEpisode[1].choices.map(choice=>choice.route).join(',')==='same_field,bridge_job,retrained,long_search','layoff episode lacks all landing routes');
+check(layoffEpisode[1].choices.slice(0,3).every(choice=>sets(choice,'employment.status','employed'))&&sets(layoffEpisode[1].choices[3],'employment.status','unemployed'),'layoff endings write contradictory employment states');
+const careerBreak=decisions.filter(event=>event.episode?.id==='career_break').sort((a,b)=>a.episode.phase-b.episode.phase);
+check(careerBreak.length===3&&careerBreak.map(event=>event.episode.role).join(',')==='start,continue,resolve','career break is not a three-phase episode');
+check(!eligible(careerBreak[0],base)&&eligible(careerBreak[0],employed),'career break starts without an income-bearing work state');
+check(careerBreak[2].choices.map(choice=>choice.route).join(',')==='continue,low_intensity,full_time,forced_return','career break lacks continue, low-intensity, full-time, or forced return endings');
+check(sets(careerBreak[2].choices[0],'employment.status','none')&&sets(careerBreak[2].choices[1],'employment.status','gig')&&careerBreak[2].choices.slice(2).every(choice=>sets(choice,'employment.status','employed')),'career break endings do not distinguish nonwork, paid projects, and employment');
 for(const decision of decisions){const consequence=consequences.find(event=>event.sourceDecisionId===decision.id);check(Boolean(consequence),`${decision.id}: missing consequence`);for(const choice of decision.choices)check(Boolean(consequence?.choiceOutcomes?.[choice.memoryKey]),`${choice.id}: missing option-specific consequence`)}
 const divergent=decisions.every(decision=>new Set(decision.choices.map(choice=>JSON.stringify(choice.effects))).size>=2);check(divergent,'one or more decisions have identical state effects');
 
-console.log(JSON.stringify({trackFixtures:Object.keys(trackFixtures).length,semanticGuards:43,decisions:decisions.length,consequences:consequences.length,failures},null,2));if(failures.length)process.exit(1);
+console.log(JSON.stringify({trackFixtures:Object.keys(trackFixtures).length,semanticGuards:57,decisions:decisions.length,consequences:consequences.length,failures},null,2));if(failures.length)process.exit(1);
