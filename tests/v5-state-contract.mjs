@@ -24,8 +24,9 @@ check(!beats.filter(event=>event.track==='children'&&event.actors.length).some(e
 const parent=structuredClone(base);parent.relationships.childCount=1;parent.people.push({id:'child',relation:'child',bornAt:24,alive:true});check(beats.filter(event=>event.track==='children'&&event.actors.length).some(event=>eligible(event,parent)),'parent has no child-age-compatible scene');
 check(!decisions.filter(event=>event.track==='remote'&&event.arc?.node===1).some(event=>eligible(event,base)),'remote route starts without portable skill');
 const skilled=structuredClone(base);skilled.capabilities.portableSkill=2;check(decisions.filter(event=>event.track==='remote'&&event.arc?.node===1).some(event=>eligible(event,skilled)),'portable worker cannot enter remote route');
-check(!decisions.filter(event=>event.track==='business'&&event.arc?.node===1).some(event=>eligible(event,base)),'business route starts without funding');
-const funded=structuredClone(base);funded.age=35;funded.finance.available=25000;check(decisions.filter(event=>event.track==='business'&&event.arc?.node===1).some(event=>eligible(event,funded)),'funded adult cannot enter business route');
+const businessStarts=decisions.filter(event=>event.track==='business'&&(event.arc?.role==='start'||event.episode?.role==='start'));
+check(!businessStarts.some(event=>eligible(event,base)),'business route starts without funding');
+const funded=structuredClone(base);funded.age=35;funded.finance.available=25000;check(businessStarts.some(event=>eligible(event,funded)),'funded adult cannot enter business route');
 const closed=structuredClone(funded);closed.business.status='closed';check(!beats.filter(event=>event.track==='business').some(event=>eligible(event,closed)),'closed business still receives operating beat');
 check(!beats.filter(event=>event.track==='habits').some(event=>eligible(event,base)),'habit consequence occurs before exposure');
 const exposed=structuredClone(base);exposed.habits={type:'gambling',stage:'repeating',risk:10,recoveryYears:0};check(beats.filter(event=>event.track==='habits').some(event=>eligible(event,exposed)),'exposed habit state has no follow-up pool');
@@ -58,7 +59,7 @@ const operating=structuredClone(funded);operating.business.status='operating';
 const resting=structuredClone(base);resting.activity.mode='leisure';
 const elder=structuredClone(retired);elder.age=68;
 const trackFixtures={education:{...structuredClone(base),age:16},employment:employed,public:publicWorker,remote:remoteWorker,business:operating,leisure:resting,partnership:withPartner,children:parent,finance:base,health:base,habits:exposed,later:elder};
-for(const [track,run]of Object.entries(trackFixtures))check(beats.filter(event=>event.track===track).some(event=>eligible(event,run))||decisions.filter(event=>event.track===track&&event.arc?.role==='start').some(event=>eligible(event,run)),`${track}: directed fixture has no reachable content`);
+for(const [track,run]of Object.entries(trackFixtures))check(beats.filter(event=>event.track===track).some(event=>eligible(event,run))||decisions.filter(event=>event.track===track&&(event.arc?.role==='start'||event.episode?.role==='start')).some(event=>eligible(event,run)),`${track}: directed fixture has no reachable content`);
 const adolescentParent=structuredClone(base);adolescentParent.age=45;adolescentParent.relationships.childCount=1;adolescentParent.people.push({id:'teen',relation:'child',bornAt:30,alive:true});check(decisions.filter(event=>event.track==='children'&&/青春期/.test(event.prompt)).some(event=>eligible(event,adolescentParent)),'adolescent child cannot reach adolescent decision');
 check(!decisions.filter(event=>/成年孩子|兼职收入/.test(event.prompt)).some(event=>eligible(event,parent)),'young child reaches adult-child decision');
 const age40=structuredClone(employed);age40.age=40;check(!decisions.filter(event=>/退休|返聘/.test(event.prompt)).some(event=>eligible(event,age40)),'retirement decision reaches a 40-year-old');
@@ -66,7 +67,12 @@ const firstJob=decisionBy(/录用通知/);check(sets(firstJob.choices[2],'employ
 const rehire=decisionBy(/返聘/);check(sets(rehire.choices[0],'employment.status','employed')&&sets(rehire.choices[1],'employment.status','employed')&&sets(rehire.choices[2],'employment.status','retired'),'rehire choices write contradictory work states');
 const parenthood=decisionBy(/要不要成为父母/);check(parenthood.choices.every(choice=>!choice.effects.some(effect=>effect.type==='createPerson')),'parenthood discussion creates a child immediately');
 const fertility=decisionBy(/生育计划遇到/);check(fertility.choices.slice(0,2).every(choice=>choice.effects.some(effect=>effect.type==='createPerson'))&&fertility.choices[2].arcExit===true,'fertility branch cannot create or explicitly end a child route');
-const sampleStore=decisionBy(/样板店/);check(sampleStore.choices[2].arcExit===true&&!sampleStore.choices[2].effects.some(effect=>effect.type==='addLiability'),'ending a sample-store inspection creates debt or leaves arc active');
+const shopEpisodes=decisions.filter(event=>event.episode?.id==='shop_opening').sort((a,b)=>a.episode.phase-b.episode.phase);
+check(shopEpisodes.length===3&&shopEpisodes.map(event=>event.episode.role).join(',')==='start,continue,resolve','shop episode is not a three-phase start/continue/resolve cluster');
+check(shopEpisodes[0].choices[2].effects.some(effect=>effect.type==='addLiability'&&effect.guaranteed),'guaranteed opening route lacks explicit liability');
+check(shopEpisodes[1].choices.every(choice=>sets(choice,'business.status','operating')),'opening phase does not enter real operation');
+check(shopEpisodes[2].choices.map(choice=>choice.route).join(',')==='survived,independent,stop_loss,debt_failure','shop episode lacks success, independent, exit, or debt failure ending');
+check(sets(shopEpisodes[2].choices[2],'business.status','closed')&&sets(shopEpisodes[2].choices[3],'business.status','closed'),'shop closure routes leave the store operating');
 const partnerSupport=decisionBy(/伴侣能承担房租/);check(partnerSupport.actors.some(actor=>actor.relation==='partner'&&actor.statusAny.includes('partnered')),'partner-funded leisure lacks partner actor');
 for(const decision of decisions){const consequence=consequences.find(event=>event.sourceDecisionId===decision.id);check(Boolean(consequence),`${decision.id}: missing consequence`);for(const choice of decision.choices)check(Boolean(consequence?.choiceOutcomes?.[choice.memoryKey]),`${choice.id}: missing option-specific consequence`)}
 const divergent=decisions.every(decision=>new Set(decision.choices.map(choice=>JSON.stringify(choice.effects))).size>=2);check(divergent,'one or more decisions have identical state effects');

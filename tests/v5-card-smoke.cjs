@@ -4,7 +4,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=path.join(ROOT,'test-results','v0.5.4-cards');
+const OUT=path.join(ROOT,'test-results','v0.5.5-cards');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const prompts=new Map([
   [0,'你带着什么开始这一生？'],
