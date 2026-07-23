@@ -35,14 +35,14 @@ for(const [index,decision] of decisions.entries()){
   const source=sourceDecisions[index];
   check(decision.prompt===source?.prompt,`${decision.id}: generated prompt differs from authored copy`);
   inRange(decision.prompt,15,55,`${decision.id} prompt`);
-  check(decision.choices.length===3,`${decision.id}: expected three choices`);
+  check(decision.choices.length===(decision.episode?.role==='resolve'?4:3),`${decision.id}: choice count does not match decision role`);
   for(const [choiceIndex,choice] of decision.choices.entries()){
     const authored=source?.choices[choiceIndex];
     check(choice.text===authored?.text,`${choice.id}: option text differs from authored copy`);
     check(choice.resultText===authored?.resultText,`${choice.id}: result text differs from authored copy`);
     check(!choice.hints?.length,`${choice.id}: employment choice still exposes mechanism hint`);
     inRange(choice.text,4,18,`${choice.id} option`);
-    inRange(choice.resultText,10,42,`${choice.id} result`);
+    inRange(choice.resultText,10,decision.episode?55:42,`${choice.id} result`);
     resultTexts.push(choice.resultText);
   }
   const consequence=consequences[index];
