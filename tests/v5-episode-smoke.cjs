@@ -8,6 +8,8 @@ const OUT=process.env.EPISODE_SMOKE_OUT||path.join(ROOT,'test-results','v0.5.5-e
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
+const shopIds=[1,2,3].map(phase=>data.events.find(event=>event.episode?.id==='shop_opening'&&event.episode.phase===phase)?.id);
 fs.mkdirSync(OUT,{recursive:true});
 
 async function fit(page,label){
@@ -68,7 +70,7 @@ async function forceEpisode(page,id,index){
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
     assert.equal(migrated.schemaVersion,8);
-    assert.equal(migrated.gameVersion,'0.5.8');
+    assert.equal(migrated.gameVersion,'0.5.9');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'上一版完整人生');
     assert.deepEqual(migrated.meta.codex,['codex_01']);
@@ -86,7 +88,7 @@ async function forceEpisode(page,id,index){
     await openPlayable(page);
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:30,cardAges:[0,18,35,55],finance:{cash:180000,liabilities:[]},business:{mode:'none',status:'none',equity:0}}));
 
-    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceDecision('decision_033')),'decision_033');
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),shopIds[0]),shopIds[0]);
     let run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
     const phaseAge=run.age,timelineBefore=run.timeline.length,cashBefore=run.finance.cash;
     assert.equal(run.sceneQueue[0].kind,'situation');
@@ -101,7 +103,7 @@ async function forceEpisode(page,id,index){
     assert.equal(run.sceneQueue[0].kind,'choice');
     const savedChoice=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
     assert.equal(savedChoice.schemaVersion,8);
-    assert.equal(savedChoice.gameVersion,'0.5.8');
+    assert.equal(savedChoice.gameVersion,'0.5.9');
     assert.equal(savedChoice.run.sceneQueue[0].kind,'choice');
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
@@ -151,10 +153,10 @@ async function forceEpisode(page,id,index){
       await page.locator('button[data-act="close-drawer"]').click();
     }
 
-    run=await forceEpisode(page,'decision_034',0);
+    run=await forceEpisode(page,shopIds[1],0);
     assert.equal(run.episodes.shop_opening.phase,3);
     const endAge=run.age;
-    run=await forceEpisode(page,'decision_035',0);
+    run=await forceEpisode(page,shopIds[2],0);
     assert.equal(run.episodes.shop_opening.status,'resolved');
     assert.equal(run.episodes.shop_opening.closureReason,'survived');
     assert.equal(run.business.status,'operating');
@@ -168,7 +170,7 @@ async function forceEpisode(page,id,index){
     for(const ending of endings){
       const age=(await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age;
       await page.evaluate(({ageValue})=>window.__LIFE_DEBUG__.patchRun({age:ageValue,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,business:{status:'operating',mode:'franchise',equity:0},episodes:{shop_opening:{status:'active',phase:3,startedAt:ageValue-2,nextPhaseAge:ageValue,deadlineAge:ageValue+3,route:'lean',boundActors:{organization:{kind:'organization',id:`shop_opening:${ageValue-2}`,label:'本轮考察的门店'}},commitments:[],closureReason:null}}}),{ageValue:age});
-      run=await forceEpisode(page,'decision_035',ending.index);
+      run=await forceEpisode(page,shopIds[2],ending.index);
       assert.equal(run.episodes.shop_opening.closureReason,ending.route);
       assert.equal(run.episodes.shop_opening.status,ending.status);
       assert.equal(run.business.status,ending.business);

@@ -97,12 +97,12 @@ export const EMPLOYMENT_COPY={
       ]
     },
     {
-      prompt:'退休手续快办完时，公司想让你再带一年新人，工资另算。',
-      echoText:'那次退休前的约定到了期限。',
+      prompt:'长期岗位合同到期前，公司想让你再带一年新人，工资另算。',
+      echoText:'那次合同到期前的约定走到了日期。',
       choices:[
-        {text:'返聘一年写清期限',resultText:'返聘合同写到具体日期，带的新人也列进了附件。',consequenceText:'一年到期，公司又来问时，新人已经能自己值班了。'},
-        {text:'只做短期顾问',resultText:'你每周去两天，不再参加部门考勤和临时会议。',consequenceText:'项目交接结束后，你的门禁权限按约定当天关闭。'},
-        {text:'按计划退休',resultText:'你把工牌交回前台，工作群在下午安静地退了。',consequenceText:'下个月发薪日，手机没有到账短信，养老金晚两天来了。'}
+        {text:'续约一年并带新人',resultText:'续约合同写到具体日期，带的新人也列进了附件。',consequenceText:'一年到期，公司又来问时，新人已经能自己值班了。'},
+        {text:'只做三个月交接',resultText:'你每周去两天，不再参加部门考勤和临时会议。',consequenceText:'项目交接结束后，你的门禁权限按约定当天关闭。'},
+        {text:'到期离开另作安排',resultText:'你交回工牌、结清工资和未休假期，没有在这份合同里提前决定退休。',consequenceText:'下一次安排工作与生活时，退休资格仍需要单独核对。'}
       ]
     }
   ]

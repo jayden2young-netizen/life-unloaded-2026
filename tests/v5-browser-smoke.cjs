@@ -82,7 +82,7 @@ let browser;
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
   assert.equal(migrated.state.schemaVersion, 8);
-  assert.equal(migrated.state.gameVersion, '0.5.8');
+  assert.equal(migrated.state.gameVersion, '0.5.9');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
