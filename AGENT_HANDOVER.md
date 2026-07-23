@@ -11,9 +11,10 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前发布版本：v0.5.2
+- 当前开发版本：v0.5.3
+- 上一个已发布版本：v0.5.2
 - `schemaVersion`：7
-- `contentRevision`：9
+- `contentRevision`：10
 - localStorage 键：`life-unloaded-2026-v1`
 - `main` 交接基线：`1ed002ac89a6def75f216bceae2efd80b6907653`
 - 基线提交说明：`Merge v0.5.2 native Chinese rewrite`
@@ -96,12 +97,17 @@ tests/                            静态、状态、语言与浏览器检查
 
 这次只重写文案，没有调整事件数量、状态条件、效果、数值平衡或界面布局。
 
+## v0.5.3 卡牌修复
+
+72张卡牌已移动到 `content/zh-CN/cards.mjs`，按0、18、35、55岁分成12／20／20／20四个池。每张卡都有独立名称、生活化说明、`drawAge` 和至少一项实际状态效果。
+
+运行时只从当前年龄对应的池中抽三张牌。旧的“起步／转折／中段／回稳／余生”后缀和不可达的 `adversity` 池已删除。四次抽卡仍发生在0、18、35、55岁，72张总量和底部弹层交互不变。
+
 ## 尚未完成
 
 下一批明确留下的中文内容是：
 
 - 44 个家庭秘密
-- 72 张卡牌的名称与说明
 - 结局标题、总结和判词
 
 这些内容目前能运行，但仍有批量模板或较抽象的说明。接手时应先读实际源文件，确认哪些文字仍由生成器拼接，再决定本轮范围。不要把文案任务顺手扩成机制重构或数值调整。
