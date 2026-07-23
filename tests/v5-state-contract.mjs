@@ -11,7 +11,7 @@ const requirements=(event,run)=>{const req=event.requirements||{},match=rule=>co
 const personAge=(person,run)=>run.age-person.bornAt;
 const actors=(event,run)=>(event.actors||[]).every(spec=>spec.optional||run.people.some(person=>(!spec.relation||person.relation===spec.relation)&&(!spec.relationAny||spec.relationAny.includes(person.relation))&&(spec.alive===undefined||person.alive===spec.alive)&&(spec.ageMin===undefined||personAge(person,run)>=spec.ageMin)&&(spec.ageMax===undefined||personAge(person,run)<=spec.ageMax)&&(!spec.statusAny||person.relation!=='partner'||spec.statusAny.includes(run.relationships.partnerStatus))));
 const eligible=(event,run)=>run.age>=event.ageMin&&run.age<=event.ageMax&&requirements(event,run)&&actors(event,run);
-const base={age:30,education:{status:'completed',level:4},employment:{status:'none',employerType:'none',arrangement:'onsite'},activity:{mode:'seeking'},finance:{available:0,totalDebt:0},relationships:{partnerStatus:'none',childCount:0},people:[],capabilities:{portableSkill:0},mobility:{mode:'home'},business:{status:'none'},habits:{risk:0}};
+const base={age:30,education:{status:'completed',level:4},employment:{status:'none',employerType:'none',arrangement:'onsite'},activity:{mode:'seeking'},finance:{cash:0,available:0,totalDebt:0,hasArrears:false},relationships:{partnerStatus:'none',childCount:0},people:[],attrs:{physique:5},health:{physical:75,status:'well',conditionSeverity:0,disability:'none'},pressures:{money:0,body:0,career:0,family:0},capabilities:{portableSkill:0,healthLiteracy:0,resilience:0},mobility:{mode:'home'},business:{status:'none'},habits:{risk:0}};
 const beats=data.events.filter(event=>event.kind==='beat'),decisions=data.events.filter(event=>event.kind==='decision'),consequences=data.events.filter(event=>event.kind==='consequence');
 const decisionBy=pattern=>decisions.find(event=>pattern.test(event.prompt));
 const sets=(choice,target,value)=>choice.effects.some(effect=>effect.type==='set'&&effect.target===target&&effect.value===value);
@@ -29,6 +29,10 @@ const funded=structuredClone(base);funded.age=35;funded.finance.available=25000;
 const closed=structuredClone(funded);closed.business.status='closed';check(!beats.filter(event=>event.track==='business').some(event=>eligible(event,closed)),'closed business still receives operating beat');
 check(!beats.filter(event=>event.track==='habits').some(event=>eligible(event,base)),'habit consequence occurs before exposure');
 const exposed=structuredClone(base);exposed.habits.risk=10;check(beats.filter(event=>event.track==='habits').some(event=>eligible(event,exposed)),'exposed habit state has no follow-up pool');
+check(!decisions.filter(event=>event.track==='health'&&event.arc?.role==='start').some(event=>eligible(event,base)),'healthy person is forced into an illness decision arc');
+const monitored=structuredClone(base);monitored.health.status='monitoring';monitored.health.conditionSeverity=18;check(decisions.filter(event=>event.track==='health'&&event.arc?.node===1).some(event=>eligible(event,monitored)),'monitored health state has no assessment route');
+const limited=structuredClone(base);limited.age=45;limited.health.status='limited';limited.health.conditionSeverity=42;limited.health.disability='persistent';check(decisions.filter(event=>event.track==='health'&&event.arc?.node===1).some(event=>eligible(event,limited))&&decisions.filter(event=>event.track==='health'&&event.arc?.node===1).length===2,'serious health state has no distinct recovery route');
+check(!beats.filter(event=>event.track==='finance'&&/还款|催收|法院/.test(event.text)).some(event=>eligible(event,base)),'debt-free person receives collection or repayment scene');
 
 const withPartner=structuredClone(base);withPartner.relationships.partnerStatus='dating';withPartner.people.push({id:'partner',relation:'partner',bornAt:2,alive:true});
 const publicWorker=structuredClone(employed);publicWorker.employment.employerType='public';
@@ -50,4 +54,4 @@ const partnerSupport=decisionBy(/伴侣可以承担开支/);check(partnerSupport
 for(const decision of decisions){const consequence=consequences.find(event=>event.sourceDecisionId===decision.id);check(Boolean(consequence),`${decision.id}: missing consequence`);for(const choice of decision.choices)check(Boolean(consequence?.choiceOutcomes?.[choice.memoryKey]),`${choice.id}: missing option-specific consequence`)}
 const divergent=decisions.every(decision=>new Set(decision.choices.map(choice=>JSON.stringify(choice.effects))).size>=2);check(divergent,'one or more decisions have identical state effects');
 
-console.log(JSON.stringify({trackFixtures:Object.keys(trackFixtures).length,semanticGuards:21,decisions:decisions.length,consequences:consequences.length,failures},null,2));if(failures.length)process.exit(1);
+console.log(JSON.stringify({trackFixtures:Object.keys(trackFixtures).length,semanticGuards:25,decisions:decisions.length,consequences:consequences.length,failures},null,2));if(failures.length)process.exit(1);
