@@ -4,7 +4,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.FAMILY_MIGRATION_SMOKE_OUT||path.join(ROOT,'test-results','v0.5.9-family-regression');
+const OUT=process.env.FAMILY_MIGRATION_SMOKE_OUT||path.join(ROOT,'test-results','v0.5.10-family-regression');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
@@ -59,9 +59,9 @@ async function chooseAndFinish(page,index){
 }
 
 (async()=>{
-  assert.equal(data.version,'0.5.9');
-  assert.equal(data.schemaVersion,8);
-  assert.equal(data.contentRevision,16);
+  assert.equal(data.version,'0.5.10');
+  assert.equal(data.schemaVersion,9);
+  assert.equal(data.contentRevision,17);
   assert.ok(migratedIds.every(id=>eventFor(id)&&data.episodeCatalog[id]?.deadline&&data.episodeCatalog[id]?.invalidated));
   assert.ok(decisions.every(event=>!('arc' in event)));
   for(const id of migratedIds){
@@ -85,7 +85,7 @@ async function chooseAndFinish(page,index){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.5.9');
+    assert.equal(migrated.gameVersion,'0.5.10');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'上一版完整人生');
     assert.equal(migrated.meta.settings.haptic,false);

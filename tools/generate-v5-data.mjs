@@ -6,7 +6,7 @@ import {TRACK_COPY} from '../content/zh-CN/tracks/index.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const output=path.join(here,'..','data.json');
-const VERSION='0.5.9',SCHEMA_VERSION=8,CONTENT_REVISION=16;
+const VERSION='0.5.10',SCHEMA_VERSION=9,CONTENT_REVISION=17;
 const stages={infancy:[0,5],childhood:[6,12],adolescence:[13,18],youth:[19,29],establishment:[30,44],midlife:[45,59],later:[60,74],elder:[75,105]};
 const stageNames=Object.keys(stages);
 const stageFor=(min,max)=>stageNames.filter(name=>Math.max(min,stages[name][0])<=Math.min(max,stages[name][1]));
@@ -34,9 +34,37 @@ const conflicts=[
 const familyNames=['城郊双职工家庭','县城小生意家庭','乡镇务农家庭','一线城市新市民家庭','教师家庭','医护家庭','个体运输家庭','基层公职家庭','工厂职工家庭','单亲务工家庭','隔代照护家庭','多子女经营家庭','技术工人家庭','自由职业家庭','小城房产家庭','返乡创业家庭','外出经商家庭','社区服务家庭','文艺从业家庭','平台劳动家庭','负债置业家庭','拆迁安置家庭','稳定储蓄家庭','高控制家庭','低表达家庭','照护压力家庭','跨城婚姻家庭','流动租住家庭','小康专业家庭','隐性债务家庭'];
 const familyClasses=['working','smallBusiness','rural','newUrban','professional'];
 const jobPools={working:['工厂职工','门店店员','物流司机','物业人员'],smallBusiness:['小店经营者','餐饮经营者','个体运输者','维修店主'],rural:['务农者','乡镇工人','村医助理','农机手'],newUrban:['平台骑手','客服人员','建筑工人','家政人员'],professional:['教师','护士','工程技术员','基层职员']};
+const familyClassFor=name=>/小生意|经营|创业|经商/.test(name)?'smallBusiness':/乡镇|务农/.test(name)?'rural':/新市民|平台|跨城|流动租住/.test(name)?'newUrban':/教师|医护|基层公职|自由职业|社区服务|文艺|小康专业/.test(name)?'professional':'working';
+const familyJobsFor=(name,familyClass)=>{
+  if(/教师/.test(name))return['中小学教师','幼儿园教师','教务人员','教育机构行政'];
+  if(/医护/.test(name))return['护士','医生','医技人员','医院行政'];
+  if(/个体运输/.test(name))return['货运司机','网约车司机','物流调度','车辆维修工'];
+  if(/基层公职/.test(name))return['基层职员','社区干部','事业单位职员','窗口办事员'];
+  if(/工厂职工/.test(name))return['流水线工人','数控操作员','质检员','设备维修工'];
+  if(/技术工人/.test(name))return['电工','焊工','数控操作员','设备维修工'];
+  if(/自由职业/.test(name))return['自由撰稿人','摄影从业者','设计接单者','小型工作室经营者'];
+  if(/文艺从业/.test(name))return['演出从业者','美术从业者','编辑','文化场馆职员'];
+  if(/平台劳动/.test(name))return['平台骑手','网约车司机','电商客服','直播运营'];
+  if(/社区服务/.test(name))return['社区工作者','养老护理员','物业人员','窗口办事员'];
+  if(/小康专业/.test(name))return['工程技术员','会计','教师','医技人员'];
+  if(/返乡创业/.test(name))return['农产品经营者','乡镇店主','电商经营者','农机服务者'];
+  if(/外出经商/.test(name))return['批发经营者','餐饮经营者','门店经营者','物流经营者'];
+  return jobPools[familyClass];
+};
 const familyArchetypes=familyNames.map((name,index)=>{
-  const familyClass=familyClasses[index%5],single=/单亲/.test(name),multi=/多子女/.test(name),debt=/负债|债务|经营/.test(name),rural=/乡镇|务农|返乡/.test(name);
-  return{id:`family_${String(index+1).padStart(2,'0')}`,name,familyClass,weight:10+index%4,locationAffinity:rural?['county','town']:index%3===0?['tier1','tier2']:['tier2','county'],parentCount:single?1:2,siblingRange:multi?[2,3]:index%4===0?[1,2]:[0,1],housingOptions:rural?['自建房','老宅']:index%3===0?['租住房','按揭商品房']:['单位住房','老城区住房','按揭商品房'],assetRange:rural?[30000,260000]:[20000+(index%5)*20000,180000+(index%4)*120000],debtRange:debt?[80000,480000]:[0,90000],cashflow:clamp(34+(index*7)%58,20,92),control:/高控制|基层公职/.test(name)?78:clamp(30+(index*11)%55,20,82),expression:clamp(28+(index*13)%60,20,88),careBurden:/照护|隔代/.test(name)?82:clamp(25+(index*9)%55,15,80),riskTolerance:clamp(24+(index*17)%68,15,90),digitalLiteracy:clamp(20+(index*19)%70,15,92),parentJobs:jobPools[familyClass],advantages:[index%2?'互相照应':'信息较早',index%3?'能吃苦':'有稳定住房'],risks:[debt?'隐性债务':index%2?'照护责任':'现金流波动'],lateEcho:index%2?'晚年时，旧家庭分工又回到饭桌上。':'父母留下的一件物品重新定义了你对家的理解。',contentRevision:CONTENT_REVISION};
+  const familyClass=familyClassFor(name),single=/单亲/.test(name),multi=/多子女/.test(name),debt=/负债|债务|经营/.test(name),rural=/乡镇|务农|返乡/.test(name);
+  const cashflow=clamp(34+(index*7)%58,20,92),control=/高控制|基层公职/.test(name)?78:clamp(30+(index*11)%55,20,82),expression=clamp(28+(index*13)%60,20,88),careBurden=/照护|隔代/.test(name)?82:clamp(25+(index*9)%55,15,80),digitalLiteracy=clamp(20+(index*19)%70,15,92);
+  const professional=familyClass==='professional'||/教师|医护|小康专业/.test(name),mobile=/新市民|平台|跨城|流动|外出/.test(name),absent=/隔代|跨城|外出|平台|医护/.test(name),unsafe=/高控制|低表达|负债|债务/.test(name);
+  const contextDefaults={
+    resources:clamp(cashflow+(professional?12:0)-(debt?18:0)-(single?8:0),15,92),
+    educationCapital:clamp(32+(professional?42:0)+digitalLiteracy*.22-(rural?10:0),15,92),
+    caregiverAvailability:clamp(72-(absent?28:0)-(multi?12:0)-(careBurden-40)*.28,18,90),
+    parentPresence:clamp(74-(absent?34:0)-(single?12:0),15,92),
+    housingStability:clamp(72-(mobile?30:0)-(debt?15:0)+(rural?8:0),18,94),
+    emotionalSafety:clamp(45+expression*.45-control*.35-(unsafe?8:0),18,90),
+    educationBudget:clamp(cashflow*.58+(professional?25:0)-(debt?12:0),12,94)
+  };
+  return{id:`family_${String(index+1).padStart(2,'0')}`,name,familyClass,weight:10+index%4,locationAffinity:rural?['county','town']:index%3===0?['tier1','tier2']:['tier2','county'],parentCount:single?1:2,siblingRange:multi?[2,3]:index%4===0?[1,2]:[0,1],housingOptions:rural?['自建房','老宅']:index%3===0?['租住房','按揭商品房']:['单位住房','老城区住房','按揭商品房'],assetRange:rural?[30000,260000]:[20000+(index%5)*20000,180000+(index%4)*120000],debtRange:debt?[80000,480000]:[0,90000],cashflow,control,expression,careBurden,riskTolerance:clamp(24+(index*17)%68,15,90),digitalLiteracy,parentJobs:familyJobsFor(name,familyClass),contextDefaults,advantages:[contextDefaults.resources>=68?'教育和试错预算较充足':contextDefaults.emotionalSafety>=58?'关系中有人愿意回应':'家里仍保留可用的生活经验',contextDefaults.educationCapital>=65?'较早接触升学信息':contextDefaults.housingStability>=62?'住处相对稳定':'能适应环境变化'],risks:[contextDefaults.resources<40?'额外费用会压缩选择':contextDefaults.parentPresence<45?'照顾者经常缺席':'家庭期待会进入选择',contextDefaults.emotionalSafety<45?'表达与控制形成压力':careBurden>65?'照护责任较重':'现金流仍需核对'],lateEcho:index%2?'晚年时，旧家庭分工又回到饭桌上。':'父母留下的一件物品重新定义了你对家的理解。',contentRevision:CONTENT_REVISION};
 });
 
 const secretSubjects=['一笔未结清的经营贷款','父亲替亲戚做过的担保','母亲中断过的升学计划','一套没有完成过户的房子','一段长期隐瞒的失业期','祖辈留下的慢性病史','父母分开保管的账本','一笔被当作存款的保险','从未告诉你的同父异母手足','家里替别人垫付的医药费','小店真实的月度流水','父母婚姻中的长期分居','被借走多年没有归还的钱','一次失败加盟留下的设备','家里一直代管的压岁钱','一份缴费年限不足的社保记录','父母曾拒绝的一次迁城机会','旧房实际存在的产权争议','母亲长期服药的原因','父亲戒酒前的那几年','亲戚名下却由家里偿还的车','一份被藏起的录取通知书','祖父母真正承担的育儿费用','家里给弟妹预留的教育金','父母没有说出口的离婚协议','一次工伤后的补偿款','家里坚持保留的小额现金','被注销前仍欠费的公司','父母替你准备的首付款来源','一笔无法继承的集体资产','家里真正依赖的兼职收入','一张写错受益人的保单','亲戚口中的稳赚项目','父母共同隐瞒的信用卡账单','一处长期空置的县城门面','家庭成员真实的照护诊断','父亲交出的银行卡密码','母亲保存的租房收据','一次没有报警的网络诈骗','家里不愿提起的借名买房','一项被夸大的职业资格','祖辈口头承诺的遗产','小生意欠下的供应商货款','父母彼此都以为对方知道的秘密'];
@@ -168,6 +196,36 @@ const HEALTH_BEATS=[
   healthBeat([65,105],'治疗方案不再追求回到从前，只保住还能做的事。','high',req([p('health.status','in',['limited','managed']),p('health.conditionSeverity','gte',30)]),[c('healthRecovery','health',8),c('add','desires.body.fulfillment',2)],12)
 ];
 
+const EDUCATION_BEAT_AGES=[[6,10],[7,12],[8,14],[9,15],[10,16],[11,17],[12,18],[13,18]];
+function educationBeatSpec(index){
+  const age=EDUCATION_BEAT_AGES[index%8],requirements=req(),effects=[c('tag','history',`education:school:${index+1}`)],add=(target,value)=>effects.push(c('add',target,value));
+  if(index<8){
+    const targets=['development.learningHabit','development.learningHabit','development.teacherSupport','development.peerSupport','development.learningHabit','capabilities.learning','development.learningHabit','development.selfAdvocacy'];
+    add(targets[index],[2,3,4,4,4,1,2,2][index]);
+  }else if(index<16){
+    add(index===10||index===15?'development.routeKnowledge':index===11?'development.careLoad':'development.selfAdvocacy',[1,1,2,2,1,-1,1,3][index-8]);
+    if(index===11)add('pressures.family',2);
+  }else if(index===16){
+    requirements.all.push(p('development.severeSchoolHarm','eq',false));effects.push(c('set','development.severeSchoolHarm',true),c('set','development.schoolHarmType','bullying'));add('development.traumaLoad',18);add('development.attendance',-8);add('health.mental',-5);
+  }else if(index===17){
+    requirements.all.push(p('development.severeSchoolHarm','eq',false));effects.push(c('set','development.severeSchoolHarm',true),c('set','development.schoolHarmType','teacher'));add('development.traumaLoad',16);add('development.teacherSupport',-12);add('health.mental',-5);
+  }else if(index===18){add('development.peerSupport',-6);add('development.selfAdvocacy',-2)}
+  else if(index===19){requirements.all.push(p('development.careLoad','gte',15));add('development.attendance',-5);add('development.careLoad',4)}
+  else if(index===20){requirements.all.push(p('originHousehold.context.housingStability','lte',58));add('development.attendance',-4);add('development.traumaLoad',3)}
+  else if(index===21){requirements.all.push(p('originHousehold.context.resources','lte',55));effects.push(c('expose','development.routeExposure','studentAid'));add('development.routeKnowledge',4);add('development.selfAdvocacy',2);add('pressures.family',2)}
+  else if(index===22){requirements.all.push(p('development.severeSchoolHarm','eq',true),p('development.schoolHarmResolved','eq',false));add('development.selfAdvocacy',4)}
+  else if(index===23){effects.push(c('expose','development.routeExposure','vocational'));add('development.routeKnowledge',4)}
+  else if(index===24){add('development.traumaLoad',4);add('pressures.family',4)}
+  else if(index===25){effects.push(c('expose','development.routeExposure','scholarship'));add('development.teacherSupport',8);add('development.selfAdvocacy',4);add('development.routeKnowledge',5)}
+  else if(index===26){add('development.peerSupport',7);add('development.selfAdvocacy',3)}
+  else if(index===27){requirements.all.push(p('development.severeSchoolHarm','eq',true));add('development.attendance',6);add('development.traumaLoad',-5)}
+  else if(index===28){effects.push(c('expose','development.routeExposure','vocational'));add('development.routeKnowledge',7)}
+  else if(index===29){effects.push(c('expose','development.routeExposure','overseas'));add('development.languagePreparation',12);add('development.routeKnowledge',8)}
+  else if(index===30){effects.push(c('expose','development.routeExposure','alternativeSchool'));add('development.routeKnowledge',6)}
+  else{add('development.routeKnowledge',5);add('development.selfAdvocacy',2)}
+  return{age,requirements,effects,weight:index===16||index===17?5:10+index%4};
+}
+
 const annualBeats=[];
 for(const id of trackOrder){
   const spec=TRACKS[id];
@@ -180,6 +238,11 @@ for(const id of trackOrder){
     if(id==='habits'){
       const row=TRACK_COPY.habits.beats[index],requirements={all:[p('habits.type','eq',row.type),p('habits.stage','in',row.stageAny),p('habits.risk','gte',1)],any:[],none:[]};
       annualBeats.push({id:`beat_${String(annualBeats.length+1).padStart(3,'0')}`,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'◌',text:row.text,tone:row.tone,intensity:row.intensity,requirements,actors:[],effects:habitBeatEffects(row,index),assertions:[],weight:12+(row.effect==='recovery'?4:0),contentRevision:CONTENT_REVISION});
+      continue;
+    }
+    if(id==='education'){
+      const row=educationBeatSpec(index),authoredBeat=TRACK_COPY.education.beats[index];
+      annualBeats.push({id:`beat_${String(annualBeats.length+1).padStart(3,'0')}`,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'▤',text:authoredBeat.text,tone:authoredBeat.tone,intensity:index<8?'low':index<24?'medium':'high',requirements:row.requirements,actors:[],effects:row.effects,assertions:[],weight:row.weight,contentRevision:CONTENT_REVISION});
       continue;
     }
     const requirements=requirementsFor(id),actors=actorsFor(id,index,'beat'),role=index%8,ageRange=TRACK_NODE_AGES[id][role];
@@ -196,8 +259,52 @@ for(const id of trackOrder){
     annualBeats.push({id:`beat_${String(annualBeats.length+1).padStart(3,'0')}`,kind:'beat',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:{education:'▤',employment:'▥',public:'⌂',remote:'⌁',business:'◇',leisure:'○',partnership:'♡',children:'♧',finance:'¥',health:'+',habits:'◌',later:'↩'}[id],text:authoredBeat.text,tone:authoredBeat.tone,intensity:index<8?'low':index<24?'medium':'high',requirements,actors,effects:beatEffects(id,index),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:10+index%4,contentRevision:CONTENT_REVISION});
   }
 }
-const originTexts=['出生证上的地址和父母租约并不相同。','家里第一次为你单独开了一个小抽屉。','父母在夜里讨论谁请假照顾你。','社区医院的疫苗本盖下第一枚章。','旧相册里有人总是站在画面外。','家里把压岁钱记进一本红色账本。','你第一次发现同学家的房间只属于自己。','一次搬家让上学路线多了四十分钟。','父母为一张补习班收据争执到深夜。','亲戚送来的旧电脑先问了弟妹意见。','家里开始讨论中学要不要跨区。','你听见父母第一次说起工作不稳定。','班主任把家庭情况表压在作业下面。','父母让你保管一把家门钥匙。','毕业照里有些同学已经决定离开。','成年前夜，家里的账本第一次向你打开。'];
-originTexts.forEach((text,index)=>annualBeats.push({id:`beat_${String(annualBeats.length+1).padStart(3,'0')}`,kind:'beat',track:'origin',stage:stageFor(index,Math.min(18,index+3)),ageMin:index,ageMax:Math.min(18,index+3),icon:'⌂',text,intensity:index<8?'low':'medium',requirements:{all:[],any:[],none:[]},actors:[],effects:[c('add','relationships.originBond',index%3-1),c('add','desires.familyBelonging.fulfillment',index%2?1:-1),c('tag','history',`origin:${index+1}`)],assertions:[],weight:16,contentRevision:CONTENT_REVISION}));
+const originProfiles=[
+  {key:'strained_safe',requirements:req([p('originHousehold.context.resourceTier','eq','strained'),p('originHousehold.context.emotionalSafety','gte',50)])},
+  {key:'strained_unsafe',requirements:req([p('originHousehold.context.resourceTier','eq','strained'),p('originHousehold.context.emotionalSafety','lt',50)])},
+  {key:'comfortable_present',requirements:req([p('originHousehold.context.resourceTier','eq','comfortable'),p('originHousehold.context.parentPresence','gte',50),p('originHousehold.context.emotionalSafety','gte',55)])},
+  {key:'comfortable_unsafe',requirements:req([p('originHousehold.context.resourceTier','eq','comfortable'),p('originHousehold.context.parentPresence','gte',50),p('originHousehold.context.emotionalSafety','lt',55)])},
+  {key:'comfortable_absent',requirements:req([p('originHousehold.context.resourceTier','eq','comfortable'),p('originHousehold.context.parentPresence','lt',50)])},
+  {key:'stable',requirements:req()}
+];
+const originMilestones={
+  2:{
+    strained_safe:['家里把婴儿用品分装进旧纸盒，照顾你的人仍按时回应哭声。',[c('add','development.learningHabit',2),c('add','relationships.originBond',2)]],
+    strained_unsafe:['大人的争吵盖过夜里的哭声，第二天仍没人解释发生了什么。',[c('add','development.traumaLoad',8),c('add','health.mental',-3)]],
+    comfortable_present:['独立的小床和绘本都准备好了，父母也轮流留出固定陪伴时间。',[c('add','development.learningHabit',4),c('add','relationships.originBond',3)]],
+    comfortable_unsafe:['婴儿用品按清单买齐，大人却把每次哭闹都解释成“不够听话”。',[c('add','development.traumaLoad',5),c('add','relationships.originBond',-2)]],
+    comfortable_absent:['用品和课程从不缺，真正陪你入睡的人却经常换成祖辈或阿姨。',[c('add','development.traumaLoad',3),c('add','development.routeKnowledge',2)]],
+    stable:['家里为你腾出一个抽屉，也慢慢形成固定的照顾顺序。',[c('add','development.learningHabit',2),c('add','relationships.originBond',1)]]
+  },
+  7:{
+    strained_safe:['旧手机要轮流使用，家人仍在餐桌一角给你留出写作业的位置。',[c('add','development.learningHabit',3),c('add','development.careLoad',2)]],
+    strained_unsafe:['费用单在书包里压了几天，你不敢再问能不能参加课外活动。',[c('add','development.traumaLoad',7),c('add','development.selfAdvocacy',-3)]],
+    comfortable_present:['书桌、阅读和兴趣课都能选择，父母也愿意听你说哪一项不想继续。',[c('add','development.learningHabit',5),c('add','development.selfAdvocacy',4)]],
+    comfortable_unsafe:['书桌和课程一样不少，错一道题后的追问却从分数一直追到“值不值得培养”。',[c('add','development.learningHabit',3),c('add','development.traumaLoad',6),c('add','development.selfAdvocacy',-3)]],
+    comfortable_absent:['课程表排得很满，家长会的椅子却由助理或亲戚代坐。',[c('add','development.routeKnowledge',5),c('add','development.traumaLoad',4)]],
+    stable:['作业、玩耍和家务第一次有了大致固定的顺序。',[c('add','development.learningHabit',3),c('add','development.attendance',2)]]
+  },
+  11:{
+    strained_safe:['搬家纸箱还没拆完，家人先陪你走了一遍新的上学路线。',[c('add','development.attendance',2),c('add','development.careLoad',3)]],
+    strained_unsafe:['你先照顾家里的人再写作业，缺掉的课只能自己补。',[c('add','development.careLoad',9),c('add','development.attendance',-5),c('add','development.traumaLoad',5)]],
+    comfortable_present:['一次旅行和几本招生读物，让你第一次知道学校之外还有不同教育路线。',[c('expose','development.routeExposure','overseas'),c('add','development.routeKnowledge',8),c('add','development.languagePreparation',6)]],
+    comfortable_unsafe:['升学资料和语言课很早就到手，选哪条路却先要满足父母写下的排名表。',[c('expose','development.routeExposure','overseas'),c('add','development.routeKnowledge',7),c('add','development.languagePreparation',5),c('add','development.traumaLoad',5)]],
+    comfortable_absent:['海外夏校的付款很快完成，真正想不想去却没人坐下来问你。',[c('expose','development.routeExposure','overseas'),c('add','development.languagePreparation',8),c('add','development.traumaLoad',4)]],
+    stable:['老师借来的资料被带回家，饭桌上第一次认真聊到中学选择。',[c('expose','development.routeExposure','alternativeSchool'),c('add','development.routeKnowledge',4)]]
+  },
+  14:{
+    strained_safe:['家里算过交通和学费，也一起查了普高、职校与资助入口。',[c('expose','development.routeExposure','vocational'),c('expose','development.routeExposure','studentAid'),c('add','development.routeKnowledge',7),c('add','development.selfAdvocacy',3)]],
+    strained_unsafe:['成绩单刚放下，大人先说家里没有钱让你慢慢试。',[c('add','development.traumaLoad',7),c('add','development.selfAdvocacy',-3),c('add','pressures.family',5)]],
+    comfortable_present:['父母把国内、海外和专业体验都列出来，也接受最后由你删掉一些选项。',[c('expose','development.routeExposure','overseas'),c('expose','development.routeExposure','scholarship'),c('add','development.routeKnowledge',10),c('add','development.languagePreparation',8)]],
+    comfortable_unsafe:['父母把国内和海外学校排成一张表，能删掉哪一项却由家庭声望先决定。',[c('expose','development.routeExposure','overseas'),c('add','development.routeKnowledge',9),c('add','development.languagePreparation',7),c('add','development.traumaLoad',6),c('add','development.selfAdvocacy',-3)]],
+    comfortable_absent:['顾问把申请路线讲得很满，父母只在付款和排名出现时上线。',[c('expose','development.routeExposure','overseas'),c('add','development.routeKnowledge',8),c('add','development.traumaLoad',5)]],
+    stable:['你和家里把志愿草表摊开，先圈出真正负担得起的几条路。',[c('expose','development.routeExposure','vocational'),c('add','development.routeKnowledge',6),c('add','development.selfAdvocacy',2)]]
+  }
+};
+for(const age of[2,7,11,14])for(const profile of originProfiles){
+  const[text,effects]=originMilestones[age][profile.key];
+  annualBeats.push({id:`origin_context_${age}_${profile.key}`,kind:'beat',track:'origin',stage:stageFor(age,age),ageMin:age,ageMax:age,icon:'⌂',text,tone:profile.key.includes('unsafe')?'friction':'ordinary',intensity:profile.key.includes('unsafe')?'high':'medium',requirements:profile.requirements,actors:[],effects:[...effects,c('tag','history',`origin:${age}:${profile.key}`)],assertions:[],weight:22,contentRevision:CONTENT_REVISION});
+}
 
 const EPISODE_ROUTES={
   shop_opening:{1:['verified','independent_test','guaranteed'],2:['lean','independent_plan','double_down'],3:['survived','independent','stop_loss','debt_failure']},
@@ -220,8 +327,9 @@ const EPISODE_ROUTES={
   platform_dependence:{1:['diversified','buffered','concentrated'],2:['independent','coexist','exited','invalidated']},
   overseas_visa:{1:['prepared','adjusted','risky'],2:['approved','limited','withdrawn','invalidated']},
   establish_base:{1:['rooted','dual','drifting'],2:['rooted','dual','returned','invalidated']}
-  ,secondary_diversion:{1:['academic','vocational','employment','invalidated']}
-  ,university_interruption:{1:['leave','transfer','formal_exit'],2:['resumed','alternate_completed','working_exit','invalidated']}
+  ,school_harm:{1:['documented','environment_change','concealed'],2:['recovered','transferred','ongoing','education_pause']}
+  ,secondary_diversion:{1:['academic','vocational','employment','alternative_school']}
+  ,undergraduate_application:{1:['domestic_plan','dual_plan','overseas_plan','work_exit'],2:['domestic_submitted','overseas_submitted','dual_submitted','not_admitted'],3:['domestic_funded','overseas_family_funded','overseas_scholarship','deferred'],4:['domestic_enrolled','overseas_enrolled','reapply','vocational_exit']}
   ,professional_certification:{1:['verified','skill_route','invalid_offer'],2:['passed','retake','alternative_skill','withdrawn']}
   ,adult_reeducation:{1:['enrolled','reduced','declined'],2:['completed','low_intensity','non_degree','forced_exit']}
   ,business_expansion:{1:['validated','limited_test','not_ready'],2:['internal_cash','debt_finance','equity_finance'],3:['scaled','downsized','sold','debt_failure']}
@@ -246,8 +354,9 @@ const EPISODE_CATALOG={
   platform_dependence:{label:'平台依赖',organization:'本轮接单平台',abandonedRoutes:['exited','invalidated'],deadline:'两年内平台集中风险必须有结论。你保存收入与申诉记录，按当前收入结构退出或降低依赖。',invalidated:'下一阶段前，平台已经停权、关闭地区或失去工作入口。停权邮件归档，这次平台路线结束。'},
   overseas_visa:{label:'海外许可',organization:'本轮申请机构',abandonedRoutes:['withdrawn','invalidated'],deadline:'两年申请期到了。许可、税务与工作安排仍不相容，你取消当前计划并保留返程与材料记录。',invalidated:'下一阶段前，许可、雇主或申请条件已经失效。退件通知装进材料夹，这次跨境计划结束。'},
   establish_base:{label:'建立基地',abandonedRoutes:['returned','invalidated'],deadline:'三年试住期结束。住所、医疗和工作边界必须固定，你按当前条件保留主基地或完成退租返回。',invalidated:'下一阶段前，收入、许可、健康或住处已经失效。退租清单和返程安排让这次基地计划明确结束。'},
-  secondary_diversion:{label:'中考分流',ageBound:true,abandonedRoutes:['employment','invalidated'],deadline:'志愿办理窗口已经结束。你按仍可办理的学校或就业准备路径完成登记，这次分流不再悬置。',invalidated:'原志愿的学校、名额或材料已经失效。你保留招生简章和退件记录，改走仍能办理的明确去处。'},
-  university_interruption:{label:'大学中断',abandonedRoutes:['formal_exit','working_exit','invalidated'],deadline:'两年学籍复核期到了。你领取现有成绩与结案材料，按当前工作和生活正式结束原学籍。',invalidated:'下一阶段前，学籍、学校规则或返校条件已经失效。你领取已有记录，让这次中断以可说明的状态结束。'},
+  school_harm:{label:'校园伤害与恢复',ageBound:true,abandonedRoutes:['ongoing','education_pause'],deadline:'两年处理期已经到期。你保存现有记录，按当前支持程度完成转班、转学、暂停或继续就读安排，不让这次伤害继续占用未完事件。',invalidated:'下一阶段前，学校、班级或学籍已经变化。已有记录归档，当前环境中的伤害事件到此结束。'},
+  secondary_diversion:{label:'中考分流',ageBound:true,abandonedRoutes:['employment'],deadline:'志愿办理窗口已经结束。你按仍可办理的学校或就业准备路径完成登记，这次分流不再悬置。',invalidated:'原志愿的学校、名额或材料已经失效。你保留招生简章和退件记录，改走仍能办理的明确去处。'},
+  undergraduate_application:{label:'国内外本科申请',ageBound:true,abandonedRoutes:['work_exit','not_admitted','deferred','reapply','vocational_exit'],deadline:'从准备申请起已经过去四年。未完成的录取、资金或入境步骤不能继续当作在读，你保留成绩和材料，以延期、转向或退出明确收尾。',invalidated:'下一阶段前，学籍、录取、资金或申请条件已经改变。你保留可用材料，停止沿用失效结果，本轮本科申请结束。'},
   professional_certification:{label:'职业考证',organization:'本轮发证与培训机构',abandonedRoutes:['invalid_offer','withdrawn'],deadline:'两年考试周期已经结束。你停止续费，保留成绩与核验记录，这次考证按当前结果收尾。',invalidated:'下一阶段前，资格目录、报考条件或考试安排已经变化。你保存通知，不购买替代“内部证”。'},
   adult_reeducation:{label:'成年再教育',organization:'本轮继续教育项目',abandonedRoutes:['declined','forced_exit'],deadline:'三年学习窗口已经到期。你完成现有课程记录并停止继续欠费，这次成年学习按当前进度收尾。',invalidated:'下一阶段前，项目、排班或家庭条件已无法继续。课程和退费材料归档，这次再教育结束。'},
   business_expansion:{label:'企业扩张',organization:'本轮扩张单元',abandonedRoutes:['not_ready','debt_failure'],deadline:'四年扩张窗口已到。你停止新增固定成本，完成低效单元清货、员工结算和设备交接，让这轮扩张明确收口。',invalidated:'下一阶段前，原企业已经关闭或不再具备经营条件。第二地点意向书作废，已投入项目按现状完成交接。'},
@@ -264,17 +373,37 @@ const habitEpisodeRoutes=(episode,kind)=>({
 }[kind]?.[episode.phase]);
 const decisionEffects=(id,index,option,authoredDecision)=>{
   const episode=authoredDecision?.episode,episodeRoutes=episode?(EPISODE_ROUTES[episode.id]?.[episode.phase]||habitEpisodeRoutes(episode,authoredDecision.habitKind)):null,route=episode?episodeRoutes?.[option]:['deliberate','negotiated','risk'][option],effects=[c('tag','history',`${id}:${route}`),c('add','agency',[4,3,2,1][option])],add=(path,value)=>effects.push(c('add',path,value)),set=(path,value)=>value!==undefined&&effects.push(c('set',path,value));
+  if(episode?.id==='school_harm'){
+    if(episode.phase===1){
+      set('development.schoolHarmResponse',['documented','environmentChange','concealed'][option]);add('development.selfAdvocacy',[8,5,-3][option]);add('development.traumaLoad',[-2,0,8][option]);add('development.attendance',[1,2,-4][option]);add('health.mental',[1,0,-4][option]);
+    }else{
+      set('development.schoolHarmResolved',option<2);set('development.schoolHarmResponse',['supported','transferred','ongoing','paused'][option]);add('development.traumaLoad',[-12,-8,6,3][option]);add('development.attendance',[8,5,-5,-8][option]);add('development.teacherSupport',[6,1,-5,0][option]);add('development.peerSupport',[4,2,-4,-2][option]);add('health.mental',[5,3,-4,-2][option]);
+      if(option===3){set('education.status','interrupted');set('activity.mode','flexible')}
+    }
+  }
   if(episode?.id==='secondary_diversion'){
     const paths=['highSchool','vocational','middleSchool','highSchool'],statuses=['enrolled','enrolled','completed','enrolled'];
     effects.push(c('transition','education',paths[option],{status:statuses[option]}));add('capabilities.skill',[2,3,1,1][option]);add('pressures.family',[-1,-1,1,2][option]);
     if(option===2)set('activity.mode','seeking');
+    if(option===3)effects.push(c('expose','development.routeExposure','alternativeSchool'));
   }
-  if(episode?.id==='university_interruption'){
+  if(episode?.id==='undergraduate_application'){
     if(episode.phase===1){
-      set('education.status',['interrupted','enrolled','interrupted'][option]);set('activity.mode',['flexible','study','work'][option]);add('finance.cash',[-1000,-3000,1000][option]);add('pressures.career',[1,2,3][option]);
-      if(option===2){set('employment.status','gig');set('employment.career','过渡工作')}
-    }else{
-      set('education.status',['enrolled','completed','interrupted','interrupted'][option]);set('activity.mode',['study','seeking','work','work'][option]);add('capabilities.skill',[4,3,2,1][option]);add('pressures.career',[-2,-1,1,3][option]);
+      set('education.applicationIntent',['domestic','dual','overseas','none'][option]);set('education.applicationStatus',option===3?'withdrawn':'planning');add('development.routeKnowledge',[5,8,8,1][option]);add('development.languagePreparation',[0,8,12,0][option]);
+      if(option===3){set('education.nextStage','workOrVocational');set('activity.mode','seeking')}
+    }
+    if(episode.phase===2){
+      if(option<3)effects.push(c('resolveApplication','education',['domestic','overseas','dual'][option]));
+      else{set('education.applicationStatus','notAdmitted');set('education.applicationResult','none');set('education.domesticOffer',false);set('education.overseasOffer',false);set('education.domesticOfferType','none');set('education.overseasOfferType','none');set('education.nextStage','reapply')}
+      add('pressures.family',[2,4,6,1][option]);add('finance.cash',[-1200,-4500,-6200,0][option]);
+    }
+    if(episode.phase===3){
+      set('education.fundingStatus',['domesticConfirmed','overseasFamily','overseasScholarship','deferred'][option]);set('education.entryPermitReady',false);set('education.applicationStatus',option===3?'deferred':'funded');set('education.scholarshipAwarded',option===2);add('finance.cash',[-6000,-18000,-7000,0][option]);add('pressures.family',[-1,3,-2,-1][option]);
+      if(option===3)set('education.nextStage','reapply');
+    }
+    if(episode.phase===4){
+      if(option===0||option===1){if(option===1)set('education.entryPermitReady',true);effects.push(c('transition','education','college',{status:'enrolled'}));set('education.enrollmentRegion',option===0?'domestic':'overseas');set('education.applicationStatus','enrolled');set('education.nextStage','undergraduate');set('activity.mode','study')}
+      else{set('education.applicationStatus',option===2?'deferred':'withdrawn');set('education.applicationResult','none');set('education.domesticOffer',false);set('education.overseasOffer',false);set('education.domesticOfferType','none');set('education.overseasOfferType','none');set('education.fundingStatus','none');set('education.entryPermitReady',false);set('education.scholarshipAwarded',false);set('education.enrollmentRegion','none');set('education.nextStage',option===2?'reapply':'workOrVocational');set('activity.mode',option===2?'study':'seeking')}
     }
   }
   if(episode?.id==='professional_certification'){
@@ -501,7 +630,7 @@ for(const id of trackOrder){
   const spec=TRACKS[id];
   for(let index=0;index<TRACK_COPY[id].decisions.length;index++){
     const authoredDecision=TRACK_COPY[id].decisions[index];
-    const eventId=`decision_${String(decisions.length+1).padStart(3,'0')}`,requirements=requirementsFor(id),actors=id==='habits'?[]:authoredDecision.episode?episodeActorsFor(authoredDecision):actorsFor(id,index,'decision'),ageRange=id==='habits'?authoredDecision.age:TRACK_NODE_AGES[id][index];
+    const eventId=`decision_${String(decisions.length+1).padStart(3,'0')}`,requirements=requirementsFor(id),actors=id==='habits'?[]:authoredDecision.episode?episodeActorsFor(authoredDecision):actorsFor(id,index,'decision'),ageRange=authoredDecision.age||(id==='habits'?authoredDecision.age:TRACK_NODE_AGES[id][index]);
     if(id==='business'&&authoredDecision.episode?.phase>1)requirements.all=requirements.all.filter(rule=>rule.path!=='finance.available');
     if(id==='employment'&&(!authoredDecision.episode||authoredDecision.episode.role==='start')&&index>0)requirements.all.push(p('employment.status','eq','employed'));
     if(id==='public'&&authoredDecision.episode?.role==='start')requirements.none.push(p('employment.employerType','eq','public'));
@@ -535,8 +664,9 @@ for(const id of trackOrder){
     }
     if(authoredDecision.episode?.id==='platform_dependence'&&authoredDecision.episode.phase===1)requirements.all.push(p('mobility.platformDependence','gte',8));
     if(authoredDecision.episode?.id==='establish_base'&&authoredDecision.episode.phase===1)requirements.all.push(p('mobility.mode','in',['domesticNomad','overseasNomad']));
+    if(authoredDecision.episode?.id==='school_harm'&&authoredDecision.episode.phase===1)requirements.all.push(p('development.severeSchoolHarm','eq',true),p('development.schoolHarmResolved','eq',false));
     if(authoredDecision.episode?.id==='secondary_diversion')requirements.all.push(p('education.level','eq',2),p('education.status','eq','completed'));
-    if(authoredDecision.episode?.id==='university_interruption'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.path','eq','college'),p('education.status','eq','enrolled'));
+    if(authoredDecision.episode?.id==='undergraduate_application'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.level','gte',3),p('education.status','eq','completed'));
     if(authoredDecision.episode?.id==='professional_certification'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.status','notIn',['notStarted','enrolled']));
     if(authoredDecision.episode?.id==='adult_reeducation'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.status','notIn',['notStarted','enrolled']));
     if(authoredDecision.episode?.id==='business_expansion'&&authoredDecision.episode.phase===1)requirements.all.push(p('business.status','eq','operating'),p('business.operatingSkill','gte',45),p('business.equity','gte',30000));
@@ -547,7 +677,11 @@ for(const id of trackOrder){
     if(id==='health'&&index===4)requirements.any.push(p('health.status','eq','limited'),p('health.conditionSeverity','gte',35),p('health.disability','neq','none'));
     if(id==='finance'&&index===4&&!authoredDecision.episode)requirements.all.push(p('finance.totalDebt','gte',10000));
     const authoredChoices=authoredDecision.choices;
-    const choices=authoredChoices.map((copyItem,option)=>{const text=typeof copyItem==='string'?copyItem:copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`;if(id==='partnership'&&!authoredDecision.episode&&index===0&&option<2)result.effects.push(c('createPerson','people',1,{relation:'partner'}));return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:[],effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:1+option,delayMax:3+option}],outcomeTags:result.outcomeTags,memoryKey,route:result.route};});
+    const choices=authoredChoices.map((copyItem,option)=>{
+      const text=typeof copyItem==='string'?copyItem:copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`;
+      if(id==='partnership'&&!authoredDecision.episode&&index===0&&option<2)result.effects.push(c('createPerson','people',1,{relation:'partner'}));
+      return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:typeof copyItem==='string'?req():copyItem.requirements||req(),...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:1+option,delayMax:3+option}],outcomeTags:result.outcomeTags,memoryKey,route:result.route};
+    });
     decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{situation:authoredDecision.situation,episode:authoredDecision.episode}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:16+index%3,contentRevision:CONTENT_REVISION});
     authoredDecisionById.set(eventId,authoredDecision);
   }
@@ -555,7 +689,6 @@ for(const id of trackOrder){
 
 const globalRows=[
   {track:'identity',age:[14,17],prompt:'你第一次认真决定，这一生最不愿失去什么。',verbs:['哪怕不稳，也要自由','先保住安稳','把重要的人留身边'],results:['你把远方写进计划，也知道没人替你兜底。','你先选了能站稳的地方，没有急着往远处走。','你开始把别人的需要算进自己的决定。'],echoText:'少年时最不愿失去的东西又来敲门。',consequences:['后来一次搬家，你没等所有人同意就买了票。','机会和风险同时到来时，你还是先看账户余额。','真正要分别时，你为留下多承担了一段日子。'],desire:[['freedom','exploration'],['security','achievement'],['love','familyBelonging']]},
-  {track:'education',age:[18,22],prompt:'成年后的第一条去向，不再由年龄自动替你决定。',verbs:['继续去读大学','接下一份正式工作','做零工慢慢找方向'],results:['录取材料寄出，你把开学日圈在日历上。','劳动合同签好，报到时间写在周一早上。','你注册了两个接单平台，先让自己有收入。'],echoText:'成年后的第一条去向开始显出重量。',consequences:['毕业求职时，专业和学费一起成了已经发生的事。','同龄人毕业那年，你已经有了几年工龄。','零工让你见过不少行业，也让社保断断续续。'],education:['college','highSchool','highSchool']},
   {track:'identity',age:[30,55],prompt:'你发现早年最想要的东西，已经不完全适合现在。',verbs:['重新排一次轻重','继续守住原来的目标','不再只认一个答案'],results:['你取消一项旧计划，把时间留给身体和安静。','你没有换目标，只调整了到达它的速度。','你允许几件事同时重要，不再排唯一名次。'],echoText:'那次重新排序后来改变了一天的用法。',consequences:['下一次加码之前，你先看自己还能不能睡好觉。','旧目标终于接近时，你仍认得当年为什么出发。','有一条路停下后，另一件在意的事接住了你。'],desire:[['peace','body'],['achievement','security'],['freedom','creation']],reclaim:true}
 ];
 for(const row of globalRows){
@@ -627,7 +760,7 @@ codex.push(
   {id:'codex_30',name:'短人生',category:'生命',lockedHint:'在模板年龄之前留下真实转折',unlockRules:{outcomeTagsAny:['earlyDeath']},contentRevision:CONTENT_REVISION}
 );
 
-const realityRules={education:'义务教育与后续学历使用独立在读、完成和中断状态；职业资格另行记录。',employment:'裁员、晋升和排班只适用于真实受雇者；求职、退出劳动市场与主动休闲不得混用。',retirement:'退休取决于出生年代、单位类型、缴费年限和个人选择，不用固定年龄覆盖。',debt:'个人债务逐笔计息；生活缺口合并记录，担保、逾期、重组和遗产处理保留独立状态。',family:'伴侣与子女是带年龄、存亡、关系和法律身份的人物实体。',platform:'远程与旅居需要可迁移能力或真实远程收入，平台依赖增加波动。',franchise:'加盟成本包含品牌、装修、设备、原料、投流和担保，成功需要技能、现金缓冲与低锁定。'};
+const realityRules={education:'家庭资源、关系安全、习惯、出勤、学校支持和个人能力共同形成准备度；金钱不直接生成成绩。国内外本科的申请、录取、资金与报到分别记录。',employment:'裁员、晋升和排班只适用于真实受雇者；求职、退出劳动市场与主动休闲不得混用。',retirement:'退休取决于出生年代、单位类型、缴费年限和个人选择，不用固定年龄覆盖。',debt:'个人债务逐笔计息；生活缺口合并记录，担保、逾期、重组和遗产处理保留独立状态。',family:'伴侣与子女是带年龄、存亡、关系和法律身份的人物实体；家庭资源、父母在场和情感安全相互独立。',platform:'远程与旅居需要可迁移能力或真实远程收入，平台依赖增加波动。',franchise:'加盟成本包含品牌、装修、设备、原料、投流和担保，成功需要技能、现金缓冲与低锁定。'};
 const trackCoverage=Object.fromEntries(trackOrder.map(id=>[id,{beats:annualBeats.filter(event=>event.track===id).length,episodes:decisions.filter(event=>event.track===id&&event.episode).length,transitions:decisions.filter(event=>event.track===id&&!event.episode).length,roles:['entry','development','daily','conflict','crisis','recovery','exit','legacy']} ]));
 const data={version:VERSION,gameVersion:VERSION,schemaVersion:SCHEMA_VERSION,contentRevision:CONTENT_REVISION,stages,locations,desires,conflicts,familyArchetypes,familySecrets,cards,events:[...annualBeats,...decisions,...echoes,...blackSwans],episodeCatalog:EPISODE_CATALOG,endingProfiles,endingTitles,codex,realityRules,trackCoverage};
 fs.writeFileSync(output,`${JSON.stringify(data,null,2)}\n`,'utf8');

@@ -64,7 +64,7 @@ function activeRecord(id,age,phase,deadlineYears,label=null,route=null){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.5.9');
+    assert.equal(migrated.gameVersion,'0.5.10');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'上一版完整人生');
     assert.deepEqual(migrated.meta.codex,['codex_01']);

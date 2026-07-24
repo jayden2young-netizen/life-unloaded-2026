@@ -5,17 +5,16 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.5.9-full-track');
+const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.5.10-full-track');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const decisions=data.events.filter(event=>event.kind==='decision');
 const eventFor=(id,phase)=>decisions.find(event=>event.episode?.id===id&&(phase===undefined||event.episode.phase===phase));
-const episodeIds=['secondary_diversion','university_interruption','professional_certification','adult_reeducation','business_expansion','wealth_peak','retirement_transition','parental_inheritance','long_term_care','will_planning'];
+const episodeIds=['secondary_diversion','professional_certification','adult_reeducation','business_expansion','wealth_peak','retirement_transition','parental_inheritance','long_term_care','will_planning'];
 const expectedRoutes={
-  secondary_diversion:['academic','vocational','employment','invalidated'],
-  university_interruption:['resumed','alternate_completed','working_exit','invalidated'],
+  secondary_diversion:['academic','vocational','employment','alternative_school'],
   professional_certification:['passed','retake','alternative_skill','withdrawn'],
   adult_reeducation:['completed','low_intensity','non_degree','forced_exit'],
   business_expansion:['scaled','downsized','sold','debt_failure'],
@@ -108,9 +107,9 @@ async function prepareFinal(page,id,event){
 }
 
 (async()=>{
-  assert.equal(data.version,'0.5.9');
-  assert.equal(data.schemaVersion,8);
-  assert.equal(data.contentRevision,16);
+  assert.equal(data.version,'0.5.10');
+  assert.equal(data.schemaVersion,9);
+  assert.equal(data.contentRevision,17);
   assert.ok(decisions.every(event=>!('arc' in event)));
   for(const id of episodeIds){
     const rows=decisions.filter(event=>event.episode?.id===id).sort((a,b)=>a.episode.phase-b.episode.phase);
@@ -134,7 +133,7 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.5.9');
+    assert.equal(migrated.gameVersion,'0.5.10');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
@@ -194,7 +193,7 @@ async function prepareFinal(page,id,event){
     }
 
     const sameLaneAge=45;
-    await page.evaluate(age=>window.__LIFE_DEBUG__.patchRun({age,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,education:{status:'completed',level:4,path:'college'},employment:{status:'employed'},business:{status:'operating',operatingSkill:70,equity:200000,scale:'regional'},episodes:{university_interruption:{status:'active',phase:2,startedAt:44,nextPhaseAge:45,deadlineAge:46,route:'leave',boundActors:{},commitments:[],closureReason:null}}}),sameLaneAge);
+    await page.evaluate(age=>window.__LIFE_DEBUG__.patchRun({age,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,education:{status:'enrolled',level:4,path:'college'},employment:{status:'employed'},business:{status:'operating',operatingSkill:70,equity:200000,scale:'regional'},episodes:{adult_reeducation:{status:'active',phase:2,startedAt:44,nextPhaseAge:45,deadlineAge:47,route:'formal_program',boundActors:{},commitments:[],closureReason:null}}}),sameLaneAge);
     let eligible=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'));
     assert.ok(!eligible.includes(eventFor('professional_certification',1).id),'same education lane allowed a second episode');
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({episodes:{business_expansion:{status:'active',phase:2,startedAt:44,nextPhaseAge:45,deadlineAge:48,route:'validated',boundActors:{organization:{kind:'organization',id:'business_expansion:44',label:'本轮扩张单元'}},commitments:[],closureReason:null}}}));
