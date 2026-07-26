@@ -30474,7 +30474,7 @@
       "ageMin": 18,
       "ageMax": 24,
       "icon": "▤",
-      "prompt": "第一学年，课程怎么排？",
+      "prompt": "第一学年，这张课表怎么排？",
       "requirements": {
         "all": [
           {
@@ -30500,8 +30500,8 @@
       "choices": [
         {
           "id": "decision_012_choice_1",
-          "text": "先把培养方案和先修课对清",
-          "resultText": "你把四年要求拆到每学期。热门课没抢到，替代课也能接上。",
+          "text": "先把毕业要求弄明白",
+          "resultText": "你顺着培养方案往下找，把先修课和替代课程都记了下来。热门课没抢到，至少还有别的课能接。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -30550,8 +30550,8 @@
         },
         {
           "id": "decision_012_choice_2",
-          "text": "多试几门。先看自己真能学什么",
-          "resultText": "你留了两门探索课，也接受有一门可能只留下普通成绩。",
+          "text": "先多上几门，看看自己喜欢什么",
+          "resultText": "你给课表留了点试错的地方。有门课分数一般，但你终于知道这个方向和想象里不太一样。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -30600,8 +30600,8 @@
         },
         {
           "id": "decision_012_choice_3",
-          "text": "只抢好过的，先把绩点保住",
-          "resultText": "课表看着轻。到了第二年，缺的先修课又从系统里冒出来。",
+          "text": "先挑好过的，绩点别太难看",
+          "resultText": "你照着群里的“避雷名单”选了一轮。课是轻松了，后面要用的先修课也一起绕过去了。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -30649,7 +30649,7 @@
           "route": "grade_first"
         }
       ],
-      "situation": "报到系统终于不再转圈。培养方案却有十几页：必修、限选、任选、先修课。学长说“随便选”，教务系统说“容量已满”。",
+      "situation": "报到系统刚不转圈，选课系统又挤不进去了。培养方案里必修、限选、任选写了十几页，高年级同学只回你一句：“差不多选就行。”",
       "episode": {
         "id": "undergraduate_domestic",
         "lane": "education",
@@ -30672,7 +30672,7 @@
       "ageMin": 19,
       "ageMax": 25,
       "icon": "▤",
-      "prompt": "课外时间留给哪一块？",
+      "prompt": "课外时间，你准备花在哪儿？",
       "requirements": {
         "all": [
           {
@@ -30698,8 +30698,8 @@
       "choices": [
         {
           "id": "decision_013_choice_1",
-          "text": "进一个真想去的社团，做完一件事",
-          "resultText": "你没集邮式加群。活动办完，几个人后来还会互相叫名字。",
+          "text": "挑一个真想去的社团",
+          "resultText": "你忍住没把二维码全扫一遍。第一次活动忙得乱七八糟，收摊以后，倒真认识了几个下次还会打招呼的人。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -30753,8 +30753,8 @@
         },
         {
           "id": "decision_013_choice_2",
-          "text": "去实验室、竞赛或课程项目",
-          "resultText": "第一周主要是整理文件和学工具。后来终于接到一小块能独立完成的。",
+          "text": "去做竞赛、课程项目或者研究",
+          "resultText": "开头的活不怎么体面，无非是学工具、理文件。后来分到你手里的那一块，终于能从头做到尾。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -30808,8 +30808,8 @@
         },
         {
           "id": "decision_013_choice_3",
-          "text": "接兼职或实习，先看工作怎么运转",
-          "resultText": "排班挤掉了两次社团会。工资不高，客户和交接倒是真的。",
+          "text": "找份兼职或实习，先出去看看",
+          "resultText": "课表和排班撞过几次。和人交接、被催、返工，哪一件都比招聘介绍写得具体。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -30863,8 +30863,8 @@
         },
         {
           "id": "decision_013_choice_4",
-          "text": "不参加。先把身体和课程保住",
-          "resultText": "你退出了三个群。晚上没有履历活动，睡眠先回来了。",
+          "text": "这学期只顾课，别再加了",
+          "resultText": "你退了几个群，空出来的晚上拿去补觉、补课，也偶尔什么都不干。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -30940,7 +30940,7 @@
       "ageMin": 20,
       "ageMax": 26,
       "icon": "▤",
-      "prompt": "为毕业后的路，先留下哪种证据？",
+      "prompt": "毕业以前，先把哪件事做实？",
       "requirements": {
         "all": [
           {
@@ -30966,8 +30966,8 @@
       "choices": [
         {
           "id": "decision_014_choice_1",
-          "text": "跟一段研究，把问题和方法做完整",
-          "resultText": "你没有只在项目名单里签到。数据、失败记录和一份报告都留下了。",
+          "text": "跟老师做一段研究",
+          "resultText": "你不只在名单上挂了个名字。数据跑坏过，方法改过，最后也有一份写得明白的结果。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31031,8 +31031,8 @@
         },
         {
           "id": "decision_014_choice_2",
-          "text": "去一段能交付的实习",
-          "resultText": "你问清职责，不把打印和订餐包装成“战略支持”。",
+          "text": "去实习，别只在学校里猜工作是什么",
+          "resultText": "你提前问了到底干什么。杂活还是有，但没把打印、订餐硬写成“参与核心决策”。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31096,8 +31096,8 @@
         },
         {
           "id": "decision_014_choice_3",
-          "text": "准备国内读研，把考试和材料分开排",
-          "resultText": "你留出复习时间，也核了复试、调剂和材料窗口。",
+          "text": "想考国内研究生，先开始准备",
+          "resultText": "复习、报名和材料各占一块时间。复试和调剂还很远，你先没急着在朋友圈宣布上岸。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31161,8 +31161,8 @@
         },
         {
           "id": "decision_014_choice_4",
-          "text": "准备海外读研，先补语言和课程证据",
-          "resultText": "推荐、成绩、课程匹配和预算分别进了清单。",
+          "text": "想去海外读研，先补缺的东西",
+          "resultText": "课程要求、语言、推荐和预算挨个看过去，缺哪项就先补哪项。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31225,7 +31225,7 @@
           "route": "overseas_grad_prep"
         }
       ],
-      "situation": "大三的通知同时来了：保研排名初稿、考研自习室座位、暑期实习和一位老师的项目。日历还是七天。",
+      "situation": "本科读到中段，消息突然都赶在一起：排名、考研自习室、暑期实习，还有老师在群里问谁愿意进项目。一天还是二十四小时。",
       "episode": {
         "id": "undergraduate_domestic",
         "lane": "education",
@@ -31248,7 +31248,7 @@
       "ageMin": 21,
       "ageMax": 27,
       "icon": "▤",
-      "prompt": "本科毕业以后，先去哪里？",
+      "prompt": "本科毕业以后，你打算往哪儿走？",
       "requirements": {
         "all": [
           {
@@ -31274,8 +31274,8 @@
       "choices": [
         {
           "id": "decision_015_choice_1",
-          "text": "拿着本科证据直接找工作",
-          "resultText": "你把课程项目、实习和能做的事排进简历。学历写在最上面，证据没藏在最下面。",
+          "text": "先找工作",
+          "resultText": "你翻出课程项目、实习和做过的事，开始改简历。有些栏能填满，有些只能空着。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31355,8 +31355,8 @@
         },
         {
           "id": "decision_015_choice_2",
-          "text": "申请国内研究生",
-          "resultText": "成绩、研究或实践记录重新装成一套材料。报名、初试和复试还在后面。",
+          "text": "考国内研究生",
+          "resultText": "成绩单和做过的项目重新整理了一遍。报名、考试、复试，一关也不会因为你已经毕业就省掉。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31437,7 +31437,7 @@
         {
           "id": "decision_015_choice_3",
           "text": "申请美国研究生",
-          "resultText": "你核对项目、资助、语言、推荐和未来工作资格。",
+          "resultText": "你开始看项目、推荐、语言和资助。预算表算到后面，鼠标在学费那一行停了很久。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31518,7 +31518,7 @@
         {
           "id": "decision_015_choice_4",
           "text": "申请欧洲研究生",
-          "resultText": "你对课程匹配、学分、当地语言和项目长度逐项核。",
+          "resultText": "课程匹配、学分要求、项目年限和当地语言都要看。几个名字相近的项目，门槛并不一样。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31621,7 +31621,7 @@
       "ageMin": 18,
       "ageMax": 24,
       "icon": "▤",
-      "prompt": "这次本科，落在哪套系统？",
+      "prompt": "你读的是哪一套本科？",
       "requirements": {
         "all": [
           {
@@ -31652,8 +31652,8 @@
       "choices": [
         {
           "id": "decision_016_choice_1",
-          "text": "美国院校",
-          "resultText": "你核了通识、主修、选课和校内支持，也把工作资格单独记下来。",
+          "text": "在美国读本科",
+          "resultText": "通识、主修和先修课要自己拼，advisor 的预约入口也找到了。至于以后能不能工作，那是另一套规定。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31722,8 +31722,8 @@
         },
         {
           "id": "decision_016_choice_2",
-          "text": "欧洲院校",
-          "resultText": "你核了项目培养方案、学分、补考和当地行政，也记下授课语言外的社会语言。",
+          "text": "在欧洲读本科",
+          "resultText": "培养方案按学分排开，考试注册和当地手续各有入口。上课用什么语言，也不等于生活里只要会这一种。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31791,7 +31791,7 @@
           "route": "europe"
         }
       ],
-      "situation": "海外报到完成了。录取邮件只写“国际学生”，但课程制度、学分和生活手续已经分成两套完全不同的地图。",
+      "situation": "你已经在海外学校报到了。“国际学生”只有四个字，接下来怎么选课、怎么算学分、去哪个办公室办事，却差得很远。",
       "episode": {
         "id": "undergraduate_overseas_orientation",
         "lane": "education",
@@ -31814,7 +31814,7 @@
       "ageMin": 19,
       "ageMax": 25,
       "icon": "▤",
-      "prompt": "美国本科第一年，怎么把路排稳？",
+      "prompt": "这学年的课，怎么选？",
       "requirements": {
         "all": [
           {
@@ -31840,8 +31840,8 @@
       "choices": [
         {
           "id": "decision_017_choice_1",
-          "text": "和顾问逐项核毕业路径",
-          "resultText": "你保存了书面计划，也问清转专业会多出什么。",
+          "text": "拉着 advisor 把毕业要求过一遍",
+          "resultText": "你让对方把计划发进邮件，又问了换主修会多出哪些课。那门一年只开一次的课，被圈了两遍。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31895,8 +31895,8 @@
         },
         {
           "id": "decision_017_choice_2",
-          "text": "先试不同方向，再申报主修",
-          "resultText": "你用选修确认兴趣。代价是一部分课不能全算进新方向。",
+          "text": "先试几个方向，再定主修",
+          "resultText": "你拿选修课试了试。有的喜欢，有的上完只想赶紧结束，还有几门未必都能算进最后的主修。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -31950,8 +31950,8 @@
         },
         {
           "id": "decision_017_choice_3",
-          "text": "压满学分，想提前毕业",
-          "resultText": "学费压力让你把课表塞满。期中以后，一门课开始拖住其他课。",
+          "text": "课塞满一点，能早毕业就早毕业",
+          "resultText": "你把能选的空位全填上了。期中一到，有门课的作业开始追着其他课跑。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32027,7 +32027,7 @@
       "ageMin": 20,
       "ageMax": 26,
       "icon": "▤",
-      "prompt": "这次实践怎么走？",
+      "prompt": "这次，你准备怎么找实践？",
       "requirements": {
         "all": [
           {
@@ -32053,8 +32053,8 @@
       "choices": [
         {
           "id": "decision_018_choice_1",
-          "text": "先和学校核工作资格，再投对口实习",
-          "resultText": "你没让一封口头邀请替代授权。材料齐了才开始。",
+          "text": "先问清工作资格，再投实习",
+          "resultText": "学校回了书面说明。你按要求办完手续，才确认开始日期。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32113,8 +32113,8 @@
         },
         {
           "id": "decision_018_choice_2",
-          "text": "做校内项目或研究助理",
-          "resultText": "钱不算多，导师和项目记录能被核到。",
+          "text": "先找校内项目或研究机会",
+          "resultText": "你去问老师和项目负责人，从能接手的小块做起。教室以外，也开始有人知道你做事是什么样。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32173,8 +32173,8 @@
         },
         {
           "id": "decision_018_choice_3",
-          "text": "先做课程项目和作品",
-          "resultText": "没有合适授权或岗位时，你把课里的东西做成能展示的成果。",
+          "text": "先把课程项目做好",
+          "resultText": "暂时没有合适的岗位，你就把课上的东西继续做完，补说明、改问题，也让别人真能看懂。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32255,7 +32255,7 @@
       "ageMin": 21,
       "ageMax": 27,
       "icon": "▤",
-      "prompt": "本科毕业，下一步怎么接？",
+      "prompt": "本科读完了。接下来往哪儿投？",
       "requirements": {
         "all": [
           {
@@ -32281,8 +32281,8 @@
       "choices": [
         {
           "id": "decision_019_choice_1",
-          "text": "本科直接申请美国工作",
-          "resultText": "你把岗位匹配、工作资格和时间窗口一起筛。",
+          "text": "留在美国找工作",
+          "resultText": "你先看岗位做什么，再看对方能不能处理你的工作资格。有些收藏了半天的职位，到最后一栏还是得关掉。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32362,8 +32362,8 @@
         },
         {
           "id": "decision_019_choice_2",
-          "text": "回国找第一份工作",
-          "resultText": "你开始办学历材料，也重新对齐国内校招节奏。",
+          "text": "回国找工作",
+          "resultText": "学历材料要办，国内招聘也有自己的批次。你重新打开求职网站，发现“海外经历”并不会替你填完项目说明。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32443,8 +32443,8 @@
         },
         {
           "id": "decision_019_choice_3",
-          "text": "申请国内研究生",
-          "resultText": "申请材料里多了海外课程，也多了认证和时间表。",
+          "text": "回国读研",
+          "resultText": "海外课程和成绩要装进国内的申请材料里，时间也得重新算。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32524,8 +32524,8 @@
         },
         {
           "id": "decision_019_choice_4",
-          "text": "继续申请美国或欧洲研究生",
-          "resultText": "你没有默认“已经在外面就该留下”。项目、钱和未来出口重新比较。",
+          "text": "还想在美国或欧洲读研",
+          "resultText": "已经在外面生活过，不代表下一段一定还留在原地。你又从项目、钱和毕业以后看了一遍。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32627,7 +32627,7 @@
       "ageMin": 19,
       "ageMax": 25,
       "icon": "▤",
-      "prompt": "欧洲本科第一年，怎么不被系统漏掉？",
+      "prompt": "第一年，先顾哪一头？",
       "requirements": {
         "all": [
           {
@@ -32653,8 +32653,8 @@
       "choices": [
         {
           "id": "decision_020_choice_1",
-          "text": "按学分和考试窗口逐项核",
-          "resultText": "你不只选了课，还完成了考试注册。",
+          "text": "先把学分和考试报名盯住",
+          "resultText": "你一边选课，一边把考试注册也点完了。确认邮件不放心，还下载了一份。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32713,8 +32713,8 @@
         },
         {
           "id": "decision_020_choice_2",
-          "text": "加一门当地语言，给日常留入口",
-          "resultText": "课程进度慢了一点。看病、租房和小组聊天开始少依赖翻译。",
+          "text": "再学一点当地语言",
+          "resultText": "课外时间少了一块。去窗口、约事情、和小组闲聊时，你开始不用每句话都先塞进翻译软件。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32773,8 +32773,8 @@
         },
         {
           "id": "decision_020_choice_3",
-          "text": "只守英文项目，其他找人帮忙",
-          "resultText": "学术还能推进。行政和日常每遇到一次新事，就得再问一次。",
+          "text": "先顾好授课语言，别的碰到再问",
+          "resultText": "课堂还能跟上。行政邮件和生活里的新问题，每来一个，你就找人问一个。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32832,7 +32832,7 @@
           "route": "english_only"
         }
       ],
-      "situation": "培养方案用学分写得很整齐。真正排课时，研讨课、考试注册和补考窗口分散在三个页面。英文项目旁边，行政邮件仍是当地语言。",
+      "situation": "培养方案用学分写得很整齐。真正排课时，研讨课、考试注册和补考窗口分散在三个页面。课程用授课语言讲，行政邮件仍可能是当地语言。",
       "episode": {
         "id": "undergraduate_europe",
         "lane": "education",
@@ -32855,7 +32855,7 @@
       "ageMin": 20,
       "ageMax": 26,
       "icon": "▤",
-      "prompt": "这段实践怎么落地？",
+      "prompt": "这个项目，你准备怎么找人、怎么做？",
       "requirements": {
         "all": [
           {
@@ -32881,8 +32881,8 @@
       "choices": [
         {
           "id": "decision_021_choice_1",
-          "text": "主动发议程，约一次具体的会",
-          "resultText": "你没有继续等“有空”。时间、任务和交付写进邀请。",
+          "text": "别等“有空”，直接约个时间",
+          "resultText": "你把时间和要谈的事一起发出去。日历邀请终于来了，会上也没人再问“所以我们今天要干什么”。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32936,8 +32936,8 @@
         },
         {
           "id": "decision_021_choice_2",
-          "text": "找国际学生和本地同学混合组队",
-          "resultText": "语言速度不一样，分工没有按国籍切开。",
+          "text": "和本地、国际学生混着组队",
+          "resultText": "有人说得快，有人写得慢，分工最后还是按谁能做什么来。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -32991,8 +32991,8 @@
         },
         {
           "id": "decision_021_choice_3",
-          "text": "申请学校或企业项目",
-          "resultText": "你先核语言、保险和工作资格。能申请的才投。",
+          "text": "去申请学校或企业的项目",
+          "resultText": "条件对得上的那一个回了消息。保险和手续办完，你才去开始。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -33045,7 +33045,7 @@
           "route": "authorized_practice"
         }
       ],
-      "situation": "项目要求小组作业或行业实践。有人约好“下周聊”，日历邀请一直没来。你也发现当地同学下课后常直接回家。",
+      "situation": "项目要求小组作业或行业实践。有人约好“下周聊”，日历邀请一直没来。几位同组的当地同学下课后也常直接回家。",
       "episode": {
         "id": "undergraduate_europe",
         "lane": "education",
@@ -33068,7 +33068,7 @@
       "ageMin": 21,
       "ageMax": 27,
       "icon": "▤",
-      "prompt": "本科毕业，下一步怎么接？",
+      "prompt": "本科读完了。接下来往哪儿走？",
       "requirements": {
         "all": [
           {
@@ -33094,8 +33094,8 @@
       "choices": [
         {
           "id": "decision_022_choice_1",
-          "text": "本科直接申请欧洲工作",
-          "resultText": "你筛掉不接受当前资格或语言要求的岗位。",
+          "text": "留在欧洲找工作",
+          "resultText": "你先筛语言、资格和能否入职。有些岗位写着英语即可，翻到后面的客户沟通又换了一种说法。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -33175,8 +33175,8 @@
         },
         {
           "id": "decision_022_choice_2",
-          "text": "回国找第一份工作",
-          "resultText": "你办学历材料，也重新进入国内招聘节奏。",
+          "text": "回国找工作",
+          "resultText": "学历材料开始办，国内招聘网站也重新打开。项目做过什么，还是得一条条写。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -33257,7 +33257,7 @@
         {
           "id": "decision_022_choice_3",
           "text": "回国读研",
-          "resultText": "课程匹配和认证材料一起准备。",
+          "resultText": "课程说明、成绩和学历材料一起准备，申请节奏也换回国内。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -33337,8 +33337,8 @@
         },
         {
           "id": "decision_022_choice_4",
-          "text": "申请美国或欧洲研究生",
-          "resultText": "你重新比较项目、资助、语言和毕业出口。",
+          "text": "继续申请美国或欧洲研究生",
+          "resultText": "你又看了一轮项目、资助、语言和毕业后的去处。已经搬过一次，不等于这次会更容易。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -33440,7 +33440,7 @@
       "ageMin": 19,
       "ageMax": 27,
       "icon": "▤",
-      "prompt": "先把哪条变化办成正式记录？",
+      "prompt": "你准备怎么办？",
       "requirements": {
         "all": [
           {
@@ -33477,8 +33477,8 @@
       "choices": [
         {
           "id": "decision_023_choice_1",
-          "text": "申请校内转专业，先核学分损失",
-          "resultText": "你把名额、先修课和可能多读的学期问清了。",
+          "text": "先申请转专业",
+          "resultText": "你问了名额、先修课和能认多少学分。听到可能要多读一阵时，你还是把申请交了。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -33537,8 +33537,8 @@
         },
         {
           "id": "decision_023_choice_2",
-          "text": "申请休学，写明复学窗口",
-          "resultText": "你交了材料，保留成绩和学籍期限，也处理了宿舍与费用。",
+          "text": "先休学，我真的读不动了",
+          "resultText": "材料交上去，成绩和能保留多久也问清楚了。离校前，还有一堆费用和手续等着办。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -33607,8 +33607,8 @@
         },
         {
           "id": "decision_023_choice_3",
-          "text": "申请转学，逐项对两边条件",
-          "resultText": "转出、转入、课程认定和时间表分别确认。",
+          "text": "申请转学，换个学校试试",
+          "resultText": "转出和转入两边各问一次，得到的答案还不完全一样。你把课程说明和成绩单重新装了一遍。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -33667,8 +33667,8 @@
         },
         {
           "id": "decision_023_choice_4",
-          "text": "正式退出本科",
-          "resultText": "你办了退学、成绩单和费用结算。",
+          "text": "不读了，办退学",
+          "resultText": "你去办退学，拿了成绩单，也结清能结的费用。手续比你想的长，最后还是走完了。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -33751,7 +33751,7 @@
           "route": "withdrawn"
         }
       ],
-      "situation": "你发现现在的专业或在读状态撑不住了。转专业窗口、休学申请、转学材料和退学说明——名字相似，后果完全不同。",
+      "situation": "这个专业你越读越不对劲，也可能是现在的日子已经撑不住了。转专业、休学、转学、退学，随便点错一个都不是“以后再改”那么简单。",
       "episode": {
         "id": "undergraduate_change",
         "lane": "education-change",
@@ -33774,7 +33774,7 @@
       "ageMin": 20,
       "ageMax": 28,
       "icon": "▤",
-      "prompt": "这次变化最后落在哪？",
+      "prompt": "这次变化，最后去了哪儿？",
       "requirements": {
         "all": [
           {
@@ -33807,8 +33807,8 @@
       "choices": [
         {
           "id": "decision_024_choice_1",
-          "text": "转专业完成，接受补课或延长",
-          "resultText": "能认的学分认了，缺的课列进新培养方案。",
+          "text": "转成了。缺的课我补",
+          "resultText": "能认的学分都认了，剩下的排进新培养方案。多读多久，系统写得清清楚楚。",
           "hints": [],
           "requirements": {
             "all": [
@@ -33878,8 +33878,8 @@
         },
         {
           "id": "decision_024_choice_2",
-          "text": "按期复学，重新接课程",
-          "resultText": "你核了复学资格、课程衔接和住处。",
+          "text": "回去复学",
+          "resultText": "复学申请过了，课程也重新接上。第一天回去时，有人问你“这学期才回来啊”，你嗯了一声。",
           "hints": [],
           "requirements": {
             "all": [
@@ -33949,8 +33949,8 @@
         },
         {
           "id": "decision_024_choice_3",
-          "text": "转学完成，从新学校继续",
-          "resultText": "两边手续办完，课程认定也落了章。",
+          "text": "转学办成了，去新学校",
+          "resultText": "两边的手续终于都结束，课程认定结果也拿到了。认下来的课进了新系统，没认的还得重修。",
           "hints": [],
           "requirements": {
             "all": [
@@ -34020,8 +34020,8 @@
         },
         {
           "id": "decision_024_choice_4",
-          "text": "不继续本科，转入求职",
-          "resultText": "成绩和做过的项目留在材料里。学位没有伪造。",
+          "text": "还是不读了，去找工作",
+          "resultText": "成绩单和做过的项目留下来，学位那一栏只能照实写。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34094,7 +34094,7 @@
           "route": "work_exit"
         }
       ],
-      "situation": "一个学期过去。转专业名单、复学审核、转学回函或退学材料已经有了结果。旧同届群还在往前刷。",
+      "situation": "一个学期过去。转专业名单、复学审核或转学回函已经有了结果。旧同届群还在往前刷。",
       "episode": {
         "id": "undergraduate_change",
         "lane": "education-change",
@@ -34117,7 +34117,7 @@
       "ageMin": 19,
       "ageMax": 26,
       "icon": "▤",
-      "prompt": "先把海外日常怎么安顿？",
+      "prompt": "这些日常，你先从哪儿摸起？",
       "requirements": {
         "all": [
           {
@@ -34141,8 +34141,8 @@
       "choices": [
         {
           "id": "decision_025_choice_1",
-          "text": "问清规则，保留自己的习惯",
-          "resultText": "你把账单、厨房和安静时间说开。能适应的适应，没必要改的也不装。",
+          "text": "不懂就问，先把眼前的规则弄明白",
+          "resultText": "你把账单、垃圾分类和安静时间挨个问了。能接受的照着来，不习惯的也直说。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34201,8 +34201,8 @@
         },
         {
           "id": "decision_025_choice_2",
-          "text": "先找华人同学和社区把系统摸清",
-          "resultText": "一张中文清单带你走完交通、超市和预约。后来你也把它转给新人。",
+          "text": "先去华人群里问问",
+          "resultText": "群里有人发了办事清单，也有人提醒哪条经验早就过期。你照着少跑了几趟冤枉路。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34261,8 +34261,8 @@
         },
         {
           "id": "decision_025_choice_3",
-          "text": "找国际学生支持和学校服务",
-          "resultText": "你问了不是同一种文化的人。大家各自有一份没看懂的账单。",
+          "text": "去找学校和国际学生服务",
+          "resultText": "你带着没看懂的通知去问。旁边还有别的国际学生，手里也攥着一封自己看不明白的信。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34320,7 +34320,7 @@
           "route": "international_support"
         }
       ],
-      "situation": "宿舍或合租房的第一周，厨房架子、垃圾分类、安静时间、账单和预约制比课程先开考。锅各有主人，锅盖没有。",
+      "situation": "在海外住下来以后，先难住你的不一定是课。垃圾到底扔哪儿、账单怎么交、看病为什么要先预约，别人觉得不用解释的事，你一件件都得问。",
       "episode": {
         "id": "overseas_undergraduate_belonging",
         "lane": "community",
@@ -34343,7 +34343,7 @@
       "ageMin": 20,
       "ageMax": 27,
       "icon": "▤",
-      "prompt": "关系网怎么往外长？",
+      "prompt": "你还想去认识谁？",
       "requirements": {
         "all": [
           {
@@ -34367,8 +34367,8 @@
       "choices": [
         {
           "id": "decision_026_choice_1",
-          "text": "留住华人圈，也主动约一次具体活动",
-          "resultText": "熟悉的饭桌给了安全感。你又把一位新认识的人约到有日期的活动里。",
+          "text": "华人群里坐坐，也约个新认识的人",
+          "resultText": "说中文的饭桌不用解释太多。你也挑了一次真有日期的活动，问新认识的人要不要一起。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34432,8 +34432,8 @@
         },
         {
           "id": "decision_026_choice_2",
-          "text": "参加本地社团、志愿或兴趣活动",
-          "resultText": "共同要做的事比寒暄好用。几次活动以后，名字不再只留在签到表。",
+          "text": "去本地社团或志愿活动试试",
+          "resultText": "纯聊天总容易卡住，手上有件事反而好办。几次活动以后，签到表上的名字开始有了脸。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34497,8 +34497,8 @@
         },
         {
           "id": "decision_026_choice_3",
-          "text": "在国际学生圈建立混合关系",
-          "resultText": "大家的口音都不一样。谁也不用先证明自己够本地。",
+          "text": "多和国际学生来往",
+          "resultText": "大家说话都带着各自的口音，聊签证、家里的吃法，也聊谁又错过了一趟车。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34562,8 +34562,8 @@
         },
         {
           "id": "decision_026_choice_4",
-          "text": "暂时少社交，把课程和身体保住",
-          "resultText": "你拒绝了几次聚会，没有把不喝酒解释成道歉。",
+          "text": "最近不想社交了",
+          "resultText": "你推掉几次聚会。有人追问为什么不喝酒，你懒得解释，只说今天不去。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34649,7 +34649,7 @@
       "ageMin": 21,
       "ageMax": 28,
       "icon": "▤",
-      "prompt": "这次被当成一个标签，你怎么处理？",
+      "prompt": "被这样说的时候，你怎么办？",
       "requirements": {
         "all": [
           {
@@ -34673,8 +34673,8 @@
       "choices": [
         {
           "id": "decision_027_choice_1",
-          "text": "纠正名字和假设，设一条边界",
-          "resultText": "你把话说短：这是我的名字，那不是我的答案。",
+          "text": "当场纠正对方",
+          "resultText": "你又念了一遍自己的名字，然后说：“我只能回答我自己的，代表不了所有中国人。”",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34748,8 +34748,8 @@
         },
         {
           "id": "decision_027_choice_2",
-          "text": "记录下来，找导师或支持服务",
-          "resultText": "时间、原话和在场的人进了记录。你也问清了正式和非正式渠道。",
+          "text": "把原话记下来，去找学校的人",
+          "resultText": "你记下时间、原话和谁在场，去问老师或支持服务。对方先问你想正式投诉，还是先换个安排。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34823,8 +34823,8 @@
         },
         {
           "id": "decision_027_choice_3",
-          "text": "找同学或社区盟友一起处理",
-          "resultText": "有人陪你复盘，也有人愿意在下次当场接话。",
+          "text": "找认识的人一起想办法",
+          "resultText": "你把事情讲给同学和社区里信得过的人听。有人帮你确认不是自己太敏感，也有人说下次愿意在场。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34898,8 +34898,8 @@
         },
         {
           "id": "decision_027_choice_4",
-          "text": "先离开这个环境，保住精力",
-          "resultText": "你没有当场教育所有人。换组、换座或先回家。",
+          "text": "我不想陪着耗，先离开",
+          "resultText": "你没留下来给所有人上一堂课。能换组就换组，不能就先离开，让自己把这一天过完。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -34972,7 +34972,7 @@
           "route": "energy_preserved"
         }
       ],
-      "situation": "一次小组讨论或公共场合里，有人又把你的名字叫错，还顺手问“你们中国人是不是都擅长这个”。也有人当场停下来，把话题拉回你本人。",
+      "situation": "一次小组讨论或公共场合里，有人把你的名字叫错，还顺手问“你们中国人是不是都擅长这个”。也有人当场停下来，把话题拉回你本人。",
       "episode": {
         "id": "overseas_undergraduate_belonging",
         "lane": "community",
@@ -34996,7 +34996,7 @@
       "ageMin": 21,
       "ageMax": 32,
       "icon": "▤",
-      "prompt": "研究生这条路，先选哪套申请？",
+      "prompt": "接下来，你想往哪边试？",
       "requirements": {
         "all": [
           {
@@ -35017,8 +35017,8 @@
       "choices": [
         {
           "id": "decision_028_choice_1",
-          "text": "申请国内研究生",
-          "resultText": "你把报名、初试、复试、调剂和材料窗口分开排。",
+          "text": "在国内读研",
+          "resultText": "报名、考试、复试和调剂都得赶时间。你先把日历翻到报名那个月。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -35087,8 +35087,8 @@
         },
         {
           "id": "decision_028_choice_2",
-          "text": "申请美国研究生",
-          "resultText": "你核项目匹配、推荐、语言、资助和毕业出口。",
+          "text": "去美国读研",
+          "resultText": "项目要求、推荐、资助和毕业后的路都要看。收藏夹很快长了一排，学费那栏也一样。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -35157,8 +35157,8 @@
         },
         {
           "id": "decision_028_choice_3",
-          "text": "申请欧洲研究生",
-          "resultText": "你核课程学分、项目长度、当地语言和资助。",
+          "text": "去欧洲读研",
+          "resultText": "有的项目看课程学分，有的学制短得让人心慌。你也开始查授课语言之外，生活和找工作要用什么语言。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -35227,8 +35227,8 @@
         },
         {
           "id": "decision_028_choice_4",
-          "text": "不读研，直接找第一份工作",
-          "resultText": "你没有把“再读几年”当默认缓冲。",
+          "text": "不读了，先找工作",
+          "resultText": "你关掉申请表，重新打开毕业生岗位页面。眼下想先挣钱，或者只是已经不想再填一轮学校申请。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -35296,7 +35296,7 @@
           "route": "direct_job"
         }
       ],
-      "situation": "本科出口定了。国内报名与考试、美国项目、欧洲项目和直接就业——需要的是四套不同日历，不是一份万能简历。",
+      "situation": "本科这一段结束了。有人开始背考研资料，有人向老师要推荐信，也有人已经在投简历。你不可能拿同一份表去赶所有截止日。",
       "episode": {
         "id": "postgraduate_application",
         "lane": "education",
@@ -35320,7 +35320,7 @@
       "ageMin": 22,
       "ageMax": 33,
       "icon": "▤",
-      "prompt": "这轮材料怎么交？",
+      "prompt": "这一次，你拿什么去申请？",
       "requirements": {
         "all": [],
         "any": [],
@@ -35330,8 +35330,8 @@
       "choices": [
         {
           "id": "decision_029_choice_1",
-          "text": "用课程和研究证据交一套匹配申请",
-          "resultText": "你没把所有经历都塞进去。问题、方法和结果能互相对上。",
+          "text": "把课程和研究写扎实",
+          "resultText": "你删掉几段“从小热爱”，把问题怎么做、结果怎么样写清楚。不是每项都漂亮，至少彼此对得上。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -35400,8 +35400,8 @@
         },
         {
           "id": "decision_029_choice_2",
-          "text": "用实践和项目证据交专业路线",
-          "resultText": "项目里的职责、产出和反馈写清了。",
+          "text": "把实习和项目拿出来讲",
+          "resultText": "你写清自己负责哪一块、交了什么、别人怎么用。学校的名字留着，但没再替你回答所有问题。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -35470,8 +35470,8 @@
         },
         {
           "id": "decision_029_choice_3",
-          "text": "补一轮关键材料，晚一点交",
-          "resultText": "你补语言、推荐或课程说明，放弃了几个赶不上的窗口。",
+          "text": "先补最缺的，再晚一点交",
+          "resultText": "语言、推荐或课程说明里总有一项来不及。你放弃了几个早截止的项目，先把剩下的补完整。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -35540,8 +35540,8 @@
         },
         {
           "id": "decision_029_choice_4",
-          "text": "证据不够，退出本轮",
-          "resultText": "你保留成绩、推荐和退件。没买“内部名额”。",
+          "text": "算了，这轮不申了",
+          "resultText": "截止日和手里的材料怎么也凑不齐。你没去买所谓“内部名额”，把还能用的成绩和推荐收好，关掉了这一轮申请。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -35619,7 +35619,7 @@
           "route": "withdrawn"
         }
       ],
-      "situation": "材料窗口开了。成绩单只能证明上过课；推荐信、研究、实习和作品要回答的是：为什么是这个方向。",
+      "situation": "申请页终于开到文书那一格。成绩单只写你上过什么课，剩下的问题还在空白框里：为什么是这个方向？你做过什么？",
       "episode": {
         "id": "postgraduate_application",
         "lane": "education",
@@ -35643,7 +35643,7 @@
       "ageMin": 23,
       "ageMax": 34,
       "icon": "▤",
-      "prompt": "怎么把结果核成能入学的？",
+      "prompt": "先去查哪一份？",
       "requirements": {
         "all": [],
         "any": [],
@@ -35653,8 +35653,8 @@
       "choices": [
         {
           "id": "decision_030_choice_1",
-          "text": "核国内复试、调剂和拟录取材料",
-          "resultText": "你按公开系统和学校通知走。截图没有替代正式名单。",
+          "text": "继续走国内复试和调剂",
+          "resultText": "你盯着公开系统和学校通知，复试要交什么就补什么。群里的截图传了几轮，正式名单没出以前，你没敢先庆祝。",
           "hints": [],
           "requirements": {
             "all": [
@@ -35709,8 +35709,8 @@
         },
         {
           "id": "decision_030_choice_2",
-          "text": "核海外录取、条件和资助",
-          "resultText": "学费、奖助、保险、押金和工作资格分别进入预算。",
+          "text": "把海外录取和钱一起算",
+          "resultText": "学费、奖助、保险和押金一项项加进去。项目邮件读起来很热情，预算表一点也不。",
           "hints": [],
           "requirements": {
             "all": [
@@ -35768,8 +35768,8 @@
         },
         {
           "id": "decision_030_choice_3",
-          "text": "接受候补或延期，保留另一条路",
-          "resultText": "你写清最后等待日，也继续准备求职。",
+          "text": "先等候补，等到最后一天",
+          "resultText": "你记下最后等待日，邮箱照看。一天刷新十次，并不会让名额空得快一点。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -35823,8 +35823,8 @@
         },
         {
           "id": "decision_030_choice_4",
-          "text": "资金或结果不成立，转求职",
-          "resultText": "沉没成本停在这里。材料归档，简历重新上线。",
+          "text": "结果不行，或者钱不够，去找工作",
+          "resultText": "申请费已经花了，再交更多也换不来确定结果。你把材料收好，重新改简历。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -35897,7 +35897,7 @@
           "route": "not_admitted"
         }
       ],
-      "situation": "回复来了：录取、候补、复试／调剂、拒信，还有一份把资助写成“另行通知”的好消息。",
+      "situation": "查结果的日子到了。国内要看公开系统，海外项目还得把录取和资助分开看；群里的截图和一句“问题不大”，都不能拿去报到。",
       "episode": {
         "id": "postgraduate_application",
         "lane": "education",
@@ -35921,7 +35921,7 @@
       "ageMin": 24,
       "ageMax": 35,
       "icon": "▤",
-      "prompt": "最后，研究生落在哪？",
+      "prompt": "最后，你去了哪儿？",
       "requirements": {
         "all": [],
         "any": [],
@@ -35931,8 +35931,8 @@
       "choices": [
         {
           "id": "decision_031_choice_1",
-          "text": "国内研究生报到",
-          "resultText": "注册、费用和培养关系完成。",
+          "text": "去国内读研",
+          "resultText": "注册和缴费办完，培养关系也落了下来。开学通知从“请按时报到”变成了你的日程。",
           "hints": [],
           "requirements": {
             "all": [
@@ -36018,8 +36018,8 @@
         },
         {
           "id": "decision_031_choice_2",
-          "text": "美国研究生报到",
-          "resultText": "条件、资金和入境材料完成。",
+          "text": "去美国读研",
+          "resultText": "录取条件、资金和入境材料都办妥了。行李到没到齐另说，你先到了学校。",
           "hints": [],
           "requirements": {
             "all": [
@@ -36115,8 +36115,8 @@
         },
         {
           "id": "decision_031_choice_3",
-          "text": "欧洲研究生报到",
-          "resultText": "学分匹配、资金和当地手续完成。",
+          "text": "去欧洲读研",
+          "resultText": "课程条件、资金和当地手续都走完了。授课语言能听懂，办事时要说的话还得继续学。",
           "hints": [],
           "requirements": {
             "all": [
@@ -36212,8 +36212,8 @@
         },
         {
           "id": "decision_031_choice_4",
-          "text": "不报到，转第一份工作",
-          "resultText": "你退了名额或让录取失效，没有保留假的在读状态。",
+          "text": "不去了，找工作",
+          "resultText": "你退掉名额，或者让录取到期。舍不得归舍不得，简历上不能写自己已经在读。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -36276,7 +36276,7 @@
           "route": "direct_job"
         }
       ],
-      "situation": "报到日前，学位材料、资金、许可或注册必须同时成立。学校群已经在聊选课，你还在对最后一页。",
+      "situation": "报到日期到了。录取之外，学位材料、钱和该办的手续也都得过关。少一项，人就不能凭邮件坐进教室。",
       "episode": {
         "id": "postgraduate_application",
         "lane": "education",
@@ -36300,7 +36300,7 @@
       "ageMin": 23,
       "ageMax": 36,
       "icon": "▤",
-      "prompt": "第一年先把什么关系和证据搭好？",
+      "prompt": "第一年，你先顾哪件事？",
       "requirements": {
         "all": [
           {
@@ -36326,8 +36326,8 @@
       "choices": [
         {
           "id": "decision_032_choice_1",
-          "text": "先对培养要求和导师预期",
-          "resultText": "你问了会议频率、署名、数据和请假。不是每项都有完美答案，至少有记录。",
+          "text": "先把导师的要求问明白",
+          "resultText": "多久见一次、数据怎么放、署名怎么算、请假找谁，你都开口问了。有的回答很清楚，有的只得到一句“到时候再说”。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -36386,8 +36386,8 @@
         },
         {
           "id": "decision_032_choice_2",
-          "text": "先补方法和课程缺口",
-          "resultText": "你承认本科没学过的部分，没用熬夜假装会。",
+          "text": "先补我不会的方法和课",
+          "resultText": "本科没学过就是没学过。你去补课、问同学，没再靠通宵把“看不懂”熬成“应该懂了”。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -36446,8 +36446,8 @@
         },
         {
           "id": "decision_032_choice_3",
-          "text": "保留行业项目或实习入口",
-          "resultText": "你核了学校和导师允许的时间。没有把研究和实习都做成缺席。",
+          "text": "还想做项目或实习",
+          "resultText": "你先问学校和导师允许不允许、时间怎么排。两边都想要你随叫随到，这件事没人替你解决。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -36529,7 +36529,7 @@
       "ageMin": 24,
       "ageMax": 37,
       "icon": "▤",
-      "prompt": "这一年把什么做成能交付的？",
+      "prompt": "这一年，你想先把什么做出来？",
       "requirements": {
         "all": [
           {
@@ -36555,8 +36555,8 @@
       "choices": [
         {
           "id": "decision_033_choice_1",
-          "text": "把研究做完，留下方法和结果",
-          "resultText": "失败数据也归档。论文不是一句“参与国家级项目”。",
+          "text": "先把研究做完",
+          "resultText": "跑坏的数据没有删，换过的方法也记着。最后写进论文的，不只是“参与过某项目”。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -36610,8 +36610,8 @@
         },
         {
           "id": "decision_033_choice_2",
-          "text": "把研究转成行业可读的项目",
-          "resultText": "你没有泄露数据，把问题、方法和产出换成岗位能读的语言。",
+          "text": "把研究讲成工作里能听懂的项目",
+          "resultText": "保密的东西不碰，剩下的问题、方法和结果换了一种说法。你改了几遍，终于不像把论文摘要硬贴在简历上。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -36665,8 +36665,8 @@
         },
         {
           "id": "decision_033_choice_3",
-          "text": "先去实习，接受毕业节奏变紧",
-          "resultText": "岗位经验增加。返校后，论文没有因为工牌自动完成。",
+          "text": "先去实习，论文回来再赶",
+          "resultText": "你去岗位上做了一段真实的活。回学校以后，论文不会因为你有过一张门禁卡就自己长出来。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -36743,7 +36743,7 @@
       "ageMin": 25,
       "ageMax": 38,
       "icon": "▤",
-      "prompt": "研究生毕业，第一份工作怎么接？",
+      "prompt": "研究生毕业了。第一份工作，你准备怎么找？",
       "requirements": {
         "all": [
           {
@@ -36769,8 +36769,8 @@
       "choices": [
         {
           "id": "decision_034_choice_1",
-          "text": "走专业或研究岗位",
-          "resultText": "你把方法、成果和能独立完成的事放进申请。",
+          "text": "就找专业或研究岗位",
+          "resultText": "你把方法、成果和自己能独立做的部分放进申请。论文题目很窄，能用的本事不一定只有那么窄。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -36845,8 +36845,8 @@
         },
         {
           "id": "decision_034_choice_2",
-          "text": "走行业岗位，把研究翻译成项目",
-          "resultText": "你删掉半页术语，补上职责和结果。",
+          "text": "去行业岗位，别要求工作和论文同名",
+          "resultText": "半页术语删掉，职责和结果补上。你不再指望招聘人员先读懂整篇论文。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -36921,8 +36921,8 @@
         },
         {
           "id": "decision_034_choice_3",
-          "text": "接受桥接岗位，先补行业经验",
-          "resultText": "职位层级没有想象中高。你问清成长和转岗，不把暂时写成永远。",
+          "text": "先投能接上的岗位",
+          "resultText": "职位级别不如预想。你问了以后能做什么、怎么转岗，还是把申请发了出去。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -36997,8 +36997,8 @@
         },
         {
           "id": "decision_034_choice_4",
-          "text": "继续求职，不用假去向结项",
-          "resultText": "系统催填时，你只填真实状态。",
+          "text": "还没找到，那就继续找",
+          "resultText": "就业系统催着填去向，你没有随便写一家单位交差。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37096,7 +37096,7 @@
       "ageMin": 23,
       "ageMax": 36,
       "icon": "▤",
-      "prompt": "第一年先把哪一块钉牢？",
+      "prompt": "第一年，你先把哪件事抓住？",
       "requirements": {
         "all": [
           {
@@ -37122,8 +37122,8 @@
       "choices": [
         {
           "id": "decision_035_choice_1",
-          "text": "核导师、资助和研究职责",
-          "resultText": "你问清工时、数据、署名和续资助条件。",
+          "text": "先问研究安排和资助",
+          "resultText": "工时、数据、署名和资助续不续，你都问了一遍。能写进邮件的写进邮件，没人肯保证的也不再当保证。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37187,8 +37187,8 @@
         },
         {
           "id": "decision_035_choice_2",
-          "text": "先补课程和方法",
-          "resultText": "课堂讨论很快。你用 office hour 把不懂的具体问出来。",
+          "text": "先把课和方法补上",
+          "resultText": "课堂讨论转得很快。你把问题攒到 office hours，一个个问，哪怕第一遍没说顺。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37252,8 +37252,8 @@
         },
         {
           "id": "decision_035_choice_3",
-          "text": "核工作资格后做校内或专业实践",
-          "resultText": "学校授权和岗位内容都能对上才开始。",
+          "text": "想做实践，先去问能不能做",
+          "resultText": "岗位内容和学校要求都问清楚，手续办完你才开始。好机会也不值得拿以后的资格去赌。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37316,7 +37316,7 @@
           "route": "authorized_practice"
         }
       ],
-      "situation": "新项目的第一周，课程、实验室、资助和工作资格说明各开了一场会。有人说“之后再看”，截止日已经写在邮件底部。",
+      "situation": "开学头几天，课程、研究安排、资助和工作资格各有一场说明。有人说细节以后再看，邮件底下的截止日期倒已经写得很清楚。",
       "episode": {
         "id": "postgraduate_us",
         "lane": "education",
@@ -37340,7 +37340,7 @@
       "ageMin": 24,
       "ageMax": 37,
       "icon": "▤",
-      "prompt": "怎么把研究接到岗位？",
+      "prompt": "你打算怎么接上工作？",
       "requirements": {
         "all": [
           {
@@ -37366,8 +37366,8 @@
       "choices": [
         {
           "id": "decision_036_choice_1",
-          "text": "申请专业或研究岗位",
-          "resultText": "你把方法、工具和结果写清，也筛掉资格不匹配的岗位。",
+          "text": "去投专业或研究岗位",
+          "resultText": "你把用过的方法、工具和做出的结果写清楚，也关掉那些资格明显不合的职位。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37426,8 +37426,8 @@
         },
         {
           "id": "decision_036_choice_2",
-          "text": "做一段经授权的行业项目",
-          "resultText": "项目给了本地反馈和推荐。研究进度也确实慢了。",
+          "text": "做一段学校允许的行业项目",
+          "resultText": "手续办完以后，你去做了一个外面的项目。有人给了具体反馈，也认识了几个课堂以外的人。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37486,8 +37486,8 @@
         },
         {
           "id": "decision_036_choice_3",
-          "text": "准备回国，把材料和校招节奏提前",
-          "resultText": "认证、成绩和招聘批次一起排。",
+          "text": "准备回国，别等毕业才开始",
+          "resultText": "成绩、学历材料和国内招聘批次一起看。你提前开了国内求职网站，页面倒没因为时差少弹一个窗口。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37569,7 +37569,7 @@
       "ageMin": 25,
       "ageMax": 38,
       "icon": "▤",
-      "prompt": "研究生毕业，第一份工作落在哪申请？",
+      "prompt": "研究生毕业了。第一份工作，你准备在哪儿找？",
       "requirements": {
         "all": [
           {
@@ -37595,8 +37595,8 @@
       "choices": [
         {
           "id": "decision_037_choice_1",
-          "text": "申请美国专业岗位",
-          "resultText": "你只投岗位匹配且能处理当前工作资格的雇主。",
+          "text": "留在美国找专业岗位",
+          "resultText": "你只投专业对得上、也愿意处理当前工作资格的雇主。职位不少，能走到最后一页的不算多。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37671,8 +37671,8 @@
         },
         {
           "id": "decision_037_choice_2",
-          "text": "回国申请专业或行业岗位",
-          "resultText": "学历材料、研究证据和国内招聘节奏重新对齐。",
+          "text": "回国找专业或行业岗位",
+          "resultText": "学历材料要办，研究经历也得改成国内岗位看得懂的说法。招聘批次不会等你倒完时差。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37747,8 +37747,8 @@
         },
         {
           "id": "decision_037_choice_3",
-          "text": "申请欧洲岗位或项目",
-          "resultText": "当地语言、职业准入和许可重新核。",
+          "text": "去欧洲找机会",
+          "resultText": "当地语言、职业准入和手续都要重新查。人在美国读过书，不能拿这套规定直接换个地区用。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37823,8 +37823,8 @@
         },
         {
           "id": "decision_037_choice_4",
-          "text": "继续求职，先保住合法和生活边界",
-          "resultText": "你没有用一份不存在的 offer 安慰所有人。",
+          "text": "还没有合适的，继续找",
+          "resultText": "你没拿一份不存在的 offer 当答案，也没假装时间很宽裕。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -37922,7 +37922,7 @@
       "ageMin": 23,
       "ageMax": 36,
       "icon": "▤",
-      "prompt": "第一阶段怎么排？",
+      "prompt": "开头这段时间，你先忙什么？",
       "requirements": {
         "all": [
           {
@@ -37948,8 +37948,8 @@
       "choices": [
         {
           "id": "decision_038_choice_1",
-          "text": "按学分、考试和论文倒排",
-          "resultText": "你把每个注册窗口记进日历。",
+          "text": "先照着学分和考试日期排",
+          "resultText": "每门课什么时候注册、什么时候考试、论文什么时候交，你全塞进了日历。提醒多得烦，总比漏一次强。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38013,8 +38013,8 @@
         },
         {
           "id": "decision_038_choice_2",
-          "text": "补当地语言，给生活和就业留入口",
-          "resultText": "学习时间被切走一块。窗口、同事和招聘不再完全隔着翻译。",
+          "text": "抽时间学当地语言",
+          "resultText": "每周又少了几小时。去窗口、和人闲聊、看招聘信息时，有些句子终于不用先拍照翻译。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38078,8 +38078,8 @@
         },
         {
           "id": "decision_038_choice_3",
-          "text": "先找研究组或行业项目",
-          "resultText": "你核了保险、资格和职责。能做的项目才接。",
+          "text": "先去找研究或行业项目",
+          "resultText": "你先问保险、资格和到底要做什么。宣传页写得再好，手续办不了也只能算看过。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38142,7 +38142,7 @@
           "route": "project"
         }
       ],
-      "situation": "项目可能只有一两年。课程学分、论文、实习和当地登记挤在一起，英文教学没有替你读完行政邮件。",
+      "situation": "项目可能只有一两年。课、学分、论文、实习和当地登记全挤在一起；就算授课语言听得懂，行政邮件也未必肯照顾你。",
       "episode": {
         "id": "postgraduate_europe",
         "lane": "education",
@@ -38166,7 +38166,7 @@
       "ageMin": 24,
       "ageMax": 37,
       "icon": "▤",
-      "prompt": "怎么把学位接到工作？",
+      "prompt": "毕业以后，你想往哪边准备？",
       "requirements": {
         "all": [
           {
@@ -38192,8 +38192,8 @@
       "choices": [
         {
           "id": "decision_039_choice_1",
-          "text": "申请当地专业岗位",
-          "resultText": "你筛语言、职业准入和工作资格，不再海投所有英文岗位。",
+          "text": "去投当地的专业岗位",
+          "resultText": "语言要求、职业准入和工作资格挨个筛。写着英语工作的岗位，也可能在面试时换成当地语言。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38252,8 +38252,8 @@
         },
         {
           "id": "decision_039_choice_2",
-          "text": "做项目并建立本地推荐",
-          "resultText": "一次具体合作比十次“保持联系”更能留下名字。",
+          "text": "先做个项目，让本地的人见过我做事",
+          "resultText": "你和别人真做完了一件事，对方知道你怎么交付、怎么改错。比起互留联系方式，这更费劲，也更有用。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38312,8 +38312,8 @@
         },
         {
           "id": "decision_039_choice_3",
-          "text": "准备回国，提前办材料和进入招聘批次",
-          "resultText": "你没有等毕业证寄到才打开国内招聘网站。",
+          "text": "准备回国，材料早点办",
+          "resultText": "你没等毕业文件寄到才打开国内招聘网站。该办的材料先办，赶得上的招聘批次先投。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38395,7 +38395,7 @@
       "ageMin": 25,
       "ageMax": 38,
       "icon": "▤",
-      "prompt": "研究生毕业，第一份工作落在哪申请？",
+      "prompt": "研究生毕业了。第一份工作，你准备在哪儿找？",
       "requirements": {
         "all": [
           {
@@ -38421,8 +38421,8 @@
       "choices": [
         {
           "id": "decision_040_choice_1",
-          "text": "申请欧洲专业岗位",
-          "resultText": "你只投语言、资格和岗位都对得上的。",
+          "text": "留在欧洲找专业岗位",
+          "resultText": "你只投语言、资格和岗位内容都合得上的。收藏夹短了很多，剩下的至少真能申请。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38497,8 +38497,8 @@
         },
         {
           "id": "decision_040_choice_2",
-          "text": "回国申请专业或行业岗位",
-          "resultText": "你把研究翻译成岗位能读的证据。",
+          "text": "回国找专业或行业岗位",
+          "resultText": "研究经历重新写了一遍，少讲题目有多新，多讲你到底做了什么。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38573,8 +38573,8 @@
         },
         {
           "id": "decision_040_choice_3",
-          "text": "申请美国岗位或项目",
-          "resultText": "工作资格和雇主手续重新核，不沿用欧洲经验。",
+          "text": "去美国找机会",
+          "resultText": "工作资格和雇主要办的手续重新查。欧洲那套经验能带走，规定不能。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38649,8 +38649,8 @@
         },
         {
           "id": "decision_040_choice_4",
-          "text": "继续求职，先做短项目保持证据",
-          "resultText": "临时项目不冒充长期岗位。",
+          "text": "还没找到，先做点短项目",
+          "resultText": "你接能留下作品和反馈的短项目，合同多长就写多长，不拿它冒充长期工作。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38748,7 +38748,7 @@
       "ageMin": 23,
       "ageMax": 38,
       "icon": "▤",
-      "prompt": "这次怎么重新安顿？",
+      "prompt": "这一次，你从哪儿安顿下来？",
       "requirements": {
         "all": [
           {
@@ -38772,8 +38772,8 @@
       "choices": [
         {
           "id": "decision_041_choice_1",
-          "text": "沿用旧网络，也给新地方留入口",
-          "resultText": "老朋友帮你少踩一个坑。你也主动约了新组里一次具体的午饭。",
+          "text": "熟人能联系就联系，也认识点新的人",
+          "resultText": "你给原来认识的人发了消息，也参加了一次新同学的活动。有人回得快，有人只留了一个表情。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38837,8 +38837,8 @@
         },
         {
           "id": "decision_041_choice_2",
-          "text": "先靠学校、实验室和国际学生支持",
-          "resultText": "你把行政、学术和生活问题分开找人。",
+          "text": "学校和国际学生服务能用就用",
+          "resultText": "学术问题找课程和项目的人，手续问题去对应办公室，生活上的麻烦再问同学。你没再指望一个人什么都管。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38902,8 +38902,8 @@
         },
         {
           "id": "decision_041_choice_3",
-          "text": "优先补当地语言和日常系统",
-          "resultText": "课程外又多一门学习。预约、合同和同事闲聊开始少一点雾。",
+          "text": "先补当地语言和办事那一套",
+          "resultText": "课程之外又多一门要学的。预约、合同和招聘里的常用话，开始不用每次都猜。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -38966,7 +38966,7 @@
           "route": "host_language"
         }
       ],
-      "situation": "读研又搬了一次。可能是第一次出海，也可能从本科城市换到新实验室。旧群聊还在，新门禁和合租规则已经要你签字。",
+      "situation": "研究生开学以后，课程、办事入口和身边的人都得重新认。有些事情看着眼熟，真去问时，规定已经换了。",
       "episode": {
         "id": "overseas_postgraduate_belonging",
         "lane": "community",
@@ -38990,7 +38990,7 @@
       "ageMin": 24,
       "ageMax": 39,
       "icon": "▤",
-      "prompt": "这次归属感怎么落下来？",
+      "prompt": "你准备怎么应对？",
       "requirements": {
         "all": [
           {
@@ -39014,8 +39014,8 @@
       "choices": [
         {
           "id": "decision_042_choice_1",
-          "text": "把边界和需要说清，继续合作",
-          "resultText": "你纠正了假设，也留下能合作的部分。",
+          "text": "把话说回去，合作还是继续",
+          "resultText": "你纠正了对方，也说了下次别再这样。该做的事照做，但不再假装那句话没发生。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -39084,8 +39084,8 @@
         },
         {
           "id": "decision_042_choice_2",
-          "text": "记录问题，找导师、工会或支持服务",
-          "resultText": "你保留事实，核对正式渠道和替代安排。",
+          "text": "留下记录，去找能管这件事的人",
+          "resultText": "你记下原话和在场的人，去找导师、工会或支持服务。对方给了正式渠道，也说了还能换什么安排。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -39154,8 +39154,8 @@
         },
         {
           "id": "decision_042_choice_3",
-          "text": "换组、换环境，保住研究和生活",
-          "resultText": "你没有把离开有问题的环境写成自己不够坚强。",
+          "text": "换合作安排，或者离开这里",
+          "resultText": "你先找能继续课程或项目的地方，再离开原来的环境。换地方很麻烦，一直耗着也没有比较高尚。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -39224,8 +39224,8 @@
         },
         {
           "id": "decision_042_choice_4",
-          "text": "用社区和盟友一起回应",
-          "resultText": "华人、国际学生或本地同事有人愿意站在旁边。",
+          "text": "找社区和身边的人一起回应",
+          "resultText": "华人、国际学生或本地同学里，有人愿意陪你去说，也有人下次会在现场接话。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -41294,7 +41294,7 @@
       "ageMin": 20,
       "ageMax": 40,
       "icon": "▥",
-      "prompt": "第一份工作，先从哪种入口投？",
+      "prompt": "第一份工作，你先从哪儿找？",
       "requirements": {
         "all": [
           {
@@ -41326,8 +41326,8 @@
       "choices": [
         {
           "id": "decision_051_choice_1",
-          "text": "走校招或毕业生岗位",
-          "resultText": "你按真实毕业时间、学历和项目填。没有把学生社团改成三年管理经验。",
+          "text": "先投入门岗位",
+          "resultText": "学历和离校时间照实填，做过什么也照实写。你没把一次社团活动改成三年管理经验。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -41391,8 +41391,8 @@
         },
         {
           "id": "decision_051_choice_2",
-          "text": "争取实习或项目转正",
-          "resultText": "你先问岗位、合同、薪资和转正条件。口头说“很有机会”没有写进结果。",
+          "text": "问问实习或项目能不能留下",
+          "resultText": "你去问岗位、合同和转正条件。对方说“机会挺大”，你接着问：那什么时候定？",
           "hints": [],
           "requirements": {
             "all": [],
@@ -41456,8 +41456,8 @@
         },
         {
           "id": "decision_051_choice_3",
-          "text": "投专业或研究岗位",
-          "resultText": "你把方法、工具和能独立做的事写清。学历不是唯一一行。",
+          "text": "只看专业对口的岗位",
+          "resultText": "你把方法、工具和能独立做的事写在前面。学历占一行，不再占完一整页。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -41521,8 +41521,8 @@
         },
         {
           "id": "decision_051_choice_4",
-          "text": "先接桥接岗位，继续投",
-          "resultText": "岗位可能不完全对口，但能带来收入和在岗证据。",
+          "text": "先找个能接上的岗位",
+          "resultText": "完全对口的职位太少，你把范围放宽了一点。先投能学到行业做法的，别让空窗继续变长。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -41585,7 +41585,7 @@
           "route": "bridge"
         }
       ],
-      "situation": "毕业出口定了。校招、社会招聘、实习转正、导师推荐和海外职业中心都在发链接。每个入口都说“尽快”，每份表都要重新填专业。",
+      "situation": "上一段学业停在成绩单上，工作还没有着落。招聘网站、学校或项目群里每天都有新链接，每个都催你尽快投，每份表又都要把经历重填一遍。",
       "episode": {
         "id": "first_job_application",
         "lane": "career",
@@ -41609,7 +41609,7 @@
       "ageMin": 21,
       "ageMax": 41,
       "icon": "▥",
-      "prompt": "面试里，怎么让证据站得住？",
+      "prompt": "下一轮真来了，你准备先讲什么？",
       "requirements": {
         "all": [
           {
@@ -41628,8 +41628,8 @@
       "choices": [
         {
           "id": "decision_052_choice_1",
-          "text": "本科入口：讲实习、课程项目和上手速度",
-          "resultText": "你承认经验还短，也能说清自己完成过什么。",
+          "text": "就讲做过的项目和上手有多快",
+          "resultText": "经验短就是短。你没躲，挑了一件自己做过的，从怎么接手讲到哪里返过工。",
           "hints": [],
           "requirements": {
             "all": [
@@ -41697,8 +41697,8 @@
         },
         {
           "id": "decision_052_choice_2",
-          "text": "研究生入口：讲研究方法和专业深度",
-          "resultText": "你删掉大段论文背景，留下问题、方法、结果和协作。",
+          "text": "把研究讲成他们听得懂的东西",
+          "resultText": "半页论文背景删掉，只留问题、方法、结果和怎么与人合作。讲到行业经验时，你也承认这块还薄。",
           "hints": [],
           "requirements": {
             "all": [
@@ -41763,8 +41763,8 @@
         },
         {
           "id": "decision_052_choice_3",
-          "text": "换成岗位能读的作品和测试",
-          "resultText": "你按要求做了一个，不再用学校名字替代交付。",
+          "text": "少说空话，照常见要求做一个",
+          "resultText": "你照着常见岗位要求做了测试或作品。学校名字帮不了你改错，最后还是一处处自己查。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -41823,8 +41823,8 @@
         },
         {
           "id": "decision_052_choice_4",
-          "text": "发现不对，撤回这份申请",
-          "resultText": "职责、薪资、工作资格或合同条件对不上。你停止了流程。",
+          "text": "越聊越不对，算了",
+          "resultText": "职责和招聘页不是一回事，薪资、资格或合同也有一项过不了。你关掉这条申请，没再陪对方“保持沟通”。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -41887,7 +41887,7 @@
           "route": "application_withdrawn"
         }
       ],
-      "situation": "笔试、作业、群面和面试来了。有人问本科生“为什么没读研”，也有人问研究生“为什么没有两年经验”。招聘系统逻辑很完整，人生没有。",
+      "situation": "申请发出去以后，你开始准备可能来的笔试、作业、群面和面试。学历少一截会被问为什么不继续读，学历多一截又常被追着要工作经验。岗位总能找到一栏嫌你不够。",
       "episode": {
         "id": "first_job_application",
         "lane": "career",
@@ -41911,7 +41911,7 @@
       "ageMin": 22,
       "ageMax": 42,
       "icon": "▥",
-      "prompt": "怎么把“有希望”核成能报到？",
+      "prompt": "下一轮申请，哪件事先问到底？",
       "requirements": {
         "all": [
           {
@@ -41930,8 +41930,8 @@
       "choices": [
         {
           "id": "decision_053_choice_1",
-          "text": "核合同、岗位和报到条件",
-          "resultText": "你把试用期、薪资、地点、职责和撤回条件写进同一张表。",
+          "text": "把合同和报到条件问到底",
+          "resultText": "你只把试用期、薪资、工作地点、职责和报到条件肯写清楚的岗位留在申请里。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -41980,8 +41980,8 @@
         },
         {
           "id": "decision_053_choice_2",
-          "text": "海外申请：先核工作资格和雇主手续",
-          "resultText": "你筛掉无法处理当前资格的岗位，也没有把族裔当成失败公式。",
+          "text": "人在海外，先问雇主能不能办手续",
+          "resultText": "岗位再合适，对方处理不了当前工作资格也走不下去。你一边筛掉不可能的，一边继续投剩下的。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -42030,8 +42030,8 @@
         },
         {
           "id": "decision_053_choice_3",
-          "text": "回国申请：补认证并对齐招聘批次",
-          "resultText": "学历材料和项目说明补齐。错过的批次没有被假装赶上。",
+          "text": "投国内岗位，先赶还开着的批次",
+          "resultText": "学历材料补起来，项目说明也按国内岗位重写。错过的批次就是错过了，网页不会因为你在海外待过就重新开放。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -42080,8 +42080,8 @@
         },
         {
           "id": "decision_053_choice_4",
-          "text": "没有可用录用，继续找",
-          "resultText": "你保留申请记录，接短项目或压缩支出。",
+          "text": "还是没有，接着投",
+          "resultText": "你留着申请记录，有短项目就做一点，手里的钱也开始省着花。亲友问起时，你没编一家“快入职”的公司。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -42139,7 +42139,7 @@
           "route": "long_search"
         }
       ],
-      "situation": "结果开始回来：正式录用、口头意向、补材料、拒信、已读不回。海外岗位还要核工作资格；回国岗位又在追问认证和应届时间。",
+      "situation": "招聘页面上，“录用”“意向”“补材料”几个词挨得很近。真走到报到，还要合同、工作资格和一个写得清楚的日期。",
       "episode": {
         "id": "first_job_application",
         "lane": "career",
@@ -42163,7 +42163,7 @@
       "ageMin": 23,
       "ageMax": 43,
       "icon": "▥",
-      "prompt": "第一份工作最后怎么落地？",
+      "prompt": "你的第一份工作，最后怎么样了？",
       "requirements": {
         "all": [
           {
@@ -42182,8 +42182,8 @@
       "choices": [
         {
           "id": "decision_054_choice_1",
-          "text": "本科入口：从基层或通用岗位站住",
-          "resultText": "你按真实岗位报到。级别不高，能做的事开始按月积累。",
+          "text": "先去基层或通用岗位",
+          "resultText": "你照合同上的岗位报到。级别不高，第一周做的事也没什么可炫耀的。",
           "hints": [],
           "requirements": {
             "all": [
@@ -42291,8 +42291,8 @@
         },
         {
           "id": "decision_054_choice_2",
-          "text": "本科入口：实习转正或对口入门",
-          "resultText": "转正条件落到合同，或对口岗位完成报到。",
+          "text": "实习转正，或者找到对口入口",
+          "resultText": "转正条件写进了合同，或者对口岗位终于让你去报到。你拿到的不是“很有机会”，是明确的入职日期。",
           "hints": [],
           "requirements": {
             "all": [
@@ -42400,8 +42400,8 @@
         },
         {
           "id": "decision_054_choice_3",
-          "text": "研究生入口：进入专业或研究岗位",
-          "resultText": "研究、课程和项目与岗位对上。报到完成。",
+          "text": "进专业或研究岗位",
+          "resultText": "课程、研究和项目正好接得上岗位。你办完报到，从新人该学的地方开始。",
           "hints": [],
           "requirements": {
             "all": [
@@ -42506,8 +42506,8 @@
         },
         {
           "id": "decision_054_choice_4",
-          "text": "研究生入口：接受错配或桥接岗位",
-          "resultText": "岗位没有完全认出你的研究方向。你问清转岗、成长和期限后报到。",
+          "text": "先去一个不完全对口的岗位",
+          "resultText": "对方不太认识你的研究方向，但愿意用你。你问了能学什么、以后怎么转，然后还是决定先进去。",
           "hints": [],
           "requirements": {
             "all": [
@@ -42612,8 +42612,8 @@
         },
         {
           "id": "decision_054_choice_5",
-          "text": "暂时没有工作，继续申请",
-          "resultText": "没有工牌，也没有填一份假去向。申请记录继续更新。",
+          "text": "还没有工作，继续找",
+          "resultText": "你没有工牌，也没填一份假去向。申请记录照旧更新，下一次招聘消息来了还得点开。",
           "hints": [],
           "requirements": {
             "all": [],
@@ -42680,7 +42680,7 @@
           "route": "long_search"
         }
       ],
-      "situation": "报到日或最后等待日到了。工牌、合同、工作资格和第一笔通勤费用都比“前景”更具体。",
+      "situation": "最后等待日到了。真拿到录用的人在准备报到，还没有的人继续刷新消息。所谓前景，到了这天也得落到一份合同上。",
       "episode": {
         "id": "first_job_application",
         "lane": "career",
@@ -74526,7 +74526,7 @@
       "ageMin": 19,
       "ageMax": 105,
       "icon": "↩",
-      "text": "那张课表第一次把兴趣、毕业要求和早八放在了一起。",
+      "text": "第一张课表排出来了。好不好看另说，早八倒是一门没少。",
       "sourceDecisionId": "decision_012",
       "requirements": {
         "all": [],
@@ -74536,7 +74536,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_012_c1": {
-          "text": "后来改方向时，至少知道哪些学分能带走。",
+          "text": "下一次课表要改，那张先修关系表还找得到。",
           "effects": [
             {
               "type": "add",
@@ -74557,7 +74557,7 @@
           ]
         },
         "decision_012_c2": {
-          "text": "专业不再只是录取通知书上的四个字。",
+          "text": "专业不再只是录取通知书上的几个字。",
           "effects": [
             {
               "type": "add",
@@ -74578,7 +74578,7 @@
           ]
         },
         "decision_012_c3": {
-          "text": "绩点没塌，补课的时间却开始挤别的事。",
+          "text": "成绩单没出大问题。补课却从下学期开始排队。",
           "effects": [
             {
               "type": "add",
@@ -74620,7 +74620,7 @@
       "ageMin": 20,
       "ageMax": 105,
       "icon": "↩",
-      "text": "群聊、工位和操场，各自留下了一点证据。",
+      "text": "这一年，你的时间没有平均分给所有群聊。",
       "sourceDecisionId": "decision_013",
       "requirements": {
         "all": [],
@@ -74630,7 +74630,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_013_c1": {
-          "text": "校园证据不厚，但能说清自己做了什么。",
+          "text": "你没混到一长串头衔，但能讲清楚那次活动是怎么做完的。",
           "effects": [
             {
               "type": "add",
@@ -74651,7 +74651,7 @@
           ]
         },
         "decision_013_c2": {
-          "text": "研究和项目证据有了第一条可核的记录。",
+          "text": "简历上多了一件经得住追问的事。",
           "effects": [
             {
               "type": "add",
@@ -74672,7 +74672,7 @@
           ]
         },
         "decision_013_c3": {
-          "text": "实践证据比职位名称更像一段经历。",
+          "text": "等你再写“做过什么”，总算不只剩职位名称。",
           "effects": [
             {
               "type": "add",
@@ -74693,7 +74693,7 @@
           ]
         },
         "decision_013_c4": {
-          "text": "没拿到社团头衔，也没把疲惫当上进。",
+          "text": "没有社团经历。那阵子你也确实没再靠咖啡硬撑。",
           "effects": [
             {
               "type": "add",
@@ -74735,7 +74735,7 @@
       "ageMin": 21,
       "ageMax": 105,
       "icon": "↩",
-      "text": "那一年没能四手都抓住，但至少有一样真的做完。",
+      "text": "你没把四条路一起攥住。这一年，至少有一件事做到了能拿出来说。",
       "sourceDecisionId": "decision_014",
       "requirements": {
         "all": [],
@@ -74745,7 +74745,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_014_c1": {
-          "text": "研究证据够导师继续问，也够你承认哪里没做出来。",
+          "text": "以后导师问到细节，你有答得出的，也有能老实说没做成的。",
           "effects": [
             {
               "type": "add",
@@ -74766,7 +74766,7 @@
           ]
         },
         "decision_014_c2": {
-          "text": "实践证据能落到任务、反馈和交接。",
+          "text": "这段经历后来能讲任务、返工和交接，不用只背公司介绍。",
           "effects": [
             {
               "type": "add",
@@ -74787,7 +74787,7 @@
           ]
         },
         "decision_014_c3": {
-          "text": "申请准备开始了，但没有被写成已经录取。",
+          "text": "备考已经开始。录不录得上，得等考试说话。",
           "effects": [
             {
               "type": "add",
@@ -74808,7 +74808,7 @@
           ]
         },
         "decision_014_c4": {
-          "text": "申请材料能说清楚为什么读，不只说想去远方。",
+          "text": "申请还没交，但“想出去看看”终于变成了几件要做的事。",
           "effects": [
             {
               "type": "add",
@@ -74850,7 +74850,7 @@
       "ageMin": 22,
       "ageMax": 105,
       "icon": "↩",
-      "text": "学籍在这一页收口。下一条路不再靠“再看看”悬着。",
+      "text": "离校手续办完了。下一步不再只停在“我再想想”。",
       "sourceDecisionId": "decision_015",
       "requirements": {
         "all": [],
@@ -74860,7 +74860,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_015_c1": {
-          "text": "第一份工作申请开始按本科入口计算。",
+          "text": "第一批职位收藏好了。第二天再看，有一个已经下架。",
           "effects": [
             {
               "type": "add",
@@ -74881,7 +74881,7 @@
           ]
         },
         "decision_015_c2": {
-          "text": "下一站是国内研究生申请，不是自动升学。",
+          "text": "复习资料摊开了。录取通知还远。",
           "effects": [
             {
               "type": "add",
@@ -74902,7 +74902,7 @@
           ]
         },
         "decision_015_c3": {
-          "text": "下一站是美国研究生申请。预算表跟成绩单放在一起。",
+          "text": "推荐信还没开口，项目截止日已经先排满一页。",
           "effects": [
             {
               "type": "add",
@@ -74923,7 +74923,7 @@
           ]
         },
         "decision_015_c4": {
-          "text": "下一站是欧洲研究生申请。英文授课没有替你办完日常。",
+          "text": "收藏夹里名字最像的两个项目，申请条件差了半页。",
           "effects": [
             {
               "type": "add",
@@ -74965,7 +74965,7 @@
       "ageMin": 19,
       "ageMax": 105,
       "icon": "↩",
-      "text": "从这一页起，海外不再是一个模糊地点。",
+      "text": "从这里往后，学校里的日子有了具体的制度和地方。",
       "sourceDecisionId": "decision_016",
       "requirements": {
         "all": [],
@@ -74975,7 +74975,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_016_c1": {
-          "text": "本科系统记为美国。后面的课程和生活按这套现实展开。",
+          "text": "下一封选课提醒来自 advisor，degree audit 也多了一排红字。",
           "effects": [
             {
               "type": "add",
@@ -74996,7 +74996,7 @@
           ]
         },
         "decision_016_c2": {
-          "text": "本科系统记为欧洲。后面的课程和生活不再套美国模板。",
+          "text": "选完课还不算完。考试注册在另一个页面等你。",
           "effects": [
             {
               "type": "add",
@@ -75038,7 +75038,7 @@
       "ageMin": 20,
       "ageMax": 105,
       "icon": "↩",
-      "text": "课表没变简单，只是每个缺口都有了名字。",
+      "text": "课表还是很绕，但你总算知道坑在哪儿。",
       "sourceDecisionId": "decision_017",
       "requirements": {
         "all": [],
@@ -75048,7 +75048,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_017_c1": {
-          "text": "课程证据稳了。以后少一次“我以为能毕业”。",
+          "text": "后来再看 degree audit，你不必拿“我以为”去跟系统争。",
           "effects": [
             {
               "type": "add",
@@ -75069,7 +75069,7 @@
           ]
         },
         "decision_017_c2": {
-          "text": "方向更像自己，毕业表上也多了真实成本。",
+          "text": "方向选得更像你自己。多花的学分也是真的。",
           "effects": [
             {
               "type": "add",
@@ -75090,7 +75090,7 @@
           ]
         },
         "decision_017_c3": {
-          "text": "时间可能省，压力和成绩也一起进入账本。",
+          "text": "毕业时间也许能往前挪，成绩和睡眠先被挤了一轮。",
           "effects": [
             {
               "type": "add",
@@ -75132,7 +75132,7 @@
       "ageMin": 21,
       "ageMax": 105,
       "icon": "↩",
-      "text": "岗位、授权和能交付的事，被放进同一份记录。",
+      "text": "你没有把“欢迎申请”当成已经能去上班。",
       "sourceDecisionId": "decision_018",
       "requirements": {
         "all": [],
@@ -75142,7 +75142,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_018_c1": {
-          "text": "实践证据和工作资格记录都干净。",
+          "text": "实习写进简历时，岗位日期和工作授权能对得上。",
           "effects": [
             {
               "type": "add",
@@ -75163,7 +75163,7 @@
           ]
         },
         "decision_018_c2": {
-          "text": "研究证据增长，也认识了不只同班的人。",
+          "text": "后来有人来核经历，老师说得出你负责的是哪一块。",
           "effects": [
             {
               "type": "add",
@@ -75184,7 +75184,7 @@
           ]
         },
         "decision_018_c3": {
-          "text": "没假装有实习，作品也不是空白。",
+          "text": "这一轮没多出实习。作品链接倒是终于能点开了。",
           "effects": [
             {
               "type": "add",
@@ -75226,7 +75226,7 @@
       "ageMin": 22,
       "ageMax": 105,
       "icon": "↩",
-      "text": "学位完成了。留下、回去或继续读，都要重新做决定。",
+      "text": "学位拿到了。留在美国、回国还是继续读，都得你自己再选一次。",
       "sourceDecisionId": "decision_019",
       "requirements": {
         "all": [],
@@ -75236,7 +75236,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_019_c1": {
-          "text": "第一份工作按美国本科入口开始，不保证能留下。",
+          "text": "第一批申请发出去了。国际学生办公室那封提醒还置顶着。",
           "effects": [
             {
               "type": "add",
@@ -75257,7 +75257,7 @@
           ]
         },
         "decision_019_c2": {
-          "text": "海外本科不是永久加成。能说清的项目才带得回来。",
+          "text": "时差还没倒，网申倒先填到了第三页。",
           "effects": [
             {
               "type": "add",
@@ -75278,7 +75278,7 @@
           ]
         },
         "decision_019_c3": {
-          "text": "读研地点重新选回国内。",
+          "text": "国内报名页打开了。海外成绩单还在等盖章。",
           "effects": [
             {
               "type": "add",
@@ -75299,7 +75299,7 @@
           ]
         },
         "decision_019_c4": {
-          "text": "研究生申请重新开始。",
+          "text": "项目收藏夹又长起来了。这次你先看钱，再看名字。",
           "effects": [
             {
               "type": "add",
@@ -75341,7 +75341,7 @@
       "ageMin": 20,
       "ageMax": 105,
       "icon": "↩",
-      "text": "课程、考试和行政登记第一次被放进同一张日历。",
+      "text": "三个页面都还在。你至少知道漏掉哪一个会出事。",
       "sourceDecisionId": "decision_020",
       "requirements": {
         "all": [],
@@ -75351,7 +75351,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_020_c1": {
-          "text": "课程证据留下，少了一次“上完却没报名考试”。",
+          "text": "这学期结束时，没有哪门课因为“没报名考试”白上。",
           "effects": [
             {
               "type": "add",
@@ -75372,7 +75372,7 @@
           ]
         },
         "decision_020_c2": {
-          "text": "社会语言增长，没有被写成一夜融入。",
+          "text": "你离“什么都听懂”还远，日常却没那么处处求人了。",
           "effects": [
             {
               "type": "add",
@@ -75393,7 +75393,7 @@
           ]
         },
         "decision_020_c3": {
-          "text": "课程没停，生活适应仍欠着几页。",
+          "text": "学业没耽误。生活里那套规则，还是边撞边学。",
           "effects": [
             {
               "type": "add",
@@ -75435,7 +75435,7 @@
       "ageMin": 21,
       "ageMax": 105,
       "icon": "↩",
-      "text": "关系没有自动变熟，项目倒有了明确分工。",
+      "text": "大家未必成了朋友，活倒是按时交了。",
       "sourceDecisionId": "decision_021",
       "requirements": {
         "all": [],
@@ -75445,7 +75445,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_021_c1": {
-          "text": "实践证据增长，也多了几次真正的来往。",
+          "text": "项目往前走了。后来也真有几次不是为了交作业才见面。",
           "effects": [
             {
               "type": "add",
@@ -75466,7 +75466,7 @@
           ]
         },
         "decision_021_c2": {
-          "text": "项目完成，关系网也不只停在一个圈。",
+          "text": "作业交上去了。你的联系人也没全留在一个圈里。",
           "effects": [
             {
               "type": "add",
@@ -75487,7 +75487,7 @@
           ]
         },
         "decision_021_c3": {
-          "text": "项目证据真实，没有把“国际化”当通行证。",
+          "text": "项目做完以后，简历上写的是你真做过的事，不是一次参观。",
           "effects": [
             {
               "type": "add",
@@ -75529,7 +75529,7 @@
       "ageMin": 22,
       "ageMax": 105,
       "icon": "↩",
-      "text": "学位在这一页完成。去向重新由材料和选择决定。",
+      "text": "学位审核过了。下一张表，要填的是工作还是继续读书。",
       "sourceDecisionId": "decision_022",
       "requirements": {
         "all": [],
@@ -75539,7 +75539,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_022_c1": {
-          "text": "第一份工作按欧洲本科入口开始。留下仍是一个流程。",
+          "text": "第一批申请发出去了。写着“英语即可”的职位，收藏夹里少了一半。",
           "effects": [
             {
               "type": "add",
@@ -75560,7 +75560,7 @@
           ]
         },
         "decision_022_c2": {
-          "text": "海外经历变成证据，不是自动高一档。",
+          "text": "国内网申没问你适应得怎么样。先问什么时候能到岗。",
           "effects": [
             {
               "type": "add",
@@ -75581,7 +75581,7 @@
           ]
         },
         "decision_022_c3": {
-          "text": "研究生地点重新选回国内。",
+          "text": "国内报名日排好了。毕业文件还在路上。",
           "effects": [
             {
               "type": "add",
@@ -75602,7 +75602,7 @@
           ]
         },
         "decision_022_c4": {
-          "text": "没有因为已经搬过一次就默认继续搬。",
+          "text": "比较表又开了一张。上次踩过的坑，这次先圈出来。",
           "effects": [
             {
               "type": "add",
@@ -75644,7 +75644,7 @@
       "ageMin": 20,
       "ageMax": 105,
       "icon": "↩",
-      "text": "那次变化没有只停在“我不想读了”。",
+      "text": "这次你没有只在心里说“不想读了”。学校那边也收到了一份正式申请。",
       "sourceDecisionId": "decision_023",
       "requirements": {
         "all": [],
@@ -75654,7 +75654,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_023_c1": {
-          "text": "申请有结果之前，原课程仍照常记。",
+          "text": "结果出来以前，你还得照常去上原来的课。",
           "effects": [
             {
               "type": "add",
@@ -75675,7 +75675,7 @@
           ]
         },
         "decision_023_c2": {
-          "text": "停下来不是失联。复学日有了能核的入口。",
+          "text": "你暂时停了下来。什么时候能回来，不再只靠一句“以后再说”。",
           "effects": [
             {
               "type": "add",
@@ -75696,7 +75696,7 @@
           ]
         },
         "decision_023_c3": {
-          "text": "转学不是一张“同意”截图。缺的材料也被写出来。",
+          "text": "转学申请发出去了。学分能带走多少，要等对方认。",
           "effects": [
             {
               "type": "add",
@@ -75717,7 +75717,7 @@
           ]
         },
         "decision_023_c4": {
-          "text": "这段学业结束。不是在读，也不被写成失踪。",
+          "text": "这段本科到这里结束。以后填表时，你不会再写自己仍然在读。",
           "effects": [
             {
               "type": "add",
@@ -75759,7 +75759,7 @@
       "ageMin": 21,
       "ageMax": 105,
       "icon": "↩",
-      "text": "学籍、课程和下一步终于对上了。",
+      "text": "名单和回函都出来了。你接下来的课表，终于不用再靠猜。",
       "sourceDecisionId": "decision_024",
       "requirements": {
         "all": [],
@@ -75769,7 +75769,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_024_c1": {
-          "text": "继续读。多出的时间没有被藏起来。",
+          "text": "你换了专业，继续读本科。",
           "effects": [
             {
               "type": "add",
@@ -75790,7 +75790,7 @@
           ]
         },
         "decision_024_c2": {
-          "text": "重新在读。休学留下的是一段记录，不是永久污点。",
+          "text": "你重新成为在读学生。休学那段时间也没有从记录里消失。",
           "effects": [
             {
               "type": "add",
@@ -75811,7 +75811,7 @@
           ]
         },
         "decision_024_c3": {
-          "text": "学校变了，本科路线继续。",
+          "text": "学校换了，你的本科还在继续。",
           "effects": [
             {
               "type": "add",
@@ -75832,7 +75832,7 @@
           ]
         },
         "decision_024_c4": {
-          "text": "第一份工作按本科未完成入口计算。",
+          "text": "你以本科未完成的身份开始找第一份工作。",
           "effects": [
             {
               "type": "add",
@@ -75874,7 +75874,7 @@
       "ageMin": 20,
       "ageMax": 105,
       "icon": "↩",
-      "text": "生活没有被一次学会，但最容易漏的几件事有了固定办法。",
+      "text": "日子还是会出岔子，好在你不再每次都从搜索框第一页开始。",
       "sourceDecisionId": "decision_025",
       "requirements": {
         "all": [],
@@ -75884,7 +75884,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_025_c1": {
-          "text": "日常适应增长，合租没有变成文化考试。",
+          "text": "后来再碰到新规矩，你至少敢在做错之前开口。",
           "effects": [
             {
               "type": "add",
@@ -75905,7 +75905,7 @@
           ]
         },
         "decision_025_c2": {
-          "text": "同胞关系增长，成为桥而不是围墙。",
+          "text": "熟悉的中文先帮你站稳。等新人来问时，你也回了几句。",
           "effects": [
             {
               "type": "add",
@@ -75926,7 +75926,7 @@
           ]
         },
         "decision_025_c3": {
-          "text": "混合支持网络开始形成。",
+          "text": "你开始知道不同问题该敲哪扇门。",
           "effects": [
             {
               "type": "add",
@@ -75968,7 +75968,7 @@
       "ageMin": 21,
       "ageMax": 105,
       "icon": "↩",
-      "text": "你没有交出原来的圈子，也没有把新圈子当打卡任务。",
+      "text": "你没有因为认识了新人就退出原来的群，也没把交朋友做成每周任务。",
       "sourceDecisionId": "decision_026",
       "requirements": {
         "all": [],
@@ -75978,7 +75978,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_026_c1": {
-          "text": "同胞和本地关系可以一起增长。",
+          "text": "后来再有人说“有空约”，你手里已经有几个真的日期。",
           "effects": [
             {
               "type": "add",
@@ -75999,7 +75999,7 @@
           ]
         },
         "decision_026_c2": {
-          "text": "本地关系增长，但没有瞬间成为“自己人”。",
+          "text": "你还谈不上成了“自己人”，但下次去时不用从自我介绍开始。",
           "effects": [
             {
               "type": "add",
@@ -76020,7 +76020,7 @@
           ]
         },
         "decision_026_c3": {
-          "text": "关系网变宽，也保留了跨国生活的现实。",
+          "text": "你认识的人来自更多地方，没人要求你先装得像本地人。",
           "effects": [
             {
               "type": "add",
@@ -76041,7 +76041,7 @@
           ]
         },
         "decision_026_c4": {
-          "text": "归属感暂时没涨，精力没有继续透支。",
+          "text": "圈子没变大。课程和睡眠也没再继续往下掉。",
           "effects": [
             {
               "type": "add",
@@ -76083,7 +76083,7 @@
       "ageMin": 22,
       "ageMax": 105,
       "icon": "↩",
-      "text": "那件事被记成环境对你做了什么，不是你哪里不够融入。",
+      "text": "这件事后来留下的，不是“你还不够会融入”。",
       "sourceDecisionId": "decision_027",
       "requirements": {
         "all": [],
@@ -76093,7 +76093,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_027_c1": {
-          "text": "边界留下了。对方是否改变，是对方的功课。",
+          "text": "气氛冷了一下。至少在场的人知道你听见了，也不接受。",
           "effects": [
             {
               "type": "add",
@@ -76114,7 +76114,7 @@
           ]
         },
         "decision_027_c2": {
-          "text": "支持有了入口，遭遇没有只留在你脑子里。",
+          "text": "这次不是只剩你回去以后越想越气。",
           "effects": [
             {
               "type": "add",
@@ -76135,7 +76135,7 @@
           ]
         },
         "decision_027_c3": {
-          "text": "同胞和本地支持都可能成为盟友。",
+          "text": "后来再碰面时，你不是一个人接那句话。",
           "effects": [
             {
               "type": "add",
@@ -76156,7 +76156,7 @@
           ]
         },
         "decision_027_c4": {
-          "text": "保存精力不是认输。歧视也没有被奖励。",
+          "text": "对方没有因此变得更对。你只是没把剩下的力气也交出去。",
           "effects": [
             {
               "type": "add",
@@ -76198,7 +76198,7 @@
       "ageMin": 22,
       "ageMax": 105,
       "icon": "↩",
-      "text": "地点重新选了一次。海外本科没有替你自动留下，国内本科也没有把门关上。",
+      "text": "你先挑了一条。日历空出来一点，焦虑没有。",
       "sourceDecisionId": "decision_028",
       "requirements": {
         "all": [],
@@ -76208,7 +76208,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_028_c1": {
-          "text": "申请意向记为国内。",
+          "text": "复习资料下单了。群里已经有人问一天背多少页。",
           "effects": [
             {
               "type": "add",
@@ -76229,7 +76229,7 @@
           ]
         },
         "decision_028_c2": {
-          "text": "申请意向记为美国。",
+          "text": "推荐信还没开口，第一批截止日先到了眼前。",
           "effects": [
             {
               "type": "add",
@@ -76250,7 +76250,7 @@
           ]
         },
         "decision_028_c3": {
-          "text": "申请意向记为欧洲。",
+          "text": "课程说明下载了一堆。名字最像的项目，要求反而差得最多。",
           "effects": [
             {
               "type": "add",
@@ -76271,7 +76271,7 @@
           ]
         },
         "decision_028_c4": {
-          "text": "第一份工作申请开始，入口学历按本科记录。",
+          "text": "简历改到第三版。研究生申请还停在草稿。",
           "effects": [
             {
               "type": "add",
@@ -76313,7 +76313,7 @@
       "ageMin": 23,
       "ageMax": 105,
       "icon": "↩",
-      "text": "申请从意向变成了真实提交，也暴露了证据的缺口。",
+      "text": "申请文件夹终于不再天天改名。交出去的交了，没交的也停在这一版。",
       "sourceDecisionId": "decision_029",
       "requirements": {
         "all": [],
@@ -76323,7 +76323,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_029_c1": {
-          "text": "研究方向匹配度提高。",
+          "text": "研究经历那一栏终于不用靠“从小热爱”撑页数。",
           "effects": [
             {
               "type": "add",
@@ -76344,7 +76344,7 @@
           ]
         },
         "decision_029_c2": {
-          "text": "专业申请不再只靠学校名字。",
+          "text": "职责和结果挨在一起，项目名称没有再替你占满整段。",
           "effects": [
             {
               "type": "add",
@@ -76365,7 +76365,7 @@
           ]
         },
         "decision_029_c3": {
-          "text": "申请更完整，时间和机会也付了代价。",
+          "text": "材料厚了一点。能赶上的项目也少了一些。",
           "effects": [
             {
               "type": "add",
@@ -76386,7 +76386,7 @@
           ]
         },
         "decision_029_c4": {
-          "text": "本轮申请退出，求职入口重新打开。",
+          "text": "求职页面重新回到最前面。",
           "effects": [
             {
               "type": "add",
@@ -76428,7 +76428,7 @@
       "ageMin": 24,
       "ageMax": 105,
       "icon": "↩",
-      "text": "录取和资助第一次没有被一句“上岸”盖过去。",
+      "text": "这一年的结果最后留在官网或邮箱里，不在群聊截图里。",
       "sourceDecisionId": "decision_030",
       "requirements": {
         "all": [],
@@ -76438,7 +76438,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_030_c1": {
-          "text": "国内结果被解析为录取、候补或落选。",
+          "text": "以后再提这一年，你拿得出系统里的结果，不用翻聊天记录。",
           "effects": [
             {
               "type": "add",
@@ -76459,7 +76459,7 @@
           ]
         },
         "decision_030_c2": {
-          "text": "美国或欧洲结果被解析，不把录取等同于付得起。",
+          "text": "项目给了什么回复、钱够不够，最后各有一份文件。",
           "effects": [
             {
               "type": "add",
@@ -76480,7 +76480,7 @@
           ]
         },
         "decision_030_c3": {
-          "text": "没有把整年交给一封可能永远不来的邮件。",
+          "text": "最后一天到了。邮箱里是什么，就按什么往下走。",
           "effects": [
             {
               "type": "add",
@@ -76501,7 +76501,7 @@
           ]
         },
         "decision_030_c4": {
-          "text": "读研申请失败，但人生没有暂停。",
+          "text": "这轮研究生没有读成。你转去找第一份工作。",
           "effects": [
             {
               "type": "add",
@@ -76543,7 +76543,7 @@
       "ageMin": 25,
       "ageMax": 105,
       "icon": "↩",
-      "text": "申请在报到日收口。没有报到的录取不再算在读。",
+      "text": "报到日过去以后，真正坐进教室的那所学校才会出现在课表里。",
       "sourceDecisionId": "decision_031",
       "requirements": {
         "all": [],
@@ -76553,7 +76553,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_031_c1": {
-          "text": "研究生系统记为国内，完整就读开始。",
+          "text": "你开始在国内读研究生。",
           "effects": [
             {
               "type": "add",
@@ -76574,7 +76574,7 @@
           ]
         },
         "decision_031_c2": {
-          "text": "研究生系统记为美国，海外生活重新进入下一阶段。",
+          "text": "你开始在美国读研究生。海外生活也翻到下一段。",
           "effects": [
             {
               "type": "add",
@@ -76595,7 +76595,7 @@
           ]
         },
         "decision_031_c3": {
-          "text": "研究生系统记为欧洲，授课语言外的生活仍要继续学。",
+          "text": "你开始在欧洲读研究生。",
           "effects": [
             {
               "type": "add",
@@ -76616,7 +76616,7 @@
           ]
         },
         "decision_031_c4": {
-          "text": "第一份工作按本科入口开始。",
+          "text": "你以本科学历开始找第一份工作。",
           "effects": [
             {
               "type": "add",
@@ -76658,7 +76658,7 @@
       "ageMin": 24,
       "ageMax": 105,
       "icon": "↩",
-      "text": "课、研究和导师沟通有了不只靠猜的节奏。",
+      "text": "课要上，研究也要做。至少你和导师之间，不再全靠猜。",
       "sourceDecisionId": "decision_032",
       "requirements": {
         "all": [],
@@ -76668,7 +76668,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_032_c1": {
-          "text": "研究证据开始增长，边界也有了第一版。",
+          "text": "后面真有分歧时，你手里不只剩各自的记忆。",
           "effects": [
             {
               "type": "add",
@@ -76689,7 +76689,7 @@
           ]
         },
         "decision_032_c2": {
-          "text": "课程证据增长，开题晚了一点但没空心。",
+          "text": "开头慢了一点。真正做研究时，你没再被最基础的那步卡住。",
           "effects": [
             {
               "type": "add",
@@ -76710,7 +76710,7 @@
           ]
         },
         "decision_032_c3": {
-          "text": "实践证据增长，也增加了排期压力。",
+          "text": "你多了一段实践，也多了几次在课表和排班之间来回赶。",
           "effects": [
             {
               "type": "add",
@@ -76752,7 +76752,7 @@
       "ageMin": 25,
       "ageMax": 105,
       "icon": "↩",
-      "text": "学历没有自己发光，能被核到的东西开始发声。",
+      "text": "毕业还没到，手里总算有了几件能摊开讲的事。",
       "sourceDecisionId": "decision_033",
       "requirements": {
         "all": [],
@@ -76762,7 +76762,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_033_c1": {
-          "text": "研究证据增长，专业路线更深。",
+          "text": "以后别人问你怎么做的，你能从第一步讲到哪里失败过。",
           "effects": [
             {
               "type": "add",
@@ -76783,7 +76783,7 @@
           ]
         },
         "decision_033_c2": {
-          "text": "研究与实践证据接上。",
+          "text": "面试再问到这段，你能先说自己做了什么，不必从论文题目背起。",
           "effects": [
             {
               "type": "add",
@@ -76804,7 +76804,7 @@
           ]
         },
         "decision_033_c3": {
-          "text": "实践更强，时间压力也更真实。",
+          "text": "实践经历多了，毕业前的时间也明显不够用了。",
           "effects": [
             {
               "type": "add",
@@ -76846,7 +76846,7 @@
       "ageMin": 26,
       "ageMax": 105,
       "icon": "↩",
-      "text": "学位完成。前景由专业证据、实践和岗位匹配继续决定。",
+      "text": "学位拿到了。它会帮你敲开一些门，门后面是不是合适，还得继续谈。",
       "sourceDecisionId": "decision_034",
       "requirements": {
         "all": [],
@@ -76856,7 +76856,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_034_c1": {
-          "text": "第一份工作按研究生专业入口开始。",
+          "text": "第一批申请发了出去。面试会不会来，还没有答案。",
           "effects": [
             {
               "type": "add",
@@ -76877,7 +76877,7 @@
           ]
         },
         "decision_034_c2": {
-          "text": "研究生学历保留，岗位不必和论文同名。",
+          "text": "行业岗位开始投了。专业名称那一栏，照样得从下拉框里挑。",
           "effects": [
             {
               "type": "add",
@@ -76898,7 +76898,7 @@
           ]
         },
         "decision_034_c3": {
-          "text": "第一份工作按研究生桥接入口开始。",
+          "text": "桥接岗位多投了一类。工牌还得等正式录用。",
           "effects": [
             {
               "type": "add",
@@ -76919,7 +76919,7 @@
           ]
         },
         "decision_034_c4": {
-          "text": "毕业完成，求职继续。",
+          "text": "毕业办完了。求职还在继续。",
           "effects": [
             {
               "type": "add",
@@ -76961,7 +76961,7 @@
       "ageMin": 24,
       "ageMax": 105,
       "icon": "↩",
-      "text": "研究生生活从一堆说明会变成了能执行的安排。",
+      "text": "说明会还是开了很多。至少其中一部分，后来真的变成了你的日程。",
       "sourceDecisionId": "decision_035",
       "requirements": {
         "all": [],
@@ -76971,7 +76971,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_035_c1": {
-          "text": "研究证据增长，口头承诺少了一点。",
+          "text": "后来谈到职责时，你不用只靠入学那天听来的印象。",
           "effects": [
             {
               "type": "add",
@@ -76992,7 +76992,7 @@
           ]
         },
         "decision_035_c2": {
-          "text": "课程证据增长，口音没有被当成能力值。",
+          "text": "话偶尔还是卡住。该学会的方法没有跟着卡住。",
           "effects": [
             {
               "type": "add",
@@ -77013,7 +77013,7 @@
           ]
         },
         "decision_035_c3": {
-          "text": "实践证据增长，没有用违规经历赌未来。",
+          "text": "项目结束时，工作内容和授权日期能对得上。",
           "effects": [
             {
               "type": "add",
@@ -77055,7 +77055,7 @@
       "ageMin": 25,
       "ageMax": 105,
       "icon": "↩",
-      "text": "论文题目没变万能，能迁移的方法开始被看见。",
+      "text": "论文题目没有突然变成万能钥匙。你做事的方法，倒开始能被岗位看懂。",
       "sourceDecisionId": "decision_036",
       "requirements": {
         "all": [],
@@ -77065,7 +77065,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_036_c1": {
-          "text": "岗位匹配提高，选择范围仍受现实限制。",
+          "text": "能投的范围窄了一些，留下来的更像真机会。",
           "effects": [
             {
               "type": "add",
@@ -77086,7 +77086,7 @@
           ]
         },
         "decision_036_c2": {
-          "text": "实践和本地关系增长。",
+          "text": "这段项目后来成了简历上的本地经历。",
           "effects": [
             {
               "type": "add",
@@ -77107,7 +77107,7 @@
           ]
         },
         "decision_036_c3": {
-          "text": "回国不是最后一周才买票。",
+          "text": "回国求职的准备，赶在毕业前开始了。",
           "effects": [
             {
               "type": "add",
@@ -77149,7 +77149,7 @@
       "ageMin": 26,
       "ageMax": 105,
       "icon": "↩",
-      "text": "学位完成。留下或回国都进入真实申请，不自动兑现。",
+      "text": "学位已经拿到。留下、回国或换地方，都得从真正的申请开始。",
       "sourceDecisionId": "decision_037",
       "requirements": {
         "all": [],
@@ -77159,7 +77159,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_037_c1": {
-          "text": "第一份工作按美国研究生入口开始。",
+          "text": "职位列表越筛越短。工作资格那一栏，每份都得重新答。",
           "effects": [
             {
               "type": "add",
@@ -77180,7 +77180,7 @@
           ]
         },
         "decision_037_c2": {
-          "text": "第一份工作按回国研究生入口开始。",
+          "text": "国内网申开着，毕业文件还在另一个时区慢慢走。",
           "effects": [
             {
               "type": "add",
@@ -77201,7 +77201,7 @@
           ]
         },
         "decision_037_c3": {
-          "text": "跨地区申请开始，不把海外当成一个国家。",
+          "text": "新的岗位申请发出去了。美国这边的工作资格帮不了欧洲那一栏。",
           "effects": [
             {
               "type": "add",
@@ -77222,7 +77222,7 @@
           ]
         },
         "decision_037_c4": {
-          "text": "求职继续，时间和现金开始成为真实压力。",
+          "text": "邮箱继续刷新。资格期限和生活开销一起往前走。",
           "effects": [
             {
               "type": "add",
@@ -77264,7 +77264,7 @@
       "ageMin": 24,
       "ageMax": 105,
       "icon": "↩",
-      "text": "紧凑学制没有被写成轻松学制。",
+      "text": "学制短是真的。轻松两个字，从来没人写进录取信。",
       "sourceDecisionId": "decision_038",
       "requirements": {
         "all": [],
@@ -77274,7 +77274,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_038_c1": {
-          "text": "课程证据增长，漏流程的风险下降。",
+          "text": "这个学期结束时，该算的学分都算上了。",
           "effects": [
             {
               "type": "add",
@@ -77295,7 +77295,7 @@
           ]
         },
         "decision_038_c2": {
-          "text": "社会语言增长，但没有自动变成本地人。",
+          "text": "你还远没变成本地人。日子却少隔了一层玻璃。",
           "effects": [
             {
               "type": "add",
@@ -77316,7 +77316,7 @@
           ]
         },
         "decision_038_c3": {
-          "text": "研究或实践证据增长。",
+          "text": "你接到了一段能真正参与的研究或实践。",
           "effects": [
             {
               "type": "add",
@@ -77358,7 +77358,7 @@
       "ageMin": 25,
       "ageMax": 105,
       "icon": "↩",
-      "text": "专业深度、当地入口和回国准备被分开计算。",
+      "text": "论文是论文，找工作是找工作。你没再指望前者自动替你办完后者。",
       "sourceDecisionId": "decision_039",
       "requirements": {
         "all": [],
@@ -77368,7 +77368,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_039_c1": {
-          "text": "本地岗位匹配提高。",
+          "text": "你投得少了一些，至少不用每次到最后才发现不合条件。",
           "effects": [
             {
               "type": "add",
@@ -77389,7 +77389,7 @@
           ]
         },
         "decision_039_c2": {
-          "text": "实践和本地关系增长。",
+          "text": "下一次申请时，你多了一段本地合作和一个能联系的人。",
           "effects": [
             {
               "type": "add",
@@ -77410,7 +77410,7 @@
           ]
         },
         "decision_039_c3": {
-          "text": "回国申请节奏接上。",
+          "text": "回国求职的准备提前开始了。",
           "effects": [
             {
               "type": "add",
@@ -77452,7 +77452,7 @@
       "ageMin": 26,
       "ageMax": 105,
       "icon": "↩",
-      "text": "学位完成。地区和岗位重新选择。",
+      "text": "论文和学分都过了。接下来要填的，是地区、岗位，还有什么时候能上班。",
       "sourceDecisionId": "decision_040",
       "requirements": {
         "all": [],
@@ -77462,7 +77462,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_040_c1": {
-          "text": "第一份工作按欧洲研究生入口开始。",
+          "text": "申请发出去了。有一份自动回复先用当地语言谢你耐心等待。",
           "effects": [
             {
               "type": "add",
@@ -77483,7 +77483,7 @@
           ]
         },
         "decision_040_c2": {
-          "text": "第一份工作按回国研究生入口开始。",
+          "text": "国内网申没有论文摘要那一栏。你把方法和结果拆开填了。",
           "effects": [
             {
               "type": "add",
@@ -77504,7 +77504,7 @@
           ]
         },
         "decision_040_c3": {
-          "text": "跨地区申请开始。",
+          "text": "美国岗位开始投了。申请表第一页就问以后要不要雇主办手续。",
           "effects": [
             {
               "type": "add",
@@ -77525,7 +77525,7 @@
           ]
         },
         "decision_040_c4": {
-          "text": "求职继续，实践记录没有断。",
+          "text": "求职还在继续。你的实践也没有完全断掉。",
           "effects": [
             {
               "type": "add",
@@ -77567,7 +77567,7 @@
       "ageMin": 24,
       "ageMax": 105,
       "icon": "↩",
-      "text": "过去的经验能带来一点底，但新地方仍要重新问。",
+      "text": "开学群消息很多。真正有用的联系人，还得慢慢认。",
       "sourceDecisionId": "decision_041",
       "requirements": {
         "all": [],
@@ -77577,7 +77577,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_041_c1": {
-          "text": "同胞和本地关系继续并存。",
+          "text": "新同学不再只剩头像。原来的联系能不能接上，也有了答案。",
           "effects": [
             {
               "type": "add",
@@ -77598,7 +77598,7 @@
           ]
         },
         "decision_041_c2": {
-          "text": "混合支持网络增长。",
+          "text": "出了问题时，你手里多了几个不同的联系人。",
           "effects": [
             {
               "type": "add",
@@ -77619,7 +77619,7 @@
           ]
         },
         "decision_041_c3": {
-          "text": "社会语言和日常适应增长。",
+          "text": "日常顺了一些。说到快的时候，你还是会漏掉一半。",
           "effects": [
             {
               "type": "add",
@@ -77661,7 +77661,7 @@
       "ageMin": 25,
       "ageMax": 105,
       "icon": "↩",
-      "text": "你不需要先抹掉来处，才有资格建立新的关系。",
+      "text": "散会以后，那句话和替你接话的人，你都记得。",
       "sourceDecisionId": "decision_042",
       "requirements": {
         "all": [],
@@ -77671,7 +77671,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_042_c1": {
-          "text": "归属感来自可重复的尊重，不是一次热闹。",
+          "text": "以后能不能处下去，要看尊重是不是只出现这一次。",
           "effects": [
             {
               "type": "add",
@@ -77692,7 +77692,7 @@
           ]
         },
         "decision_042_c2": {
-          "text": "歧视负荷被看见，没有进入学业或求职失败公式。",
+          "text": "事情进了记录，不再只由你一个人证明它发生过。",
           "effects": [
             {
               "type": "add",
@@ -77713,7 +77713,7 @@
           ]
         },
         "decision_042_c3": {
-          "text": "支持网络重新搭，研究证据保住。",
+          "text": "课程或项目接上了。身边的人得重新认识。",
           "effects": [
             {
               "type": "add",
@@ -77734,7 +77734,7 @@
           ]
         },
         "decision_042_c4": {
-          "text": "多个圈子一起成为支持。",
+          "text": "这次支持你的，不只来自一个圈子。",
           "effects": [
             {
               "type": "add",
@@ -78549,7 +78549,7 @@
       "ageMin": 21,
       "ageMax": 105,
       "icon": "↩",
-      "text": "申请不再只是“找工作”，而是有了入口学历、地区和真实记录。",
+      "text": "你选了一个入口，开始真的往外投。",
       "sourceDecisionId": "decision_051",
       "requirements": {
         "all": [],
@@ -78559,7 +78559,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_051_c1": {
-          "text": "申请进入毕业生通道。",
+          "text": "收藏夹短了一点，“已申请”那栏终于不再是空的。",
           "effects": [
             {
               "type": "add",
@@ -78580,7 +78580,7 @@
           ]
         },
         "decision_051_c2": {
-          "text": "实践证据进入第一份工作判断。",
+          "text": "对方开始谈留用。录用通知还是空的。",
           "effects": [
             {
               "type": "add",
@@ -78601,7 +78601,7 @@
           ]
         },
         "decision_051_c3": {
-          "text": "专业匹配进入第一份工作判断。",
+          "text": "职位少了一截。剩下的至少会问你到底会什么。",
           "effects": [
             {
               "type": "add",
@@ -78622,7 +78622,7 @@
           ]
         },
         "decision_051_c4": {
-          "text": "第一份工作允许从桥上走，不把桥写成终点。",
+          "text": "收藏夹多了一类职位。工资还没来，申请先多了。",
           "effects": [
             {
               "type": "add",
@@ -78664,7 +78664,7 @@
       "ageMin": 22,
       "ageMax": 105,
       "icon": "↩",
-      "text": "学历路线没有被争成高低，只被翻译成岗位能核的东西。",
+      "text": "面试稿改了几版。最顺口的，还是你真做过的那一段。",
       "sourceDecisionId": "decision_052",
       "requirements": {
         "all": [],
@@ -78674,7 +78674,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_052_c1": {
-          "text": "本科路线更早进入岗位，但初始层级和匹配仍要谈。",
+          "text": "这段经历不用等别人提醒，你也能从头讲清。",
           "effects": [
             {
               "type": "add",
@@ -78695,7 +78695,7 @@
           ]
         },
         "decision_052_c2": {
-          "text": "研究生路线打开更专业的岗位，也暴露行业经验缺口。",
+          "text": "稿子里的专业深度还在，经验不足也没被漂亮话盖住。",
           "effects": [
             {
               "type": "add",
@@ -78716,7 +78716,7 @@
           ]
         },
         "decision_052_c3": {
-          "text": "岗位匹配提高，学历差异没有自动消失。",
+          "text": "文件能直接打开，也能看出你做到了哪一步。",
           "effects": [
             {
               "type": "add",
@@ -78737,7 +78737,7 @@
           ]
         },
         "decision_052_c4": {
-          "text": "少一个虚假的机会，也少一份后面更贵的麻烦。",
+          "text": "少了一次看起来有希望的机会，也少了一个以后更难退的坑。",
           "effects": [
             {
               "type": "add",
@@ -78779,7 +78779,7 @@
       "ageMin": 23,
       "ageMax": 105,
       "icon": "↩",
-      "text": "offer、资格、地区和岗位匹配第一次被分开确认。",
+      "text": "申请记录里，能报到的和还在等的，没有再写在同一栏。",
       "sourceDecisionId": "decision_053",
       "requirements": {
         "all": [],
@@ -78789,7 +78789,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_053_c1": {
-          "text": "能报到的录用留下，口头意向不再冒充 offer。",
+          "text": "电话里说的和正式文件上的，后来没有再混在一起。",
           "effects": [
             {
               "type": "add",
@@ -78810,7 +78810,7 @@
           ]
         },
         "decision_053_c2": {
-          "text": "海外申请由语言、资格、关系和岗位证据决定。",
+          "text": "海外这条申请继续往前走，语言、资格和岗位经历都得经得住问。",
           "effects": [
             {
               "type": "add",
@@ -78831,7 +78831,7 @@
           ]
         },
         "decision_053_c3": {
-          "text": "回国申请进入真实节奏，海归不自动升档。",
+          "text": "还开着的岗位投出去了。学历那一栏没有替你回答项目做了什么。",
           "effects": [
             {
               "type": "add",
@@ -78852,7 +78852,7 @@
           ]
         },
         "decision_053_c4": {
-          "text": "持续求职是明确状态，不是假就业。",
+          "text": "你还在求职。这是当前的生活，不是一份工作。",
           "effects": [
             {
               "type": "add",
@@ -78894,7 +78894,7 @@
       "ageMin": 24,
       "ageMax": 105,
       "icon": "↩",
-      "text": "学业到工作的接口在这里收口。前景分开，但谁都没有自动通关。",
+      "text": "最后等待日过去。工牌有就有，没有也不能拿别人的单位填进自己的去向。",
       "sourceDecisionId": "decision_054",
       "requirements": {
         "all": [],
@@ -78904,7 +78904,7 @@
       "actors": [],
       "choiceOutcomes": {
         "decision_054_c1": {
-          "text": "本科直接就业更早获得在岗年限，专业天花板仍要靠后续证据打开。",
+          "text": "第一段正式经验从这里开始。工资和门槛都按新人算。",
           "effects": [
             {
               "type": "add",
@@ -78925,7 +78925,7 @@
           ]
         },
         "decision_054_c2": {
-          "text": "本科实践证据换成了第一段正式经验。",
+          "text": "以前做过的事，终于接上了第一段正式工作。",
           "effects": [
             {
               "type": "add",
@@ -78946,7 +78946,7 @@
           ]
         },
         "decision_054_c3": {
-          "text": "研究生专业入口成立，但晋升和收入仍从第一天重新算。",
+          "text": "岗位名称很专业。入职培训和试用期，照样从新人那一页开始。",
           "effects": [
             {
               "type": "add",
@@ -78967,7 +78967,7 @@
           ]
         },
         "decision_054_c4": {
-          "text": "学历没有浪费，也没有替你免掉行业经验。",
+          "text": "第一周先记行业里的名字和流程。研究方向暂时只占简历上的一行。",
           "effects": [
             {
               "type": "add",
@@ -78988,7 +78988,7 @@
           ]
         },
         "decision_054_c5": {
-          "text": "第一份工作簇以持续求职收口，后续由普通就业事件接手。",
+          "text": "第一份工作暂时没有落地。普通求职生活从这里接着往下走。",
           "effects": [
             {
               "type": "add",
@@ -91366,26 +91366,26 @@
     "undergraduate_domestic": {
       "label": "国内本科生活",
       "ageBound": true,
-      "deadline": "从报到起五年了。培养方案、已修课程和毕业审核按现在的真实结果归档。没完成的，不再写成即将毕业。",
-      "invalidated": "学籍已经中断、转出或结束。成绩单和能认的学分留着，原学校这条本科生活收在这里。"
+      "deadline": "第五年，毕业审核里的红字还在。修完的课进了成绩单，差的那几项也没人替你补上。",
+      "invalidated": "原学校的学生证已经不能用了。成绩单开出来，能认的学分带走，剩下的停在这里。"
     },
     "undergraduate_overseas_orientation": {
       "label": "海外本科制度确认",
       "ageBound": true,
-      "deadline": "报到后的制度确认窗口过去了。学校所在系统按正式培养方案归档，不再用“海外”两个字代替全部细节。",
-      "invalidated": "海外学籍或学校发生变化。旧培养方案归档，按新学校重新确认。"
+      "deadline": "第一张课表已经排了。哪门算学分、考试要不要另报名，学校按自己的办法来。",
+      "invalidated": "学校或学籍变了。旧培养方案收起来，下一张课表要按新学校重排。"
     },
     "undergraduate_us": {
       "label": "美国本科生活",
       "ageBound": true,
-      "deadline": "本科审核窗口到了。已修课程、实践和毕业状态按学校记录收口；没完成的学分不冒充学位。",
-      "invalidated": "美国本科学籍已经中断、转出或结束。课程和授权记录归档，这条学业停在真实状态。"
+      "deadline": "毕业审核到了，degree audit 里还有红字。修过的课都在，缺的要求也没有自己消失。",
+      "invalidated": "这段美国本科学籍停了。课程和工作资格记录还在，完成到哪就写到哪。"
     },
     "undergraduate_europe": {
       "label": "欧洲本科生活",
       "ageBound": true,
-      "deadline": "学分与毕业审核窗口到了。注册过的考试、已获学分和毕业状态按正式记录收口。",
-      "invalidated": "欧洲本科学籍已经中断、转出或结束。学分和行政材料归档，这条学业停在真实状态。"
+      "deadline": "考试注册窗口关了，学分单也出来了。报过的、通过的和还空着的，各在各的位置。",
+      "invalidated": "这段欧洲本科学籍停了。学分单和办过的手续装在一起，完成到哪就写到哪。"
     },
     "undergraduate_change": {
       "label": "本科休学与转学",
@@ -91393,13 +91393,13 @@
         "withdrawn",
         "work_exit"
       ],
-      "deadline": "两年了。转专业、复学或转学不能只停在申请中。按最后的学籍回函和成绩单收口。",
-      "invalidated": "原学籍已经结束或变更。旧申请作废，能认的课程和正式文件留着。"
+      "deadline": "两年了。最后一封学籍回函到了。转成、复学还是转出，学校在上面写得很清楚。",
+      "invalidated": "原来的学籍已经变了，那份旧申请也不能再用。能认的课和开出的文件还在。"
     },
     "overseas_undergraduate_belonging": {
       "label": "海外本科生活与归属",
-      "deadline": "三年了。合租、关系网和支持渠道按现在的样子固定下来；归属感不再等一次完美融入。",
-      "invalidated": "你已经不在这段海外本科学籍里。退租、账单和支持记录归档，这段生活结束。"
+      "deadline": "三年过去，账单怎么交、遇到事先问谁，你有了自己的过法。至于算不算“融入”，没有人来盖章。",
+      "invalidated": "你离开了这段海外本科生活。最后的账结清，手机里还联系谁，由你自己留。"
     },
     "postgraduate_application": {
       "label": "研究生申请",
@@ -91409,8 +91409,8 @@
         "withdrawn",
         "not_admitted"
       ],
-      "deadline": "从选项目到现在四年了。录取、资助和报到没同时成立的，不再算在读。材料归档，转入求职或以后重申。",
-      "invalidated": "本科资格、录取、资金或项目条件变了。旧结果不再可用，这轮申请结束。"
+      "deadline": "四年过去，录取、钱和报到没能在同一天碰头。邮箱里有过什么，不等于你已经在读。",
+      "invalidated": "资格、录取、钱或项目条件变了。那封旧回复已经不能拿去报到。"
     },
     "postgraduate_domestic": {
       "label": "国内研究生生活",
@@ -91418,8 +91418,8 @@
       "abandonedRoutes": [
         "long_search"
       ],
-      "deadline": "四年了。课程、论文、学位审核和就业状态按正式结果收口。没完成的研究不冒充学位。",
-      "invalidated": "国内研究生学籍已经中断或结束。课程、数据和正式材料归档。"
+      "deadline": "第四年，答辩和学位审核都到了最后期限。系统里写到哪一步，这段研究生就停在哪一步。",
+      "invalidated": "这段国内研究生学籍停了。课程、数据和学校开出的材料都留了下来。"
     },
     "postgraduate_us": {
       "label": "美国研究生生活",
@@ -91427,8 +91427,8 @@
       "abandonedRoutes": [
         "long_search"
       ],
-      "deadline": "四年了。学位、资助和工作资格按正式结果收口。没有形成的岗位不再当 offer。",
-      "invalidated": "美国研究生学籍已经中断或结束。研究、资助和授权记录归档。"
+      "deadline": "第四年，学位审核、资助期限和工作资格一起到期。没发下来的文件，不能拿一句“应该没问题”代替。",
+      "invalidated": "这段美国研究生学籍停了。研究、资助和工作资格记录都留了下来。"
     },
     "postgraduate_europe": {
       "label": "欧洲研究生生活",
@@ -91436,13 +91436,13 @@
       "abandonedRoutes": [
         "long_search"
       ],
-      "deadline": "四年了。学分、论文、学位与下一步许可按正式结果收口。",
-      "invalidated": "欧洲研究生学籍已经中断或结束。学分、行政和项目记录归档。"
+      "deadline": "第四年，学分、论文和学位审核都到了最后期限。学校最后发下来的记录，就是这段学业的结果。",
+      "invalidated": "这段欧洲研究生学籍停了。学分单、行政回函和项目材料都还在。"
     },
     "overseas_postgraduate_belonging": {
       "label": "海外研究生生活与归属",
-      "deadline": "两年了。新城市、实验室和社区关系按现在的样子落定；支持不要求你先抹掉来处。",
-      "invalidated": "你已经离开这段海外研究生生活。门禁、租约和支持记录归档。"
+      "deadline": "两年了。常走的路已经不用导航。至于出了事能找谁，试过才知道。",
+      "invalidated": "你离开了这段海外研究生生活。手续停在离开那天，想继续联系的人不用一起归零。"
     },
     "first_job_application": {
       "label": "第一份工作申请",
@@ -91451,8 +91451,8 @@
         "withdrawn",
         "long_search"
       ],
-      "deadline": "四年了。没有形成的意向不再当 offer。申请记录、短项目和当前求职状态归档，普通就业事件从这里接手。",
-      "invalidated": "你已经正式入职，或不再处于这轮毕业求职。旧申请归档，第一份工作簇结束。"
+      "deadline": "四年了。申请页还在更新，工牌那一栏仍然空着。没有合同，就不能把“快了”填成已经入职。",
+      "invalidated": "你已经正式入职，或者不再投这一轮岗位。旧申请收进历史，待办列表终于短了一截。"
     }
   },
   "endingProfiles": [
