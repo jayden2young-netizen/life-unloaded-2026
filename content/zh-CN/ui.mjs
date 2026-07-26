@@ -1,7 +1,7 @@
 export const UI_COPY={
   homeTagline:'你出生在什么家，很多事一开始就不一样。后面的路，得自己一段一段走。',
   birthTitle:'你出生了',
-  birthHouseholdNote:'家里有房有债，但都不是刚出生的你的。',
+  birthHouseholdNote:'家里有房有债，但都还不是你的。',
   birthNext:'分配起点',
   attributesTitle:'你天生更靠什么',
   attributesLead:'起点不能选，但这二十点花在哪儿，由你。',

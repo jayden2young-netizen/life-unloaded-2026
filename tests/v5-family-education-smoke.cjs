@@ -5,7 +5,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.FAMILY_EDUCATION_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.5.10-family-education');
+const OUT=process.env.FAMILY_EDUCATION_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.5.11-family-education');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
@@ -89,7 +89,7 @@ async function advanceToPhase(page,id,number){
 }
 
 (async()=>{
-  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.5.10',9,17]);
+  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.5.11',9,18]);
   assert.equal(data.events.filter(event=>event.id.startsWith('origin_context_')).length,24);
   assert.ok(data.familyArchetypes.find(family=>family.name==='医护家庭').parentJobs.every(job=>/护士|医生|医技|医院/.test(job)));
   assert.ok(data.familyArchetypes.find(family=>family.name==='平台劳动家庭').parentJobs.every(job=>/平台|骑手|网约车|电商|直播/.test(job)));
@@ -107,7 +107,7 @@ async function advanceToPhase(page,id,number){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[9,'0.5.10',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[9,'0.5.11',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.9完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,9);
@@ -129,34 +129,34 @@ async function advanceToPhase(page,id,number){
     await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({age:2,originHousehold:{context:value},yearStarted:false,yearQueue:[],usedEvents:[],timeline:[]}),unsafeContext);
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
-    assert.match(run.timeline.at(-1).text,/争吵|没人解释/);
+    assert.equal(run.timeline.at(-1).id,'origin_context_2_strained_unsafe');
     assert.ok(run.development.traumaLoad>0);
 
     const presentContext={...unsafeContext,resourceTier:'comfortable',resources:88,educationCapital:85,educationBudget:88,parentPresence:82,caregiverAvailability:80,emotionalSafety:78,housingStability:82};
     await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({age:7,originHousehold:{context:value},yearStarted:false,yearQueue:[],usedEvents:[],timeline:[]}),presentContext);
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
-    assert.match(run.timeline.at(-1).text,/书桌|兴趣课|父母/);
+    assert.equal(run.timeline.at(-1).id,'origin_context_7_comfortable_present');
 
     const comfortableUnsafe={...presentContext,emotionalSafety:32};
     await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({age:7,originHousehold:{context:value},yearStarted:false,yearQueue:[],usedEvents:[],timeline:[]}),comfortableUnsafe);
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
-    assert.match(run.timeline.at(-1).text,/错一道题|值得培养/);
+    assert.equal(run.timeline.at(-1).id,'origin_context_7_comfortable_unsafe');
 
     await enterPhase(page,phase('secondary_diversion',1),{age:15,attrs:{intellect:1},education:{status:'completed',level:2,path:'middleSchool'},development:{learningHabit:15,attendance:55,teacherSupport:25,peerSupport:30,selfAdvocacy:20,careLoad:65,traumaLoad:55,routeKnowledge:10,languagePreparation:0,routeExposure:[]}});
     let rendered=await textState(page);
-    const academic=rendered.run.decision.choices.find(choice=>/普高/.test(choice.text));
+    const academic=rendered.run.decision.choices.find(choice=>choice.index===0);
     assert.equal(academic.visible,true);
     assert.equal(academic.enabled,false);
     assert.match(academic.reason,/成绩|出勤|准备/);
-    assert.equal(rendered.run.decision.choices.some(choice=>/可办理学校/.test(choice.text)),false);
+    assert.equal(rendered.run.decision.choices.some(choice=>choice.index===3),false);
     const beforeLocked=await snapshot(page);
     await page.evaluate(()=>document.querySelector('[data-choice="0"]').click());
     assert.equal((await snapshot(page)).sceneQueue[0].kind,beforeLocked.sceneQueue[0].kind);
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({development:{routeExposure:['alternativeSchool']}}));
     rendered=await textState(page);
-    assert.equal(rendered.run.decision.choices.some(choice=>/可办理学校/.test(choice.text)),true);
+    assert.equal(rendered.run.decision.choices.some(choice=>choice.index===3),true);
     await page.setViewportSize({width:360,height:640});
     await fit(page,'secondary-locked-360x640');
     await page.waitForTimeout(900);
@@ -169,7 +169,7 @@ async function advanceToPhase(page,id,number){
     run=await chooseAndFinish(page,0);
     assert.equal(run.education.applicationIntent,'domestic');
     await advanceToPhase(page,'undergraduate_application',2);
-    assert.equal((await textState(page)).run.decision.choices.find(choice=>/国内考试/.test(choice.text)).enabled,true);
+    assert.equal((await textState(page)).run.decision.choices.find(choice=>choice.index===0).enabled,true);
     run=await chooseAndFinish(page,0);
     assert.equal(run.education.domesticOffer,true);
     assert.equal(run.education.applicationStatus,'offered');
@@ -191,7 +191,7 @@ async function advanceToPhase(page,id,number){
     const overseasDevelopment={...strongDevelopment,routeExposure:['overseas']};
     await enterPhase(page,phase('undergraduate_application',1),{age:18,attrs:{intellect:10},originHousehold:{context:presentContext},education:{...strongEducation},development:overseasDevelopment,episodes:{undergraduate_application:{status:'inactive'}},usedEvents:usedWithoutUndergrad});
     rendered=await textState(page);
-    assert.equal(rendered.run.decision.choices.find(choice=>/海外本科作为主线/.test(choice.text)).enabled,true);
+    assert.equal(rendered.run.decision.choices.find(choice=>choice.index===2).enabled,true);
     run=await chooseAndFinish(page,2);
     assert.equal(run.education.applicationIntent,'overseas');
     await advanceToPhase(page,'undergraduate_application',2);
@@ -200,8 +200,8 @@ async function advanceToPhase(page,id,number){
     assert.equal(run.education.overseasOfferType,'direct');
     await advanceToPhase(page,'undergraduate_application',3);
     rendered=await textState(page);
-    assert.equal(rendered.run.decision.choices.find(choice=>/家庭预算/.test(choice.text)).enabled,true);
-    assert.equal(rendered.run.decision.choices.some(choice=>/奖学金/.test(choice.text)),false);
+    assert.equal(rendered.run.decision.choices.find(choice=>choice.index===1).enabled,true);
+    assert.equal(rendered.run.decision.choices.some(choice=>choice.index===2),false);
     run=await chooseAndFinish(page,1);
     assert.equal(run.education.entryPermitReady,false);
     assert.equal(run.education.overseasDepartureReady,true);
@@ -227,7 +227,7 @@ async function advanceToPhase(page,id,number){
     const poorContext={...presentContext,resources:20,educationBudget:10};
     await enterPhase(page,phase('undergraduate_application',3),{age:19,originHousehold:{context:poorContext,assets:0,debt:50000},finance:{cash:0},education:{...strongEducation,domesticOffer:true,domesticOfferType:'admitted',applicationStatus:'offered'},development:{...strongDevelopment,routeExposure:[]},episodes:{undergraduate_application:{status:'active',phase:3,startedAt:18,nextPhaseAge:19,deadlineAge:22,route:'domestic_submitted',boundActors:{},commitments:[],closureReason:null}}});
     rendered=await textState(page);
-    const domesticFunding=rendered.run.decision.choices.find(choice=>/国内录取/.test(choice.text));
+    const domesticFunding=rendered.run.decision.choices.find(choice=>choice.index===0);
     assert.equal(domesticFunding.visible,true);
     assert.equal(domesticFunding.enabled,false);
     assert.match(domesticFunding.reason,/费用|资助/);

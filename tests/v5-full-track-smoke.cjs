@@ -5,7 +5,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.5.10-full-track');
+const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.5.11-full-track');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
@@ -107,9 +107,9 @@ async function prepareFinal(page,id,event){
 }
 
 (async()=>{
-  assert.equal(data.version,'0.5.10');
+  assert.equal(data.version,'0.5.11');
   assert.equal(data.schemaVersion,9);
-  assert.equal(data.contentRevision,17);
+  assert.equal(data.contentRevision,18);
   assert.ok(decisions.every(event=>!('arc' in event)));
   for(const id of episodeIds){
     const rows=decisions.filter(event=>event.episode?.id===id).sort((a,b)=>a.episode.phase-b.episode.phase);
@@ -133,11 +133,12 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.5.10');
+    assert.equal(migrated.gameVersion,'0.5.11');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,8);
+    assert.equal(migrated.meta.seen.events.beat_001,undefined);
     assert.deepEqual(migrated.meta.recentSeeds,['v058-finished']);
     await context.close();
 
@@ -184,6 +185,7 @@ async function prepareFinal(page,id,event){
       const startIndex=id==='secondary_diversion'?1:0;
       routeResults[id]??=[];
       for(let index=startIndex;index<finalEvent.choices.length;index++){
+        if(id==='secondary_diversion'&&index===3)await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({development:{routeExposure:['alternativeSchool']}}));
         if(finalEvent.episode.role!=='start')await prepareFinal(page,id,finalEvent);
         run=await chooseAndFinish(page,finalEvent,index);
         assert.equal(run.episodes[id].closureReason,finalEvent.choices[index].route,`${id}/${index}: closure route`);
