@@ -1,10 +1,11 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'test-results', 'v5-browser');
+const OUT = process.env.BROWSER_SMOKE_OUT || path.join(os.tmpdir(), 'life-unloaded-v0.5.12-browser');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY = 'life-unloaded-2026-v1';
 const SYSTEM_CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
@@ -98,8 +99,8 @@ let browser;
     legacyKeys: Object.keys(localStorage).filter(item => item.startsWith('life-unloaded-2026-') && item !== key),
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
-  assert.equal(migrated.state.schemaVersion, 9);
-  assert.equal(migrated.state.gameVersion, '0.5.11');
+  assert.equal(migrated.state.schemaVersion, 10);
+  assert.equal(migrated.state.gameVersion, '0.5.12');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
