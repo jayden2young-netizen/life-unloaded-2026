@@ -11,16 +11,16 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前开发版本：v0.5.11
-- 当前本地开发版本：v0.5.11
-- 上一个已发布版本：v0.5.10
-- `schemaVersion`：9
-- `contentRevision`：18
+- 当前开发版本：v0.5.12
+- 当前本地开发版本：v0.5.12
+- 当前 `main` 基线版本：v0.5.11
+- `schemaVersion`：10
+- `contentRevision`：19
 - localStorage 键：`life-unloaded-2026-v1`
-- `main` 开发基线：`6a7522e2d877bc95c7061d0cdaec3a420ec03f30`
-- 基线提交说明：`feat: v0.5.10 原生家庭与国内外升学`
-- 开发分支：`codex/v0.5.11-deepseek-copy-migration`
-- 基线版本：`v0.5.10`
+- `main` 开发基线：`2076ea323f465bbd9786fa573d132841aaa8ea3a`
+- 基线提交说明：`Merge PR #21: remove obsolete generator entrypoint`
+- 开发分支：`codex/v0.5.12-university-to-first-job`
+- 基线版本：`v0.5.11`
 
 交接前核验时，`main` 与 `origin/main` 一致，工作区原本干净。本交接文件随玩家版 README 一起维护；是否已经提交、当前分支是否变化，以新窗口现场执行的 Git 检查为准。
 
@@ -79,9 +79,9 @@ tests/                            当前核心浏览器检查
 
 当前内容规模：
 
-- 400 个年度事件
-- 124 个选择事件
-- 124 个选择特定长期后果
+- 408 个年度事件
+- 162 个选择事件
+- 162 个选择特定长期后果
 - 20 个黑天鹅
 - 72 张卡牌
 - 30 种家庭画像
@@ -184,9 +184,17 @@ Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案
 
 合并前 hot fix 修复了三个实际试玩问题：首次入职现在写入“企业项目岗位”及对应雇主、行业，不再以“尚未进入社会”领取工资；产检单只会在有现实伴侣且已进入备孕计划时出现，原来错误绑定学龄子女的异常产检改为孩子体检；关系建立后的伴侣绑定补齐存活字段，不再每次恋爱后误触发分手，真实失效时会把伴侣转为前任并将状态收口为单身。hot fix 后生成器连续两次 SHA-256 均为 `A7E2CEF74EA53D5BFCB4EAD6D3B07B58D6CD6B98641A0281EED18B21210D01ED`；数据、状态、语言及就业和家庭关系浏览器回归通过，截图人工目检通过，控制台错误为0。
 
+## v0.5.12 本科—研究生—首份工作
+
+- 2026-07-26: 从 `main@2076ea3` 新建 `codex/v0.5.12-university-to-first-job`。版本升至 v0.5.12、Schema 10、content revision 19；Schema 9 活动人生清除，跨局档案、设置、统计、稳定已见记录和最近种子保留。
+- 2026-07-26: 新增国内本科、美国本科、欧洲本科、休学／转学、研究生申请、国内／美国／欧洲研究生和首份工作共12条短期事件簇。教育主线使用 `education` lane，海外生活使用 `community` lane；没有重写国内外本科申请，也没有改 UI/CSS。
+- 2026-07-26: 本科直接就业与研究生就业分别消费课程、校园、实践和研究证据。研究生学历不会自动兑换高薪；方向过窄、经验不足、资金缺口、工作资格受限和持续求职都有独立结果。持续求职完成后仍可遇到普通岗位机会，不会永久卡在求职状态。
+- 2026-07-26: 海外生活区分美国与欧洲教育制度、授课语言与社会语言、日常行政和合租习惯。同胞、本地与国际网络可以并存；歧视记录为环境压力，不进入录取或就业失败乘数。研究依据归档在 `docs/research/v0.5.12-本科研究生与首份工作.md`。
+- 2026-07-26: 数据为408个年度事件、162个选择、162个选择特定长期后果和20个黑天鹅，共752个节点；生成器连续两次 SHA-256 均为 `461F81D2BE5B9F6E86D6485466D4053286CF1896ECF81BB1C24B845CA4330290`。定向 smoke 覆盖本科直就业、读研、休学复学、转学、申请失败、资助缺口、工作资格受限、持续求职、海外关系网和三种窄屏；现有四项核心 smoke 继续通过，控制台错误为0。没有运行批量概率模拟。
+
 ## 尚未完成
 
-v0.5.x 事件簇迁移范围已经完成，本科之后连续路线仍待下一版本实现。当前 v0.5.11 分支仍需经过 PR 审阅、用户确认后才能合并和部署；不要自动合并。
+当前 v0.5.12 分支仍需经过 Draft PR 审阅和用户确认后才能合并；没有部署，也不要自动合并或部署。
 
 数值平衡、危机强度、结局辨识度、时间线连贯感和重开欲望仍需人工试玩判断。当前自动测试只证明数据契约、定向结局和核心路径连通，不代表主观体验已经完成。后续若调整内容，应根据真实试玩反馈建立独立小版本，不要把反馈修正和架构升级混在一起。
 
@@ -230,7 +238,7 @@ tests/v5-family-education-smoke.cjs
 tests/v5-full-track-smoke.cjs
 ```
 
-保留用户已有改动。若 v0.5.11 PR 尚未创建或合并，先确认当前分支、验证和审阅状态；未经用户确认不要合并。若已合并，需要重新读取 Pages 的 `index.html`、`game.js` 和 `data.json` 后才能声称线上版本有效，不能沿用本文件的旧结论。下一轮本科、研究生与就业连续路线必须从当时最新 `main` 新建 `codex/` 分支，并读取现有 `development`、申请记录和 `education.nextStage`，不要重新发明一套割裂状态。
+保留用户已有改动。若 v0.5.12 Draft PR 尚未创建，先确认分支、验证和审阅状态后补建；若已创建，未经用户确认不要合并或部署。只有实际合并后才能重新读取 Pages 的 `index.html`、`game.js` 和 `data.json` 并声称线上版本有效，不能沿用本文件的旧结论。
 
 ## 常用验证
 
@@ -249,6 +257,7 @@ node --check tests/v5-browser-smoke.cjs
 node --check tests/v5-employment-language-smoke.cjs
 node --check tests/v5-family-education-smoke.cjs
 node --check tests/v5-full-track-smoke.cjs
+node --check tests/v5-university-career-smoke.cjs
 ```
 
 浏览器检查（先保持本地服务器运行）：
@@ -258,6 +267,7 @@ node tests/v5-browser-smoke.cjs
 node tests/v5-employment-language-smoke.cjs
 node tests/v5-family-education-smoke.cjs
 node tests/v5-full-track-smoke.cjs
+node tests/v5-university-career-smoke.cjs
 ```
 
 涉及数据时，生成器应连续运行两次并确认第二次输出稳定。涉及运行时或移动端交互时，再执行一次相关浏览器核心路径；不要用大规模人生模拟代替人工试玩。
