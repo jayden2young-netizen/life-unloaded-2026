@@ -62,8 +62,7 @@ data.json                         生成后的内容数据
 content/zh-CN/ui.mjs              核心界面中文
 content/zh-CN/tracks/*.mjs        十二条人生轨道中文
 tools/generate-v5-data.mjs        当前数据生成器
-tools/generate-v3-data.mjs        兼容入口
-tests/                            静态、状态、语言与浏览器检查
+tests/                            当前核心浏览器检查
 ```
 
 `data.json` 只能由生成器产生。数据或文案改动必须先改生成器或 `content/zh-CN/` 的源文件，再重新生成；不要只手工编辑 `data.json`。
@@ -225,8 +224,10 @@ index.html
 game.js
 tools/generate-v5-data.mjs
 content/zh-CN/
-tests/v5-language-contract.mjs
-tests/v5-validate.mjs
+tests/v5-browser-smoke.cjs
+tests/v5-employment-language-smoke.cjs
+tests/v5-family-education-smoke.cjs
+tests/v5-full-track-smoke.cjs
 ```
 
 保留用户已有改动。若 v0.5.11 PR 尚未创建或合并，先确认当前分支、验证和审阅状态；未经用户确认不要合并。若已合并，需要重新读取 Pages 的 `index.html`、`game.js` 和 `data.json` 后才能声称线上版本有效，不能沿用本文件的旧结论。下一轮本科、研究生与就业连续路线必须从当时最新 `main` 新建 `codex/` 分支，并读取现有 `development`、申请记录和 `education.nextStage`，不要重新发明一套割裂状态。
@@ -244,11 +245,19 @@ python -m http.server 8765
 ```powershell
 node --check game.js
 node --check tools/generate-v5-data.mjs
-node tests/v5-validate.mjs
-node tests/v5-state-contract.mjs
-node tests/v5-language-contract.mjs
+node --check tests/v5-browser-smoke.cjs
+node --check tests/v5-employment-language-smoke.cjs
+node --check tests/v5-family-education-smoke.cjs
+node --check tests/v5-full-track-smoke.cjs
+```
+
+浏览器检查（先保持本地服务器运行）：
+
+```powershell
+node tests/v5-browser-smoke.cjs
 node tests/v5-employment-language-smoke.cjs
 node tests/v5-family-education-smoke.cjs
+node tests/v5-full-track-smoke.cjs
 ```
 
 涉及数据时，生成器应连续运行两次并确认第二次输出稳定。涉及运行时或移动端交互时，再执行一次相关浏览器核心路径；不要用大规模人生模拟代替人工试玩。
