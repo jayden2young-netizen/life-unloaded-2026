@@ -132,6 +132,11 @@ async function chooseAndFinish(page,index){
     run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
     assert.equal(run.episodes.relationship_start.phase,2);
     assert.equal(run.episodes.relationship_start.boundActors.partner.id,activeId);
+    assert.equal(run.episodes.relationship_start.boundActors.partner.alive,true);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.episodes.relationship_start.status,'active');
+    assert.ok(!run.sceneQueue.some(scene=>scene.forced&&scene.episodeId==='relationship_start'),'valid relationship was forced into a breakup');
 
     await page.setViewportSize({width:360,height:773});
     await enterChoice(page,eventFor('relationship_start',2).id);
@@ -139,6 +144,15 @@ async function chooseAndFinish(page,index){
     assert.equal(run.episodes.relationship_start.status,'resolved');
     assert.equal(run.relationships.partnerStatus,'married');
     assert.equal(run.relationships.activePartnerId,activeId);
+
+    await page.evaluate(({activeId,age})=>window.__LIFE_DEBUG__.patchRun({phase:'playing',sceneQueue:[],currentDecision:null,relationships:{partnerStatus:'dating',activePartnerId:activeId},episodes:{relationship_start:{status:'active',phase:2,startedAt:age-1,nextPhaseAge:age,deadlineAge:age+1,route:'committed',boundActors:{partner:{kind:'person',id:activeId,alive:true}},commitments:[],closureReason:null}}}),{activeId,age:run.age});
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceEpisodeClosure('relationship_start','invalidated')),true);
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.relationships.partnerStatus,'none');
+    assert.equal(run.relationships.activePartnerId,null);
+    assert.equal(run.people.find(person=>person.id===activeId).relation,'exPartner');
+    await page.waitForTimeout(900);
+    await page.screenshot({path:path.join(OUT,'03-relationship-invalidated-single-360x773.png'),fullPage:true});
 
     await enterChoice(page,eventFor('school_entry').id);
     run=await chooseAndFinish(page,0);
@@ -163,7 +177,7 @@ async function chooseAndFinish(page,index){
 
     await page.setViewportSize({width:360,height:773});
     await page.waitForTimeout(900);
-    await page.screenshot({path:path.join(OUT,'03-platform-invalidated-360x773.png'),fullPage:true});
+    await page.screenshot({path:path.join(OUT,'04-platform-invalidated-360x773.png'),fullPage:true});
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({ok:true,migration:'v0.5.7-run-cleared-meta-preserved',episodes:migratedIds.length,legacyArcsRemoved:['remote','partnership','children'],sameAgeAndRefresh:true,activePartnerBinding:true,ageBoundSchoolEntry:true,singlePhaseResolution:true,laneLimit:true,forcedClosure:'platform-invalidated',viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));
     await context.close();

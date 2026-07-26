@@ -17191,6 +17191,16 @@
             "path": "relationships.childCount",
             "op": "eq",
             "value": 0
+          },
+          {
+            "path": "relationships.parenthoodIntent",
+            "op": "eq",
+            "value": "planned"
+          },
+          {
+            "path": "relationships.activePartnerId",
+            "op": "truthy",
+            "value": true
           }
         ],
         "any": [],
@@ -17682,6 +17692,16 @@
             "path": "relationships.childCount",
             "op": "eq",
             "value": 0
+          },
+          {
+            "path": "relationships.parenthoodIntent",
+            "op": "eq",
+            "value": "planned"
+          },
+          {
+            "path": "relationships.activePartnerId",
+            "op": "truthy",
+            "value": true
           }
         ],
         "any": [],
@@ -18173,6 +18193,16 @@
             "path": "relationships.childCount",
             "op": "eq",
             "value": 0
+          },
+          {
+            "path": "relationships.parenthoodIntent",
+            "op": "eq",
+            "value": "planned"
+          },
+          {
+            "path": "relationships.activePartnerId",
+            "op": "truthy",
+            "value": true
           }
         ],
         "any": [],
@@ -18659,6 +18689,16 @@
             "path": "relationships.childCount",
             "op": "eq",
             "value": 0
+          },
+          {
+            "path": "relationships.parenthoodIntent",
+            "op": "eq",
+            "value": "planned"
+          },
+          {
+            "path": "relationships.activePartnerId",
+            "op": "truthy",
+            "value": true
           }
         ],
         "any": [],
@@ -18760,7 +18800,7 @@
       "ageMin": 25,
       "ageMax": 60,
       "icon": "♧",
-      "text": "产检指标异常，医生让你们尽快再做一次检查。",
+      "text": "孩子体检指标异常，医生让你们尽快再做一次检查。",
       "tone": "pressure",
       "intensity": "high",
       "requirements": {
@@ -30485,6 +30525,21 @@
               "value": "work"
             },
             {
+              "type": "set",
+              "target": "employment.career",
+              "value": "企业项目岗位"
+            },
+            {
+              "type": "set",
+              "target": "employment.employerType",
+              "value": "private"
+            },
+            {
+              "type": "set",
+              "target": "employment.sector",
+              "value": "general"
+            },
+            {
               "type": "add",
               "target": "employment.salary",
               "value": 3000
@@ -30547,6 +30602,21 @@
               "type": "set",
               "target": "activity.mode",
               "value": "work"
+            },
+            {
+              "type": "set",
+              "target": "employment.career",
+              "value": "企业项目岗位"
+            },
+            {
+              "type": "set",
+              "target": "employment.employerType",
+              "value": "private"
+            },
+            {
+              "type": "set",
+              "target": "employment.sector",
+              "value": "general"
             },
             {
               "type": "add",
@@ -40618,6 +40688,21 @@
               "value": "employed"
             },
             {
+              "type": "set",
+              "target": "employment.career",
+              "value": "基层服务岗位"
+            },
+            {
+              "type": "set",
+              "target": "employment.employerType",
+              "value": "private"
+            },
+            {
+              "type": "set",
+              "target": "employment.sector",
+              "value": "services"
+            },
+            {
               "type": "add",
               "target": "desires.freedom.fulfillment",
               "value": 6
@@ -40857,6 +40942,21 @@
               "type": "set",
               "target": "employment.status",
               "value": "employed"
+            },
+            {
+              "type": "set",
+              "target": "employment.career",
+              "value": "全职企业岗位"
+            },
+            {
+              "type": "set",
+              "target": "employment.employerType",
+              "value": "private"
+            },
+            {
+              "type": "set",
+              "target": "employment.sector",
+              "value": "general"
             },
             {
               "type": "add",

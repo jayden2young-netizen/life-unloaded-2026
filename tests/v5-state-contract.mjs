@@ -68,6 +68,11 @@ check(guarantee[2].choices.map(choice=>choice.route).join(',')==='recovered,rest
 check(!beats.filter(event=>event.track==='finance'&&/还款|催收|法院/.test(event.text)).some(event=>eligible(event,base)),'debt-free person receives collection or repayment scene');
 
 const withPartner=structuredClone(base);withPartner.relationships.partnerStatus='dating';withPartner.relationships.activePartnerId='partner';withPartner.people.push({id:'partner',relation:'partner',bornAt:2,alive:true});
+const prenatalBeat=beats.find(event=>/产检单/.test(event.text));
+const plannedParent=structuredClone(withPartner);plannedParent.relationships.parenthoodIntent='planned';
+check(Boolean(prenatalBeat)&&!eligible(prenatalBeat,base),'single childless person receives prenatal paperwork');
+check(eligible(prenatalBeat,plannedParent),'planned parenthood with a real partner cannot receive prenatal paperwork');
+check(!beats.some(event=>/产检/.test(event.text)&&event.actors.some(actor=>actor.relationAny?.includes('child'))),'prenatal wording is attached to an existing child');
 const publicWorker=structuredClone(employed);publicWorker.employment.employerType='public';
 const remoteWorker=structuredClone(employed);remoteWorker.capabilities.portableSkill=2;remoteWorker.employment.arrangement='remote';
 const operating=structuredClone(funded);operating.business.status='operating';
@@ -80,6 +85,7 @@ check(!decisions.filter(event=>event.episode?.id==='adult_child_boundary').some(
 const adultParent=structuredClone(base);adultParent.age=48;adultParent.relationships.childCount=1;adultParent.people.push({id:'adult-child',relation:'child',bornAt:28,alive:true});check(decisions.filter(event=>event.episode?.id==='adult_child_boundary'&&event.episode.role==='start').some(event=>eligible(event,adultParent)),'adult child cannot reach boundary episode');
 const age40=structuredClone(employed);age40.age=40;check(!decisions.filter(event=>event.episode?.id==='retirement_transition'||(!event.episode&&event.track==='later'&&event.ageMin>=55)).some(event=>eligible(event,age40)),'retirement decision reaches a 40-year-old');
 const firstJob=decisionBy(/录用通知/);check(sets(firstJob.choices[2],'employment.status','unemployed'),'rejecting first job does not remain unemployed');
+check(firstJob.choices.slice(0,2).every(choice=>sets(choice,'employment.status','employed')&&sets(choice,'employment.career','企业项目岗位')&&sets(choice,'employment.employerType','private')&&sets(choice,'employment.sector','general')),'first employment does not classify the actual job');
 const retirement=decisions.filter(event=>event.episode?.id==='retirement_transition').sort((a,b)=>a.episode.phase-b.episode.phase);check(retirement.length===2&&sets(retirement[1].choices[0],'employment.status','retired')&&sets(retirement[1].choices[1],'employment.status','gig')&&sets(retirement[1].choices[2],'employment.status','employed')&&sets(retirement[1].choices[3],'employment.status','retired'),'retirement endings do not distinguish retirement, semi-retirement, continued work, and forced exit');
 const becomingParent=decisions.filter(event=>event.episode?.id==='becoming_parent').sort((a,b)=>a.episode.phase-b.episode.phase);
 check(becomingParent.length===2&&becomingParent[0].choices.every(choice=>!choice.effects.some(effect=>effect.type==='createPerson')),'parenthood discussion creates a child immediately');
