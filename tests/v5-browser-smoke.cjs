@@ -7,7 +7,23 @@ const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(ROOT, 'test-results', 'v5-browser');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY = 'life-unloaded-2026-v1';
+const SYSTEM_CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'data.json'), 'utf8'));
+const DECISIONS = DATA.events.filter(event => event.kind === 'decision');
 fs.mkdirSync(OUT, { recursive: true });
+
+function decisionId(criteria) {
+  const pool = DECISIONS.filter(event => {
+    if (criteria.episodeId !== undefined && event.episode?.id !== criteria.episodeId) return false;
+    if (criteria.episodePhase !== undefined && event.episode?.phase !== criteria.episodePhase) return false;
+    if (criteria.track !== undefined && event.track !== criteria.track) return false;
+    if (criteria.noEpisode === true && event.episode) return false;
+    return true;
+  });
+  const event = pool[criteria.index ?? 0];
+  assert.ok(event, `no decision matches ${JSON.stringify(criteria)}`);
+  return event.id;
+}
 
 async function waitBoot(page) {
   await page.waitForFunction(() => window.__LIFE_BOOTED__ === true);
@@ -40,7 +56,8 @@ async function fit(page, label) {
 
 let browser;
 (async () => {
-  browser = await chromium.launch({ headless: true });
+  const executablePath = process.env.CHROME_PATH || (fs.existsSync(SYSTEM_CHROME) ? SYSTEM_CHROME : null);
+  browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
   const errors = [];
   const preparePage = async contextValue => {
     const pageValue = await contextValue.newPage();
@@ -82,14 +99,14 @@ let browser;
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
   assert.equal(migrated.state.schemaVersion, 9);
-  assert.equal(migrated.state.gameVersion, '0.5.10');
+  assert.equal(migrated.state.gameVersion, '0.5.11');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
   assert.deepEqual(migrated.state.meta.codex, ['codex_01']);
   assert.equal(migrated.state.meta.settings.haptic, false);
   assert.equal(migrated.state.meta.stats.runs, 2);
-  assert.equal(migrated.state.meta.seen.events.beat_001, 1);
+  assert.equal(migrated.state.meta.seen.events.beat_001, undefined, 'legacy generated event IDs should be removed during migration');
   assert.deepEqual(migrated.state.meta.recentSeeds, ['finished-life']);
   assert.equal(await page.locator('[data-act="new"]').count(), 1);
   assert.match(await page.locator('.migration-note').innerText(), /旧版本的活动人生已结束/);
@@ -100,6 +117,7 @@ let browser;
   await page.goto(URL, { waitUntil: 'domcontentloaded' });
   await waitBoot(page);
   await page.locator('[data-act="new"]').click();
+  await page.waitForTimeout(900);
   await page.screenshot({ path: path.join(OUT, 'birth-360x773.png'), fullPage: true });
   let run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
   assert.equal(run.finance.netWorth, run.finance.cash, 'family assets leaked into personal net worth');
@@ -121,13 +139,14 @@ let browser;
   await page.locator('[data-act="attributes-done"]').click();
   await page.locator('[data-card]').first().click();
 
-  run = await forceChoice(page, 'decision_103', 0);
+  run = await forceChoice(page, decisionId({ track: 'identity', index: 0 }), 0);
   assert.ok(Object.values(run.desires).some(value => value && typeof value === 'object' && value.claimed));
-  run = await forceChoice(page, 'decision_105', 1);
+  const employmentDecisionId = decisionId({ track: 'employment', noEpisode: true, index: 0 });
+  run = await forceChoice(page, employmentDecisionId, 1);
   assert.equal(run.employment.status, 'employed');
-  assert.ok(run.scheduledConsequences.some(item => item.sourceDecisionId === 'decision_105'));
+  assert.ok(run.scheduledConsequences.some(item => item.sourceDecisionId === employmentDecisionId));
 
-  const due = run.scheduledConsequences.find(item => item.sourceDecisionId === 'decision_105');
+  const due = run.scheduledConsequences.find(item => item.sourceDecisionId === employmentDecisionId);
   await page.evaluate(schedule => window.__LIFE_DEBUG__.patchRun({ cardAges: [0, 18, 35, 55], scheduledConsequences: [schedule] }), due);
   await page.evaluate(age => window.__LIFE_DEBUG__.forceAge(age), due.dueAge);
   await page.evaluate(() => window.__LIFE_DEBUG__.advance());
@@ -135,21 +154,21 @@ let browser;
   run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
   assert.ok(run.usedConsequences.includes(due.id), `scheduled consequence did not return: ${JSON.stringify({ age: run.age, phase: run.phase, yearStarted: run.yearStarted, queue: run.yearQueue.map(item => item.id), schedule: run.scheduledConsequences, timeline: run.timeline.slice(-3) })}`);
 
-  run = await forceChoice(page, 'decision_048', 0);
+  run = await forceChoice(page, decisionId({ episodeId: 'relationship_start', episodePhase: 1 }), 0);
   assert.equal(run.relationships.partnerStatus, 'dating');
-  run = await forceChoice(page, 'decision_056', 0);
+  run = await forceChoice(page, decisionId({ episodeId: 'becoming_parent', episodePhase: 1 }), 0);
   assert.equal(run.relationships.parenthoodIntent, 'planned');
   assert.equal(run.relationships.childCount, 0);
-  run = await forceChoice(page, 'decision_057', 0);
+  run = await forceChoice(page, decisionId({ episodeId: 'becoming_parent', episodePhase: 2 }), 0);
   assert.equal(run.relationships.childCount, 1);
-  run = await forceChoice(page, 'decision_080', 2);
+  run = await forceChoice(page, decisionId({ episodeId: 'habit_gambling_formation', episodePhase: 1 }), 2);
   assert.equal(run.habits.type, 'gambling');
   assert.equal(run.habits.stage, 'repeating');
-  run = await forceChoice(page, 'decision_040', 0);
+  run = await forceChoice(page, decisionId({ episodeId: 'career_break', episodePhase: 1 }), 0);
   assert.equal(run.activity.mode, 'sabbatical');
-  run = await forceChoice(page, 'decision_025', 0);
+  run = await forceChoice(page, decisionId({ episodeId: 'first_remote_contract', episodePhase: 1 }), 0);
   assert.equal(run.employment.arrangement, 'remote');
-  run = await forceChoice(page, 'decision_033', 0);
+  run = await forceChoice(page, decisionId({ episodeId: 'shop_opening', episodePhase: 1 }), 0);
   assert.ok(['testing', 'operating'].includes(run.business.status));
 
   await page.locator('[data-act="open-drawer"]').click();

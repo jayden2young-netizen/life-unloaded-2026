@@ -3,6 +3,12 @@ Current prompt (2026-07-23): 修复卡牌中的“起步／转折／中段”等
 
 ## Progress
 
+- 2026-07-26: 当前任务是在最新 `main` 上发布 v0.5.11，完整迁入 `claude/vibrant-morse-e27f6b` 的 DeepSeek 玩家文案，但不 cherry-pick 该提交；运行时与测试继续以 main 为工程基线，只做版本迁移、客观文字纠错和必要的语义化测试调整。
+- 2026-07-26: 从 `main` 的 `6a7522e` 创建 `codex/v0.5.11-deepseek-copy-migration`。十二条轨道、UI、家庭节点与秘密、黑天鹅、图鉴提示、事件簇强制结尾和运行时玩家可见文案已迁入；`content/zh-CN/cards.mjs` 与来源分支哈希一致，本轮没有卡牌源文件差异可迁移。没有引入 `_internals()`、数据索引暴露或来源分支的运行时重构。
+- 2026-07-26: 版本升至 v0.5.11，Schema 保持9，content revision 升至18。五处方向错误的中文引号已纠正，其他文案不做第二轮风格改写。递归覆盖核对来源分支1590个字符串差异：1586项逐字一致，4项为生成数据中的客观纠错，另有1项运行时纠错；除字符串、版本和内容修订外，数据结构、ID、顺序、条件、效果、数值、概率和数组长度无差异。
+- 2026-07-26: 生成器连续两次 SHA-256 均为 `9CB70541B90778BCF59E244C65987FCC3D4F31B2EAB63CD04350019BEFF08677`。JS语法、682节点数据契约、78项状态语义门槛和语言检查通过。
+- 2026-07-26: 系统 Chrome 核心、家庭教育、就业语言和全轨道 smoke 均通过，控制台错误为0；首次失败均确认来自旧文案、旧ID或旧fixture，只修正验收器，没有为通过 smoke 修改游戏机制。360×773、360×640、320×568的出生、普通时间线、情况／选择／结果卡、强制结尾、状态抽屉和结局截图人工目检通过。没有运行批量人生模拟，分支仍需用户审阅和试玩，不自动合并或部署。
+- 2026-07-26: 合并前 hot fix 根据实际试玩截图处理三项状态错误：首次入职补齐职业、雇主类型和行业；产检年度事件绑定真实备孕与伴侣状态，原本绑定学龄子女的异常产检改为孩子体检；关系建立后的伴侣绑定补齐存活状态，真实失效时恋爱状态收口为单身。生成器连续两次 SHA-256 均为 `A7E2CEF74EA53D5BFCB4EAD6D3B07B58D6CD6B98641A0281EED18B21210D01ED`；JS语法、682节点数据契约、78项状态契约、语言检查及就业、家庭关系浏览器 smoke 通过，控制台错误为0。就业抽屉、恋爱成立和真实分手截图人工目检通过；第一次就业抽屉截图仅因动画未完成不可见，修正等待时间后复测通过，未改游戏迎合截图。
 - 2026-07-21: Confirmed remote `main` remains at `1cf91ce` (`v0.2.0.1`).
 - 2026-07-21: Cloned repository, created local `legacy/v0.2.0.1`, and switched to `codex/v3-narrative-rebuild`.
 - 2026-07-21: GitHub connector branch creation returned 403; implementation continues locally and publishing will be retried after validation.
