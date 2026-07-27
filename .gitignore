@@ -4,3 +4,6 @@ output/
 .agents/
 _bmad/
 _bmad-output/
+claude_analysis_results.md
+investigate_card_game_mechanics-analysis.ignore.md
+roadmap/
