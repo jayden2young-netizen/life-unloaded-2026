@@ -7,3 +7,7 @@ _bmad-output/
 claude_analysis_results.md
 investigate_card_game_mechanics-analysis.ignore.md
 roadmap/
+
+# Local-only launcher for manual browser testing.
+run-local-manual-test.bat
+local-manual-test-server.py

@@ -5,7 +5,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.UNIVERSITY_CAREER_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.5.12-university-career');
+const OUT=process.env.UNIVERSITY_CAREER_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.0-university-career');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
@@ -55,7 +55,7 @@ async function fit(page,label){
 async function optionEnabled(page,index){return page.locator(`[data-choice="${index}"]`).isEnabled()}
 
 (async()=>{
-  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.5.12',10,19]);
+  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.0',11,20]);
   for(const id of episodeIds){
     const rows=decisions.filter(event=>event.episode?.id===id).sort((a,b)=>a.episode.phase-b.episode.phase);
     assert.ok(rows.length>=1&&rows.length<=4,`${id}: phase count`);
@@ -103,7 +103,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[10,'0.5.12',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[11,'0.6.0',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.11完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,11);

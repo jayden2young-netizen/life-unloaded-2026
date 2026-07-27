@@ -2,11 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {CARD_COPY} from '../content/zh-CN/cards.mjs';
+import {cardInteractionFor,CARD_INTERACTION_WITNESSES} from '../content/zh-CN/card-interactions.mjs';
 import {TRACK_COPY} from '../content/zh-CN/tracks/index.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const output=path.join(here,'..','data.json');
-const VERSION='0.5.12',SCHEMA_VERSION=10,CONTENT_REVISION=19;
+const VERSION='0.6.0',SCHEMA_VERSION=11,CONTENT_REVISION=20;
 const stages={infancy:[0,5],childhood:[6,12],adolescence:[13,18],youth:[19,29],establishment:[30,44],midlife:[45,59],later:[60,74],elder:[75,105]};
 const stageNames=Object.keys(stages);
 const stageFor=(min,max)=>stageNames.filter(name=>Math.max(min,stages[name][0])<=Math.min(max,stages[name][1]));
@@ -770,7 +771,7 @@ for(const id of trackOrder){
     if(id==='finance'&&index===4&&!authoredDecision.episode)requirements.all.push(p('finance.totalDebt','gte',10000));
     const authoredChoices=authoredDecision.choices;
     const choices=authoredChoices.map((copyItem,option)=>{
-      const text=typeof copyItem==='string'?copyItem:copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`;
+      const text=typeof copyItem==='string'?copyItem:copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`,cardInteraction=cardInteractionFor(id,index,option);
       if(id==='partnership'&&!authoredDecision.episode&&index===0&&option<2)result.effects.push(c('createPerson','people',1,{relation:'partner'}));
       const choiceRules=typeof copyItem==='string'?req():copyItem.requirements||req();
       if(authoredDecision.episode?.id==='postgraduate_application'&&authoredDecision.episode.phase===4&&option<3)choiceRules.all.push(p('education.graduateOfferRegion','eq',['domestic','us','europe'][option]),p('education.graduateFundingStatus','eq','ready'));
@@ -779,7 +780,7 @@ for(const id of trackOrder){
       if(authoredDecision.episode?.id==='undergraduate_change'&&authoredDecision.episode.phase===2&&option<3)choiceRules.all.push(p('education.changeIntent','eq',['major','leave','transfer'][option]));
       if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===2){if(option===0)choiceRules.all.push(p('employment.entryCredential','in',['bachelor','undergraduateIncomplete']));if(option===1)choiceRules.all.push(p('employment.entryCredential','eq','postgraduate'))}
       if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===4){if(option<2)choiceRules.all.push(p('employment.entryCredential','in',['bachelor','undergraduateIncomplete']));if(option>=2&&option<4)choiceRules.all.push(p('employment.entryCredential','eq','postgraduate'));if(option<4)choiceRules.all.push(p('employment.applicationStatus','eq','offered'))}
-      return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:1+option,delayMax:3+option}],outcomeTags:result.outcomeTags,memoryKey,route:result.route};
+      return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:1+option,delayMax:3+option}],outcomeTags:result.outcomeTags,memoryKey,route:result.route};
     });
     decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{situation:authoredDecision.situation,episode:authoredDecision.episode}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:16+index%3,contentRevision:CONTENT_REVISION});
     authoredDecisionById.set(eventId,authoredDecision);
@@ -790,13 +791,45 @@ const globalRows=[
   {track:'identity',age:[14,17],prompt:'你第一次认真决定，这一生最不愿失去什么。',verbs:['哪怕不稳，也要自由','先保住安稳','把重要的人留身边'],results:['你把远方写进计划，也知道没人替你兜底。','你先选了能站稳的地方，没有急着往远处走。','你开始把别人的需要算进自己的决定。'],echoText:'少年时最不愿失去的东西又来敲门。',consequences:['后来一次搬家，你没等所有人同意就买了票。','机会和风险同时到来时，你还是先看账户余额。','真正要分别时，你为留下多承担了一段日子。'],desire:[['freedom','exploration'],['security','achievement'],['love','familyBelonging']]},
   {track:'identity',age:[30,55],prompt:'你发现早年最想要的东西，已经不完全适合现在。',verbs:['重新排一次轻重','继续守住原来的目标','不再只认一个答案'],results:['你取消一项旧计划，把时间留给身体和安静。','你没有换目标，只调整了到达它的速度。','你允许几件事同时重要，不再排唯一名次。'],echoText:'那次重新排序后来改变了一天的用法。',consequences:['下一次加码之前，你先看自己还能不能睡好觉。','旧目标终于接近时，你仍认得当年为什么出发。','有一条路停下后，另一件在意的事接住了你。'],desire:[['peace','body'],['achievement','security'],['freedom','creation']],reclaim:true}
 ];
-for(const row of globalRows){
+for(const [globalIndex,row] of globalRows.entries()){
   const id=`decision_${String(decisions.length+1).padStart(3,'0')}`;
-  const choices=row.verbs.map((text,index)=>{const educationStatus=row.age[0]===18?(index===0?'enrolled':'completed'):(index===2?'completed':'enrolled'),effects=[row.education?c('transition','education',row.education[index],{status:educationStatus}):c('claimDesire','desires',row.desire[index],{replace:Boolean(row.reclaim)})];if(row.age[0]===18&&index===1)effects.push(c('set','employment.status','employed'),c('set','employment.career','基层岗位'),c('set','employment.sector','services'),c('set','activity.mode','work'));if(row.age[0]===18&&index===2)effects.push(c('set','employment.status','gig'),c('set','employment.career','灵活就业'),c('set','employment.sector','platform'),c('set','activity.mode','work'));return{id:`${id}_choice_${index+1}`,text,resultText:row.results[index],hints:[],requirements:[],effects,commitments:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:2,delayMax:5}],outcomeTags:[row.track,index===0?'chosenA':index===1?'chosenB':'chosenC'],memoryKey:`${id}_c${index+1}`,route:['deliberate','stable','open'][index]}});
+  const choices=row.verbs.map((text,index)=>{const educationStatus=row.age[0]===18?(index===0?'enrolled':'completed'):(index===2?'completed':'enrolled'),effects=[row.education?c('transition','education',row.education[index],{status:educationStatus}):c('claimDesire','desires',row.desire[index],{replace:Boolean(row.reclaim)})],cardInteraction=cardInteractionFor(row.track,globalIndex,index);if(row.age[0]===18&&index===1)effects.push(c('set','employment.status','employed'),c('set','employment.career','基层岗位'),c('set','employment.sector','services'),c('set','activity.mode','work'));if(row.age[0]===18&&index===2)effects.push(c('set','employment.status','gig'),c('set','employment.career','灵活就业'),c('set','employment.sector','platform'),c('set','activity.mode','work'));return{id:`${id}_choice_${index+1}`,text,resultText:row.results[index],hints:[],requirements:[],mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects,commitments:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:2,delayMax:5}],outcomeTags:[row.track,index===0?'chosenA':index===1?'chosenB':'chosenC'],memoryKey:`${id}_c${index+1}`,route:['deliberate','stable','open'][index]}});
   decisions.push({id,kind:'decision',track:row.track,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'◎',prompt:row.prompt,requirements:{all:[row.reclaim?p('desires.reclaimed','eq',false):p('age','gte',row.age[0])],any:[],none:[]},actors:[],choices,assertions:[],priority:30,weight:30,contentRevision:CONTENT_REVISION});
   authoredDecisionById.set(id,{echoText:row.echoText,choices:row.consequences.map(consequenceText=>({consequenceText}))});
 }
 
+function interactionPath(value,path){return String(path).split('.').reduce((current,key)=>current?.[key],value)}
+function interactionPredicate(rule,state){const actual=interactionPath(state,rule.path);if(rule.op==='eq')return actual===rule.value;if(rule.op==='gte')return Number(actual)>=Number(rule.value);if(rule.op==='in')return rule.value.includes(actual);return false}
+function validateCardInteractions(){
+  const decisionPanels=decisions.filter(decision=>decision.choices?.length),interactions=[];
+  for(const decision of decisionPanels)for(const choice of decision.choices){
+    if(!Array.isArray(choice.mechanicTags)||!Object.hasOwn(choice,'cardInteraction'))throw new Error(`${choice.id}: missing explicit card fields`);
+    if(choice.cardInteraction){
+      const spec=choice.cardInteraction;
+      if(!['unlock','requirementShift','costShift','riskShift','resultVariant'].includes(spec.mode))throw new Error(`${choice.id}: invalid card mode`);
+      if(!spec.primaryMechanic||!Array.isArray(spec.patch)||!spec.explanation)throw new Error(`${choice.id}: incomplete card interaction`);
+      if(!choice.mechanicTags.includes(spec.primaryMechanic))throw new Error(`${choice.id}: mechanic tag does not name its primary card`);
+      if(!cards.some(card=>card.mechanic===spec.primaryMechanic&&card.drawAge<=decision.ageMax))throw new Error(`${choice.id}: card interaction happens before its card can be drawn`);
+      for(const rule of [...(spec.activeRequirements?.all||[]),...(spec.activeRequirements?.any||[]),...(spec.activeRequirements?.none||[])])if(['age','education.level','education.highestCompleted','employment.entryCredential'].includes(rule.path))throw new Error(`${choice.id}: card interaction tries to relax a hard gate`);
+      interactions.push({decision,choice,spec});
+    }
+  }
+  if(decisionPanels.filter(decision=>decision.choices.some(choice=>choice.cardInteraction)).length<Math.ceil(decisionPanels.length*.75))throw new Error('card interaction coverage is below 75% of decision panels');
+  for(const mechanic of new Set(cards.map(card=>card.mechanic))){
+    const rows=interactions.filter(item=>item.spec.primaryMechanic===mechanic),stages=new Set(rows.flatMap(item=>item.decision.stage));
+    if(rows.length<8||stages.size<3)throw new Error(`${mechanic}: needs 8 options across 3 stages`);
+    for(const drawAge of[35,55])if(cards.some(card=>card.mechanic===mechanic&&card.drawAge===drawAge)&&!rows.some(item=>item.decision.ageMax>=drawAge))throw new Error(`${mechanic}: ${drawAge}岁卡没有后续用途`);
+  }
+  for(const witness of CARD_INTERACTION_WITNESSES){
+    const decision=decisions.filter(item=>item.track===witness.track)[witness.index],choice=decision?.choices?.[witness.choice],spec=choice?.cardInteraction;
+    if(!decision||!spec||spec.primaryMechanic!==witness.mechanic)throw new Error(`${witness.id}: witness does not point to its authored card interaction`);
+    if(!cards.some(card=>card.mechanic===witness.mechanic&&card.drawAge===witness.cardDrawAge))throw new Error(`${witness.id}: witness card is unavailable at its declared draw age`);
+    if(witness.cardDrawAge>decision.ageMax)throw new Error(`${witness.id}: witness card is drawn too late`);
+    const requirements=spec.activeRequirements||choice.requirements;
+    if(!(requirements.all||[]).every(rule=>interactionPredicate(rule,witness.state))||((requirements.any||[]).length&&!requirements.any.some(rule=>interactionPredicate(rule,witness.state))))throw new Error(`${witness.id}: declared state cannot reach the card option`);
+  }
+  return{decisionPanels:decisionPanels.length,activePanels:decisionPanels.filter(decision=>decision.choices.some(choice=>choice.cardInteraction)).length,interactions:interactions.length,witnesses:CARD_INTERACTION_WITNESSES.length};
+}
 const echoPressure={education:'career',employment:'career',public:'career',remote:'loneliness',business:'money',leisure:'money',partnership:'family',children:'family',finance:'money',health:'body',habits:'money',later:'loneliness'};
 const echoes=decisions.map((decision,index)=>{
   const authoredDecision=authoredDecisionById.get(decision.id),habitPressure={gambling:'money',alcohol:'body',gaming:'career',shopping:'money',medication:'body'}[authoredDecision?.type],pressure=decision.track==='habits'?habitPressure:echoPressure[decision.track];
@@ -824,6 +857,7 @@ function cardEffects(mechanic,drawAge){
 }
 const cards=[];
 for(const drawAge of[0,18,35,55])for(const authored of CARD_COPY[drawAge])cards.push({id:`card_${String(cards.length+1).padStart(2,'0')}`,kind:drawAge===0?'innate':'stage',drawAge,displayName:authored.displayName,text:authored.text,mechanic:authored.mechanic,effects:cardEffects(authored.mechanic,drawAge),contentRevision:CONTENT_REVISION});
+const cardInteractionCoverage=validateCardInteractions();
 
 const endingProfiles=[
   ['ordinaryContent','你没有赢下所有比较，但日子最终适合自己。','常见',['lifeEnded','decisionDiversity']],
@@ -861,6 +895,6 @@ codex.push(
 
 const realityRules={education:'家庭资源、关系安全、习惯、出勤、学校支持和个人能力共同形成准备度；金钱不直接生成成绩。国内外本科的申请、录取、资金与报到分别记录。',employment:'裁员、晋升和排班只适用于真实受雇者；求职、退出劳动市场与主动休闲不得混用。',retirement:'退休取决于出生年代、单位类型、缴费年限和个人选择，不用固定年龄覆盖。',debt:'个人债务逐笔计息；生活缺口合并记录，担保、逾期、重组和遗产处理保留独立状态。',family:'伴侣与子女是带年龄、存亡、关系和法律身份的人物实体；家庭资源、父母在场和情感安全相互独立。',platform:'远程与旅居需要可迁移能力或真实远程收入，平台依赖增加波动。',franchise:'加盟成本包含品牌、装修、设备、原料、投流和担保，成功需要技能、现金缓冲与低锁定。'};
 const trackCoverage=Object.fromEntries(trackOrder.map(id=>[id,{beats:annualBeats.filter(event=>event.track===id).length,episodes:decisions.filter(event=>event.track===id&&event.episode).length,transitions:decisions.filter(event=>event.track===id&&!event.episode).length,roles:['entry','development','daily','conflict','crisis','recovery','exit','legacy']} ]));
-const data={version:VERSION,gameVersion:VERSION,schemaVersion:SCHEMA_VERSION,contentRevision:CONTENT_REVISION,stages,locations,desires,conflicts,familyArchetypes,familySecrets,cards,events:[...annualBeats,...decisions,...echoes,...blackSwans],episodeCatalog:EPISODE_CATALOG,endingProfiles,endingTitles,codex,realityRules,trackCoverage};
+const data={version:VERSION,gameVersion:VERSION,schemaVersion:SCHEMA_VERSION,contentRevision:CONTENT_REVISION,stages,locations,desires,conflicts,familyArchetypes,familySecrets,cards,events:[...annualBeats,...decisions,...echoes,...blackSwans],episodeCatalog:EPISODE_CATALOG,endingProfiles,endingTitles,codex,realityRules,trackCoverage,cardInteractionCoverage,cardInteractionWitnesses:CARD_INTERACTION_WITNESSES};
 fs.writeFileSync(output,`${JSON.stringify(data,null,2)}\n`,'utf8');
 console.log(JSON.stringify({version:VERSION,events:{beat:annualBeats.length,decision:decisions.length,consequence:echoes.length,blackSwan:blackSwans.length,total:data.events.length},cards:cards.length,families:familyArchetypes.length,secrets:familySecrets.length,endings:endingTitles.length,codex:codex.length},null,2));

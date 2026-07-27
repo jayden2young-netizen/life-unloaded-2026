@@ -21,11 +21,11 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前开发版本：v0.5.12
-- 当前本地开发版本：v0.5.12
-- 当前 `main` 基线版本：v0.5.12
-- `schemaVersion`：10
-- `contentRevision`：19
+- 当前开发版本：v0.6.0
+- 当前本地开发版本：v0.6.0
+- 当前 `main` 基线版本：v0.6.0
+- `schemaVersion`：11
+- `contentRevision`：20
 - localStorage 键：`life-unloaded-2026-v1`
 - `main` 当前合并提交：`403df537fb323ff0ae500a2dc22f0ce29539d446`
 - 合并提交说明：`Merge pull request #23 from jayden2young-netizen/codex/v0.5.12-copywriting-guideline`
@@ -214,6 +214,14 @@ Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案
 
 数值平衡、危机强度、结局辨识度、时间线连贯感和重开欲望仍需人工试玩判断。当前自动测试只证明数据契约、定向结局和核心路径连通，不代表主观体验已经完成。后续若调整内容，应根据真实试玩反馈建立独立小版本，不要把反馈修正和架构升级混在一起。
 
+## v0.6.0 卡牌参与选择
+
+- 版本升至 v0.6.0、Schema 11、content revision 20。Schema 10 活动人生会清除；人生档案、图鉴、设置、统计、稳定已见记录和最近种子保留。
+- 72张既有卡仍在0、18、35、55岁各抽三选一，抽取时的一次性效果继续存在。卡牌进入 `run.cards` 后永久有效；同机制多卡按获得顺序取最早一张作为唯一主卡，不消耗、不叠加。
+- 每个选择均有显式 `mechanicTags` 与 `cardInteraction`。卡牌可解锁信息入口、放宽软性资金门槛、补一段成本、压低一次风险或切换作者预写结果；事件年龄、学历、执业和现实资格门槛不得被卡牌绕过。
+- 生成器验证12种机制均有至少8个选项、3个阶段和35／55岁后续用途；当前162个决策面板全部存在可能生效的交互。`CARD_INTERACTION_WITNESSES` 保留卡牌专属入口的声明式见证，验证失败会中止生成。
+- 新增 `tests/v6-card-interaction-smoke.cjs`，覆盖五种交互模式、无卡兼容、同机制主卡、刷新不重复结算、Schema 10迁移和系统减少动态效果。四次抽卡弹层边框仅呼吸两次；`prefers-reduced-motion` 时保持静态。
+
 ## 存档与发布规则
 
 - 存档键继续使用 `life-unloaded-2026-v1`。
@@ -262,7 +270,7 @@ tests/v5-full-track-smoke.cjs
 
 ```text
 roadmap/00-总体策略.md
-roadmap/当前目标版本.md
+roadmap/v0.6.0-卡牌参与选择.md
 git log --oneline --decorate investigate_card_game_mechanics
 git diff --stat origin/main..investigate_card_game_mechanics
 ```

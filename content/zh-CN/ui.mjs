@@ -1,5 +1,9 @@
 export const UI_COPY={
-  homeTagline:'你出生在什么家，很多事一开始就不一样。后面的路，得自己一段一段走。',
+  homeTagline:'出身决定开始，选择改变命运',
+  mainMenu:'主菜单',
+  restartActive:'重启人生',
+  restartActiveHint:'放弃当前进度，从出生重新开始',
+  restartActiveConfirm:'确定重启人生？当前人生的进度会被放弃，并重新进入出生流程。人生档案、人间见闻、统计、设置和跨局记录都会保留。',
   birthTitle:'你出生了',
   birthHouseholdNote:'家里有房有债，但都还不是你的。',
   birthNext:'分配起点',
@@ -12,6 +16,7 @@ export const UI_COPY={
     35:'这些年，什么成了你的底气？',
     55:'走到这里，你留下了哪样本事？'
   },
+  heldCardsLabel:'待生效',
   streamEmpty:'点一下，第一年开始。',
   consequenceLabel:'以前的事又回来了',
   activityField:'现在在干嘛',
