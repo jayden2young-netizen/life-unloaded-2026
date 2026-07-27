@@ -1,6 +1,6 @@
 # 《人生尚未加载 · 2026》开发交接
 
-更新时间：2026-07-26
+更新时间：2026-07-28
 
 这份文件用于下一次 Codex 窗口接手项目。开始工作前仍要重新检查本地文件和 GitHub；下面记录的是交接时已经核对过的状态，不代替现场核验。
 
@@ -27,9 +27,9 @@
 - `schemaVersion`：10
 - `contentRevision`：19
 - localStorage 键：`life-unloaded-2026-v1`
-- `main` 当前合并提交：`8ed52605cde28fcf30ce15c91484873b5767381a`
-- 合并提交说明：`Merge v0.5.12 university-to-career episodes`
-- 开发分支：`codex/v0.5.12-university-to-first-job`
+- `main` 当前合并提交：`403df537fb323ff0ae500a2dc22f0ce29539d446`
+- 合并提交说明：`Merge pull request #23 from jayden2young-netizen/codex/v0.5.12-copywriting-guideline`
+- 当前基线分支：`main`
 - 本轮起点版本：`v0.5.11`
 
 交接前核验时，`main` 与 `origin/main` 一致，工作区原本干净。本交接文件随玩家版 README 一起维护；是否已经提交、当前分支是否变化，以新窗口现场执行的 Git 检查为准。
@@ -59,6 +59,12 @@ C:\Users\Administrator\Documents\Codex\tools\gh\bin\gh.exe
 ```
 
 交接时登录账号为 `jayden2young-netizen`。
+
+2026-07-28 额外核对：
+
+- 本地 `main` 已快进到 `origin/main`，两者当前同为 `403df53`。
+- 根目录本地 `roadmap/` 已按 Git ignore 管理，包含 v0.6.x 总体策略和 v0.6.0—v0.6.5 六个独立开发文件；它们不上传 GitHub，新窗口应在同一 checkout 读取。
+- 实验分支 `investigate_card_game_mechanics` 存在，分支尖端为 `e02e2fa`。它不是小修，而是一个 `v0.6.0 / Schema 11 / Content Revision 20` 的大实验分支，包含运行时模块化、卡牌标签化、经济分层、跨局传承等大量新机制；当前已知存在严重交互阻断，表现为约 5 岁的卡牌流程可能无法继续推进。
 
 ## 项目结构
 
@@ -251,6 +257,17 @@ tests/v5-full-track-smoke.cjs
 ```
 
 保留用户已有改动。v0.5.12 已合并并部署；仍要现场核对 Git 和 Pages，不沿用本文件的旧结论。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
+
+下一窗口开始 v0.6.x 开发时，先读：
+
+```text
+roadmap/00-总体策略.md
+roadmap/当前目标版本.md
+git log --oneline --decorate investigate_card_game_mechanics
+git diff --stat origin/main..investigate_card_game_mechanics
+```
+
+`investigate_card_game_mechanics` 只作实现参考，不整体合并。每个版本从最新 `main` 单独开发，并遵守 roadmap 中对产品边界、Terra High 自主范围和验收条件的约束。
 
 ## 常用验证
 
