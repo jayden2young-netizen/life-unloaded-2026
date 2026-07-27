@@ -27,12 +27,12 @@
 - `schemaVersion`：11
 - `contentRevision`：20
 - localStorage 键：`life-unloaded-2026-v1`
-- `main` 当前合并提交：`403df537fb323ff0ae500a2dc22f0ce29539d446`
-- 合并提交说明：`Merge pull request #23 from jayden2young-netizen/codex/v0.5.12-copywriting-guideline`
+- v0.6.0 功能提交：`82beb1432e3bad1df2c222735cce493e3c34495f`
+- 功能提交说明：`feat: ship v0.6.0 card participation`
 - 当前基线分支：`main`
-- 本轮起点版本：`v0.5.11`
+- 本轮起点版本：`v0.5.12`
 
-交接前核验时，`main` 与 `origin/main` 一致，工作区原本干净。本交接文件随玩家版 README 一起维护；是否已经提交、当前分支是否变化，以新窗口现场执行的 Git 检查为准。
+本次发布完成后，`main` 与 `origin/main` 应同时包含上述功能提交和随后的发布文档提交，工作区应保持干净。本交接文件随玩家版 README 一起维护；最终提交、当前分支和线上状态仍以新窗口现场执行的 Git 与 Pages 检查为准。
 
 旧检出目录已经失效，不要再使用：
 
@@ -62,9 +62,10 @@ C:\Users\Administrator\Documents\Codex\tools\gh\bin\gh.exe
 
 2026-07-28 额外核对：
 
-- 本地 `main` 已快进到 `origin/main`，两者当前同为 `403df53`。
+- v0.6.0 在 `codex/v0.6.0-card-participation` 完成，功能提交为 `82beb14`；发布时直接将 `main` 快进到包含该提交的最新文档提交。
+- `legacy/v0.5.12` 固定指向发布前基线 `9fc7da5`。
 - 根目录本地 `roadmap/` 已按 Git ignore 管理，包含 v0.6.x 总体策略和 v0.6.0—v0.6.5 六个独立开发文件；它们不上传 GitHub，新窗口应在同一 checkout 读取。
-- 实验分支 `investigate_card_game_mechanics` 存在，分支尖端为 `e02e2fa`。它不是小修，而是一个 `v0.6.0 / Schema 11 / Content Revision 20` 的大实验分支，包含运行时模块化、卡牌标签化、经济分层、跨局传承等大量新机制；当前已知存在严重交互阻断，表现为约 5 岁的卡牌流程可能无法继续推进。
+- 独立 worktree 中仍有实验分支 `investigate_card_game_mechanics@9efa6dc`。它包含不同架构和额外机制，不是 v0.6.0 发布来源，不要整体合并回 `main`。
 
 ## 项目结构
 
@@ -76,6 +77,7 @@ style.css                         黑色移动端界面
 game.js                           状态账本、因果引擎、存档与流程
 data.json                         生成后的内容数据
 content/zh-CN/ui.mjs              核心界面中文
+content/zh-CN/card-interactions.mjs 卡牌—选项显式交互
 content/zh-CN/tracks/*.mjs        十二条人生轨道中文
 tools/generate-v5-data.mjs        当前数据生成器
 tests/                            当前核心浏览器检查
@@ -221,6 +223,9 @@ Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案
 - 每个选择均有显式 `mechanicTags` 与 `cardInteraction`。卡牌可解锁信息入口、放宽软性资金门槛、补一段成本、压低一次风险或切换作者预写结果；事件年龄、学历、执业和现实资格门槛不得被卡牌绕过。
 - 生成器验证12种机制均有至少8个选项、3个阶段和35／55岁后续用途；当前162个决策面板全部存在可能生效的交互。`CARD_INTERACTION_WITNESSES` 保留卡牌专属入口的声明式见证，验证失败会中止生成。
 - 新增 `tests/v6-card-interaction-smoke.cjs`，覆盖五种交互模式、无卡兼容、同机制主卡、刷新不重复结算、Schema 10迁移和系统减少动态效果。四次抽卡弹层边框仅呼吸两次；`prefers-reduced-motion` 时保持静态。
+- 选择弹层以“待生效”弱提示列出持有卡；实际生效时才在对应选项上显示卡名、具体改变和细边框，不改变无卡选择的层级。
+- 游戏内全局“主菜单”只返回首页并保留当前人生；首页“重启人生”经过确认后重新进入出生流程，只清除当前人生，跨局档案、图鉴、统计和设置继续保留。
+- 发布前已确认生成器连续两次无 diff、语法检查、v0.6 定向 smoke 与五个既有 smoke 均通过；360×773 和 320×568 移动端核心路径无控制台错误。
 
 ## 存档与发布规则
 
@@ -262,20 +267,19 @@ tests/v5-browser-smoke.cjs
 tests/v5-employment-language-smoke.cjs
 tests/v5-family-education-smoke.cjs
 tests/v5-full-track-smoke.cjs
+tests/v6-card-interaction-smoke.cjs
 ```
 
-保留用户已有改动。v0.5.12 已合并并部署；仍要现场核对 Git 和 Pages，不沿用本文件的旧结论。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
+保留用户已有改动。v0.6.0 已完成并发布；仍要现场核对 Git 和 Pages，不沿用本文件的旧结论。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
 
-下一窗口开始 v0.6.x 开发时，先读：
+下一窗口开始 v0.6.1 开发时，先读：
 
 ```text
 roadmap/00-总体策略.md
-roadmap/v0.6.0-卡牌参与选择.md
-git log --oneline --decorate investigate_card_game_mechanics
-git diff --stat origin/main..investigate_card_game_mechanics
+roadmap/v0.6.1-教育年龄与重试.md
 ```
 
-`investigate_card_game_mechanics` 只作实现参考，不整体合并。每个版本从最新 `main` 单独开发，并遵守 roadmap 中对产品边界、Terra High 自主范围和验收条件的约束。
+实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。每个版本从最新 `main` 单独开发，并遵守 roadmap 中对产品边界、Terra High 自主范围和验收条件的约束。
 
 ## 常用验证
 
@@ -290,6 +294,7 @@ python -m http.server 8765
 ```powershell
 node --check game.js
 node --check tools/generate-v5-data.mjs
+node --check tests/v6-card-interaction-smoke.cjs
 node --check tests/v5-browser-smoke.cjs
 node --check tests/v5-employment-language-smoke.cjs
 node --check tests/v5-family-education-smoke.cjs
@@ -300,6 +305,7 @@ node --check tests/v5-university-career-smoke.cjs
 浏览器检查（先保持本地服务器运行）：
 
 ```powershell
+node tests/v6-card-interaction-smoke.cjs
 node tests/v5-browser-smoke.cjs
 node tests/v5-employment-language-smoke.cjs
 node tests/v5-family-education-smoke.cjs
