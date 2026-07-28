@@ -7,7 +7,7 @@ import {TRACK_COPY} from '../content/zh-CN/tracks/index.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const output=path.join(here,'..','data.json');
-const VERSION='0.6.0',SCHEMA_VERSION=11,CONTENT_REVISION=20;
+const VERSION='0.6.1',SCHEMA_VERSION=11,CONTENT_REVISION=20;
 const stages={infancy:[0,5],childhood:[6,12],adolescence:[13,18],youth:[19,29],establishment:[30,44],midlife:[45,59],later:[60,74],elder:[75,105]};
 const stageNames=Object.keys(stages);
 const stageFor=(min,max)=>stageNames.filter(name=>Math.max(min,stages[name][0])<=Math.min(max,stages[name][1]));

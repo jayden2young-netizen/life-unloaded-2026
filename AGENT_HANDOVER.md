@@ -21,16 +21,17 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前开发版本：v0.6.0
-- 当前本地开发版本：v0.6.0
+- 当前开发版本：v0.6.1 本地实现完成，尚未提交、推送、合并或部署
+- 当前本地开发版本：v0.6.1
 - 当前 `main` 基线版本：v0.6.0
-- 下一规划版本：v0.6.1 可审查源码基线，尚未开始实现
-- 当前规划范围：v0.6.1—v0.6.7 已完成路线审计与文档重构
+- 下一规划版本：v0.6.2 正确性与内容完整性护栏，须等待 v0.6.1 审阅完成
+- 当前规划范围：v0.6.2—v0.6.7 已完成路线审计与文档重构
 - `schemaVersion`：11
 - `contentRevision`：20
 - localStorage 键：`life-unloaded-2026-v1`
 - v0.6.0 功能提交：`82beb1432e3bad1df2c222735cce493e3c34495f`
 - 功能提交说明：`feat: ship v0.6.0 card participation`
+- 当前开发分支：`codex/v0.6.1-readable-runtime`
 - 当前基线分支：`main`
 - 本轮起点版本：`v0.5.12`
 
@@ -66,7 +67,7 @@ C:\Users\Administrator\Documents\Codex\tools\gh\bin\gh.exe
 
 - v0.6.0 在 `codex/v0.6.0-card-participation` 完成，功能提交为 `82beb14`；发布时直接将 `main` 快进到包含该提交的最新文档提交。
 - `legacy/v0.5.12` 固定指向发布前基线 `9fc7da5`。
-- 根目录本地 `roadmap/` 已按 Git ignore 管理，共有一份总体策略和 v0.6.0—v0.6.7 八份逐版本文件；其中 v0.6.0 已完成，v0.6.1—v0.6.7 是七个独立待开发版本。它们不上传 GitHub，新窗口应在同一 checkout 读取。
+- 根目录本地 `roadmap/` 已按 Git ignore 管理，共有一份总体策略和 v0.6.0—v0.6.7 八份逐版本文件；其中 v0.6.0 已发布，v0.6.1 已在本地分支完成实现，v0.6.2—v0.6.7 仍待开发。roadmap 不上传 GitHub，新窗口应在同一 checkout 读取。
 - v0.6.x 规划审计只更新文档，没有修改游戏代码、数据、玩家文案或测试。路线采用两个工程版本打底，再按教育、首职、家庭、债务、整体验收完成原五个内容版本。
 - 模型委托已经锁定：v0.6.1、v0.6.2、v0.6.7 使用 GPT-5.6 Sol High；v0.6.3—v0.6.6 使用 GPT-5.6 Terra High；Luna High 不作为主执行者。
 - 独立 worktree 中仍有实验分支 `investigate_card_game_mechanics@9efa6dc`。它包含不同架构和额外机制，不是 v0.6.0 发布来源，不要整体合并回 `main`。
@@ -231,11 +232,20 @@ Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案
 - 游戏内全局“主菜单”只返回首页并保留当前人生；首页“重启人生”经过确认后重新进入出生流程，只清除当前人生，跨局档案、图鉴、统计和设置继续保留。
 - 发布前已确认生成器连续两次无 diff、语法检查、v0.6 定向 smoke 与五个既有 smoke 均通过；360×773 和 320×568 移动端核心路径无控制台错误。
 
-## v0.6.x 后续规划（尚未实施）
+## v0.6.1 可审查源码基线
+
+- 从本地 `main@4b23df7` 创建 `codex/v0.6.1-readable-runtime`。使用固定版本 Prettier 3.6.2 原地展开 `game.js`，从347行整理为3643行；仍由 `index.html` 直接加载，没有增加 `src/`、modules、bundler、`package.json` 或第二部署入口。
+- 格式化前后 Prettier AST `--debug-check` 均通过；具名函数仍为155个，`rng`／`chance`／`weighted` 调用仍为17处，localStorage 键和全部既有调试接口保持不变。
+- 新增 `tests/v6-runtime-equivalence-smoke.cjs` 与 v0.6.0 golden fixture。固定 seed `v061-readable-runtime-equivalence` 覆盖出生、随机属性、0岁抽卡、8次实际推进和 `decision_043_choice_1 + card_01` 卡牌互动；14个检查点完全一致，最终 `rngState` 为 `783991599`。
+- 版本升至 v0.6.1，Schema 保持11，content revision 保持20。生成器连续两次 SHA-256 均为 `8CF2E0C8491CF43F20083FBF0CCCCA3C80CF6FC6FB76FE236F6D30683D2B8DF8`；删除 `version` 与 `gameVersion` 后，生成数据与 v0.6.0 的语义哈希完全相同。
+- 26个 JS／MJS／CJS 文件语法检查通过；固定轨迹与六项既有 Chrome smoke 全部通过，覆盖360×773、360×640、320×568，控制台错误为0。就业 smoke 中一条首页旧文案断言已按当前正式源文案校正；这是验收器修正，没有修改游戏文案。
+- 本轮没有修复主冲突加权、年度健康边界或其他 v0.6.2 问题，没有修改玩家内容、数值、状态契约、UI/CSS 或实验 worktree。尚未提交、推送、建 PR、合并或部署。
+
+## v0.6.x 后续规划
 
 后续版本顺序已经完成审计并固定为：
 
-1. v0.6.1：可审查源码基线。只把当前直接部署的 `game.js` 整理为可读、行为等价的源码，不修 bug，不引入 `src/`、modules 或 bundler。
+1. v0.6.1：可审查源码基线。本地实现和验证已完成，等待用户审阅与后续 Git／发布决定。
 2. v0.6.2：正确性与内容完整性护栏。修复已确认的主冲突加权和年度健康边界，解除生成器 index 语义，严格验证 command、path、operator、ID 和引用。
 3. v0.6.3：教育年龄、复读与海外重申。
 4. v0.6.4：首份工作与职业状态桥接。
@@ -290,18 +300,20 @@ tests/v5-employment-language-smoke.cjs
 tests/v5-family-education-smoke.cjs
 tests/v5-full-track-smoke.cjs
 tests/v6-card-interaction-smoke.cjs
+tests/v6-runtime-equivalence-smoke.cjs
 ```
 
-保留用户已有改动。v0.6.0 已完成并发布；仍要现场核对 Git 和 Pages，不沿用本文件的旧结论。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
+保留用户已有改动。v0.6.1 已在本地分支完成实现与验证，但没有提交、推送、合并或部署；仍要现场核对 Git 和 Pages，不沿用本文件的旧结论。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
 
-下一窗口开始 v0.6.1 开发时，先读：
+下一窗口审阅 v0.6.1 或准备 v0.6.2 时，先读：
 
 ```text
 roadmap/00-总体策略.md
 roadmap/v0.6.1-可审查源码基线.md
+roadmap/v0.6.2-正确性与内容护栏.md
 ```
 
-实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。每个版本从最新 `main` 单独开发，并遵守 roadmap 中的产品边界、对应模型自主范围和验收条件。v0.6.1 由 Sol High 主执行，必须先证明源码整理行为等价，不能顺手修复 v0.6.2 的问题。
+实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。先完成 v0.6.1 审阅与用户指定的 Git／发布动作，再从最新 `main` 单独开始 v0.6.2；不得把 v0.6.2 修复回填到 v0.6.1 格式化 diff。
 
 ## 常用验证
 
@@ -316,6 +328,7 @@ python -m http.server 8765
 ```powershell
 node --check game.js
 node --check tools/generate-v5-data.mjs
+node --check tests/v6-runtime-equivalence-smoke.cjs
 node --check tests/v6-card-interaction-smoke.cjs
 node --check tests/v5-browser-smoke.cjs
 node --check tests/v5-employment-language-smoke.cjs
@@ -327,6 +340,7 @@ node --check tests/v5-university-career-smoke.cjs
 浏览器检查（先保持本地服务器运行）：
 
 ```powershell
+node tests/v6-runtime-equivalence-smoke.cjs
 node tests/v6-card-interaction-smoke.cjs
 node tests/v5-browser-smoke.cjs
 node tests/v5-employment-language-smoke.cjs

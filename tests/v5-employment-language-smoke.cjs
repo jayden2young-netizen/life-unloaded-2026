@@ -5,7 +5,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.EMPLOYMENT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.0-employment');
+const OUT=process.env.EMPLOYMENT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.1-employment');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const DATA=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
@@ -24,7 +24,7 @@ fs.mkdirSync(OUT,{recursive:true});
   try{
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
-    assert.match(await page.locator('.hero-sub').innerText(),/你出生在什么家/);
+    assert.equal(await page.locator('.hero-sub').innerText(),'出身决定开始，选择改变命运');
     await page.locator('[data-act="new"]').click();
     assert.equal(await page.locator('.topbar .title').innerText(),'你出生了');
     assert.match(await page.locator('.card.hero').innerText(),/家里有房有债/);
