@@ -1,13 +1,19 @@
 (async () => {
   'use strict';
 
+  const app = document.getElementById('app');
+  let CONTRACT;
+  try {
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.2');
+  } catch (error) {
+    throw new Error(`共享内容合同加载失败：${error?.message || error}`);
+  }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.1',
+  const VERSION = '0.6.2',
     SCHEMA_VERSION = 11,
     CONTENT_REVISION = 20;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
-  const app = document.getElementById('app');
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
   const esc = (value) =>
@@ -915,26 +921,41 @@
   const save = (force) => persist(state, force);
 
   function compare(actual, op, expected) {
-    if (op === 'eq') return actual === expected;
-    if (op === 'neq') return actual !== expected;
-    if (op === 'gte') return Number(actual) >= Number(expected);
-    if (op === 'lte') return Number(actual) <= Number(expected);
-    if (op === 'gt') return Number(actual) > Number(expected);
-    if (op === 'lt') return Number(actual) < Number(expected);
-    if (op === 'in') return expected.includes(actual);
-    if (op === 'notIn') return !expected.includes(actual);
-    if (op === 'includes') return Array.isArray(actual) && actual.includes(expected);
-    if (op === 'truthy') return Boolean(actual);
-    return false;
+    try {
+      return CONTRACT.compareByOperator(actual, op, expected);
+    } catch (error) {
+      if (DEBUG) throw error;
+      console.error(`[内容合同] ${error.message}`);
+      return false;
+    }
   }
   function predicateMatches(rule, run = state.run) {
+    if (!CONTRACT.isReadPath(rule?.path)) {
+      const error = new Error(`未知 read path：${String(rule?.path)}`);
+      if (DEBUG) throw error;
+      console.error(`[内容合同] ${error.message}`);
+      return false;
+    }
     const actual = rule.path === 'age' ? run.age : getPath(run, rule.path);
     return compare(actual, rule.op, rule.value);
   }
   function requirementsMatch(requirements = {}, run = state.run) {
+    if (Array.isArray(requirements))
+      requirements = { all: requirements, any: [], none: [] };
     const all = requirements.all || [],
       any = requirements.any || [],
       none = requirements.none || [];
+    const invalid = [...all, ...any, ...none].find(
+      (rule) => !CONTRACT.isReadPath(rule?.path) || !CONTRACT.isRuntimeOperator(rule?.op)
+    );
+    if (invalid) {
+      const error = new Error(
+        `非法 predicate：${String(invalid.path)} ${String(invalid.op)}`
+      );
+      if (DEBUG) throw error;
+      console.error(`[内容合同] ${error.message}`);
+      return false;
+    }
     return (
       all.every((rule) => predicateMatches(rule, run)) &&
       (!any.length || any.some((rule) => predicateMatches(rule, run))) &&
@@ -1334,6 +1355,15 @@
     const run = state.run,
       before = copy(run);
     for (const command of commands) {
+      if (!CONTRACT.isCommandType(command?.type) || !CONTRACT.isWritePath(command?.target)) {
+        const location = context.eventId || context.choiceId || context.source || 'unknown';
+        const error = new Error(
+          `非法 command @ ${location}：${String(command?.type)} → ${String(command?.target)}`
+        );
+        if (DEBUG) throw error;
+        console.error(`[内容合同] ${error.message}`);
+        continue;
+      }
       if (command.type === 'add') {
         if (command.target === 'finance.cash' && Number(command.value) < 0 && run.age < 18) {
           const cost = Math.abs(Number(command.value)),
@@ -2047,6 +2077,8 @@
       if (run.pressures[key] > 0) run.pressures[key] = clamp(run.pressures[key] - 1, 0, 100);
     run.employment.tenure = run.employment.status === 'employed' ? run.employment.tenure + 1 : 0;
     run.activity.years++;
+    run.health.physical = clamp(run.health.physical, 0, 100);
+    run.health.mental = clamp(run.health.mental, 0, 100);
     syncDerived(run);
     unlockCodex();
   }
@@ -2188,7 +2220,8 @@
   function eventWeight(event) {
     const run = state.run;
     let weight = event.weight || 10;
-    if (event.track === run.mainConflict?.split('_')[0]) weight *= 1.2;
+    const conflict = DATA.conflicts.find((item) => item.id === run.mainConflict);
+    weight *= CONTRACT.conflictWeightMultiplier(event.track, conflict?.desires);
     if (event.track === 'remote') weight *= 1 + run.capabilities.portableSkill * 0.12;
     if (event.track === 'business') weight *= 1 + run.business.operatingSkill / 180;
     if (event.track === 'health') {
@@ -3258,7 +3291,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.1-存档.json';
+    link.download = '人生尚未加载-v0.6.2-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }
@@ -3621,6 +3654,23 @@
           endingAxes: () => endingAxes(state.run),
           routeTags: () => routeTags(state.run),
           decisionAllowance: () => decisionAllowance(state.run),
+          eventWeight: (eventId, mainConflict = state.run.mainConflict) => {
+            const event = INDEX.event.get(eventId);
+            if (!event) throw new Error(`未知事件：${eventId}`);
+            const previous = state.run.mainConflict;
+            state.run.mainConflict = mainConflict;
+            try {
+              return eventWeight(event);
+            } finally {
+              state.run.mainConflict = previous;
+            }
+          },
+          contentContract: () => ({
+            operators: [...CONTRACT.RUNTIME_OPERATORS],
+            commands: [...CONTRACT.COMMAND_TYPES],
+            evidence: copy(CONTRACT.TRACK_DESIRE_EVIDENCE),
+          }),
+          requirementsMatch: (requirements) => requirementsMatch(requirements, state.run),
           finish: () => {
             state.run.deathCause = '调试结束';
             finishLife();

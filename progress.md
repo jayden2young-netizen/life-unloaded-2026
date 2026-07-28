@@ -3,6 +3,9 @@ Current prompt (2026-07-23): 修复卡牌中的“起步／转折／中段”等
 
 ## Progress
 
+- 2026-07-28: v0.6.2 正确性与内容完整性护栏在 `codex/v0.6.2-correctness-guardrails` 完成本地实现。共享内容合同在数据 fetch 和状态恢复前加载；生成器新增 command／path／operator／有限数值／ID／引用／作者泄漏验证；主冲突采用三条有内容证据的开放映射，未登记关系保持中性；年度身心健康结算限制到0—100。
+- 2026-07-28: beat、decision、card、echo、卡牌互动和 witness 改用生成期作者定位与固定槽位；家庭债务范围显式化为三项。validator 暴露并经用户批准删除3条缺少 value、运行时原本按加0处理的无操作 `add`。正式 `data.json` 相对 v0.6.1 只变化版本字段和这3条 command，Schema 11、content revision 20、752个事件节点与72张卡保持不变；SHA-256 为 `1A2182D4B3CFC257EB6AEC3270468F9F00874DEF3BF363B78812D4B82A20F09F`。
+- 2026-07-28: 31个脚本语法、连续两次生成、v0.6.2护栏负例、operator子集、12检查点中性选择/RNG轨迹、合同加载前置／失败页、映射权重、健康上下界和v0.6.1固定轨迹通过。全部六项既有Chrome smoke通过，覆盖三种窄屏且控制台错误为0；家庭教育smoke仅修正随机持有cashBuffer卡干扰“无卡门槛”断言的fixture。尚未推送、合并或部署。
 - 2026-07-28: v0.6.1 可审查源码基线在 `codex/v0.6.1-readable-runtime` 完成，起点为 `main@4b23df7`。固定版本 Prettier 3.6.2 将直接部署的 `game.js` 从347行原地展开为3643行；前后 AST debug-check、155个具名函数、17处 RNG／chance／weighted 调用、存储键和调试接口均保持一致，没有引入 `src/`、modules、bundler 或构建步骤。
 - 2026-07-28: 新增固定 seed 等价 smoke 与 v0.6.0 golden fixture，14个检查点覆盖出生、随机属性、0岁抽卡、8次推进和代表性卡牌互动，最终 `rngState=783991599`。版本升至 v0.6.1，Schema 保持11、content revision 保持20；生成器连续两次 SHA-256 均为 `8CF2E0C8491CF43F20083FBF0CCCCA3C80CF6FC6FB76FE236F6D30683D2B8DF8`，去除版本字段后生成内容与 v0.6.0 完全等价。
 - 2026-07-28: 26项语法检查、固定轨迹和六项既有 Chrome smoke 全部通过，覆盖360×773、360×640、320×568，控制台错误为0。就业 smoke 的首页断言曾使用旧文案，已按当前正式源事实校正并复测通过；未修改游戏文案、玩法、数值、状态或 v0.6.2 已知问题。

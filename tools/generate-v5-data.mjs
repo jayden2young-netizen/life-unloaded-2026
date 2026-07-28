@@ -4,10 +4,37 @@ import {fileURLToPath} from 'node:url';
 import {CARD_COPY} from '../content/zh-CN/cards.mjs';
 import {cardInteractionFor,CARD_INTERACTION_WITNESSES} from '../content/zh-CN/card-interactions.mjs';
 import {TRACK_COPY} from '../content/zh-CN/tracks/index.mjs';
+import {
+  beatAuthorKey,
+  cardAuthorKey,
+  createAuthorSlotRegistry,
+  decisionAuthorKey,
+  registerAuthorSlot,
+  resolveAuthorSlot,
+} from './author-slots.mjs';
+import {
+  BEAT_SLOT_REGISTRATIONS,
+  CARD_SLOT_REGISTRATIONS,
+  DECISION_SLOT_REGISTRATIONS,
+} from './author-slot-manifest.mjs';
+import {validateGeneratedData} from './validate-content-contract.mjs';
+import {compareByOperator} from '../runtime-content-contract.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
-const output=path.join(here,'..','data.json');
-const VERSION='0.6.1',SCHEMA_VERSION=11,CONTENT_REVISION=20;
+const output=process.env.LIFE_DATA_OUTPUT?path.resolve(process.env.LIFE_DATA_OUTPUT):path.join(here,'..','data.json');
+const authorSlots=createAuthorSlotRegistry();
+// New authored definitions must claim an unused local slot here before they can generate.
+// New item example: {domain:'beats',key:beatAuthorKey('education','...'),slot:{id:'beat_409',track:'education',localIndex:32}}
+// Renamed item may also set replaces to its previous author key while retaining the same slot.
+const registrationGroups=[
+  ['beats',BEAT_SLOT_REGISTRATIONS],
+  ['decisions',DECISION_SLOT_REGISTRATIONS],
+  ['cards',CARD_SLOT_REGISTRATIONS],
+];
+for(const [domain,registrations] of registrationGroups)
+  for(const registration of registrations)
+    registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
+const VERSION='0.6.2',SCHEMA_VERSION=11,CONTENT_REVISION=20;
 const stages={infancy:[0,5],childhood:[6,12],adolescence:[13,18],youth:[19,29],establishment:[30,44],midlife:[45,59],later:[60,74],elder:[75,105]};
 const stageNames=Object.keys(stages);
 const stageFor=(min,max)=>stageNames.filter(name=>Math.max(min,stages[name][0])<=Math.min(max,stages[name][1]));
@@ -34,6 +61,7 @@ const conflicts=[
 
 const familyNames=['城郊双职工家庭','县城小生意家庭','乡镇务农家庭','一线城市新市民家庭','教师家庭','医护家庭','个体运输家庭','基层公职家庭','工厂职工家庭','单亲务工家庭','隔代照护家庭','多子女经营家庭','技术工人家庭','自由职业家庭','小城房产家庭','返乡创业家庭','外出经商家庭','社区服务家庭','文艺从业家庭','平台劳动家庭','负债置业家庭','拆迁安置家庭','稳定储蓄家庭','高控制家庭','低表达家庭','照护压力家庭','跨城婚姻家庭','流动租住家庭','小康专业家庭','隐性债务家庭'];
 const familyClasses=['working','smallBusiness','rural','newUrban','professional'];
+const familyDebtNames=new Set(['多子女经营家庭','负债置业家庭','隐性债务家庭']);
 const jobPools={working:['工厂职工','门店店员','物流司机','物业人员'],smallBusiness:['小店经营者','餐饮经营者','个体运输者','维修店主'],rural:['务农者','乡镇工人','村医助理','农机手'],newUrban:['平台骑手','客服人员','建筑工人','家政人员'],professional:['教师','护士','工程技术员','基层职员']};
 const familyClassFor=name=>/小生意|经营|创业|经商/.test(name)?'smallBusiness':/乡镇|务农/.test(name)?'rural':/新市民|平台|跨城|流动租住/.test(name)?'newUrban':/教师|医护|基层公职|自由职业|社区服务|文艺|小康专业/.test(name)?'professional':'working';
 const familyJobsFor=(name,familyClass)=>{
@@ -53,7 +81,7 @@ const familyJobsFor=(name,familyClass)=>{
   return jobPools[familyClass];
 };
 const familyArchetypes=familyNames.map((name,index)=>{
-  const familyClass=familyClassFor(name),single=/单亲/.test(name),multi=/多子女/.test(name),debt=/负债|债务|经营/.test(name),rural=/乡镇|务农|返乡/.test(name);
+  const familyClass=familyClassFor(name),single=/单亲/.test(name),multi=/多子女/.test(name),debt=familyDebtNames.has(name),rural=/乡镇|务农|返乡/.test(name);
   const cashflow=clamp(34+(index*7)%58,20,92),control=/高控制|基层公职/.test(name)?78:clamp(30+(index*11)%55,20,82),expression=clamp(28+(index*13)%60,20,88),careBurden=/照护|隔代/.test(name)?82:clamp(25+(index*9)%55,15,80),digitalLiteracy=clamp(20+(index*19)%70,15,92);
   const professional=familyClass==='professional'||/教师|医护|小康专业/.test(name),mobile=/新市民|平台|跨城|流动|外出/.test(name),absent=/隔代|跨城|外出|平台|医护/.test(name),unsafe=/高控制|低表达|负债|债务/.test(name);
   const contextDefaults={
@@ -230,34 +258,34 @@ function educationBeatSpec(index){
 const annualBeats=[];
 for(const id of trackOrder){
   const spec=TRACKS[id];
-  for(let index=0;index<32;index++){
+  for(let index=0;index<TRACK_COPY[id].beats.length;index++){
+    const authoredBeat=TRACK_COPY[id].beats[index],slot=resolveAuthorSlot(authorSlots,'beats',beatAuthorKey(id,authoredBeat.text),`${id}.beats[${index}]`),stableIndex=slot.localIndex;
     if(id==='health'){
-      const row=HEALTH_BEATS[index];
-      annualBeats.push({id:`beat_${String(annualBeats.length+1).padStart(3,'0')}`,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'+',text:TRACK_COPY.health.beats[index].text,tone:TRACK_COPY.health.beats[index].tone,intensity:row.intensity,requirements:row.requirements,actors:[],effects:row.effects,assertions:[],weight:row.weight,contentRevision:CONTENT_REVISION});
+      const row=HEALTH_BEATS[stableIndex];
+      annualBeats.push({id:slot.id,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'+',text:authoredBeat.text,tone:authoredBeat.tone,intensity:row.intensity,requirements:row.requirements,actors:[],effects:row.effects,assertions:[],weight:row.weight,contentRevision:CONTENT_REVISION});
       continue;
     }
     if(id==='habits'){
-      const row=TRACK_COPY.habits.beats[index],requirements={all:[p('habits.type','eq',row.type),p('habits.stage','in',row.stageAny),p('habits.risk','gte',1)],any:[],none:[]};
-      annualBeats.push({id:`beat_${String(annualBeats.length+1).padStart(3,'0')}`,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'◌',text:row.text,tone:row.tone,intensity:row.intensity,requirements,actors:[],effects:habitBeatEffects(row,index),assertions:[],weight:12+(row.effect==='recovery'?4:0),contentRevision:CONTENT_REVISION});
+      const row=authoredBeat,requirements={all:[p('habits.type','eq',row.type),p('habits.stage','in',row.stageAny),p('habits.risk','gte',1)],any:[],none:[]};
+      annualBeats.push({id:slot.id,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'◌',text:row.text,tone:row.tone,intensity:row.intensity,requirements,actors:[],effects:habitBeatEffects(row,stableIndex),assertions:[],weight:12+(row.effect==='recovery'?4:0),contentRevision:CONTENT_REVISION});
       continue;
     }
     if(id==='education'){
-      const row=educationBeatSpec(index),authoredBeat=TRACK_COPY.education.beats[index];
-      annualBeats.push({id:`beat_${String(annualBeats.length+1).padStart(3,'0')}`,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'▤',text:authoredBeat.text,tone:authoredBeat.tone,intensity:index<8?'low':index<24?'medium':'high',requirements:row.requirements,actors:[],effects:row.effects,assertions:[],weight:row.weight,contentRevision:CONTENT_REVISION});
+      const row=educationBeatSpec(stableIndex);
+      annualBeats.push({id:slot.id,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'▤',text:authoredBeat.text,tone:authoredBeat.tone,intensity:stableIndex<8?'low':stableIndex<24?'medium':'high',requirements:row.requirements,actors:[],effects:row.effects,assertions:[],weight:row.weight,contentRevision:CONTENT_REVISION});
       continue;
     }
-    const requirements=requirementsFor(id),actors=actorsFor(id,index,'beat'),role=index%8,ageRange=TRACK_NODE_AGES[id][role];
+    const requirements=requirementsFor(id),actors=actorsFor(id,stableIndex,'beat'),role=stableIndex%8,ageRange=TRACK_NODE_AGES[id][role];
     if(id==='employment')requirements.all.push(p('employment.status','eq','employed'));
     if(id==='public')requirements.all.push(p('employment.employerType','eq','public'));
     if(id==='remote')requirements.any.push(p('employment.arrangement','in',['remote','hybrid']),p('mobility.mode','in',['domesticNomad','overseasNomad']));
     if(id==='business')requirements.all.push(p('business.status','in',['testing','operating']));
     if(id==='leisure')requirements.all.push(p('activity.mode','in',['sabbatical','leisure']));
     if(id==='children'){requirements.all.push(p('relationships.childCount',role===0?'eq':'gte',role===0?0:1));if(role===0)requirements.all.push(p('relationships.parenthoodIntent','eq','planned'),p('relationships.activePartnerId','truthy',true))}
-    if(id==='partnership'&&index%8===0)requirements.all.push(p('relationships.partnerStatus','in',['none','divorced','widowed']));
+    if(id==='partnership'&&stableIndex%8===0)requirements.all.push(p('relationships.partnerStatus','in',['none','divorced','widowed']));
     if(id==='finance'&&[1,3,7].includes(role))requirements.all.push(p('finance.totalDebt','gte',1));
     if(id==='finance'&&[5,6].includes(role))requirements.all.push(p('finance.hasArrears','eq',true));
-    const authoredBeat=TRACK_COPY[id].beats[index];
-    annualBeats.push({id:`beat_${String(annualBeats.length+1).padStart(3,'0')}`,kind:'beat',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:{education:'▤',employment:'▥',public:'⌂',remote:'⌁',business:'◇',leisure:'○',partnership:'♡',children:'♧',finance:'¥',health:'+',habits:'◌',later:'↩'}[id],text:authoredBeat.text,tone:authoredBeat.tone,intensity:index<8?'low':index<24?'medium':'high',requirements,actors,effects:beatEffects(id,index),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:10+index%4,contentRevision:CONTENT_REVISION});
+    annualBeats.push({id:slot.id,kind:'beat',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:{education:'▤',employment:'▥',public:'⌂',remote:'⌁',business:'◇',leisure:'○',partnership:'♡',children:'♧',finance:'¥',health:'+',habits:'◌',later:'↩'}[id],text:authoredBeat.text,tone:authoredBeat.tone,intensity:stableIndex<8?'low':stableIndex<24?'medium':'high',requirements,actors,effects:beatEffects(id,stableIndex),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:10+stableIndex%4,contentRevision:CONTENT_REVISION});
   }
 }
 const originProfiles=[
@@ -397,7 +425,8 @@ const habitEpisodeRoutes=(episode,kind)=>({
   relapse:{1:['reported','restricted','hidden'],2:['recovery_reset','treatment_return','lapse_only','relapse']}
 }[kind]?.[episode.phase]);
 const decisionEffects=(id,index,option,authoredDecision)=>{
-  const episode=authoredDecision?.episode,episodeRoutes=episode?(EPISODE_ROUTES[episode.id]?.[episode.phase]||habitEpisodeRoutes(episode,authoredDecision.habitKind)):null,route=episode?episodeRoutes?.[option]:['deliberate','negotiated','risk'][option],effects=[c('tag','history',`${id}:${route}`),c('add','agency',[4,3,2,1][option])],add=(path,value)=>effects.push(c('add',path,value)),set=(path,value)=>value!==undefined&&effects.push(c('set',path,value));
+  const episode=authoredDecision?.episode,episodeRoutes=episode?(EPISODE_ROUTES[episode.id]?.[episode.phase]||habitEpisodeRoutes(episode,authoredDecision.habitKind)):null,route=episode?episodeRoutes?.[option]:['deliberate','negotiated','risk'][option],effects=[c('tag','history',`${id}:${route}`)],add=(path,value)=>effects.push(c('add',path,value)),set=(path,value)=>value!==undefined&&effects.push(c('set',path,value));
+  if(option<4)add('agency',[4,3,2,1][option]);
   if(episode?.id==='school_harm'){
     if(episode.phase===1){
       set('development.schoolHarmResponse',['documented','environmentChange','concealed'][option]);add('development.selfAdvocacy',[8,5,-3][option]);add('development.traumaLoad',[-2,0,8][option]);add('development.attendance',[1,2,-4][option]);add('health.mental',[1,0,-4][option]);
@@ -532,7 +561,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
       if(option===2)effects.push(c('addLiability','finance.liabilities',90000,{kind:'business',rate:.09,guaranteed:true}));
     }
     if(phase===2){
-      set('business.status','operating');if(option===1)set('business.mode','independent');if(option===2)set('business.mode','franchise');add('business.operatingSkill',[5,4,0][option]);add('finance.cash',[-12000,-8000,-35000][option]);
+      set('business.status','operating');if(option===1)set('business.mode','independent');if(option===2)set('business.mode','franchise');if(option<3){add('business.operatingSkill',[5,4,0][option]);add('finance.cash',[-12000,-8000,-35000][option])}
       if(option===2)effects.push(c('addLiability','finance.liabilities',50000,{kind:'business',rate:.1,guaranteed:true}));
     }
     if(phase===3){
@@ -702,9 +731,9 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
 const decisions=[],authoredDecisionById=new Map();
 for(const id of trackOrder){
   const spec=TRACKS[id];
-  for(let index=0;index<TRACK_COPY[id].decisions.length;index++){
-    const authoredDecision=TRACK_COPY[id].decisions[index];
-    const eventId=`decision_${String(decisions.length+1).padStart(3,'0')}`,requirements=requirementsFor(id),actors=id==='habits'?[]:authoredDecision.episode?episodeActorsFor(authoredDecision):actorsFor(id,index,'decision'),ageRange=authoredDecision.age||(id==='habits'?authoredDecision.age:TRACK_NODE_AGES[id][index]);
+  for(let sourceIndex=0;sourceIndex<TRACK_COPY[id].decisions.length;sourceIndex++){
+    const authoredDecision=TRACK_COPY[id].decisions[sourceIndex],slot=resolveAuthorSlot(authorSlots,'decisions',decisionAuthorKey(id,authoredDecision.prompt,authoredDecision.choices),`${id}.decisions[${sourceIndex}]`),index=slot.localIndex;
+    const eventId=slot.id,echoId=eventId.replace('decision_','echo_'),requirements=requirementsFor(id),actors=id==='habits'?[]:authoredDecision.episode?episodeActorsFor(authoredDecision):actorsFor(id,index,'decision'),ageRange=authoredDecision.age||(id==='habits'?authoredDecision.age:TRACK_NODE_AGES[id][index]);
     if(id==='business'&&authoredDecision.episode?.phase>1)requirements.all=requirements.all.filter(rule=>rule.path!=='finance.available');
     if(id==='employment'&&!authoredDecision.episode){
       if(index===0)requirements.all.push(p('education.nextStage','eq','career'),p('employment.status','in',['unemployed','gig']));
@@ -780,7 +809,7 @@ for(const id of trackOrder){
       if(authoredDecision.episode?.id==='undergraduate_change'&&authoredDecision.episode.phase===2&&option<3)choiceRules.all.push(p('education.changeIntent','eq',['major','leave','transfer'][option]));
       if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===2){if(option===0)choiceRules.all.push(p('employment.entryCredential','in',['bachelor','undergraduateIncomplete']));if(option===1)choiceRules.all.push(p('employment.entryCredential','eq','postgraduate'))}
       if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===4){if(option<2)choiceRules.all.push(p('employment.entryCredential','in',['bachelor','undergraduateIncomplete']));if(option>=2&&option<4)choiceRules.all.push(p('employment.entryCredential','eq','postgraduate'));if(option<4)choiceRules.all.push(p('employment.applicationStatus','eq','offered'))}
-      return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:1+option,delayMax:3+option}],outcomeTags:result.outcomeTags,memoryKey,route:result.route};
+      return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences:[{eventId:echoId,delayMin:1+option,delayMax:3+option}],outcomeTags:result.outcomeTags,memoryKey,route:result.route};
     });
     decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{situation:authoredDecision.situation,episode:authoredDecision.episode}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:16+index%3,contentRevision:CONTENT_REVISION});
     authoredDecisionById.set(eventId,authoredDecision);
@@ -791,15 +820,20 @@ const globalRows=[
   {track:'identity',age:[14,17],prompt:'你第一次认真决定，这一生最不愿失去什么。',verbs:['哪怕不稳，也要自由','先保住安稳','把重要的人留身边'],results:['你把远方写进计划，也知道没人替你兜底。','你先选了能站稳的地方，没有急着往远处走。','你开始把别人的需要算进自己的决定。'],echoText:'少年时最不愿失去的东西又来敲门。',consequences:['后来一次搬家，你没等所有人同意就买了票。','机会和风险同时到来时，你还是先看账户余额。','真正要分别时，你为留下多承担了一段日子。'],desire:[['freedom','exploration'],['security','achievement'],['love','familyBelonging']]},
   {track:'identity',age:[30,55],prompt:'你发现早年最想要的东西，已经不完全适合现在。',verbs:['重新排一次轻重','继续守住原来的目标','不再只认一个答案'],results:['你取消一项旧计划，把时间留给身体和安静。','你没有换目标，只调整了到达它的速度。','你允许几件事同时重要，不再排唯一名次。'],echoText:'那次重新排序后来改变了一天的用法。',consequences:['下一次加码之前，你先看自己还能不能睡好觉。','旧目标终于接近时，你仍认得当年为什么出发。','有一条路停下后，另一件在意的事接住了你。'],desire:[['peace','body'],['achievement','security'],['freedom','creation']],reclaim:true}
 ];
-for(const [globalIndex,row] of globalRows.entries()){
-  const id=`decision_${String(decisions.length+1).padStart(3,'0')}`;
-  const choices=row.verbs.map((text,index)=>{const educationStatus=row.age[0]===18?(index===0?'enrolled':'completed'):(index===2?'completed':'enrolled'),effects=[row.education?c('transition','education',row.education[index],{status:educationStatus}):c('claimDesire','desires',row.desire[index],{replace:Boolean(row.reclaim)})],cardInteraction=cardInteractionFor(row.track,globalIndex,index);if(row.age[0]===18&&index===1)effects.push(c('set','employment.status','employed'),c('set','employment.career','基层岗位'),c('set','employment.sector','services'),c('set','activity.mode','work'));if(row.age[0]===18&&index===2)effects.push(c('set','employment.status','gig'),c('set','employment.career','灵活就业'),c('set','employment.sector','platform'),c('set','activity.mode','work'));return{id:`${id}_choice_${index+1}`,text,resultText:row.results[index],hints:[],requirements:[],mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects,commitments:[],consequences:[{eventId:`echo_${String(decisions.length+1).padStart(3,'0')}`,delayMin:2,delayMax:5}],outcomeTags:[row.track,index===0?'chosenA':index===1?'chosenB':'chosenC'],memoryKey:`${id}_c${index+1}`,route:['deliberate','stable','open'][index]}});
+for(const [sourceIndex,row] of globalRows.entries()){
+  const slot=resolveAuthorSlot(authorSlots,'decisions',decisionAuthorKey(row.track,row.prompt,row.verbs),`globalRows[${sourceIndex}]`),globalIndex=slot.localIndex,id=slot.id,echoId=id.replace('decision_','echo_');
+  const choices=row.verbs.map((text,index)=>{const educationStatus=row.age[0]===18?(index===0?'enrolled':'completed'):(index===2?'completed':'enrolled'),effects=[row.education?c('transition','education',row.education[index],{status:educationStatus}):c('claimDesire','desires',row.desire[index],{replace:Boolean(row.reclaim)})],cardInteraction=cardInteractionFor(row.track,globalIndex,index);if(row.age[0]===18&&index===1)effects.push(c('set','employment.status','employed'),c('set','employment.career','基层岗位'),c('set','employment.sector','services'),c('set','activity.mode','work'));if(row.age[0]===18&&index===2)effects.push(c('set','employment.status','gig'),c('set','employment.career','灵活就业'),c('set','employment.sector','platform'),c('set','activity.mode','work'));return{id:`${id}_choice_${index+1}`,text,resultText:row.results[index],hints:[],requirements:[],mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects,commitments:[],consequences:[{eventId:echoId,delayMin:2,delayMax:5}],outcomeTags:[row.track,index===0?'chosenA':index===1?'chosenB':'chosenC'],memoryKey:`${id}_c${index+1}`,route:['deliberate','stable','open'][index]}});
   decisions.push({id,kind:'decision',track:row.track,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'◎',prompt:row.prompt,requirements:{all:[row.reclaim?p('desires.reclaimed','eq',false):p('age','gte',row.age[0])],any:[],none:[]},actors:[],choices,assertions:[],priority:30,weight:30,contentRevision:CONTENT_REVISION});
   authoredDecisionById.set(id,{echoText:row.echoText,choices:row.consequences.map(consequenceText=>({consequenceText}))});
 }
 
+const positionedAnnualBeats=annualBeats.filter(event=>event.id.startsWith('beat_')).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
+const fixedAnnualBeats=annualBeats.filter(event=>!event.id.startsWith('beat_'));
+annualBeats.splice(0,annualBeats.length,...positionedAnnualBeats,...fixedAnnualBeats);
+decisions.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
+
 function interactionPath(value,path){return String(path).split('.').reduce((current,key)=>current?.[key],value)}
-function interactionPredicate(rule,state){const actual=interactionPath(state,rule.path);if(rule.op==='eq')return actual===rule.value;if(rule.op==='gte')return Number(actual)>=Number(rule.value);if(rule.op==='in')return rule.value.includes(actual);return false}
+function interactionPredicate(rule,state){return compareByOperator(interactionPath(state,rule.path),rule.op,rule.value)}
 function validateCardInteractions(){
   const decisionPanels=decisions.filter(decision=>decision.choices?.length),interactions=[];
   for(const decision of decisionPanels)for(const choice of decision.choices){
@@ -831,9 +865,9 @@ function validateCardInteractions(){
   return{decisionPanels:decisionPanels.length,activePanels:decisionPanels.filter(decision=>decision.choices.some(choice=>choice.cardInteraction)).length,interactions:interactions.length,witnesses:CARD_INTERACTION_WITNESSES.length};
 }
 const echoPressure={education:'career',employment:'career',public:'career',remote:'loneliness',business:'money',leisure:'money',partnership:'family',children:'family',finance:'money',health:'body',habits:'money',later:'loneliness'};
-const echoes=decisions.map((decision,index)=>{
+const echoes=decisions.map(decision=>{
   const authoredDecision=authoredDecisionById.get(decision.id),habitPressure={gambling:'money',alcohol:'body',gaming:'career',shopping:'money',medication:'body'}[authoredDecision?.type],pressure=decision.track==='habits'?habitPressure:echoPressure[decision.track];
-  return{id:`echo_${String(index+1).padStart(3,'0')}`,kind:'consequence',track:decision.track,stage:stageNames,ageMin:Math.min(105,decision.ageMin+1),ageMax:105,icon:'↩',text:authoredDecision?.echoText||'当年那个选择留下的东西，又出现了。',sourceDecisionId:decision.id,requirements:{all:[],any:[],none:[]},actors:[],choiceOutcomes:Object.fromEntries(decision.choices.map((choice,choiceIndex)=>[choice.memoryKey,{text:authoredDecision?.choices[choiceIndex].consequenceText||`${choice.resultText.replace(/。$/,'')}。${choiceIndex===0?'早先投入的东西开始显出回报。':choiceIndex===1?'当初保留的余地如今派上用场。':'当时推迟的代价没有消失。'}`,effects:[choiceIndex===0?c('add','agency',1):choiceIndex===1?c('add','capabilities.resilience',1):c('add',`pressures.${pressure||'money'}`,4),c('tag','history',`echo:${decision.track}`)],outcomeTags:[...choice.outcomeTags,'echo']}])) ,assertions:[],weight:22,contentRevision:CONTENT_REVISION};
+  return{id:decision.id.replace('decision_','echo_'),kind:'consequence',track:decision.track,stage:stageNames,ageMin:Math.min(105,decision.ageMin+1),ageMax:105,icon:'↩',text:authoredDecision?.echoText||'当年那个选择留下的东西，又出现了。',sourceDecisionId:decision.id,requirements:{all:[],any:[],none:[]},actors:[],choiceOutcomes:Object.fromEntries(decision.choices.map((choice,choiceIndex)=>[choice.memoryKey,{text:authoredDecision?.choices[choiceIndex].consequenceText||`${choice.resultText.replace(/。$/,'')}。${choiceIndex===0?'早先投入的东西开始显出回报。':choiceIndex===1?'当初保留的余地如今派上用场。':'当时推迟的代价没有消失。'}`,effects:[choiceIndex===0?c('add','agency',1):choiceIndex===1?c('add','capabilities.resilience',1):c('add',`pressures.${pressure||'money'}`,4),c('tag','history',`echo:${decision.track}`)],outcomeTags:[...choice.outcomeTags,'echo']}])) ,assertions:[],weight:22,contentRevision:CONTENT_REVISION};
 });
 
 const swanRows=[
@@ -856,7 +890,11 @@ function cardEffects(mechanic,drawAge){
   return effects;
 }
 const cards=[];
-for(const drawAge of[0,18,35,55])for(const authored of CARD_COPY[drawAge])cards.push({id:`card_${String(cards.length+1).padStart(2,'0')}`,kind:drawAge===0?'innate':'stage',drawAge,displayName:authored.displayName,text:authored.text,mechanic:authored.mechanic,effects:cardEffects(authored.mechanic,drawAge),contentRevision:CONTENT_REVISION});
+for(const drawAge of[0,18,35,55])for(const authored of CARD_COPY[drawAge]){
+  const slot=resolveAuthorSlot(authorSlots,'cards',cardAuthorKey(drawAge,authored.displayName),`cards.${drawAge}.${authored.displayName}`);
+  cards.push({id:slot.id,kind:drawAge===0?'innate':'stage',drawAge,displayName:authored.displayName,text:authored.text,mechanic:authored.mechanic,effects:cardEffects(authored.mechanic,drawAge),contentRevision:CONTENT_REVISION});
+}
+cards.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
 const cardInteractionCoverage=validateCardInteractions();
 
 const endingProfiles=[
@@ -896,5 +934,6 @@ codex.push(
 const realityRules={education:'家庭资源、关系安全、习惯、出勤、学校支持和个人能力共同形成准备度；金钱不直接生成成绩。国内外本科的申请、录取、资金与报到分别记录。',employment:'裁员、晋升和排班只适用于真实受雇者；求职、退出劳动市场与主动休闲不得混用。',retirement:'退休取决于出生年代、单位类型、缴费年限和个人选择，不用固定年龄覆盖。',debt:'个人债务逐笔计息；生活缺口合并记录，担保、逾期、重组和遗产处理保留独立状态。',family:'伴侣与子女是带年龄、存亡、关系和法律身份的人物实体；家庭资源、父母在场和情感安全相互独立。',platform:'远程与旅居需要可迁移能力或真实远程收入，平台依赖增加波动。',franchise:'加盟成本包含品牌、装修、设备、原料、投流和担保，成功需要技能、现金缓冲与低锁定。'};
 const trackCoverage=Object.fromEntries(trackOrder.map(id=>[id,{beats:annualBeats.filter(event=>event.track===id).length,episodes:decisions.filter(event=>event.track===id&&event.episode).length,transitions:decisions.filter(event=>event.track===id&&!event.episode).length,roles:['entry','development','daily','conflict','crisis','recovery','exit','legacy']} ]));
 const data={version:VERSION,gameVersion:VERSION,schemaVersion:SCHEMA_VERSION,contentRevision:CONTENT_REVISION,stages,locations,desires,conflicts,familyArchetypes,familySecrets,cards,events:[...annualBeats,...decisions,...echoes,...blackSwans],episodeCatalog:EPISODE_CATALOG,endingProfiles,endingTitles,codex,realityRules,trackCoverage,cardInteractionCoverage,cardInteractionWitnesses:CARD_INTERACTION_WITNESSES};
+validateGeneratedData(data);
 fs.writeFileSync(output,`${JSON.stringify(data,null,2)}\n`,'utf8');
 console.log(JSON.stringify({version:VERSION,events:{beat:annualBeats.length,decision:decisions.length,consequence:echoes.length,blackSwan:blackSwans.length,total:data.events.length},cards:cards.length,families:familyArchetypes.length,secrets:familySecrets.length,endings:endingTitles.length,codex:codex.length},null,2));

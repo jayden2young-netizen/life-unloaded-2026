@@ -1,6 +1,6 @@
 {
-  "version": "0.6.1",
-  "gameVersion": "0.6.1",
+  "version": "0.6.2",
+  "gameVersion": "0.6.2",
   "schemaVersion": 11,
   "contentRevision": 20,
   "stages": {
@@ -43824,10 +43824,6 @@
               "value": "employment:long_search"
             },
             {
-              "type": "add",
-              "target": "agency"
-            },
-            {
               "type": "set",
               "target": "education.nextStage",
               "value": "career"
@@ -50789,14 +50785,6 @@
               "type": "set",
               "target": "business.status",
               "value": "operating"
-            },
-            {
-              "type": "add",
-              "target": "business.operatingSkill"
-            },
-            {
-              "type": "add",
-              "target": "finance.cash"
             },
             {
               "type": "add",

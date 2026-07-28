@@ -21,17 +21,17 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前开发版本：v0.6.1 已发布
-- 当前本地开发版本：v0.6.1
+- 当前开发版本：v0.6.2 本地实现已完成，尚未发布
+- 当前本地开发版本：v0.6.2
 - 当前 `main` 基线版本：v0.6.1
-- 下一规划版本：v0.6.2 正确性与内容完整性护栏，须等待 v0.6.1 审阅完成
+- 下一规划版本：v0.6.3 教育年龄、复读与海外重申
 - 当前规划范围：v0.6.2—v0.6.7 已完成路线审计与文档重构
 - `schemaVersion`：11
 - `contentRevision`：20
 - localStorage 键：`life-unloaded-2026-v1`
 - v0.6.0 功能提交：`82beb1432e3bad1df2c222735cce493e3c34495f`
 - 功能提交说明：`feat: ship v0.6.0 card participation`
-- 当前开发分支：`codex/v0.6.1-readable-runtime`
+- 当前开发分支：`codex/v0.6.2-correctness-guardrails`
 - 当前基线分支：`main`
 - 本轮起点版本：`v0.5.12`
 
@@ -67,7 +67,7 @@ C:\Users\Administrator\Documents\Codex\tools\gh\bin\gh.exe
 
 - v0.6.0 在 `codex/v0.6.0-card-participation` 完成，功能提交为 `82beb14`；发布时直接将 `main` 快进到包含该提交的最新文档提交。
 - `legacy/v0.5.12` 固定指向发布前基线 `9fc7da5`。
-- 根目录本地 `roadmap/` 已按 Git ignore 管理，共有一份总体策略和 v0.6.0—v0.6.7 八份逐版本文件；其中 v0.6.0 与 v0.6.1 已发布，v0.6.2—v0.6.7 仍待开发。roadmap 不上传 GitHub，新窗口应在同一 checkout 读取。
+- 根目录本地 `roadmap/` 已按 Git ignore 管理，共有一份总体策略和 v0.6.0—v0.6.7 八份逐版本文件；其中 v0.6.0 与 v0.6.1 已发布，v0.6.2 已完成本地实现但尚未发布，v0.6.3—v0.6.7 仍待开发。roadmap 不上传 GitHub，新窗口应在同一 checkout 读取。
 - v0.6.x 规划审计只更新文档，没有修改游戏代码、数据、玩家文案或测试。路线采用两个工程版本打底，再按教育、首职、家庭、债务、整体验收完成原五个内容版本。
 - 模型委托已经锁定：v0.6.1、v0.6.2、v0.6.7 使用 GPT-5.6 Sol High；v0.6.3—v0.6.6 使用 GPT-5.6 Terra High；Luna High 不作为主执行者。
 - 独立 worktree 中仍有实验分支 `investigate_card_game_mechanics@9efa6dc`。它包含不同架构和额外机制，不是 v0.6.0 发布来源，不要整体合并回 `main`。
@@ -241,6 +241,17 @@ Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案
 - 26个 JS／MJS／CJS 文件语法检查通过；固定轨迹与六项既有 Chrome smoke 全部通过，覆盖360×773、360×640、320×568，控制台错误为0。就业 smoke 中一条首页旧文案断言已按当前正式源文案校正；这是验收器修正，没有修改游戏文案。
 - 本轮没有修复主冲突加权、年度健康边界或其他 v0.6.2 问题，没有修改玩家内容、数值、状态契约、UI/CSS 或实验 worktree。功能提交 `2a3910c` 已推送到 `codex/v0.6.1-readable-runtime`；`main` 以 fast-forward 发布，未创建 PR 或合并提交。GitHub Pages 最新构建指向该提交，线上 `index.html`、`game.js` 和 `data.json` 均已核对为 v0.6.1／Schema 11／Content Revision 20。
 
+## v0.6.2 正确性与内容完整性护栏
+
+- 从 `main@32fb143` 创建 `codex/v0.6.2-correctness-guardrails`。新增共享内容合同，统一运行时与生成器的 operator、command、读写路径和比较语义；`game.js` 在请求 `data.json` 和恢复状态前加载合同，合同缺失时进入明确启动失败页。页面仍直接加载同一经典 `game.js`，没有 bundler 或第二入口。
+- 主冲突权重只登记有正式内容证据的开放关系：`leisure→freedom`、`later→peace`、`health→body`；未登记关系保持中性。配置不要求覆盖所有冲突或轨道，也不是封闭合同，后续主干事件按证据增量补充。
+- 年度结算在全部健康增减完成后、`syncDerived` 前将 physical 和 mental 限制到0—100；其他路径、扣减值和结算顺序未调整。
+- 生成器写出前严格验证 command、读写 path、operator、有限数值、ID、引用、作者键泄漏和映射证据。validator 暴露了3条缺少数值、运行时原本按加0处理的无操作 `add`；经用户确认，只从生成器源定义删除这3条，没有补值或改动同一 choice 的其他效果。
+- beat、decision、card、echo、卡牌互动和 witness 改用生成期作者定位与固定槽位。移动既有定义或插入已登记定义不会改变无关槽位，未登记定义会中止生成。作者键没有进入 `data.json`、存档、运行状态或公共接口。家庭债务范围由模糊正则改为显式三项名单，生成结果不变。
+- v0.6.2 仍为 Schema 11、content revision 20。相对 v0.6.1，`data.json` 只有两个版本字段和上述3条无操作 command 删除；事件、卡牌、家庭、文案、ID、顺序和其他效果不变。最终 SHA-256 为 `1A2182D4B3CFC257EB6AEC3270468F9F00874DEF3BF363B78812D4B82A20F09F`。
+- 本地验证通过：31个脚本语法检查；生成器连续两次稳定；护栏负例、operator子集、12检查点中性选择/RNG等价、合同加载前置与失败页、映射命中／中性、健康上下界；v0.6.1固定轨迹14检查点继续匹配。六项既有Chrome smoke全部通过且控制台错误为0。家庭教育smoke的无卡资金门槛原来受随机持有 `cashBuffer` 卡影响，已仅在该fixture显式清空卡牌，未改游戏。
+- 当前改动尚未推送、合并或部署；线上仍是 v0.6.1。
+
 ## v0.6.x 后续规划
 
 后续版本顺序已经完成审计并固定为：
@@ -305,15 +316,15 @@ tests/v6-runtime-equivalence-smoke.cjs
 
 保留用户已有改动。v0.6.1 已完成提交、推送、main fast-forward 与 Pages 部署；仍要现场核对 Git 和 Pages，不沿用本文件的旧结论。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
 
-下一窗口审阅 v0.6.1 或准备 v0.6.2 时，先读：
+下一窗口审阅 v0.6.2 或准备 v0.6.3 时，先读：
 
 ```text
 roadmap/00-总体策略.md
-roadmap/v0.6.1-可审查源码基线.md
 roadmap/v0.6.2-正确性与内容护栏.md
+roadmap/v0.6.3-教育年龄与重试.md
 ```
 
-实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。先完成 v0.6.1 审阅与用户指定的 Git／发布动作，再从最新 `main` 单独开始 v0.6.2；不得把 v0.6.2 修复回填到 v0.6.1 格式化 diff。
+实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。先完成 v0.6.2 审阅与用户指定的 Git／发布动作，再从最新 `main` 单独开始 v0.6.3；不得把 v0.6.3 内容回填到 v0.6.2 护栏 diff。
 
 ## 常用验证
 
