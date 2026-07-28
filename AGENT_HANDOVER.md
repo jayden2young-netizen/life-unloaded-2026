@@ -21,9 +21,9 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前开发版本：v0.6.1 本地实现完成，尚未提交、推送、合并或部署
+- 当前开发版本：v0.6.1 已发布
 - 当前本地开发版本：v0.6.1
-- 当前 `main` 基线版本：v0.6.0
+- 当前 `main` 基线版本：v0.6.1
 - 下一规划版本：v0.6.2 正确性与内容完整性护栏，须等待 v0.6.1 审阅完成
 - 当前规划范围：v0.6.2—v0.6.7 已完成路线审计与文档重构
 - `schemaVersion`：11
@@ -35,7 +35,7 @@
 - 当前基线分支：`main`
 - 本轮起点版本：`v0.5.12`
 
-线上与远端当前仍以 v0.6.0 发布事实为准。本地 `main` 可能包含尚未推送的文档提交；最终提交、ahead/behind、当前分支和线上状态必须以新窗口现场执行的 Git 与 Pages 检查为准。
+线上与远端已于2026-07-28确认发布 v0.6.1。功能提交为 `2a3910c50883b09c8907e98f91aa2116737852fd`；`legacy/0.6.0` 固定在发布前的 `main@4b23df7a738d54862534289e334319767aa8e69b`。最终提交、ahead/behind、当前分支和线上状态仍必须以新窗口现场执行的 Git 与 Pages 检查为准。
 
 旧检出目录已经失效，不要再使用：
 
@@ -67,7 +67,7 @@ C:\Users\Administrator\Documents\Codex\tools\gh\bin\gh.exe
 
 - v0.6.0 在 `codex/v0.6.0-card-participation` 完成，功能提交为 `82beb14`；发布时直接将 `main` 快进到包含该提交的最新文档提交。
 - `legacy/v0.5.12` 固定指向发布前基线 `9fc7da5`。
-- 根目录本地 `roadmap/` 已按 Git ignore 管理，共有一份总体策略和 v0.6.0—v0.6.7 八份逐版本文件；其中 v0.6.0 已发布，v0.6.1 已在本地分支完成实现，v0.6.2—v0.6.7 仍待开发。roadmap 不上传 GitHub，新窗口应在同一 checkout 读取。
+- 根目录本地 `roadmap/` 已按 Git ignore 管理，共有一份总体策略和 v0.6.0—v0.6.7 八份逐版本文件；其中 v0.6.0 与 v0.6.1 已发布，v0.6.2—v0.6.7 仍待开发。roadmap 不上传 GitHub，新窗口应在同一 checkout 读取。
 - v0.6.x 规划审计只更新文档，没有修改游戏代码、数据、玩家文案或测试。路线采用两个工程版本打底，再按教育、首职、家庭、债务、整体验收完成原五个内容版本。
 - 模型委托已经锁定：v0.6.1、v0.6.2、v0.6.7 使用 GPT-5.6 Sol High；v0.6.3—v0.6.6 使用 GPT-5.6 Terra High；Luna High 不作为主执行者。
 - 独立 worktree 中仍有实验分支 `investigate_card_game_mechanics@9efa6dc`。它包含不同架构和额外机制，不是 v0.6.0 发布来源，不要整体合并回 `main`。
@@ -239,7 +239,7 @@ Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案
 - 新增 `tests/v6-runtime-equivalence-smoke.cjs` 与 v0.6.0 golden fixture。固定 seed `v061-readable-runtime-equivalence` 覆盖出生、随机属性、0岁抽卡、8次实际推进和 `decision_043_choice_1 + card_01` 卡牌互动；14个检查点完全一致，最终 `rngState` 为 `783991599`。
 - 版本升至 v0.6.1，Schema 保持11，content revision 保持20。生成器连续两次 SHA-256 均为 `8CF2E0C8491CF43F20083FBF0CCCCA3C80CF6FC6FB76FE236F6D30683D2B8DF8`；删除 `version` 与 `gameVersion` 后，生成数据与 v0.6.0 的语义哈希完全相同。
 - 26个 JS／MJS／CJS 文件语法检查通过；固定轨迹与六项既有 Chrome smoke 全部通过，覆盖360×773、360×640、320×568，控制台错误为0。就业 smoke 中一条首页旧文案断言已按当前正式源文案校正；这是验收器修正，没有修改游戏文案。
-- 本轮没有修复主冲突加权、年度健康边界或其他 v0.6.2 问题，没有修改玩家内容、数值、状态契约、UI/CSS 或实验 worktree。尚未提交、推送、建 PR、合并或部署。
+- 本轮没有修复主冲突加权、年度健康边界或其他 v0.6.2 问题，没有修改玩家内容、数值、状态契约、UI/CSS 或实验 worktree。功能提交 `2a3910c` 已推送到 `codex/v0.6.1-readable-runtime`；`main` 以 fast-forward 发布，未创建 PR 或合并提交。GitHub Pages 最新构建指向该提交，线上 `index.html`、`game.js` 和 `data.json` 均已核对为 v0.6.1／Schema 11／Content Revision 20。
 
 ## v0.6.x 后续规划
 
@@ -303,7 +303,7 @@ tests/v6-card-interaction-smoke.cjs
 tests/v6-runtime-equivalence-smoke.cjs
 ```
 
-保留用户已有改动。v0.6.1 已在本地分支完成实现与验证，但没有提交、推送、合并或部署；仍要现场核对 Git 和 Pages，不沿用本文件的旧结论。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
+保留用户已有改动。v0.6.1 已完成提交、推送、main fast-forward 与 Pages 部署；仍要现场核对 Git 和 Pages，不沿用本文件的旧结论。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
 
 下一窗口审阅 v0.6.1 或准备 v0.6.2 时，先读：
 
