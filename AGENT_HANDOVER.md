@@ -1,6 +1,6 @@
 # 《人生尚未加载 · 2026》开发交接
 
-更新时间：2026-07-28
+更新时间：2026-07-29
 
 这份文件用于下一次 Codex 窗口接手项目。开始工作前仍要重新检查本地文件和 GitHub；下面记录的是交接时已经核对过的状态，不代替现场核验。
 
@@ -31,7 +31,7 @@
 - localStorage 键：`life-unloaded-2026-v1`
 - v0.6.0 功能提交：`82beb1432e3bad1df2c222735cce493e3c34495f`
 - 功能提交说明：`feat: ship v0.6.0 card participation`
-- 当前开发分支：`codex/v0.6.2-correctness-guardrails`
+- 当前开发分支：`codex/cleanup-redundant-smoke-artifacts`
 - 当前基线分支：`main`
 - 本轮起点版本：`v0.5.12`
 
@@ -306,12 +306,8 @@ index.html
 game.js
 tools/generate-v5-data.mjs
 content/zh-CN/
-tests/v5-browser-smoke.cjs
-tests/v5-employment-language-smoke.cjs
-tests/v5-family-education-smoke.cjs
-tests/v5-full-track-smoke.cjs
-tests/v6-card-interaction-smoke.cjs
-tests/v6-runtime-equivalence-smoke.cjs
+tests/run-checks.cjs
+本次改动实际命中的 profile 及其引用测试
 ```
 
 保留用户已有改动。v0.6.2 已完成人工复测、提交、推送、main fast-forward 与 Pages 部署；仍要现场核对 Git 和 Pages，不沿用本文件的旧结论。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
@@ -328,36 +324,27 @@ roadmap/v0.6.3-教育年龄与重试.md
 
 ## 常用验证
 
-本地启动：
+统一入口：
 
 ```powershell
-python -m http.server 8765
+node tests/run-checks.cjs --list
+node tests/run-checks.cjs --changed main --dry-run
+node tests/run-checks.cjs --changed main --scope <profile>
 ```
 
-静态检查：
+常用显式 profile：
 
 ```powershell
-node --check game.js
-node --check tools/generate-v5-data.mjs
-node --check tests/v6-runtime-equivalence-smoke.cjs
-node --check tests/v6-card-interaction-smoke.cjs
-node --check tests/v5-browser-smoke.cjs
-node --check tests/v5-employment-language-smoke.cjs
-node --check tests/v5-family-education-smoke.cjs
-node --check tests/v5-full-track-smoke.cjs
-node --check tests/v5-university-career-smoke.cjs
+node tests/run-checks.cjs --profile syntax
+node tests/run-checks.cjs --profile fast
+node tests/run-checks.cjs --profile core
+node tests/run-checks.cjs --profile cards
+node tests/run-checks.cjs --profile family
+node tests/run-checks.cjs --profile education
+node tests/run-checks.cjs --profile career
+node tests/run-checks.cjs --profile episodes
+node tests/run-checks.cjs --profile runtime-refactor
+node tests/run-checks.cjs --profile full
 ```
 
-浏览器检查（先保持本地服务器运行）：
-
-```powershell
-node tests/v6-runtime-equivalence-smoke.cjs
-node tests/v6-card-interaction-smoke.cjs
-node tests/v5-browser-smoke.cjs
-node tests/v5-employment-language-smoke.cjs
-node tests/v5-family-education-smoke.cjs
-node tests/v5-full-track-smoke.cjs
-node tests/v5-university-career-smoke.cjs
-```
-
-涉及数据时，生成器应连续运行两次并确认第二次输出稳定。涉及运行时或移动端交互时，再执行一次相关浏览器核心路径；不要用大规模人生模拟代替人工试玩。
+runner 会执行全部 JS／MJS／CJS 语法检查，并为浏览器 profile 启动和回收一次临时静态服务器。无参数不会运行测试；`full` 只用于明确的整体验收。`--changed` 遇到 `game.js`、生成器或未知测试文件会要求 `--scope`，不得猜测或退回全量。涉及数据时，生成器仍应连续运行两次并确认第二次输出稳定；涉及运行时或移动端交互时，再执行一次相关浏览器核心路径，不要用大规模人生模拟代替人工试玩。
