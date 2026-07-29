@@ -1,11 +1,7 @@
 node_modules/
-test-results/
-output/
 .agents/
 _bmad/
 _bmad-output/
-claude_analysis_results.md
-investigate_card_game_mechanics-analysis.ignore.md
 roadmap/
 docs/Claude+Fable+5_Third_party_analysis/
 
