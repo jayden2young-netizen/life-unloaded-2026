@@ -67,6 +67,10 @@ export function cardInteractionFor(track,index,option){
     primaryMechanic:'cashBuffer',mode:'requirementShift',explanation:'你留的缓冲，补上了首年费用里最急的一截。',patch:[{type:'add',target:'finance.cash',value:-1200}],resultSuffix:'你没有把那笔缓冲当成已经不存在。',
     activeRequirements:{all:[{path:'education.domesticOffer',op:'eq',value:true}],any:[{path:'education.domesticFundingReady',op:'eq',value:true},{path:'capabilities.cashBuffer',op:'gte',value:1}],none:[]}
   };
+  if(track==='education'&&index===5&&option===3)return{
+    primaryMechanic:'evidence',mode:'resultVariant',explanation:'你把退件、成绩和资金缺口分开整理，第二次不会从空白开始。',patch:[{type:'add',target:'capabilities.evidence',value:1}],resultSuffix:'材料夹里哪些还能用、哪些必须重做，这次写得很清楚。',
+    activeRequirements:{all:[{path:'education.extraApplicationYearUsed',op:'eq',value:false}],any:[],none:[]}
+  };
   if(option!==0)return null;
   const mechanic=rotation[(index+(rotationOffsets[track]||0))%rotation.length];
   return genericInteraction(mechanic,track);
@@ -75,4 +79,7 @@ export function cardInteractionFor(track,index,option){
 export const CARD_INTERACTION_WITNESSES=[{
   id:'network-opens-overseas-preparation',track:'education',index:3,choice:1,mechanic:'network',cardDrawAge:0,
   state:{development:{languagePreparation:20,routeKnowledge:28,routeExposure:[]}}
+},{
+  id:'evidence-organizes-shared-undergraduate-retry',track:'education',index:5,choice:3,mechanic:'evidence',cardDrawAge:0,
+  state:{education:{extraApplicationYearUsed:false}}
 }];

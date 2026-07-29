@@ -120,7 +120,7 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.2', 11, 20]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.3', 11, 21]);
   assert.equal(summary.evidenceRecords, 3);
 
   const predicates = collect(
@@ -417,7 +417,7 @@ function neutralTrace(multiplier) {
   assert.match(unregisteredFailure, /未登记定义/);
 
   assert.ok(
-    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.2')") <
+    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.3')") <
       gameSource.indexOf('fetch(`./data.json?v=${VERSION}`'),
     'shared contract import must precede data fetch',
   );
@@ -453,7 +453,7 @@ function neutralTrace(multiplier) {
             seed: 'v062-correctness-guardrails',
             schemaVersion: 11,
             gameVersion: data.version,
-            contentRevision: 20,
+            contentRevision: 21,
             phase: 'birth',
           },
         }),

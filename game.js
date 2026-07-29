@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.2');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.3');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.2',
+  const VERSION = '0.6.3',
     SCHEMA_VERSION = 11,
-    CONTENT_REVISION = 20;
+    CONTENT_REVISION = 21;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -430,6 +430,15 @@
       domesticEntryReady: false,
       overseasEntryReady: false,
       applicationIntent: 'none',
+      applicationRoute: 'none',
+      applicationAttemptCount: 0,
+      extraApplicationYearUsed: false,
+      gaokaoAttemptCount: 0,
+      overseasUndergradAttemptCount: 0,
+      lastApplicationOutcome: 'none',
+      gapYears: 0,
+      fullTimeUndergraduateClosed: false,
+      timelineOffsetYears: 0,
       applicationStatus: 'none',
       enrollmentRegion: 'none',
       nextStage: 'secondary',
@@ -629,6 +638,11 @@
   }
   function syncDerived(run) {
     run.age = clamp(run.age, 0, 105);
+    if (
+      run.age >= 30 &&
+      !(run.education.level >= 4 && ['enrolled', 'completed'].includes(run.education.status))
+    )
+      run.education.fullTimeUndergraduateClosed = true;
     run.world = worldAt(run.age, run.location);
     run.relationships.childCount = childPeople(run).length;
     const activePartner = run.people.find(
@@ -767,11 +781,15 @@
       context.educationBudget >= 68 ||
       run.originHousehold.assets - run.originHousehold.debt >= 220000;
     run.education.domesticEntryReady =
-      run.education.domesticOffer && run.education.fundingStatus === 'domesticConfirmed';
+      run.education.domesticOffer &&
+      (run.education.fundingStatus === 'domesticConfirmed' ||
+        (run.education.extraApplicationYearUsed && run.education.domesticFundingReady));
     run.education.overseasDepartureReady =
       run.education.overseasOffer &&
       run.education.overseasConditionsMet &&
-      ['overseasFamily', 'overseasScholarship'].includes(run.education.fundingStatus);
+      (['overseasFamily', 'overseasScholarship'].includes(run.education.fundingStatus) ||
+        (run.education.extraApplicationYearUsed &&
+          (run.education.overseasFundingReady || run.education.scholarshipReady)));
     run.education.overseasEntryReady =
       run.education.overseasDepartureReady && run.education.entryPermitReady;
     if (run.employment.status === 'employed' && !run.roles.includes('employee'))
@@ -1031,7 +1049,13 @@
       return (
         (!record || record.status === 'inactive') &&
         activeEpisodes(run).length < 2 &&
-        !activeEpisodes(run).some((item) => item.lane === episode.lane)
+        (!activeEpisodes(run).some((item) => item.lane === episode.lane) ||
+          (episode.id === 'postgraduate_application' &&
+            activeEpisodes(run).some(
+              (item) =>
+                item.id.startsWith('undergraduate_') &&
+                item.phase === episodePhaseCount(item.id)
+            )))
       );
     return Boolean(
       record &&
@@ -1198,15 +1222,45 @@
       run.roles.push('student');
   }
   function resolveUndergraduateApplication(run, route) {
-    const domesticSubmitted = ['domestic', 'dual'].includes(route),
-      overseasSubmitted = ['overseas', 'dual'].includes(route),
-      domesticOffer = domesticSubmitted && run.education.domesticOfferReady,
-      overseasOffer = overseasSubmitted && run.education.overseasOfferReady;
+    const retrying = run.education.applicationStatus === 'retrying',
+      attempt = retrying ? 2 : 1;
+    if (
+      run.education.applicationAttemptCount >= attempt &&
+      run.education.lastApplicationOutcome !== 'none'
+    )
+      return;
+    const lockedRoute =
+        attempt === 1
+          ? route
+          : run.education.applicationRoute === 'none'
+            ? route
+            : run.education.applicationRoute,
+      domesticSubmitted = ['domestic', 'dual'].includes(lockedRoute),
+      overseasSubmitted = ['overseas', 'dual'].includes(lockedRoute),
+      adjacentShift = stable(run.seed, `undergraduate-application-${attempt}-${lockedRoute}`, 3) - 1,
+      domesticBase = !run.education.domesticEligible
+        ? 0
+        : run.education.domesticOfferReady
+          ? 2
+          : 1,
+      overseasBase = !run.education.overseasPrepared
+        ? 0
+        : run.education.overseasOfferReady
+          ? 2
+          : 1,
+      domesticTier = domesticBase ? clamp(domesticBase + adjacentShift, 0, 2) : 0,
+      overseasTier = overseasBase ? clamp(overseasBase + adjacentShift, 0, 2) : 0,
+      domesticOffer = domesticSubmitted && domesticTier > 0,
+      overseasOffer = overseasSubmitted && overseasTier > 0;
+    run.education.applicationRoute = lockedRoute;
+    run.education.applicationAttemptCount = attempt;
+    if (domesticSubmitted) run.education.gaokaoAttemptCount++;
+    if (overseasSubmitted) run.education.overseasUndergradAttemptCount++;
     run.education.domesticOffer = domesticOffer;
     run.education.overseasOffer = overseasOffer;
     run.education.domesticOfferType = domesticOffer ? 'admitted' : 'none';
     run.education.overseasOfferType = overseasOffer
-      ? run.education.readiness >= 78 && run.development.languagePreparation >= 45
+      ? overseasTier >= 2
         ? 'direct'
         : 'conditional'
       : 'none';
@@ -1220,6 +1274,13 @@
             : 'none';
     run.education.applicationStatus =
       run.education.applicationResult === 'none' ? 'notAdmitted' : 'offered';
+    run.education.lastApplicationOutcome =
+      run.education.applicationResult === 'none'
+        ? 'notAdmitted'
+        : run.education.overseasOfferType === 'conditional' &&
+            run.education.applicationResult === 'overseas'
+          ? 'conditional'
+          : run.education.applicationResult;
     run.education.nextStage =
       run.education.applicationResult === 'none' ? 'reapply' : 'undergraduateApplication';
   }
@@ -1526,15 +1587,11 @@
         'uncontrolled',
         'relapse',
       ],
-      applicationFailure =
-        episode.id === 'undergraduate_application' &&
-        episode.phase === 2 &&
-        run.education.applicationStatus === 'notAdmitted',
       abandoned =
-        (catalog.abandonedRoutes || fallbackAbandoned).includes(choice.route) || applicationFailure,
+        (catalog.abandonedRoutes || fallbackAbandoned).includes(choice.route),
       earlyClosure = abandoned || fallbackEarly.includes(choice.route),
       terminal = episode.role === 'resolve' || episodePhaseCount(episode.id) === 1 || earlyClosure,
-      terminalReason = applicationFailure ? 'not_admitted' : choice.route;
+      terminalReason = choice.route;
     let record = run.episodes[episode.id];
     if (episode.role === 'start') {
       record = {
@@ -1572,11 +1629,37 @@
       record.status = 'active';
       record.phase = episode.phase + 1;
       record.nextPhaseAge = run.age + clamp(episode.delayYears, 0, 5);
+      if (
+        episode.id === 'undergraduate_application' &&
+        episode.phase === 3 &&
+        run.education.applicationStatus === 'retrying'
+      )
+        record.nextPhaseAge = run.age + 1;
     }
     run.episodes[episode.id] = record;
   }
   function startEpisodePhase(event) {
     const run = state.run;
+    if (
+      event.episode.id === 'undergraduate_application' &&
+      event.episode.phase === 4 &&
+      run.education.applicationStatus === 'retrying'
+    ) {
+      resolveUndergraduateApplication(
+        run,
+        run.education.applicationRoute === 'none'
+          ? run.education.applicationIntent
+          : run.education.applicationRoute
+      );
+      if (run.education.domesticOffer && run.education.domesticFundingReady)
+        run.education.fundingStatus = 'domesticConfirmed';
+      else if (run.education.overseasOffer && run.education.scholarshipReady) {
+        run.education.fundingStatus = 'overseasScholarship';
+        run.education.scholarshipAwarded = true;
+      } else if (run.education.overseasOffer && run.education.overseasFundingReady)
+        run.education.fundingStatus = 'overseasFamily';
+      syncDerived(run);
+    }
     run.currentDecision = event;
     run.phase = 'episode';
     run.sceneQueue = [
@@ -1663,6 +1746,28 @@
     run.currentDecision = null;
     run.sceneQueue = [];
     run.phase = 'playing';
+    const educationEventsThisAge = run.decisionHistory.filter(
+        (item) =>
+          item.age === run.age &&
+          INDEX.event.get(item.eventId)?.track === 'education' &&
+          INDEX.event.get(item.eventId)?.episode
+      ).length,
+      canContinueSameAge =
+        event.track === 'education' &&
+        event.episode.ageAdvanceYears === 0 &&
+        educationEventsThisAge < 2 &&
+        INDEX.kinds.decision.some(
+          (candidate) =>
+            candidate.track === 'education' &&
+            candidate.episode &&
+            eligible(candidate, run)
+        );
+    if (canContinueSameAge) {
+      run.yearStarted = true;
+      save();
+      render();
+      return;
+    }
     run.yearStarted = false;
     settleYear(run);
     run.age++;
@@ -1671,6 +1776,12 @@
     render();
   }
   function episodeBindingInvalid(id, record, run) {
+    if (
+      id === 'undergraduate_application' &&
+      run.education.fullTimeUndergraduateClosed &&
+      run.education.status !== 'enrolled'
+    )
+      return true;
     for (const binding of Object.values(record.boundActors || {})) {
       if (
         binding?.kind === 'person' &&
@@ -2089,13 +2200,13 @@
     if (run.age === 12 && run.education.path === 'primary')
       transitionEducation(run, { value: 'middleSchool', status: 'enrolled' });
     if (
-      run.age === 15 &&
+      run.age === 14 &&
       run.education.path === 'middleSchool' &&
       run.education.status === 'enrolled'
     )
       run.education.status = 'completed';
     if (
-      run.age === 18 &&
+      run.age === 17 &&
       ['highSchool', 'vocational'].includes(run.education.path) &&
       run.education.status === 'enrolled'
     )
@@ -3291,7 +3402,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.2-存档.json';
+    link.download = '人生尚未加载-v0.6.3-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }

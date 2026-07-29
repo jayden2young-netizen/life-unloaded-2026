@@ -34,7 +34,7 @@ const registrationGroups=[
 for(const [domain,registrations] of registrationGroups)
   for(const registration of registrations)
     registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
-const VERSION='0.6.2',SCHEMA_VERSION=11,CONTENT_REVISION=20;
+const VERSION='0.6.3',SCHEMA_VERSION=11,CONTENT_REVISION=21;
 const stages={infancy:[0,5],childhood:[6,12],adolescence:[13,18],youth:[19,29],establishment:[30,44],midlife:[45,59],later:[60,74],elder:[75,105]};
 const stageNames=Object.keys(stages);
 const stageFor=(min,max)=>stageNames.filter(name=>Math.max(min,stages[name][0])<=Math.min(max,stages[name][1]));
@@ -358,7 +358,7 @@ const EPISODE_ROUTES={
   establish_base:{1:['rooted','dual','drifting'],2:['rooted','dual','returned','invalidated']}
   ,school_harm:{1:['documented','environment_change','concealed'],2:['recovered','transferred','ongoing','education_pause']}
   ,secondary_diversion:{1:['academic','vocational','employment','alternative_school']}
-  ,undergraduate_application:{1:['domestic_plan','dual_plan','overseas_plan','work_exit'],2:['domestic_submitted','overseas_submitted','dual_submitted','not_admitted'],3:['domestic_funded','overseas_family_funded','overseas_scholarship','deferred'],4:['domestic_enrolled','overseas_enrolled','reapply','vocational_exit']}
+  ,undergraduate_application:{1:['domestic_plan','dual_plan','overseas_plan','work_exit'],2:['domestic_submitted','overseas_submitted','dual_submitted','not_admitted'],3:['domestic_funded','overseas_family_funded','overseas_scholarship','deferred'],4:['domestic_enrolled','overseas_enrolled','vocational_exit','work_exit']}
   ,professional_certification:{1:['verified','skill_route','invalid_offer'],2:['passed','retake','alternative_skill','withdrawn']}
   ,adult_reeducation:{1:['enrolled','reduced','declined'],2:['completed','low_intensity','non_degree','forced_exit']}
   ,business_expansion:{1:['validated','limited_test','not_ready'],2:['internal_cash','debt_finance','equity_finance'],3:['scaled','downsized','sold','debt_failure']}
@@ -397,7 +397,7 @@ const EPISODE_CATALOG={
   establish_base:{label:'建立基地',abandonedRoutes:['returned','invalidated'],deadline:'三年了。住处、看病和工作——得有个固定的边界。你按现在的条件保住了主基地，或完成退租回去。',invalidated:'收入、许可、身体或住处——有一样撑不住了。退租清单和返程安排摆在那。这次基地，停在这。'},
   school_harm:{label:'校园伤害与恢复',ageBound:true,abandonedRoutes:['ongoing','education_pause'],deadline:'两年了。你留着记录，按现在能得到的支持——转了班、转了学、暂停了，或继续读。这件事不再挂在未完里。',invalidated:'学校、班级或学籍变了。已有记录你收好了。那个环境里的伤害，到此为止。'},
   secondary_diversion:{label:'中考分流',ageBound:true,abandonedRoutes:['employment'],deadline:'志愿窗口关了。你按还能办的学校或准备就业的路登记了。这次分流不再挂着。',invalidated:'原来报的学校、名额或材料——失效了。招生简章和退件记录你留着。走了另一条能去的路。'},
-  undergraduate_application:{label:'国内外本科申请',ageBound:true,abandonedRoutes:['work_exit','not_admitted','deferred','reapply','vocational_exit'],deadline:'从准备到现在，四年了。录取、资金和入境——没走完的那些，不能还当在读。你留着成绩和材料，退了、转了，或停在这。',invalidated:'学籍、录取、资金或申请条件——变了。能用的材料你留着。旧的结果不再能用，这轮申请，结束。'},
+  undergraduate_application:{label:'国内外本科申请',ageBound:true,abandonedRoutes:['work_exit','vocational_exit'],deadline:'二十岁这一轮已经走到收口。录取、资金和报到少一项，都不能写成已经在读。成绩单、退件和缴费记录各自归档。',invalidated:'学籍、录取、资金或申请条件变了。能用的材料留着，旧结果不再拿去报到。'},
   professional_certification:{label:'职业考证',organization:'本轮发证与培训机构',abandonedRoutes:['invalid_offer','withdrawn'],deadline:'两年了。你停了续费，留着成绩和核验记录。这次考证，按现在的结果收了。',invalidated:'资格目录、报考条件或考试安排——变了。通知你留着。没去买替代的“内部证”。'},
   adult_reeducation:{label:'成年再教育',organization:'本轮继续教育项目',abandonedRoutes:['declined','forced_exit'],deadline:'三年了。课上完了，钱不欠了。这次成年学习，按现在的进度收在这。',invalidated:'项目、排班或家里——有一样撑不住了。课程和退费材料归档。这次重新上学，停在这。'},
   business_expansion:{label:'企业扩张',organization:'本轮扩张单元',abandonedRoutes:['not_ready','debt_failure'],deadline:'四年了。不再往里投了。该清的货清了，人结算完了，设备也交了。这轮扩张，收在这。',invalidated:'原来的企业关了，或不再有经营条件。第二地点的意向书作废。投进去的，按现状交了。'},
@@ -453,11 +453,11 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     }
     if(episode.phase===3){
       set('education.fundingStatus',['domesticConfirmed','overseasFamily','overseasScholarship','deferred'][option]);set('education.entryPermitReady',false);set('education.applicationStatus',option===3?'deferred':'funded');set('education.scholarshipAwarded',option===2);add('finance.cash',[-6000,-18000,-7000,0][option]);add('pressures.family',[-1,3,-2,-1][option]);
-      if(option===3)set('education.nextStage','reapply');
+      if(option===3){set('education.applicationStatus','retrying');set('education.extraApplicationYearUsed',true);add('education.gapYears',1);add('education.timelineOffsetYears',1);set('education.nextStage','reapply')}
     }
     if(episode.phase===4){
       if(option===0||option===1){if(option===1)set('education.entryPermitReady',true);effects.push(c('transition','education','college',{status:'enrolled'}));set('education.enrollmentRegion',option===0?'domestic':'overseas');set('education.applicationStatus','enrolled');set('education.nextStage','undergraduate');set('activity.mode','study')}
-      else{set('education.applicationStatus',option===2?'deferred':'withdrawn');set('education.applicationResult','none');set('education.domesticOffer',false);set('education.overseasOffer',false);set('education.domesticOfferType','none');set('education.overseasOfferType','none');set('education.fundingStatus','none');set('education.entryPermitReady',false);set('education.scholarshipAwarded',false);set('education.enrollmentRegion','none');set('education.nextStage',option===2?'reapply':'workOrVocational');set('activity.mode',option===2?'study':'seeking')}
+      else{set('education.applicationStatus',option===2?'vocationalExit':'withdrawn');set('education.applicationResult','none');set('education.domesticOffer',false);set('education.overseasOffer',false);set('education.domesticOfferType','none');set('education.overseasOfferType','none');set('education.fundingStatus','none');set('education.entryPermitReady',false);set('education.scholarshipAwarded',false);set('education.enrollmentRegion','none');set('education.nextStage','workOrVocational');set('activity.mode','seeking')}
     }
   }
   if(episode?.id==='undergraduate_domestic'){
@@ -773,7 +773,7 @@ for(const id of trackOrder){
     if(authoredDecision.episode?.id==='establish_base'&&authoredDecision.episode.phase===1)requirements.all.push(p('mobility.mode','in',['domesticNomad','overseasNomad']));
     if(authoredDecision.episode?.id==='school_harm'&&authoredDecision.episode.phase===1)requirements.all.push(p('development.severeSchoolHarm','eq',true),p('development.schoolHarmResolved','eq',false));
     if(authoredDecision.episode?.id==='secondary_diversion')requirements.all.push(p('education.level','eq',2),p('education.status','eq','completed'));
-    if(authoredDecision.episode?.id==='undergraduate_application'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.level','gte',3),p('education.status','eq','completed'));
+    if(authoredDecision.episode?.id==='undergraduate_application'){requirements.all.push(p('education.fullTimeUndergraduateClosed','eq',false));if(authoredDecision.episode.phase===1)requirements.all.push(p('education.level','gte',3),p('education.status','eq','completed'),p('age','lt',30))}
     if(authoredDecision.episode?.id==='undergraduate_domestic')requirements.all.push(p('education.status','eq','enrolled'),p('education.enrollmentRegion','eq','domestic'),p('education.nextStage','eq','undergraduate'));
     if(authoredDecision.episode?.id==='undergraduate_overseas_orientation')requirements.all.push(p('education.status','eq','enrolled'),p('education.enrollmentRegion','eq','overseas'),p('education.nextStage','eq','undergraduate'),p('education.undergraduateSystem','eq','none'));
     if(authoredDecision.episode?.id==='undergraduate_us')requirements.all.push(p('education.status','eq','enrolled'),p('education.undergraduateSystem','eq','us'),p('education.nextStage','eq','undergraduate'));
@@ -783,7 +783,7 @@ for(const id of trackOrder){
       else requirements.all.push(p('education.changeIntent','in',['major','leave','transfer']),p('education.status','in',['enrolled','interrupted']),p('education.nextStage','eq','undergraduate'));
     }
     if(authoredDecision.episode?.id==='overseas_undergraduate_belonging')requirements.all.push(p('education.status','eq','enrolled'),p('education.undergraduateSystem','in',['us','europe']));
-    if(authoredDecision.episode?.id==='postgraduate_application'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.highestCompleted','eq','undergraduate'),p('education.nextStage','eq','postgraduateApplication'));
+    if(authoredDecision.episode?.id==='postgraduate_application'&&authoredDecision.episode.phase===1){requirements.all.push(p('education.level','eq',4),p('education.status','in',['enrolled','completed']));requirements.any.push(p('education.nextStage','eq','postgraduateApplication'),p('education.graduateApplicationIntent','in',['domestic','us','europe']))}
     if(authoredDecision.episode?.id==='postgraduate_domestic')requirements.all.push(p('education.status','eq','enrolled'),p('education.postgraduateSystem','eq','domestic'),p('education.nextStage','eq','postgraduate'));
     if(authoredDecision.episode?.id==='postgraduate_us')requirements.all.push(p('education.status','eq','enrolled'),p('education.postgraduateSystem','eq','us'),p('education.nextStage','eq','postgraduate'));
     if(authoredDecision.episode?.id==='postgraduate_europe')requirements.all.push(p('education.status','eq','enrolled'),p('education.postgraduateSystem','eq','europe'),p('education.nextStage','eq','postgraduate'));
@@ -804,6 +804,7 @@ for(const id of trackOrder){
       if(id==='partnership'&&!authoredDecision.episode&&index===0&&option<2)result.effects.push(c('createPerson','people',1,{relation:'partner'}));
       const choiceRules=typeof copyItem==='string'?req():copyItem.requirements||req();
       if(authoredDecision.episode?.id==='postgraduate_application'&&authoredDecision.episode.phase===4&&option<3)choiceRules.all.push(p('education.graduateOfferRegion','eq',['domestic','us','europe'][option]),p('education.graduateFundingStatus','eq','ready'));
+      if(authoredDecision.episode?.id==='undergraduate_application'&&authoredDecision.episode.phase===3&&option===3)choiceRules.all.push(p('education.extraApplicationYearUsed','eq',false));
       if(authoredDecision.episode?.id==='postgraduate_application'&&authoredDecision.episode.phase===3&&option===0)choiceRules.all.push(p('education.graduateApplicationIntent','eq','domestic'));
       if(authoredDecision.episode?.id==='postgraduate_application'&&authoredDecision.episode.phase===3&&option===1)choiceRules.all.push(p('education.graduateApplicationIntent','in',['us','europe']));
       if(authoredDecision.episode?.id==='undergraduate_change'&&authoredDecision.episode.phase===2&&option<3)choiceRules.all.push(p('education.changeIntent','eq',['major','leave','transfer'][option]));

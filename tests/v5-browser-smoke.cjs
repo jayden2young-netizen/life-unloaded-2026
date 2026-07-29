@@ -5,7 +5,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = process.env.BROWSER_SMOKE_OUT || path.join(os.tmpdir(), 'life-unloaded-v0.6.2-browser');
+const OUT = process.env.BROWSER_SMOKE_OUT || path.join(os.tmpdir(), 'life-unloaded-v0.6.3-browser');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY = 'life-unloaded-2026-v1';
 const SYSTEM_CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
@@ -100,7 +100,7 @@ let browser;
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
   assert.equal(migrated.state.schemaVersion, 11);
-  assert.equal(migrated.state.gameVersion, '0.6.2');
+  assert.equal(migrated.state.gameVersion, '0.6.3');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');

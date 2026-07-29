@@ -22,16 +22,16 @@
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
 - 当前开发版本：v0.6.2 已发布
-- 当前本地开发版本：v0.6.2
+- 当前本地开发版本：v0.6.3（待提交、未发布）
 - 当前 `main` 基线版本：v0.6.2
-- 下一规划版本：v0.6.3 教育年龄、复读与海外重申
+- 下一规划版本：v0.6.4 首份工作与职业桥接
 - 当前规划范围：v0.6.3—v0.6.7 已完成路线审计与文档重构
 - `schemaVersion`：11
-- `contentRevision`：20
+- `contentRevision`：21
 - localStorage 键：`life-unloaded-2026-v1`
 - v0.6.0 功能提交：`82beb1432e3bad1df2c222735cce493e3c34495f`
 - 功能提交说明：`feat: ship v0.6.0 card participation`
-- 当前开发分支：`codex/cleanup-redundant-smoke-artifacts`
+- 当前开发分支：`codex/v0.6.3-education-retry`
 - 当前基线分支：`main`
 - 本轮起点版本：`v0.5.12`
 
@@ -251,6 +251,15 @@ Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案
 - v0.6.2 仍为 Schema 11、content revision 20。相对 v0.6.1，`data.json` 只有两个版本字段和上述3条无操作 command 删除；事件、卡牌、家庭、文案、ID、顺序和其他效果不变。最终 SHA-256 为 `1A2182D4B3CFC257EB6AEC3270468F9F00874DEF3BF363B78812D4B82A20F09F`。
 - 本地验证通过：31个脚本语法检查；生成器连续两次稳定；护栏负例、operator子集、12检查点中性选择/RNG等价、合同加载前置与失败页、映射命中／中性、健康上下界；v0.6.1固定轨迹14检查点继续匹配。六项既有Chrome smoke全部通过且控制台错误为0。家庭教育smoke的无卡资金门槛原来受随机持有 `cashBuffer` 卡影响，已仅在该fixture显式清空卡牌，未改游戏。
 - 功能提交 `cec0246` 已推送到 `codex/v0.6.2-correctness-guardrails`；`legacy/0.6.1` 固定在原 `main@32fb143`，`main` 以 fast-forward 发布，未创建 PR 或合并提交。GitHub Pages 运行 `30368740260` 成功，线上 `index.html`、`game.js`、`data.json` 和 `runtime-content-contract.mjs` 均返回200并一致显示 v0.6.2／Schema 11／Content Revision 20；线上数据 SHA-256 与提交中的生成数据一致。
+
+## v0.6.3 教育年龄与重试
+
+- 本地分支 `codex/v0.6.3-education-retry` 从 `3e70d885` 开始实施；尚未提交、推送、合并或部署。
+- 普通本科申请新增路线、次数、稳定结果、一次共享补申年、时间偏移和 30 岁关闭状态。国内复读与海外重申不能各消费一次；刷新不会重掷已形成结果。
+- 教育事件同一年龄最多处理两条，第一条存在合法教育后续时不结算，第二条只结算一次；无合法后续时正常结束当年。非教育年度流程未改。
+- 本科末年可以同龄接研究生申请，是 education lane 的唯一重叠例外。学历只在本科或研究生最终阶段写入；录取、资金、入境和注册继续分离。
+- 版本为 v0.6.3、Schema 11、content revision 21。研究档案位于 `docs/research/v0.6.3-教育年龄与重试.md`。
+- 最终本地验证：生成器连续两次 SHA-256 均为 `2EE5A8708994FC57F154B9E5BB1A5BCAF2CF457004315AA6108F1E17E94DF5FE`；education、core、cards profile 通过。浏览器覆盖 360×773、360×640、320×568，控制台错误为 0；没有运行批量人生模拟。
 
 ## v0.6.x 后续规划
 

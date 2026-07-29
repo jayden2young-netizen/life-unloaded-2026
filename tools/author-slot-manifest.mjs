@@ -774,5 +774,16 @@ export const CARD_AUTHOR_SLOT_HASHES = Object.freeze([
   "0d329969665094f7341ea31c"
 ]);
 export const BEAT_SLOT_REGISTRATIONS = [];
-export const DECISION_SLOT_REGISTRATIONS = [];
+export const DECISION_SLOT_REGISTRATIONS = [
+  {
+    key: '@author/decision/1469fdaa36dfd996caee71c9',
+    slot: { id: 'decision_006', track: 'education', localIndex: 5 },
+    replaces: '@author/decision/ed63a0ea6c6f7b23732c4851',
+  },
+  {
+    key: '@author/decision/7e9307cb2b5fdccb5fd2c76f',
+    slot: { id: 'decision_007', track: 'education', localIndex: 6 },
+    replaces: '@author/decision/df7b3d60da762965f4bd95c7',
+  },
+];
 export const CARD_SLOT_REGISTRATIONS = [];

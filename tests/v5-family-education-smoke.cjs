@@ -5,7 +5,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.FAMILY_EDUCATION_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.2-family-education');
+const OUT=process.env.FAMILY_EDUCATION_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.3-family-education');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
@@ -67,7 +67,8 @@ async function chooseAndFinish(page,index,{reload=false}={}){
   }
   await page.locator('[data-act="episode-next"]').click();
   const finished=await snapshot(page);
-  assert.equal(finished.age,before.age+1);
+  if(before.currentDecision.episode.ageAdvanceYears===0)assert.ok([before.age,before.age+1].includes(finished.age));
+  else assert.equal(finished.age,before.age+1);
   assert.equal(finished.timeline.length,before.timeline.length+1);
   return finished;
 }
@@ -89,11 +90,36 @@ async function advanceToPhase(page,id,number){
 }
 
 (async()=>{
-  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.2',11,20]);
+  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.3',11,21]);
   assert.equal(data.events.filter(event=>event.id.startsWith('origin_context_')).length,24);
   assert.ok(data.familyArchetypes.find(family=>family.name==='医护家庭').parentJobs.every(job=>/护士|医生|医技|医院/.test(job)));
   assert.ok(data.familyArchetypes.find(family=>family.name==='平台劳动家庭').parentJobs.every(job=>/平台|骑手|网约车|电商|直播/.test(job)));
   assert.deepEqual(decisions.filter(event=>event.episode?.id==='undergraduate_application').map(event=>event.episode.role),['start','continue','continue','resolve']);
+  assert.ok(decisions.filter(event=>event.episode?.id==='undergraduate_application').every(event=>event.episode.ageAdvanceYears===0));
+  assert.ok(decisions.filter(event=>event.episode?.id==='undergraduate_application').every(event=>event.requirements.all.some(rule=>rule.path==='education.fullTimeUndergraduateClosed'&&rule.op==='eq'&&rule.value===false)));
+  assert.ok(phase('undergraduate_application',1).requirements.all.some(rule=>rule.path==='education.fullTimeUndergraduateClosed'&&rule.op==='eq'&&rule.value===false));
+  assert.ok(phase('undergraduate_application',1).requirements.all.some(rule=>rule.path==='age'&&rule.op==='lt'&&rule.value===30));
+  assert.ok(phase('undergraduate_application',3).choices[3].requirements.all.some(rule=>rule.path==='education.extraApplicationYearUsed'&&rule.op==='eq'&&rule.value===false));
+  assert.deepEqual(phase('undergraduate_application',4).choices.map(choice=>choice.route),['domestic_enrolled','overseas_enrolled','vocational_exit','work_exit']);
+  assert.ok(phase('postgraduate_application',1).requirements.any.some(rule=>rule.path==='education.graduateApplicationIntent'&&rule.op==='in'));
+assert.match(phase('postgraduate_application',1).situation,/本科走到最后两年/);
+  assert.doesNotMatch(phase('postgraduate_application',1).situation,/本科这一段结束了/);
+  assert.deepEqual(
+    decisions.filter(event=>event.episode?.id==='undergraduate_application').map(event=>event.ageMin),
+    [17,18,19,19]
+  );
+  assert.deepEqual(
+    decisions.filter(event=>event.episode?.id==='undergraduate_domestic').map(event=>event.ageMin),
+    [20,20,21,22]
+  );
+  assert.deepEqual(
+    decisions.filter(event=>event.episode?.id==='postgraduate_application').map(event=>event.ageMin),
+    [21,22,23,23]
+  );
+  assert.deepEqual(
+    decisions.filter(event=>event.episode?.id==='postgraduate_domestic').map(event=>event.ageMin),
+    [24,24,25]
+  );
   const browser=await chromium.launch({headless:true,executablePath:fs.existsSync(CHROME)?CHROME:undefined});
   const errors=[];
   try{
@@ -107,7 +133,7 @@ async function advanceToPhase(page,id,number){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[11,'0.6.2',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[11,'0.6.3',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.9完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,9);
@@ -124,6 +150,20 @@ async function advanceToPhase(page,id,number){
     let run=await snapshot(page);
     assert.ok(run.originHousehold.context&&run.development&&Number.isFinite(run.education.readiness));
     assert.ok(run.originHousehold.people.filter(person=>['father','mother'].includes(person.relation)).every(parent=>parent.occupation&&parent.occupationImpact&&Number.isFinite(parent.educationExposure)));
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:14,education:{status:'enrolled',level:2,path:'middleSchool'},employment:{status:'none'},yearStarted:false,yearQueue:[],usedEvents:[],decisionHistory:[],timeline:[]}));
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.education.status,'completed');
+    await enterPhase(page,phase('secondary_diversion',1),{age:14,education:{status:'completed',level:2,path:'middleSchool'},employment:{status:'none'},usedEvents:[],decisionHistory:[]});
+    run=await chooseAndFinish(page,2);
+    assert.notEqual(run.employment.status,'employed');
+    assert.equal(run.activity.mode,'seeking');
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:17,education:{status:'enrolled',level:3,path:'highSchool'},employment:{status:'none'},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[],usedEvents:[],decisionHistory:[],timeline:[]}));
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.education.status,'completed');
 
     const unsafeContext={...run.originHousehold.context,resourceTier:'strained',resources:25,emotionalSafety:30,parentPresence:55};
     await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({age:2,originHousehold:{context:value},yearStarted:false,yearQueue:[],usedEvents:[],timeline:[]}),unsafeContext);
@@ -162,7 +202,7 @@ async function advanceToPhase(page,id,number){
     await page.waitForTimeout(900);
     await page.screenshot({path:path.join(OUT,'01-secondary-locked-360x640.png'),fullPage:true});
 
-    const strongEducation={status:'completed',level:3,path:'highSchool',applicationIntent:'none',applicationStatus:'none',domesticOffer:false,overseasOffer:false,fundingStatus:'none',entryPermitReady:false,enrollmentRegion:'none'};
+    const strongEducation={status:'completed',level:3,path:'highSchool',applicationIntent:'none',applicationRoute:'none',applicationAttemptCount:0,extraApplicationYearUsed:false,gaokaoAttemptCount:0,overseasUndergradAttemptCount:0,lastApplicationOutcome:'none',gapYears:0,fullTimeUndergraduateClosed:false,timelineOffsetYears:0,applicationStatus:'none',domesticOffer:false,overseasOffer:false,fundingStatus:'none',entryPermitReady:false,enrollmentRegion:'none'};
     const strongDevelopment={learningHabit:90,attendance:96,teacherSupport:85,peerSupport:75,selfAdvocacy:80,careLoad:5,traumaLoad:4,routeKnowledge:88,languagePreparation:82,routeExposure:['overseas','scholarship']};
     await page.setViewportSize({width:360,height:773});
     await enterPhase(page,phase('undergraduate_application',1),{age:18,attrs:{intellect:10},originHousehold:{context:presentContext},education:strongEducation,development:strongDevelopment,episodes:{undergraduate_application:{status:'inactive'}},usedEvents:[]},{reloadChoice:true});
@@ -196,8 +236,16 @@ async function advanceToPhase(page,id,number){
     assert.equal(run.education.applicationIntent,'overseas');
     await advanceToPhase(page,'undergraduate_application',2);
     run=await chooseAndFinish(page,1);
-    assert.equal(run.education.overseasOffer,true);
-    assert.equal(run.education.overseasOfferType,'direct');
+    assert.equal(run.education.overseasOffer,true,JSON.stringify({
+      readiness:run.education.readiness,
+      achievement:run.education.achievement,
+      overseasPrepared:run.education.overseasPrepared,
+      overseasOfferReady:run.education.overseasOfferReady,
+      route:run.education.applicationRoute,
+      attempts:run.education.applicationAttemptCount,
+      outcome:run.education.lastApplicationOutcome
+    }));
+    assert.ok(['direct','conditional'].includes(run.education.overseasOfferType));
     await advanceToPhase(page,'undergraduate_application',3);
     rendered=await textState(page);
     assert.equal(rendered.run.decision.choices.find(choice=>choice.index===1).enabled,true);
@@ -233,19 +281,42 @@ async function advanceToPhase(page,id,number){
     assert.match(domesticFunding.reason,/费用|资助/);
     run=await chooseAndFinish(page,3);
     assert.equal(run.education.nextStage,'reapply');
+    assert.equal(run.education.extraApplicationYearUsed,true);
+    assert.equal(run.education.gapYears,1);
+    assert.equal(run.education.timelineOffsetYears,1);
     assert.equal(run.education.entryPermitReady,false);
 
     const lowLocation={...run.location,mods:{...run.location.mods,education:0}};
     const marginalDevelopment={learningHabit:55,attendance:86,teacherSupport:48,peerSupport:50,selfAdvocacy:52,careLoad:2,traumaLoad:2,routeKnowledge:55,languagePreparation:0,routeExposure:[]};
-    await enterPhase(page,phase('undergraduate_application',2),{age:18,location:lowLocation,attrs:{intellect:2},originHousehold:{context:{...presentContext,educationBudget:45}},education:{...strongEducation,applicationIntent:'domestic'},development:marginalDevelopment,episodes:{undergraduate_application:{status:'active',phase:2,startedAt:17,nextPhaseAge:18,deadlineAge:21,route:'domestic_plan',boundActors:{},commitments:[],closureReason:null}}});
+    await enterPhase(page,phase('undergraduate_application',2),{seed:'retry-seed-2',age:18,location:lowLocation,attrs:{intellect:2},originHousehold:{context:{...presentContext,educationBudget:45}},education:{...strongEducation,applicationIntent:'domestic'},development:marginalDevelopment,episodes:{undergraduate_application:{status:'active',phase:2,startedAt:17,nextPhaseAge:18,deadlineAge:22,route:'domestic_plan',boundActors:{},commitments:[],closureReason:null}},usedEvents:usedWithoutUndergrad,decisionHistory:[]});
     run=await snapshot(page);
     assert.equal(run.education.domesticEligible,true);
     assert.equal(run.education.domesticOfferReady,false);
-    run=await chooseAndFinish(page,0);
+    run=await chooseAndFinish(page,0,{reload:true});
     assert.equal(run.education.applicationStatus,'notAdmitted');
     assert.equal(run.education.nextStage,'reapply');
-    assert.equal(run.episodes.undergraduate_application.status,'abandoned');
-    assert.equal(run.episodes.undergraduate_application.closureReason,'not_admitted');
+    assert.equal(run.education.applicationAttemptCount,1);
+    assert.equal(run.education.gaokaoAttemptCount,1);
+    assert.equal(run.education.lastApplicationOutcome,'notAdmitted');
+    assert.equal(run.episodes.undergraduate_application.status,'active');
+    await advanceToPhase(page,'undergraduate_application',3);
+    run=await chooseAndFinish(page,3);
+    assert.equal(run.education.extraApplicationYearUsed,true);
+    assert.equal(run.age,20);
+    await advanceToPhase(page,'undergraduate_application',4);
+    run=await snapshot(page);
+    assert.equal(run.education.applicationAttemptCount,2);
+    assert.equal(run.education.gaokaoAttemptCount,2);
+    assert.equal(run.education.extraApplicationYearUsed,true);
+    assert.equal(run.education.applicationRoute,'domestic');
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    const restoredRetry=await snapshot(page);
+    assert.equal(restoredRetry.education.applicationAttemptCount,2);
+    assert.equal(restoredRetry.education.lastApplicationOutcome,run.education.lastApplicationOutcome);
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:30,education:{status:'completed',level:3,fullTimeUndergraduateClosed:false}}));
+    assert.equal((await snapshot(page)).education.fullTimeUndergraduateClosed,true);
 
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({ok:true,migration:'schema-8-run-cleared-meta-preserved-indexed-seen-reset',familyMilestones:['strained-unsafe','comfortable-present','comfortable-unsafe'],gating:['core-visible-locked','special-hidden-until-exposed','domestic-funding-locked','scholarship-hidden'],routes:['domestic-enrolled','overseas-enrolled','not-admitted','deferred'],phaseScheduling:'natural-after-start',sameAgeCards:true,refreshRestored:['choice','result'],timelinePerPhase:1,viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));
