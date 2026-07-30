@@ -1,5 +1,83 @@
 import {episodeDecision as e,choice as c} from './helpers.mjs';
 
+const q=(path,op,value)=>({path,op,value});
+const rules=(all=[],any=[],none=[])=>({all,any,none});
+const fx=(type,target,value,extra={})=>({type,target,value,...extra});
+const seedDecision=(seedId,age,prompt,echoText,...choices)=>({seedId,age,prompt,echoText,choices});
+
+export const RECRUITMENT_SCENARIO_COPY=Object.freeze({
+  E01:{situation:'门店玻璃上那张招工纸只写了白班。老板把你的简历压在收银台边，聊到快结束，才说每周还得轮两次夜班。',prompt:'夜班现在才说，你怎么答？',choices:[
+    {text:'能轮。先把哪几天说清',resultText:'老板翻出排班表，夜班和休息日终于有了具体格子。',offerIntent:true},
+    {text:'把夜班频率写进合同再定',resultText:'对方没再只说“偶尔”，拿笔圈出了轮班安排。',offerIntent:true},
+    {text:'纸上没写，今天就不谈了',resultText:'你把简历收回来。玻璃上的招工纸还贴着。',offerIntent:false}
+  ]},
+  E02:{situation:'中介先收了被褥和车费，才说原厂已经满员，只剩另一家没听过名字的厂。收据上的项目倒写得很齐。',prompt:'人没进厂，钱先交了。你怎么处理？',choices:[
+    {text:'先核对新厂和派遣合同',resultText:'厂名、地址和结算方对上以后，你才保留这条机会。',offerIntent:true},
+    {text:'原岗位没有，先退钱',resultText:'你拿着收据等退款，没有坐上那辆去陌生厂区的车。',offerIntent:false},
+    {text:'去公共零工市场再找',resultText:'当天没进厂。大屏上的日结岗位至少先写了工种和价格。',offerIntent:true,profileIds:['loading_gig']}
+  ]},
+  E03:{situation:'HR在电话里连问三次最快哪天到岗。你追问具体做什么，对面只说“来了会有人带”。共享会议链接倒已经发来。',prompt:'到岗日期催得紧，岗位还说不清。你怎么回？',choices:[
+    {text:'先面试，职责讲清再报日期',resultText:'会议没有取消。对方终于把岗位和考核说到了具体工作。',offerIntent:true},
+    {text:'先报最早日期，进去再看',resultText:'到岗时间写进了记录，职责仍只剩一句“服从安排”。',offerIntent:true},
+    {text:'连岗位都不讲，不去了',resultText:'你关掉会议链接，继续看下一条招聘消息。',offerIntent:false}
+  ]},
+  E04:{situation:'两轮专业面都结束了。HR说业务还在横向比较，答复日期从“本周”挪到了下周，邮件里没有拒绝，也没有录用。',prompt:'这段等待，你怎么放在求职里？',choices:[
+    {text:'等到说好的日期',resultText:'你保留这条申请，也把约定日期留在日历里。',offerIntent:true},
+    {text:'说明手里还有别的进度',resultText:'HR没有立刻加价，但给出了最后决定的具体时间。',offerIntent:true},
+    {text:'别押这一家，继续投',resultText:'这条申请没有删。新的职位也照常投了出去。',offerIntent:false}
+  ]},
+  E05:{situation:'谈到薪资，HR让你发上一份工资流水。你还没有正式工作，能拿出来的只有实习补贴和项目结算。',prompt:'对方拿旧收入压新岗位，你怎么谈？',choices:[
+    {text:'把真实结算发过去',resultText:'数字发了过去，你也注明了那不是同一种合同。',offerIntent:true},
+    {text:'按岗位职责谈期望',resultText:'你没有编流水，只把职责、市场区间和自己的底线重新说了一遍。',offerIntent:true},
+    {text:'这套谈法不接受',resultText:'谈薪停在这里。你没有拿一张不存在的工资单补空白。',offerIntent:false}
+  ]},
+  E06:{situation:'老板就坐在店里靠窗的位置，一边看客流一边问你明天能不能来。收银台下压着一沓还没填名字的合同。',prompt:'明天上班这句话，怎么回答？',choices:[
+    {text:'能来，先把岗位和工资写上',resultText:'开工日期定了，空着的合同也开始一项项填。',offerIntent:true},
+    {text:'合同先看完，再答应',resultText:'你没有当场点头。老板把合同递了过来。',offerIntent:true},
+    {text:'给我一天，明天回复',resultText:'你拍下岗位和排班，带着问题离开了店门。',offerIntent:true}
+  ]},
+  E07:{situation:'终面临时多坐进来一位高管。问题从专业转到一年能出差多少天、多久可以独立带人，原招聘页没写这些。',prompt:'岗位范围突然大了一圈。你怎么接？',choices:[
+    {text:'范围能接受，按这个版本谈',resultText:'出差和带人写进了岗位说明，不再只留在终面口头。',offerIntent:true},
+    {text:'先把出差上限说清',resultText:'双方砍掉了“随时出差”，换成了能计算的频率。',offerIntent:true},
+    {text:'这不是我投的岗位，退出',resultText:'终面结束得很快。你没有拿职位名替变化后的职责签字。',offerIntent:false}
+  ]},
+  E08:{situation:'海外招聘者先核工作授权和当地语言，再开始问项目。申请表上那一栏，不能拿“学校说大概可以”代替。',prompt:'资格先被摆到桌面上。你怎么继续？',choices:[
+    {text:'把能核验的授权材料补齐',resultText:'授权类型和日期对上以后，业务面才继续。',offerIntent:true,route:'overseas'},
+    {text:'改投不受当前限制的岗位',resultText:'职位范围缩了一圈，留下的至少能走到报到。',offerIntent:true,route:'overseas'},
+    {text:'转回国内招聘批次',resultText:'海外这条申请停了。国内同类岗位的网申重新打开。',offerIntent:true,route:'return',entryPath:'specialist'}
+  ]},
+  E09:{situation:'offer写着“项目结束后另行安排”，电话里却一直说长期稳定。你问具体安排，对面又把话绕回了团队发展。',prompt:'纸面和口头不是一回事。你怎么选？',choices:[
+    {text:'把项目结束后的安排写明',resultText:'长期承诺没有补上，项目期限和结算方式倒写清了。',offerIntent:true},
+    {text:'接受项目制，按风险算',resultText:'你没有把项目合同当长期岗，收入也按这段期限重新算。',offerIntent:true},
+    {text:'不拿口头稳定赌下去',resultText:'offer退回去了。那句“以后再安排”没有变成你的合同。',offerIntent:false}
+  ]},
+  E10:{situation:'面试结束，对方让你先来三天“互相观察”，不签协议，也不计工资。工位和任务倒已经安排好了。',prompt:'三天无薪试岗，你怎么答？',choices:[
+    {text:'签短期协议，做就计薪',resultText:'对方改成了有日期、有任务、有结算的短期安排。',offerIntent:true},
+    {text:'只看现场，不接正式任务',resultText:'你去看了排班和工作台，没有替正式员工顶三天班。',offerIntent:false},
+    {text:'不做无薪试岗',resultText:'这条申请停了。三天时间没有免费交出去。',offerIntent:false}
+  ]},
+  E11:{situation:'背调授权页要求填写实习或项目导师的电话。你还没同意联系，对方却说今天不交，offer流程就往后排。',prompt:'背调想先联系带过你的人。你怎么处理？',choices:[
+    {text:'我先告知导师，再联系',resultText:'背调时间往后挪了，授权范围也补进了邮件。',offerIntent:true},
+    {text:'只提供约定过的证明人',resultText:'联系人缩到你确认过的范围，没有临时扩大。',offerIntent:true},
+    {text:'不接受这套背调顺序',resultText:'这份offer没有继续。导师也没有先从陌生电话里听见你的安排。',offerIntent:false}
+  ]},
+  E12:{situation:'亲戚说“先来帮忙”，老板也说都是熟人。问到合同和发薪日，两个人却一起说来了再谈。',prompt:'人情已经到了，工作条件还没到。你怎么回？',choices:[
+    {text:'岗位、合同、发薪日先说清',resultText:'老板不太高兴，还是把三件事逐项回了消息。',offerIntent:true},
+    {text:'只做一段短期过渡',resultText:'起止日期和结算写在聊天记录里，你没把帮忙当长期岗。',offerIntent:true},
+    {text:'不欠这笔人情账',resultText:'亲戚念叨了几天。你没有去一份连发薪日都不知道的工作。',offerIntent:false}
+  ]},
+  E13:{situation:'广告写着“月入过万”。到了站点，桌上先摆出来的却是租车合同、装备费和一张没有保底的计价表。',prompt:'广告上的收入不在合同里。你怎么选？',choices:[
+    {text:'核对真实站点和每项扣费',resultText:'租金、保险、装备和计价都摊开以后，你才决定接单。',offerIntent:true},
+    {text:'转去有站点管理的专送',resultText:'收入仍按单浮动，至少排班、车辆和结算有人说得清。',offerIntent:true,entryPath:'siteDirect',profileIds:['station_rider']},
+    {text:'不签租车合同，离开',resultText:'头盔没有领，第一笔租金也没有扣。',offerIntent:false}
+  ]},
+  E14:{situation:'说好给结果的日期已经过去。邮箱里只有系统自动通知，招聘软件上的联系人没有再回。',prompt:'没有明确结果，你怎么处理这条申请？',choices:[
+    {text:'追问一次，留个截止时间',resultText:'消息发出去了。有没有回复，明天再看。',offerIntent:false},
+    {text:'不等了，继续投别家',resultText:'这条记录留在申请列表，新投递没有停。',offerIntent:false},
+    {text:'今天先停一下',resultText:'你关掉招聘软件一天。没有把休息写成已经录用。',offerIntent:false}
+  ]}
+});
+
 export const EMPLOYMENT_COPY={
   label:'受雇工作',
   beatMix:{ordinary:10,awkward:8,friction:8,pressure:4,major:2},
@@ -105,34 +183,116 @@ export const EMPLOYMENT_COPY={
         {text:'不续了，走人',resultText:'你交了工牌，结了工资和假期。退不退休的事，不是这份合同能定的。',consequenceText:'下次再想退不退休的时候，社保年限还得另外算。'}
       ]
     },
-    e({id:'first_job_application',lane:'career',phase:1,role:'start',delayYears:1,deadlineYears:4,age:[20,40]},
+    e({id:'first_job_application',lane:'career',phase:1,role:'start',delayYears:1,deadlineYears:4,age:[16,28]},
       '上一段学业停在成绩单上，工作还没有着落。招聘网站、学校或项目群里每天都有新链接，每个都催你尽快投，每份表又都要把经历重填一遍。',
       '第一份工作，你先从哪儿找？','你选了一个入口，开始真的往外投。',
       c('先投入门岗位','学历和离校时间照实填，做过什么也照实写。你没把一次社团活动改成三年管理经验。','收藏夹短了一点，“已申请”那栏终于不再是空的。'),
       c('问问实习或项目能不能留下','你去问岗位、合同和转正条件。对方说“机会挺大”，你接着问：那什么时候定？','对方开始谈留用。录用通知还是空的。'),
       c('只看专业对口的岗位','你把方法、工具和能独立做的事写在前面。学历占一行，不再占完一整页。','职位少了一截。剩下的至少会问你到底会什么。'),
       c('先找个能接上的岗位','完全对口的职位太少，你把范围放宽了一点。先投能学到行业做法的，别让空窗继续变长。','收藏夹多了一类职位。工资还没来，申请先多了。')),
-    e({id:'first_job_application',lane:'career',phase:2,role:'continue',delayYears:1,deadlineYears:4,age:[21,41]},
+    e({id:'first_job_application',lane:'career',phase:2,role:'continue',delayYears:1,deadlineYears:4,age:[17,29]},
       '申请发出去以后，你开始准备可能来的笔试、作业、群面和面试。学历少一截会被问为什么不继续读，学历多一截又常被追着要工作经验。岗位总能找到一栏嫌你不够。',
       '下一轮真来了，你准备先讲什么？','面试稿改了几版。最顺口的，还是你真做过的那一段。',
       c('就讲做过的项目和上手有多快','经验短就是短。你没躲，挑了一件自己做过的，从怎么接手讲到哪里返过工。','这段经历不用等别人提醒，你也能从头讲清。'),
       c('把研究讲成他们听得懂的东西','半页论文背景删掉，只留问题、方法、结果和怎么与人合作。讲到行业经验时，你也承认这块还薄。','稿子里的专业深度还在，经验不足也没被漂亮话盖住。'),
       c('少说空话，照常见要求做一个','你照着常见岗位要求做了测试或作品。学校名字帮不了你改错，最后还是一处处自己查。','文件能直接打开，也能看出你做到了哪一步。'),
       c('越聊越不对，算了','职责和招聘页不是一回事，薪资、资格或合同也有一项过不了。你关掉这条申请，没再陪对方“保持沟通”。','少了一次看起来有希望的机会，也少了一个以后更难退的坑。')),
-    e({id:'first_job_application',lane:'career',phase:3,role:'continue',delayYears:1,deadlineYears:4,age:[22,42]},
+    e({id:'first_job_application',lane:'career',phase:3,role:'continue',delayYears:1,deadlineYears:4,age:[18,30]},
       '招聘页面上，“录用”“意向”“补材料”几个词挨得很近。真走到报到，还要合同、工作资格和一个写得清楚的日期。',
       '下一轮申请，哪件事先问到底？','申请记录里，能报到的和还在等的，没有再写在同一栏。',
       c('把合同和报到条件问到底','你只把试用期、薪资、工作地点、职责和报到条件肯写清楚的岗位留在申请里。','电话里说的和正式文件上的，后来没有再混在一起。'),
       c('人在海外，先问雇主能不能办手续','岗位再合适，对方处理不了当前工作资格也走不下去。你一边筛掉不可能的，一边继续投剩下的。','海外这条申请继续往前走，语言、资格和岗位经历都得经得住问。'),
       c('投国内岗位，先赶还开着的批次','学历材料补起来，项目说明也按国内岗位重写。错过的批次就是错过了，网页不会因为你在海外待过就重新开放。','还开着的岗位投出去了。学历那一栏没有替你回答项目做了什么。'),
       c('还是没有，接着投','你留着申请记录，有短项目就做一点，手里的钱也开始省着花。亲友问起时，你没编一家“快入职”的公司。','你还在求职。这是当前的生活，不是一份工作。')),
-    e({id:'first_job_application',lane:'career',phase:4,role:'resolve',delayYears:0,deadlineYears:4,age:[23,43]},
+    e({id:'first_job_application',lane:'career',phase:4,role:'resolve',delayYears:0,deadlineYears:4,age:[19,31]},
       '最后等待日到了。真拿到录用的人在准备报到，还没有的人继续刷新消息。所谓前景，到了这天也得落到一份合同上。',
-      '你的第一份工作，最后怎么样了？','最后等待日过去。工牌有就有，没有也不能拿别人的单位填进自己的去向。',
-      c('先去基层或通用岗位','你照合同上的岗位报到。级别不高，第一周做的事也没什么可炫耀的。','第一段正式经验从这里开始。工资和门槛都按新人算。'),
-      c('实习转正，或者找到对口入口','转正条件写进了合同，或者对口岗位终于让你去报到。你拿到的不是“很有机会”，是明确的入职日期。','以前做过的事，终于接上了第一段正式工作。'),
-      c('进专业或研究岗位','课程、研究和项目正好接得上岗位。你办完报到，从新人该学的地方开始。','岗位名称很专业。入职培训和试用期，照样从新人那一页开始。'),
-      c('先去一个不完全对口的岗位','对方不太认识你的研究方向，但愿意用你。你问了能学什么、以后怎么转，然后还是决定先进去。','第一周先记行业里的名字和流程。研究方向暂时只占简历上的一行。'),
-      c('还没有工作，继续找','你没有工牌，也没填一份假去向。申请记录照旧更新，下一次招聘消息来了还得点开。','第一份工作暂时没有落地。普通求职生活从这里接着往下走。'))
+      '这份工作，你怎么答？','最后等待日过去。工牌有就有，没有也不能拿别人的单位填进自己的去向。',
+      c('接受这份 offer','你照合同上的岗位报到。工牌、排班或项目账号到手，第一段正式经验从新人该学的地方开始。','职位不一定完美，但合同、收入和报到日期都是真的。'),
+      c('拒绝这份 offer','你把不合适的条款说清楚，没有拿“先进去再说”骗自己。招聘进度归零，下一次投递仍要从头来。','你保住了底线，也承担继续待业的成本。'),
+      c('继续寻找','你没有工牌，也没填一份假去向。招聘网站照旧要点开，下一次消息来了还得回。','第一份工作暂时没有着落。普通求职生活从这里接着往下走。')),
+
+    e({id:'long_term_first_job_reentry',lane:'career',phase:1,role:'start',delayYears:1,deadlineYears:3,age:[32,58]},
+      '空窗拖过三十二岁以后，家人转来的招聘链接越来越具体：县城门店、熟人的办公室、站点招人、回家住一阵。有人真想帮忙，也有人只想让饭桌上有个说法。 ',
+      '这次催促来了，你先怎么回？','那几条招聘链接没有替你做决定。家里也终于听到了一句完整的话。',
+      c('说清底线和期限','你把不能接受的无薪试岗、模糊合同和最低开销说清，也答应在约定日期前给家里一个进展。','后来再问起工作，争吵少了一点，期限仍在日历上。'),
+      c('先去看看熟人介绍的','你同意见人，不答应当场上班。岗位、合同、发薪日和谁负责，一项项问。','人情还在，工作值不值得去有了单独的答案。'),
+      c('不让家里安排','你把链接收起来，继续按自己的方向投。饭桌上的气氛冷了几天。','选择权保住了，家里的耐心和你的现金都没有因此增加。')),
+    e({id:'long_term_first_job_reentry',lane:'career',phase:2,role:'continue',delayYears:1,deadlineYears:3,age:[33,59]},
+      '房租、社保和信用卡最低还款挤到同一周。简历还在投，银行卡不会等面试结果。短工、搬家和继续找原行业工作，都开始有了具体价格。',
+      '现金先从哪里松一口气？','这次调整很难体面。至少下个月的账单不再全靠假设。',
+      c('搬小一点，继续找','你退掉现在的住处，押金和搬家费重新算。通勤更远，能撑的月份多了一点。','后来收到面试通知时，地址已经换了，求职方向没换。'),
+      c('接一段合法短工','你核过计价、结算和装备费用，先接一段能停下来的活。白天或夜里工作，另一段时间继续投。','收入不稳定，房租先没有断。原方向的简历也没有扔。'),
+      c('再扛一阵，不接眼前的','你拒绝了条件含糊的岗位，把花销压到最低。','不可靠的工作没接，现金和家里的耐心继续往下掉。')),
+    e({id:'long_term_first_job_reentry',lane:'career',phase:3,role:'resolve',delayYears:0,deadlineYears:3,age:[34,60]},
+      '几个月后，手里终于同时有了三种去向：一份能马上报到的工作，一条还要继续等的原方向，还有拒绝以后自行承担的空档。没有哪一项会把前几年自动抹掉。',
+      '这一次，你怎么回到工作里？','合同、申请记录或拒绝邮件，最后总有一份留了下来。',
+      c('先接能报到的工作','你看过合同和发薪日，接受了比学历上限低一档的岗位。先把现金流接上。','第一份正式工作来得晚。工牌是真的，起点也照实记录。'),
+      c('继续按原区间求职','你保留短工或节流安排，继续投真正匹配的岗位。','求职还在继续。没有合同，也没有把短暂机会写成正式工作。'),
+      c('拒绝当前机会','条件不可靠，或者代价实在不值得。你发出拒绝，重新计算能撑多久。','拒绝不是免费选择。下一轮仍能投，眼前的账单得自己接住。')),
+
+    seedDecision('E17',[18,60],'新人第一次跟站点老骑手跑单。对方没讲大道理，只告诉你哪栋楼的电梯藏在消防门后、哪家商场要从卸货口进。下一单已经开始倒计时。','那条跟跑路线后来成了你自己的经验。',
+      c('照着老路线跑','你把入口和楼栋记进导航备注，先少绕一次。','后来带新人时，你也先告诉他那扇不起眼的消防门。',{effects:[fx('add','capabilities.skill',3),fx('add','pressures.body',1)]}),
+      c('自己试条近路','地图上少两百米，现场多了一道上锁的门。','超时申诉里有了照片。你也记住这条近路并不近。',{effects:[fx('add','capabilities.skill',1),fx('add','pressures.career',3)]}),
+      c('先打电话确认入口','顾客回了消息，保安也没再让你绕整栋楼。','以后碰到陌生园区，你不再只盯地图上的蓝线。',{effects:[fx('add','capabilities.network',2)]})),
+    seedDecision('E20',[18,60],'商家还在出餐，保温箱里已经有五单。催得太凶怕拿错，不催，后面的楼栋一起超时。站长的头像亮着。','那次卡餐以后，你处理顺序变了。',
+      c('盯住这单，催商家','你核对取餐号，在出餐口等到袋子封好。','后面几单晚了些，至少没有把别人的餐送错。',{effects:[fx('add','pressures.career',2),fx('add','capabilities.skill',1)]}),
+      c('找站长改派','你把出餐照片和手里单量发过去，站长拆走两单。','下次爆单时，对方先问现场是不是又卡餐。',{effects:[fx('add','capabilities.network',2),fx('add','pressures.career',-1)]}),
+      c('先送已经拿到的','你标记商家未出餐，带着其余订单先走。','路线没全乱，回来时那袋餐已经凉了一点。',{effects:[fx('add','capabilities.riskSense',2),fx('add','pressures.body',2)]})),
+    seedDecision('E24',[18,60],'仓储园区中午不让出门，售卖机一盒饭的钱接近一小时工资。夜班同事把自带饭放在休息室的小冰箱里。','园区里的那顿饭后来有了固定办法。',
+      c('先买一份，记下价格','你没空着肚子上后半班，也把这笔钱算进真实日薪。','下次接类似班次，你先问清吃饭和交通。',{effects:[fx('add','finance.cash',-35),fx('add','capabilities.riskSense',1)]}),
+      c('以后自己带饭','第二天饭盒和水杯一起塞进包里。','休息只有半小时，至少不用排售卖机。',{effects:[fx('add','capabilities.cashBuffer',1),fx('add','pressures.body',-1)]}),
+      c('找班组问能否统一订','几个人一起报了人数，组长联系附近餐馆送到门口。','饭不算好吃，价格终于没那么离谱。',{effects:[fx('add','capabilities.network',2)]})),
+    seedDecision('E25',[18,60],'传送带识别失败，人工件越堆越高。组长在另一头催数字，脚边的黄线已经被纸箱压住。','那晚的产量表旁边，后来多了一条安全记录。',
+      c('加快手速顶过去','数字追上了一点，手套却被纸箱边划开。','第二天贴创可贴时，积压早换到了另一条线。',{effects:[fx('add','pressures.body',5),fx('add','capabilities.skill',1)]}),
+      c('叫组长增人','你拍下积压和黄线，请对方先调两个人来清。','产量晚了十分钟，通道重新露了出来。',{effects:[fx('add','capabilities.boundary',3),fx('add','pressures.career',1)]}),
+      c('按安全节奏做','你没让纸箱越过黄线，数字就照真实速度往上走。','复盘时，故障时间没有被算成你偷懒。',{effects:[fx('add','capabilities.riskSense',3)]})),
+    seedDecision('E26',[18,60],'零工市场大屏同时跳出三单：远处装卸给得多，附近保洁当天结，技能单还没刷新。窗口只给你几分钟考虑。','那块大屏上的一行字，后来变成了当天的现金。',
+      c('去钱多的装卸','你坐最早一班车去仓库，按约定清点工时。','当天挣得多，第二天胳膊抬得很慢。',{effects:[fx('add','finance.cash',420),fx('add','pressures.body',4)]}),
+      c('接离家近的保洁','通勤短，结算单也在下班前签完。','钱少一点，晚上还能自己做顿饭。',{effects:[fx('add','finance.cash',260),fx('add','pressures.body',2)]}),
+      c('再等技能单','前两单很快被领走。你守到下午，屏幕没再跳出合适的。','今天没收入，明天仍能继续等。',{effects:[fx('add','pressures.money',3),fx('add','capabilities.riskSense',1)]})),
+    seedDecision('E30',[18,60],'超市盘货拖到凌晨，排班表上第二天仍是七点早班。盘点枪还剩一格电，同事已经开始算回家还有没有夜班车。','那次盘货以后，排班表第一次被拿来逐项对时间。',
+      c('留下盘完','你和同事把最后两排货扫完，打车费自己先垫。','第二天站早班时，谁都没把疲惫叫作团队氛围。',{effects:[fx('add','pressures.body',6),fx('add','capabilities.skill',1)]}),
+      c('要求换掉早班','你把结束时间发给店长，确认第二天由别人先开门。','群里有人不高兴，工时至少没有凭空消失。',{effects:[fx('add','capabilities.boundary',3),fx('add','pressures.career',1)]}),
+      c('记录工时先走','你拍下盘点进度和打卡时间，赶上最后一班车。','剩下的货第二天补完，记录也留在系统里。',{effects:[fx('add','capabilities.riskSense',2),fx('add','pressures.career',2)]})),
+    seedDecision('E34',[18,60],'奶茶店爆单时，店长自己站到封口机前，让每个人轮流去后场喝水。外卖屏还在往下滚。','那一晚大家记住的，不只是出了多少杯。',
+      c('留下支援高峰','你接过打包台，按取餐号一袋袋核。','高峰过去，店长把多出的工时补进排班。',{effects:[fx('add','relationships.network',3),fx('add','pressures.body',2)]}),
+      c('按原班下班','你完成交接，照排班时间打卡。店长点头，让下一班接上。','下次你临时有事，对方也没有拿这次说事。',{effects:[fx('add','capabilities.boundary',2),fx('add','relationships.network',1)]}),
+      c('替同事换十分钟','你先守住操作台，让忙了一小时的人去喝水。','轮到你休息时，杯子里还留着温水。',{effects:[fx('add','relationships.network',4),fx('add','pressures.body',1)]})),
+    seedDecision('E37',[20,60],'咖啡店值班伙伴同时盯制作、巡视和新人。客人排到门外，冰箱温度记录还差一次。店长电话占线。','那次高峰以后，交接本上多了处理顺序。',
+      c('先守食品安全','你暂停一台设备，补完温度和清洁记录再继续出杯。','投诉了几句的客人走了，冰箱里的原料没有带病上岗。',{effects:[fx('add','capabilities.riskSense',3),fx('add','pressures.career',2)]}),
+      c('先保出杯速度','你把巡视往后放，所有人先站制作线。','队伍短了，打烊后补记录补到很晚。',{effects:[fx('add','capabilities.skill',2),fx('add','pressures.body',3)]}),
+      c('请区域店长补位','你把缺口说清，对方从邻店调来一人。','支援只待了两小时，最乱的一段有人接住了。',{effects:[fx('add','capabilities.network',3),fx('add','pressures.career',-1)]})),
+    seedDecision('E41',[18,60],'入厂以后才知道分到长白班，隔壁技术组要两班倒。宿舍已经领了钥匙，培训表等着签字。','那张培训表后来对应了真正做过的班次。',
+      c('留在长白班','你按现有工位学操作，先把收入和作息稳住。','熟练以后，班长开始让你带一次新人。',{effects:[fx('add','capabilities.skill',3),fx('add','pressures.body',1)]}),
+      c('申请换技术组','你问清夜班补贴、培训和评级，再交调组申请。','申请排了队，至少不是只听一句以后再说。',{effects:[fx('add','capabilities.skill',2),fx('add','pressures.body',3)]}),
+      c('先做一个月再定','你把宿舍、工位和真实工时都记下来。','月底再看时，选择里多了自己的数字。',{effects:[fx('add','capabilities.riskSense',2)]})),
+    seedDecision('E44',[20,65],'客服电话里，顾客要求立刻退款。你的权限只够小额处理，主管消息没回，计时器还在跳。','那通电话后来进了质检记录。',
+      c('解释权限，请对方等','你说清能做什么、还要等谁确认，没有假装已经退款。','等待很难听，质检没说你越权。',{effects:[fx('add','capabilities.boundary',2),fx('add','pressures.career',2)]}),
+      c('找值班经理','你越过没回消息的主管，把订单和录音编号发给值班经理。','退款批了，主管第二天问你为什么没继续等。',{effects:[fx('add','capabilities.network',2),fx('add','pressures.career',1)]}),
+      c('先用小额权限补偿','你先发了能批的券，继续保留退款申请。','顾客没有立刻满意，至少知道事情还在办。',{effects:[fx('add','capabilities.skill',2),fx('add','pressures.career',1)]})),
+    seedDecision('E51',[22,65],'项目上线前，需求第三次变化。产品群里只写了“尽量支持”，测试环境已经锁定今晚。','那次上线以后，大家终于知道哪一版算数。',
+      c('继续改到最后','你把变化全部接进来，测试时间被压到只剩一轮。','功能上了线，第二天的修复单也一起上来了。',{effects:[fx('add','capabilities.skill',2),fx('add','pressures.body',5)]}),
+      c('要求冻结范围','你列出新增项和延期项，请负责人选一版签字。','有人嫌你不够灵活，测试总算拿到固定版本。',{effects:[fx('add','capabilities.boundary',3),fx('add','pressures.career',2)]}),
+      c('交可用版并列风险','你先保核心流程，把没做完的和可能出错的写进发布说明。','上线没那么漂亮，凌晨没有突然多出一套承诺。',{effects:[fx('add','capabilities.riskSense',3),fx('add','capabilities.evidence',2)]})),
+    seedDecision('E52',[22,65],'报销单缺了一张附件，业务负责人催财务今天付款。供应商的电话已经打到第三次。','那笔付款后来能从账上追到每一张纸。',
+      c('退回补齐附件','你在系统里写明缺什么，单据回到业务部门。','款晚了一天，审计时不用靠聊天记录解释。',{effects:[fx('add','capabilities.riskSense',3),fx('add','pressures.career',2)]}),
+      c('先挂账，附件后补','你按已有合同记入待处理，没有直接把钱付出去。','附件补来以前，这笔账一直挂在提醒里。',{effects:[fx('add','capabilities.skill',2),fx('add','pressures.career',1)]}),
+      c('请财务主管确认','你把合同、缺项和付款期限一起发过去，请主管留下决定。','供应商拿到回复，责任也没有只停在你一个人的账号。',{effects:[fx('add','capabilities.network',2),fx('add','capabilities.boundary',2)]})),
+    seedDecision('E55',[22,65],'新系统第一次交到你手里。直属领导录了一段操作视频，又发来一份做过的模板，说先照着跑一遍，错了再一起看。','那段录屏后来被新人转发过很多次。',
+      c('先照模板做一次','你按步骤完成首份交付，把不懂的地方逐个标出。','第二次再做时，视频只需要停两次。',{effects:[fx('add','capabilities.skill',3),fx('add','relationships.network',2)]}),
+      c('做完再提改进','你先跑通流程，再把重复填写的两步圈出来。','领导删掉一项没用的汇报，模板也跟着改了。',{effects:[fx('add','capabilities.creativity',2),fx('add','relationships.network',2)]}),
+      c('自己先摸索','你关掉视频试了一遍，卡住后才回去找对应步骤。','花的时间更多，系统里的坑也记得更牢。',{effects:[fx('add','capabilities.skill',2),fx('add','pressures.career',1)]})),
+    seedDecision('E56',[22,65],'项目小群里漏了你。截止前一天，同事才把任务截图转来，还说“我以为有人告诉你了”。','后来再建项目群，名单会先对一遍。',
+      c('先把缺口补上','你确认最急的部分，连夜补出能交的版本。','项目没停，晚来的任务也没有变成你早就知道。',{effects:[fx('add','capabilities.skill',2),fx('add','pressures.body',4)]}),
+      c('要求统一回主群','你把任务、负责人和截止日贴回公开群，请大家确认。','有人嫌麻烦，下一次漏人却能当天被看见。',{effects:[fx('add','capabilities.boundary',3),fx('add','pressures.career',1)]}),
+      c('保留记录说明延期','你交了当前能做的部分，把收到消息的时间附在说明里。','截止日往后挪了，责任没有靠谁声音大来分。',{effects:[fx('add','capabilities.evidence',3),fx('add','pressures.career',2)]})),
+    seedDecision('E59',[24,60],'管培轮岗结束，两张去向表摆在面前：核心项目强度大、升得快；边缘团队资源少，直属领导却愿意把目标和支持写清。','那张去向表后来决定了你每天跟谁开会。',
+      c('去核心项目','你接受高压排期和更硬的指标，名字进入重点项目名单。','机会多了，周末也更常出现在工作日历里。',{effects:[fx('add','capabilities.evidence',4),fx('add','pressures.body',5)]}),
+      c('选那个靠谱领导','你去了不那么耀眼的团队，第一次月会就拿到明确优先级。','项目小一些，做错时有人先问流程哪里没接住。',{effects:[fx('add','relationships.network',4),fx('add','pressures.career',-2)]}),
+      c('再观察一个月','你要求跟两个团队各做一段短任务再签去向。','决定晚了，至少不是只靠组织架构图猜。',{effects:[fx('add','capabilities.riskSense',3),fx('add','pressures.career',1)]})),
+    seedDecision('E62',[24,65],'下属按你批准的方案做，结果出了错。上级已经在群里问“谁负责”，绩效表下周就要交。','那次错误后来写进了团队的复盘。',
+      c('公开说决定是我做的','你先说明批准和判断来自自己，再和执行的人核对哪里失效。','下属的绩效没有替你的判断买单。',{effects:[fx('add','capabilities.boundary',4),fx('add','relationships.network',4)]}),
+      c('私下让下属认错','你让对方先写说明，答应以后再帮忙解释。','说明进了系统，口头承诺没跟进去。',{effects:[fx('add','pressures.career',-1),fx('add','relationships.network',-5)]}),
+      c('一起复盘改流程','你把批准、执行和检查拆开，谁漏了哪一步都写清。','流程改了，责任也没有被写成“团队共同承担”就算结束。',{effects:[fx('add','capabilities.skill',3),fx('add','relationships.network',2)]}))
   ]
 };

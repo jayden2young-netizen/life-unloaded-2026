@@ -3,6 +3,7 @@ Current prompt (2026-07-23): 修复卡牌中的“起步／转折／中段”等
 
 ## Progress
 
+- 2026-07-30: v0.6.4 首份工作分层与职业系统融合重做在 `codex/v0.6.4-first-job-bridge` 完成本地实现，尚未提交、推送、合并或部署。新增统一 `employmentCatalog`、原子职业状态命令、T0—T4 内部分层、地区／薪资档位与五类收入规则；首份工作第三阶段会实际展示 E01—E14 招聘／HR 场景并锁定 offer，第四阶段只接受、拒绝或继续寻找，T4 不可作为首职。医生、律师、大学讲师通过简化资格凭证进入 T3，32 岁后使用三阶段再入场链。E01—E14 招聘场景、16 个完整职业选择和 E63—E72 桥接共 40 个研究种子均已编码。版本为 v0.6.4、Schema 11、content revision 22；数据为 408 beats、183 decisions、183 consequences、20 black swans，双跑 SHA-256 均为 `EC7AA0B8D7BBB16FFC2CD1B16E6A189871EE63395D49DE94870C5D97C6B4B663`。career、cards、core、episodes 与 runtime-refactor profile 通过；E01—E14 均有固定运行时 witness，专业资格正反路径、停薪留职恢复、限期交接和关副业保留主职均有断言；覆盖三种窄屏且控制台错误为 0。
 - 2026-07-29: v0.6.3 教育年龄与重试在 `codex/v0.6.3-education-retry` 完成本地实施。教育申请新增稳定结果、一次共享补申年、路线与次数记录、统一时间偏移和 30 岁普通全日制本科关闭；同一年龄最多处理两条教育事件且只结算一次，非教育年度流程保持原样。Schema 保持 11，content revision 升至 21。education、core 与 cards profile 通过，覆盖三种窄屏且控制台错误为 0；生成器连续两次 SHA-256 均为 `2EE5A8708994FC57F154B9E5BB1A5BCAF2CF457004315AA6108F1E17E94DF5FE`。
 - 2026-07-28: v0.6.2 正确性与内容完整性护栏在 `codex/v0.6.2-correctness-guardrails` 完成本地实现。共享内容合同在数据 fetch 和状态恢复前加载；生成器新增 command／path／operator／有限数值／ID／引用／作者泄漏验证；主冲突采用三条有内容证据的开放映射，未登记关系保持中性；年度身心健康结算限制到0—100。
 - 2026-07-28: beat、decision、card、echo、卡牌互动和 witness 改用生成期作者定位与固定槽位；家庭债务范围显式化为三项。validator 暴露并经用户批准删除3条缺少 value、运行时原本按加0处理的无操作 `add`。正式 `data.json` 相对 v0.6.1 只变化版本字段和这3条 command，Schema 11、content revision 20、752个事件节点与72张卡保持不变；SHA-256 为 `1A2182D4B3CFC257EB6AEC3270468F9F00874DEF3BF363B78812D4B82A20F09F`。

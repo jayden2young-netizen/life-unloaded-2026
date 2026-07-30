@@ -1,6 +1,6 @@
 # 《人生尚未加载 · 2026》开发交接
 
-更新时间：2026-07-29
+更新时间：2026-07-30
 
 这份文件用于下一次 Codex 窗口接手项目。开始工作前仍要重新检查本地文件和 GitHub；下面记录的是交接时已经核对过的状态，不代替现场核验。
 
@@ -22,16 +22,16 @@
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
 - 当前开发版本：v0.6.2 已发布
-- 当前本地开发版本：v0.6.3（待提交、未发布）
-- 当前 `main` 基线版本：v0.6.2
-- 下一规划版本：v0.6.4 首份工作与职业桥接
+- 当前本地开发版本：v0.6.4（待提交、未发布）
+- 当前 `main` 基线版本：v0.6.3
+- 下一规划版本：v0.6.5 家庭与亲密关系
 - 当前规划范围：v0.6.3—v0.6.7 已完成路线审计与文档重构
 - `schemaVersion`：11
-- `contentRevision`：21
+- `contentRevision`：22
 - localStorage 键：`life-unloaded-2026-v1`
 - v0.6.0 功能提交：`82beb1432e3bad1df2c222735cce493e3c34495f`
 - 功能提交说明：`feat: ship v0.6.0 card participation`
-- 当前开发分支：`codex/v0.6.3-education-retry`
+- 当前开发分支：`codex/v0.6.4-first-job-bridge`
 - 当前基线分支：`main`
 - 本轮起点版本：`v0.5.12`
 
@@ -69,7 +69,7 @@ C:\Users\Administrator\Documents\Codex\tools\gh\bin\gh.exe
 - `legacy/v0.5.12` 固定指向发布前基线 `9fc7da5`。
 - 根目录本地 `roadmap/` 已按 Git ignore 管理，共有一份总体策略和 v0.6.0—v0.6.7 八份逐版本文件；其中 v0.6.0—v0.6.2 已发布，v0.6.3—v0.6.7 仍待开发。roadmap 不上传 GitHub，新窗口应在同一 checkout 读取。
 - v0.6.x 规划审计只更新文档，没有修改游戏代码、数据、玩家文案或测试。路线采用两个工程版本打底，再按教育、首职、家庭、债务、整体验收完成原五个内容版本。
-- 模型委托已经锁定：v0.6.1、v0.6.2、v0.6.7 使用 GPT-5.6 Sol High；v0.6.3—v0.6.6 使用 GPT-5.6 Terra High；Luna High 不作为主执行者。
+- v0.6.x 开发不再指定模型；仍需保留各版本的产品、工程、文案质量和验收责任。
 - 独立 worktree 中仍有实验分支 `investigate_card_game_mechanics@9efa6dc`。它包含不同架构和额外机制，不是 v0.6.0 发布来源，不要整体合并回 `main`。
 
 ## 项目结构
@@ -103,8 +103,8 @@ tests/                            当前核心浏览器检查
 当前内容规模：
 
 - 408 个年度事件
-- 162 个选择事件
-- 162 个选择特定长期后果
+- 183 个选择事件
+- 183 个选择特定长期后果
 - 20 个黑天鹅
 - 72 张卡牌
 - 30 种家庭画像
@@ -112,6 +112,16 @@ tests/                            当前核心浏览器检查
 - 12 条人生轨道
 - 16 条结局画像、64 个结局标题
 - 30 个社会图鉴条目
+
+## v0.6.4 首份工作分层与职业系统融合
+
+- 本地分支 `codex/v0.6.4-first-job-bridge` 从 `main@3ba0490` 开始实施；尚未提交、推送、合并或部署。
+- 版本为 v0.6.4、Schema 11、content revision 22。研究档案位于 `docs/research/v0.6.4-首份工作与当代中国职业生活.md`。
+- `content/zh-CN/employment-catalog.mjs` 是统一职业目录源；`data.json.employmentCatalog` 由生成器产生。T0—T3 月薪基准为 4200／6000／12000／20000 元，地区系数为 1.20／1.00／0.82／0.72。
+- 就业状态通过 `applyEmploymentProfile`、`acceptFirstJobOffer`、`leaveEmployment`、`adjustJobTier`、`resolveLayoff` 和 `grantCredential` 原子写入。旧 `contract` 与 `salary` 保持兼容，年收入优先读取 `incomeAnnualGross`。
+- 首份工作四阶段年龄为 16—28、17—29、18—30、19—31；第三阶段写入 `pendingOfferId`，第四阶段只接受、拒绝或继续寻找。T4 不可作为首份工作。
+- 医生、律师、大学讲师使用简化资格凭证；32 岁后长期未就业进入三阶段再入场。40 个研究种子均有生成数据中的场景或 `research:E##` 标记。
+- career、cards、core、episodes 与 runtime-refactor profile 已通过；E01—E14 均有固定运行时 witness，专业资格正反路径、停薪留职恢复、限期交接和关副业保留主职均有断言；覆盖 360×773、360×640、320×568，控制台错误为 0。正式生成器双跑 SHA-256 为 `EC7AA0B8D7BBB16FFC2CD1B16E6A189871EE63395D49DE94870C5D97C6B4B663`。
 
 ## v0.5.2 已完成
 
@@ -271,13 +281,13 @@ Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案
 4. v0.6.4：首份工作与职业状态桥接。
 5. v0.6.5：生育计划、怀孕决定与单身收养。
 6. v0.6.6：债务执行与生活后果。
-7. v0.6.7：跨系统验收、有限内容收口和一次 Sol High 级别的 v0.6.x 整体文案核对。
+7. v0.6.7：跨系统验收、有限内容收口和一次 v0.6.x 整体文案核对。
 
 v0.6.2 允许的作者键只用于生成器内部稳定定位和作者配置。它不得输出到 `data.json`，不得进入运行时状态、localStorage、存档、历史、图鉴、统计、延迟后果、玩家可见数据或跨版本接口，也不得形成第二套通用身份系统。需要跨版本稳定身份时必须停止并另行研究。
 
 v0.6.x 不实现完整稳定语义 ID 迁移、统一 provenance bus、Reactive Rules、复杂因果图、参数化后果引擎、Headless 大样本模拟或完整模块化构建链。这些方向只能在内容成熟并出现跨至少三个领域的重复因果证据后，作为 v0.7.x 研究问题重新评估。
 
-v0.6.3—v0.6.6 的 Terra High 必须在每版交付可发布玩家文案，不能把模板化初稿全部留给最终版本。v0.6.7 的 Sol High 核对负责跨版本一致性、人物声音、敏感表达和残余模板债，保留已有好文案，不做无差别全量重写。
+v0.6.3—v0.6.6 必须在每版交付可发布玩家文案，不能把模板化初稿全部留给最终版本。v0.6.7 的整体核对负责跨版本一致性、人物声音、敏感表达和残余模板债，保留已有好文案，不做无差别全量重写。
 
 ## 存档与发布规则
 
@@ -321,15 +331,15 @@ tests/run-checks.cjs
 
 保留用户已有改动。v0.6.2 已完成人工复测、提交、推送、main fast-forward 与 Pages 部署；仍要现场核对 Git 和 Pages，不沿用本文件的旧结论。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
 
-下一窗口审阅 v0.6.2 或准备 v0.6.3 时，先读：
+下一窗口审阅 v0.6.4 或准备 v0.6.5 时，先读：
 
 ```text
 roadmap/00-总体策略.md
-roadmap/v0.6.2-正确性与内容护栏.md
-roadmap/v0.6.3-教育年龄与重试.md
+roadmap/v0.6.4-首份工作与职业桥接.md
+roadmap/v0.6.5-生育计划与收养.md
 ```
 
-实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。先完成 v0.6.2 审阅与用户指定的 Git／发布动作，再从最新 `main` 单独开始 v0.6.3；不得把 v0.6.3 内容回填到 v0.6.2 护栏 diff。
+实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。先完成 v0.6.4 审阅与用户指定的 Git／发布动作，再从最新 `main` 单独开始 v0.6.5；不得把后续版本内容回填到 v0.6.4 职业域 diff。
 
 ## 常用验证
 

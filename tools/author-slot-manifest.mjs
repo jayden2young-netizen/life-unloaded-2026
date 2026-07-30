@@ -521,7 +521,7 @@ export const DECISION_AUTHOR_SLOT_GROUPS = Object.freeze([
       "835aba4c570fbaa38014db0d",
       "f8f4fa09ec2a295217b47375",
       "34db8a9983653bb3145d7b42",
-      "454c20099742efcec75e79ae"
+      "6a57e865f66a149614f1a348"
     ]
   },
   {
@@ -784,6 +784,90 @@ export const DECISION_SLOT_REGISTRATIONS = [
     key: '@author/decision/7e9307cb2b5fdccb5fd2c76f',
     slot: { id: 'decision_007', track: 'education', localIndex: 6 },
     replaces: '@author/decision/df7b3d60da762965f4bd95c7',
+  },
+  {
+    key: '@author/decision/fe799222c84d7eee46d433d4',
+    slot: { id: 'decision_163', track: 'education', localIndex: 42 },
+  },
+  {
+    key: '@author/decision/14bbfa0af954added9d9e33c',
+    slot: { id: 'decision_164', track: 'education', localIndex: 43 },
+  },
+  {
+    key: '@author/decision/772edb1d3f72aff20721af0d',
+    slot: { id: 'decision_165', track: 'employment', localIndex: 12 },
+  },
+  {
+    key: '@author/decision/47e8938ae7ccb48cdc94252a',
+    slot: { id: 'decision_166', track: 'employment', localIndex: 13 },
+  },
+  {
+    key: '@author/decision/904b2779af693c0727f2a6b3',
+    slot: { id: 'decision_167', track: 'employment', localIndex: 14 },
+  },
+  {
+    key: '@author/decision/5fb163872241e684b742b9f7',
+    slot: { id: 'decision_168', track: 'employment', localIndex: 15 },
+  },
+  {
+    key: '@author/decision/9e5c9a2eb6e49e846b859296',
+    slot: { id: 'decision_169', track: 'employment', localIndex: 16 },
+  },
+  {
+    key: '@author/decision/0f856588903e9f27ae9a00bc',
+    slot: { id: 'decision_170', track: 'employment', localIndex: 17 },
+  },
+  {
+    key: '@author/decision/b030d8b662b74af910710215',
+    slot: { id: 'decision_171', track: 'employment', localIndex: 18 },
+  },
+  {
+    key: '@author/decision/3f56a3a61c36a53b53498f0e',
+    slot: { id: 'decision_172', track: 'employment', localIndex: 19 },
+  },
+  {
+    key: '@author/decision/9743a399aeb79d96a84fa518',
+    slot: { id: 'decision_173', track: 'employment', localIndex: 20 },
+  },
+  {
+    key: '@author/decision/fabdf10d99bc907a3b52500b',
+    slot: { id: 'decision_174', track: 'employment', localIndex: 21 },
+  },
+  {
+    key: '@author/decision/b8a5fbe1bfb620c02fc1856d',
+    slot: { id: 'decision_175', track: 'employment', localIndex: 22 },
+  },
+  {
+    key: '@author/decision/1694d446a6eb400de2aa03a6',
+    slot: { id: 'decision_176', track: 'employment', localIndex: 23 },
+  },
+  {
+    key: '@author/decision/29e9c8936c5ac3a73e4169d0',
+    slot: { id: 'decision_177', track: 'employment', localIndex: 24 },
+  },
+  {
+    key: '@author/decision/5906b66322f34401b3c3b37b',
+    slot: { id: 'decision_178', track: 'employment', localIndex: 25 },
+  },
+  {
+    key: '@author/decision/28a2d0889ef782de64cd4670',
+    slot: { id: 'decision_179', track: 'employment', localIndex: 26 },
+  },
+  {
+    key: '@author/decision/d60233d6319fa3143abf4c67',
+    slot: { id: 'decision_180', track: 'employment', localIndex: 27 },
+  },
+  {
+    key: '@author/decision/0db150cfa0202be2ff93f7d5',
+    slot: { id: 'decision_181', track: 'employment', localIndex: 28 },
+  },
+  {
+    key: '@author/decision/164daa4b054858cbfd07e8ee',
+    slot: { id: 'decision_182', track: 'employment', localIndex: 29 },
+  },
+  {
+    key: '@author/decision/85e3f4dbbd58ab6f392834b0',
+    slot: { id: 'decision_183', track: 'employment', localIndex: 30 },
   },
 ];
 export const CARD_SLOT_REGISTRATIONS = [];

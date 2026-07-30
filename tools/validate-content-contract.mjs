@@ -28,6 +28,12 @@ const COMMAND_TARGETS = Object.freeze({
   resolveApplication: 'education',
   resolveGraduateApplication: 'education',
   resolveFirstJobApplication: 'employment',
+  acceptFirstJobOffer: 'employment',
+  applyEmploymentProfile: 'employment',
+  leaveEmployment: 'employment',
+  adjustJobTier: 'employment',
+  resolveLayoff: 'employment',
+  grantCredential: 'education',
   createPerson: 'people',
   transitionPartner: 'people',
   transition: 'education',
@@ -118,10 +124,13 @@ export function validateCommand(command, location = 'command') {
     fail(location, `${command.type}.value 必须是有限数值`);
   if (
     ['expose', 'tag', 'resolveApplication', 'resolveGraduateApplication', 'resolveFirstJobApplication',
-      'transitionPartner', 'transition'].includes(command.type) &&
+      'acceptFirstJobOffer', 'applyEmploymentProfile', 'leaveEmployment', 'resolveLayoff',
+      'grantCredential', 'transitionPartner', 'transition'].includes(command.type) &&
     typeof command.value !== 'string'
   )
     fail(location, `${command.type}.value 必须是字符串`);
+  if (command.type === 'adjustJobTier' && !finite(command.value))
+    fail(location, 'adjustJobTier.value 必须是有限数值');
   if (
     command.type === 'set' &&
     !(
@@ -340,6 +349,79 @@ function validateEvidence(data) {
   }
 }
 
+function validateEmploymentCatalog(data) {
+  const catalog=data.employmentCatalog;
+  if(!isObject(catalog))fail('employmentCatalog','缺少统一职业目录');
+  const tierIds=new Set(Object.keys(catalog.tiers||{}));
+  const regionIds=new Set((data.locations||[]).map(location=>location.id));
+  const profileIds=new Set();
+  for(const [id,value] of Object.entries(catalog.regionalCoefficients||{})){
+    if(!regionIds.has(id))fail(`employmentCatalog.regionalCoefficients.${id}`,'地区不存在');
+    if(!finite(value)||value<=0)fail(`employmentCatalog.regionalCoefficients.${id}`,'地区系数必须为正数');
+  }
+  if(regionIds.size!==Object.keys(catalog.regionalCoefficients||{}).length)
+    fail('employmentCatalog.regionalCoefficients','必须完整覆盖 location ID');
+  for(const [index,profile] of (catalog.profiles||[]).entries()){
+    const location=`employmentCatalog.profiles[${index}]`;
+    if(profileIds.has(profile.id))fail(location,`重复职业 ID：${profile.id}`);
+    profileIds.add(profile.id);
+    if(!tierIds.has(profile.tier))fail(location,`未知 tier：${profile.tier}`);
+    if(profile.tier==='T4'&&profile.firstJobEligible)fail(location,'T4 不得进入首份工作池');
+    if(!Object.hasOwn(catalog.incomeModes||{},profile.incomeStability))
+      fail(location,`未知收入形态：${profile.incomeStability}`);
+    if(!Object.hasOwn(catalog.salaryBands||{},profile.salaryBand))
+      fail(location,`未知薪资档：${profile.salaryBand}`);
+    for(const region of profile.regions||[])
+      if(!regionIds.has(region))fail(location,`未知地区：${region}`);
+  }
+  for(const [id,tier] of Object.entries(catalog.tiers||{}))
+    if(id!=='T4'&&(!finite(tier.monthlyBase)||tier.monthlyBase<=0))
+      fail(`employmentCatalog.tiers.${id}`,'T0-T3 月薪基准必须为正数');
+  const profileById=new Map((catalog.profiles||[]).map(profile=>[profile.id,profile]));
+  for(const [fromId,toId] of Object.entries(catalog.promotionMap||{})){
+    const from=profileById.get(fromId),to=profileById.get(toId);
+    if(!from||!to)fail(`employmentCatalog.promotionMap.${fromId}`,'晋升映射引用未知职业');
+    const fromTier=Number(from.tier.slice(1)),toTier=Number(to.tier.slice(1));
+    if(toTier!==fromTier+1)fail(`employmentCatalog.promotionMap.${fromId}`,'晋升映射必须恰好提高一级');
+  }
+  const scenarioIds=new Set();
+  for(const [index,scenario] of (catalog.recruitmentScenarios||[]).entries()){
+    const location=`employmentCatalog.recruitmentScenarios[${index}]`;
+    if(scenarioIds.has(scenario.id))fail(location,`重复招聘场景 ID：${scenario.id}`);
+    scenarioIds.add(scenario.id);
+    if(!scenario.title||!scenario.situation||!scenario.prompt)fail(location,'缺少标题、情境或提问');
+    if(!Array.isArray(scenario.age)||scenario.age.length!==2)fail(location,'年龄范围必须有上下限');
+    if(!Array.isArray(scenario.tiers)||!scenario.tiers.length)fail(location,'至少需要一个职业层级');
+    for(const tier of scenario.tiers)if(!tierIds.has(tier))fail(location,`未知 tier：${tier}`);
+    for(const region of scenario.locations||[])if(!regionIds.has(region))fail(location,`未知地区：${region}`);
+    for(const profileId of scenario.profileIds||[])if(!profileIds.has(profileId))fail(location,`未知职业：${profileId}`);
+    if(!Array.isArray(scenario.choices)||scenario.choices.length!==3)fail(location,'招聘场景必须有三个可玩选择');
+    for(const [choiceIndex,choice] of scenario.choices.entries()){
+      if(!choice.text||!choice.resultText||typeof choice.offerIntent!=='boolean')
+        fail(`${location}.choices[${choiceIndex}]`,'选择缺少文本、结果或录用意向');
+      if(!choice.offerIntent)continue;
+      const entryPath=choice.entryPath||scenario.entryPath;
+      const allowedProfileIds=choice.profileIds||scenario.profileIds;
+      const playableProfiles=(catalog.profiles||[]).filter(profile=>
+        profile.firstJobEligible&&
+        profile.tier!=='T4'&&
+        scenario.tiers.includes(profile.tier)&&
+        (!allowedProfileIds?.length||allowedProfileIds.includes(profile.id))&&
+        (!scenario.locations?.length||(profile.regions||[]).some(region=>scenario.locations.includes(region)))&&
+        (!entryPath||(profile.entryPaths||[]).includes(entryPath))
+      );
+      if(!playableProfiles.length)
+        fail(`${location}.choices[${choiceIndex}]`,'录用选择找不到符合层级、地区和入口的职业');
+      for(const tier of scenario.tiers)
+        if(!playableProfiles.some(profile=>profile.tier===tier))
+          fail(`${location}.choices[${choiceIndex}]`,`录用选择在 ${tier} 没有可达职业`);
+    }
+  }
+  const expectedScenarioIds=Array.from({length:14},(_,index)=>`E${String(index+1).padStart(2,'0')}`);
+  if(expectedScenarioIds.some(id=>!scenarioIds.has(id))||scenarioIds.size!==expectedScenarioIds.length)
+    fail('employmentCatalog.recruitmentScenarios','必须完整且仅包含 E01-E14');
+}
+
 export function validateGeneratedData(data) {
   if (!isObject(data)) fail('data', '根数据必须是对象');
   assertUnique(data.locations, 'locations');
@@ -358,6 +440,7 @@ export function validateGeneratedData(data) {
   walkContracts(data);
   validateReferences(data);
   validateEvidence(data);
+  validateEmploymentCatalog(data);
   assertNoAuthorKeys(data);
   return {
     operators: [...RUNTIME_OPERATORS],

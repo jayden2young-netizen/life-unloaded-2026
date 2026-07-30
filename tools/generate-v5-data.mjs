@@ -3,6 +3,8 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {CARD_COPY} from '../content/zh-CN/cards.mjs';
 import {cardInteractionFor,CARD_INTERACTION_WITNESSES} from '../content/zh-CN/card-interactions.mjs';
+import {EMPLOYMENT_CATALOG_SOURCE} from '../content/zh-CN/employment-catalog.mjs';
+import {RECRUITMENT_SCENARIO_COPY} from '../content/zh-CN/tracks/employment.mjs';
 import {TRACK_COPY} from '../content/zh-CN/tracks/index.mjs';
 import {
   beatAuthorKey,
@@ -34,7 +36,7 @@ const registrationGroups=[
 for(const [domain,registrations] of registrationGroups)
   for(const registration of registrations)
     registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
-const VERSION='0.6.3',SCHEMA_VERSION=11,CONTENT_REVISION=21;
+const VERSION='0.6.4',SCHEMA_VERSION=11,CONTENT_REVISION=22;
 const stages={infancy:[0,5],childhood:[6,12],adolescence:[13,18],youth:[19,29],establishment:[30,44],midlife:[45,59],later:[60,74],elder:[75,105]};
 const stageNames=Object.keys(stages);
 const stageFor=(min,max)=>stageNames.filter(name=>Math.max(min,stages[name][0])<=Math.min(max,stages[name][1]));
@@ -275,12 +277,16 @@ for(const id of trackOrder){
       annualBeats.push({id:slot.id,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'▤',text:authoredBeat.text,tone:authoredBeat.tone,intensity:stableIndex<8?'low':stableIndex<24?'medium':'high',requirements:row.requirements,actors:[],effects:row.effects,assertions:[],weight:row.weight,contentRevision:CONTENT_REVISION});
       continue;
     }
-    const requirements=requirementsFor(id),actors=actorsFor(id,stableIndex,'beat'),role=stableIndex%8,ageRange=TRACK_NODE_AGES[id][role];
+    const requirements=requirementsFor(id),actors=actorsFor(id,stableIndex,'beat'),role=stableIndex%8,ageRange=authoredBeat.age||TRACK_NODE_AGES[id][role];
     if(id==='employment')requirements.all.push(p('employment.status','eq','employed'));
     if(id==='public')requirements.all.push(p('employment.employerType','eq','public'));
     if(id==='remote')requirements.any.push(p('employment.arrangement','in',['remote','hybrid']),p('mobility.mode','in',['domesticNomad','overseasNomad']));
     if(id==='business')requirements.all.push(p('business.status','in',['testing','operating']));
     if(id==='leisure')requirements.all.push(p('activity.mode','in',['sabbatical','leisure']));
+    if(id==='later'&&authoredBeat.retirement)requirements.all.push(p('later.retirement','in',authoredBeat.retirement));
+    if(id==='later'&&authoredBeat.healthContext)requirements.any.push(p('health.careNeed','gte',1),p('health.status','in',['treating','managed','limited']),p('later.care','neq','none'));
+    if(id==='later'&&authoredBeat.willContext)requirements.all.push(p('later.will','neq','none'));
+    if(id==='later'&&authoredBeat.endOfLifeContext)requirements.any.push(p('health.conditionSeverity','gte',35),p('health.careNeed','gte',1),p('later.will','in',['documented','partial']),p('legacy.medicalDirective','neq','none'));
     if(id==='children'){requirements.all.push(p('relationships.childCount',role===0?'eq':'gte',role===0?0:1));if(role===0)requirements.all.push(p('relationships.parenthoodIntent','eq','planned'),p('relationships.activePartnerId','truthy',true))}
     if(id==='partnership'&&stableIndex%8===0)requirements.all.push(p('relationships.partnerStatus','in',['none','divorced','widowed']));
     if(id==='finance'&&[1,3,7].includes(role))requirements.all.push(p('finance.totalDebt','gte',1));
@@ -378,7 +384,9 @@ const EPISODE_ROUTES={
   ,postgraduate_us:{1:['funding','methods','authorized_practice'],2:['specialist','industry','return_prep'],3:['us_job','return_job','europe_job','long_search']}
   ,postgraduate_europe:{1:['planned','host_language','project'],2:['local_job','local_reference','return_prep'],3:['europe_job','return_job','us_job','long_search']}
   ,overseas_postgraduate_belonging:{1:['dual_network','institutional_support','host_language'],2:['bounded_cooperation','documented','environment_change','allies']}
-  ,first_job_application:{1:['graduate_channel','conversion','specialist','bridge'],2:['bachelor_evidence','postgraduate_evidence','work_sample','application_withdrawn'],3:['verified_offer','overseas_verified','return_verified','long_search'],4:['bachelor_general','bachelor_aligned','postgraduate_specialist','postgraduate_bridge','long_search']}
+  ,first_job_application:{1:['graduate_channel','conversion','specialist','bridge'],2:['bachelor_evidence','postgraduate_evidence','work_sample','application_withdrawn'],3:['verified_offer','overseas_verified','return_verified','long_search'],4:['accept_offer','decline_offer','long_search']}
+  ,professional_entry_qualification:{1:['medical','legal','teaching','ordinary_job'],2:['passed','retake','adjacent_job','withdrawn']}
+  ,long_term_first_job_reentry:{1:['bounded','introduced','independent'],2:['downsized','short_work','continued'],3:['accepted','searching','declined']}
 };
 const EPISODE_CATALOG={
   relationship_start:{label:'关系建立',bindActivePartnerAfterChoice:true,abandonedRoutes:['exited','ended'],deadline:'两年了。备用钥匙没交出去，共同账单也没形成。你们把东西还了，花过的钱结清。这段关系停在这。',invalidated:'那个人已经不再是你的伴侣。钥匙装回信封，共享日历关了。这次，到此为止。'},
@@ -418,6 +426,8 @@ const EPISODE_CATALOG={
   postgraduate_europe:{label:'欧洲研究生生活',ageBound:true,abandonedRoutes:['long_search'],deadline:'第四年，学分、论文和学位审核都到了最后期限。学校最后发下来的记录，就是这段学业的结果。',invalidated:'这段欧洲研究生学籍停了。学分单、行政回函和项目材料都还在。'},
   overseas_postgraduate_belonging:{label:'海外研究生生活与归属',deadline:'两年了。常走的路已经不用导航。至于出了事能找谁，试过才知道。',invalidated:'你离开了这段海外研究生生活。手续停在离开那天，想继续联系的人不用一起归零。'},
   first_job_application:{label:'第一份工作申请',ageBound:true,abandonedRoutes:['withdrawn','long_search'],deadline:'四年了。申请页还在更新，工牌那一栏仍然空着。没有合同，就不能把“快了”填成已经入职。',invalidated:'你已经正式入职，或者不再投这一轮岗位。旧申请收进历史，待办列表终于短了一截。'},
+  professional_entry_qualification:{label:'专业职业入口',ageBound:true,abandonedRoutes:['ordinary_job','withdrawn'],deadline:'报名和考核期限到了。拿到的凭证照实放进材料，没拿到的不能拿一句“快了”代替。',invalidated:'学业、报考条件或职业方向变了。这一轮材料留着，旧入口不再继续占着日程。'},
+  long_term_first_job_reentry:{label:'长期求职再入场',ageBound:true,abandonedRoutes:['declined'],deadline:'三年了。合同、短工记录和还在投的简历各自摆着。没有正式工作的，不能把临时收入写成已经报到。',invalidated:'你已经入职、重新在读，或不再走这轮安排。旧招聘链接和预算表收进抽屉。'},
 };
 const habitEpisodeRoutes=(episode,kind)=>({
   formation:{1:['ordinary_exit','monitoring','repeating'],2:['stopped','exposed','dependent','uncontrolled']},
@@ -438,7 +448,8 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
   if(episode?.id==='secondary_diversion'){
     const paths=['highSchool','vocational','middleSchool','highSchool'],statuses=['enrolled','enrolled','completed','enrolled'];
     effects.push(c('transition','education',paths[option],{status:statuses[option]}));add('capabilities.skill',[2,3,1,1][option]);add('pressures.family',[-1,-1,1,2][option]);
-    if(option===2)set('activity.mode','seeking');
+    if(option!==2)set('education.nextStage','secondary');
+    if(option===2){set('education.nextStage','firstJob');set('education.highestCompleted','middleSchool');set('employment.entryCredential','middleSchool');set('activity.mode','seeking')}
     if(option===3)effects.push(c('expose','development.routeExposure','alternativeSchool'));
   }
   if(episode?.id==='undergraduate_application'){
@@ -504,10 +515,43 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     if(episode.phase===2){add('mobility.discriminationLoad',[2,1,2,1][option]);add('mobility.belonging',[4,3,1,5][option]);add('capabilities.boundary',[3,2,4,2][option]);add('mobility.localTies',[2,2,0,4][option]);add('mobility.chineseCommunityTies',[0,1,0,4][option])}
   }
   if(episode?.id==='first_job_application'){
-    if(episode.phase===1){set('employment.applicationStatus','applying');set('employment.applicationChannel',['graduate','conversion','specialist','bridge'][option]);add('education.practiceEvidence',[1,5,1,3][option]);add('pressures.career',[1,1,2,-1][option])}
+    if(episode.phase===1){set('employment.applicationStatus','applying');set('employment.applicationChannel',['openRecruitment','conversion','specialist','bridge'][option]);set('employment.firstJobEntryPath',['openRecruitment','conversion','specialist','bridge'][option]);add('education.practiceEvidence',[1,5,1,3][option]);add('pressures.career',[1,1,2,-1][option])}
     if(episode.phase===2){add('education.practiceEvidence',[6,2,5,0][option]);add('education.researchEvidence',[0,6,2,0][option]);add('capabilities.employability',[5,5,6,0][option]);if(option===3)set('employment.applicationStatus','applying')}
     if(episode.phase===3){if(option<3)effects.push(c('resolveFirstJobApplication','employment',['domestic','overseas','return'][option]));else{set('employment.applicationStatus','searching');set('employment.firstJobOutcome','longSearch');set('activity.mode','seeking')}}
-    if(episode.phase===4){set('education.nextStage','career');if(option<4){set('employment.status','employed');set('employment.employerType','private');set('employment.sector',option===2?'specialist':'general');set('employment.career',['基层或通用岗位','对口入门岗位','专业或研究岗位','桥接岗位'][option]);set('employment.rank',option===2?2:1);set('employment.salary',[5500,7000,9500,7500][option]);set('employment.applicationStatus','employed');set('employment.firstJobOutcome',['bachelorGeneral','bachelorAligned','postgraduateSpecialist','postgraduateBridge'][option]);set('activity.mode','work')}else{set('employment.status','unemployed');set('employment.applicationStatus','searching');set('employment.firstJobOutcome','longSearch');set('activity.mode','seeking')}}
+    if(episode.phase===4){set('education.nextStage','career');if(option===0)effects.push(c('acceptFirstJobOffer','employment','pending'));if(option===1)effects.push(c('leaveEmployment','employment','declined'));if(option===2)effects.push(c('leaveEmployment','employment','longSearch'))}
+  }
+  if(episode?.id==='professional_entry_qualification'){
+    if(episode.phase===1){
+      set('education.professionalQualificationIntent',['medical_practice','legal_practice','university_teaching','none'][option]);
+      add('pressures.career',[2,2,2,-2][option]);
+      add('education.researchEvidence',[0,1,4,1][option]);
+    }else{
+      if(option===0)effects.push(c('grantCredential','education','selected'));
+      if(option>0)set('education.professionalQualificationIntent','none');
+      add('capabilities.employability',[5,2,3,0][option]);
+      add('pressures.career',[-3,2,-1,0][option]);
+    }
+  }
+  if(episode?.id==='long_term_first_job_reentry'){
+    if(episode.phase===1){
+      add('pressures.family',[-2,1,5][option]);
+      add('health.mental',[1,0,-2][option]);
+      set('employment.firstJobEntryPath',['reentry','referral','reentry'][option]);
+      effects.push(c('tag','history','research:E63'),c('tag','history','research:E64'));
+    }
+    if(episode.phase===2){
+      add('finance.cash',[-3500,1200,-2500][option]);
+      add('pressures.money',[-2,-1,4][option]);
+      if(option===1)set('employment.applicationStatus','applying');
+      effects.push(c('tag','history','research:E65'),c('tag','history','research:E66'));
+    }
+    if(episode.phase===3){
+      if(option===0)effects.push(c('acceptFirstJobOffer','employment','reentry'));
+      else effects.push(c('leaveEmployment','employment',option===1?'longSearch':'declined'));
+      add('pressures.family',[-2,0,3][option]);
+      add('health.mental',[1,0,-2][option]);
+      effects.push(c('tag','history','research:E67'),c('tag','history','research:E68'));
+    }
   }
   if(episode?.id==='professional_certification'){
     add('capabilities.skill',episode.phase===1?[2,3,0][option]:[5,2,4,0][option]);add('finance.cash',episode.phase===1?[-1500,-2500,0][option]:[-2500,-1800,-1200,0][option]);add('pressures.career',episode.phase===1?[-1,-1,2][option]:[-3,1,-1,2][option]);
@@ -518,32 +562,62 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     if(episode.phase===2){set('education.status',['completed','enrolled','completed','interrupted'][option]);set('activity.mode',['seeking','study','work','work'][option])}
     add('capabilities.skill',episode.phase===1?[3,2,0][option]:[5,3,3,1][option]);add('finance.cash',episode.phase===1?[-6000,-3000,0][option]:[-4000,-2500,-1200,1000][option]);add('pressures.career',episode.phase===1?[1,0,-1][option]:[-2,0,-1,2][option]);
   }
-  if(id==='employment'&&!episode){const states=[['employed','employed','unemployed'],['employed','employed','employed'],['employed','unemployed','unemployed'],['employed','employed','employed'],['employed','employed','employed'],['employed','employed','employed'],['employed','employed','unemployed'],['employed','selfEmployed','unemployed']][index],modes=[['work','work','seeking'],['work','work','work'],['work','seeking','seeking'],['work','work','work'],['work','work','work'],['work','work','work'],['study','work','seeking'],['work','flexible','seeking']][index],salaryChanges=[[3000,5000,0],[10000,5000,0],[0,0,0],[12000,5000,0],[0,0,0],[16000,4000,0],[0,0,0],[5000,2000,0]][index];set('employment.status',states[option]);set('activity.mode',modes[option]);if(index===0&&option<2){set('employment.career','企业项目岗位');set('employment.employerType','private');set('employment.sector','general')}add('employment.salary',salaryChanges[option]);add('pressures.career',[4,1,-2][option])}
-  if(id==='public'&&!episode){const states=[['employed','unemployed','unemployed'],['employed','unemployed','unemployed'],['employed','employed','unemployed'],['employed','employed','employed'],['employed','employed','unemployed'],['employed','employed','unemployed'],['employed','careLeave','unemployed'],['employed','employed','unemployed']][index],modes=states.map(value=>value==='employed'?'work':value==='careLeave'?'flexible':value==='retired'?'retired':'seeking');set('employment.status',states[option]);set('activity.mode',modes[option]);set('employment.employerType',states[option]==='employed'?'public':option===2?'private':'none');set('employment.sector',states[option]==='employed'?'public':'general');add('capabilities.publicCredential',[2,1,0][option]);add('pressures.career',[3,1,-2][option])}
+  if(id==='employment'&&!episode&&index<8){
+    if(index===0){
+      if(option===0)effects.push(c('applyEmploymentProfile','employment','admin_assistant'));
+      if(option===1)effects.push(c('applyEmploymentProfile','employment','sales_representative'));
+      if(option===2)effects.push(c('leaveEmployment','employment','offerDeclined'));
+    }
+    if(index===1&&option<2)effects.push(c('applyEmploymentProfile','employment',option===0?'current:high':'current:mid'));
+    if(index===5){
+      if(option===0)effects.push(c('adjustJobTier','employment',1));
+      if(option===1)effects.push(c('applyEmploymentProfile','employment','current:high'));
+      effects.push(c('tag','history','research:E69'));
+    }
+    if(index===6&&option===2)effects.push(c('leaveEmployment','employment','resigned'));
+    if(index===7&&option===1)effects.push(c('completeEmploymentHandover','employment','threeMonths'));
+    if(index===7&&option===2)effects.push(c('leaveEmployment','employment','contractEnded'));
+    add('pressures.career',[4,1,-2][option]);
+  }
+  if(id==='public'&&!episode){
+    add('capabilities.publicCredential',[2,1,0][option]);
+    add('pressures.career',[3,1,-2][option]);
+    if(index===4&&option===2)effects.push(c('leaveEmployment','employment','publicResigned'));
+    if(index===5&&option===2)effects.push(c('leaveEmployment','employment','publicResigned'));
+    if(index===6&&option===1)effects.push(c('takeCareLeave','employment','oneYear'));
+    if(index===6&&option===2)effects.push(c('applyEmploymentProfile','employment','admin_assistant'));
+  }
   if(episode?.id==='public_exam'){
     if(episode.phase===1){
       add('capabilities.publicCredential',[2,2,0][option]);add('pressures.career',[2,1,-3][option]);
     }else{
-      if(option===0){set('employment.status','employed');set('employment.employerType','public');set('employment.sector','public');set('employment.career','公共部门岗位');set('activity.mode','work')}
-      if(option===2){set('employment.status','employed');set('employment.employerType','private');set('employment.sector','general');set('employment.career','受雇岗位');set('activity.mode','work')}
+      if(option===0)effects.push(c('applyEmploymentProfile','employment','public_clerk'));
+      if(option===2)effects.push(c('applyEmploymentProfile','employment','admin_assistant'));
       add('capabilities.publicCredential',[5,2,0,0][option]);add('pressures.career',[-4,3,-2,4][option]);
     }
   }
   if(episode?.id==='layoff_reemployment'){
     if(episode.phase===1){
-      set('employment.status',['unemployed','employed','unemployed'][option]);set('employment.employerType',['none','private','none'][option]);set('activity.mode',['seeking','work','seeking'][option]);add('finance.cash',[12000,0,5000][option]);add('pressures.career',[5,-2,6][option]);
+      if(option===1)effects.push(c('adjustJobTier','employment',0));
+      else effects.push(c('resolveLayoff','employment',option===0?'documented':'reviewed'));
+      set('activity.mode',['seeking','work','seeking'][option]);add('pressures.career',[5,-2,6][option]);effects.push(c('tag','history','research:E70'));
     }else{
-      set('employment.status',['employed','employed','employed','unemployed'][option]);set('employment.employerType',['private','private','private','none'][option]);set('employment.career',['同领域岗位','过渡岗位','转岗岗位','求职'][option]);set('activity.mode',['work','work','work','seeking'][option]);add('employment.salary',[5000,-3000,-5000,0][option]);add('capabilities.employability',[3,1,4,1][option]);add('pressures.career',[-5,-2,-2,6][option]);
+      if(option===0)effects.push(c('applyEmploymentProfile','employment','sameField'));
+      if(option===1)effects.push(c('applyEmploymentProfile','employment','bridgeJob'));
+      if(option===2)effects.push(c('applyEmploymentProfile','employment','careerChange'));
+      if(option===3)effects.push(c('leaveEmployment','employment','longSearch'));
+      if(option===3)set('activity.mode','seeking');add('capabilities.employability',[3,1,4,1][option]);add('pressures.career',[-5,-2,-2,6][option]);
+      effects.push(c('tag','history','research:E71'));
     }
   }
-  if(id==='remote'&&!episode){if(index===0){set('employment.arrangement',['remote','hybrid','onsite'][option]);if(option<2){set('employment.status',option===0?'gig':'employed');set('employment.career',option===0?'远程合同工作':'混合办公岗位');set('employment.sector','digital');set('activity.mode','work')}}if(index===1)set('mobility.mode',['domesticNomad','overseasNomad','home'][option]);add('mobility.platformDependence',[-3,8,-5][option]);add('mobility.rootlessness',[2,7,-4][option]);add('capabilities.portableSkill',option===0?2:1)}
+  if(id==='remote'&&!episode){if(index===0&&option<2)effects.push(c('applyEmploymentProfile','employment',option===0?'remote_contractor':'software_engineer'));if(index===1)set('mobility.mode',['domesticNomad','overseasNomad','home'][option]);add('mobility.platformDependence',[-3,8,-5][option]);add('mobility.rootlessness',[2,7,-4][option]);add('capabilities.portableSkill',option===0?2:1)}
   if(episode?.id==='first_remote_contract'){
-    if(option<2){set('employment.arrangement',option===0?'remote':'hybrid');set('employment.status',option===0?'gig':'employed');set('employment.career',option===0?'远程合同工作':'短期远程项目');set('employment.sector','digital');set('activity.mode','work')}
+    if(option<2)effects.push(c('applyEmploymentProfile','employment',option===0?'remote_contractor':'software_engineer'));
     add('capabilities.portableSkill',[3,2,0,0][option]);add('pressures.career',[-2,1,-1,2][option]);
   }
   if(episode?.id==='platform_dependence'){
     if(episode.phase===1)add('mobility.platformDependence',[-12,-6,10][option]);
-    else{add('mobility.platformDependence',[-18,-8,-20,15][option]);if(option===2){set('employment.arrangement','onsite');set('employment.status','employed');set('employment.career','稳定受雇岗位');set('activity.mode','work')}if(option===3){set('employment.status','unemployed');set('activity.mode','seeking')}add('finance.cash',[3000,0,1000,-12000][option])}
+    else{add('mobility.platformDependence',[-18,-8,-20,15][option]);if(option===2)effects.push(c('applyEmploymentProfile','employment','admin_assistant'));if(option===3)effects.push(c('leaveEmployment','employment','platformClosed'));add('finance.cash',[3000,0,1000,-12000][option])}
     add('pressures.career',episode.phase===1?[-2,0,5][option]:[-4,1,-2,9][option]);
   }
   if(episode?.id==='overseas_visa'){
@@ -562,10 +636,12 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     }
     if(phase===2){
       set('business.status','operating');if(option===1)set('business.mode','independent');if(option===2)set('business.mode','franchise');if(option<3){add('business.operatingSkill',[5,4,0][option]);add('finance.cash',[-12000,-8000,-35000][option])}
+      if(authoredDecision.episode.id==='shop_opening'&&option<3)effects.push(c('applyEmploymentProfile','employment','small_shop_owner'));
       if(option===2)effects.push(c('addLiability','finance.liabilities',50000,{kind:'business',rate:.1,guaranteed:true}));
     }
     if(phase===3){
       set('business.status',option<2?'operating':'closed');if(option===1)set('business.mode','independent');if(option===2)set('business.mode','none');if(option===3)set('business.mode','franchise');add('business.operatingSkill',[4,5,1,0][option]);add('business.equity',[60000,35000,0,0][option]);add('finance.cash',[0,-4000,-8000,-45000][option]);
+      if(authoredDecision.episode.id==='shop_opening'&&option>=2)effects.push(c('leaveEmployment','employment','businessClosed'));
       if(option===3)effects.push(c('addLiability','finance.liabilities',120000,{kind:'business',rate:.12,guaranteed:true}));
     }
   }
@@ -578,25 +654,31 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     if(episode.phase===3){
       set('business.status',option===3?'closed':'operating');set('business.scale',['regional','local','local','none'][option]);add('business.equity',[300000,50000,-80000,-150000][option]);add('finance.cash',[25000,-12000,80000,-50000][option]);add('business.control',[0,2,-12,-8][option]);
       if(option===3)effects.push(c('addLiability','finance.liabilities',160000,{kind:'business',rate:.11,guaranteed:true}));
+      if(option===3)effects.push(c('leaveEmployment','employment','businessClosed'));
+      if(option===0)effects.push(c('applyEmploymentProfile','employment','mature_owner'));
     }
   }
   if(episode?.id==='wealth_peak'){
     if(episode.phase===1){add('business.control',[1,0,2][option]);add('finance.cash',[-10000,250000,0][option]);if(option===1)add('business.equity',-200000)}
     if(episode.phase===2){
       add('business.control',[3,-8,-100,0][option]);add('finance.cash',[0,800000,2400000,0][option]);add('business.equity',[250000,-500000,-2000000,0][option]);
-      if(option===2)set('business.status','sold');if(option<3)effects.push(c('tag','history','wealthApex'));
+      if(option===0)effects.push(c('applyEmploymentProfile','employment','mature_owner'));if(option===2){set('business.status','sold');effects.push(c('leaveEmployment','employment','businessSold'))}if(option<3)effects.push(c('tag','history','wealthApex'));effects.push(c('tag','history','research:E72'));
     }
   }
-  if(id==='leisure'&&!episode){const modes=[['sabbatical','leisure','flexible'],['sabbatical','leisure','leisure'],['care','leisure','seeking'],['leisure','leisure','seeking'],['sabbatical','leisure','leisure'],['flexible','leisure','work'],['study','work','leisure'],['flexible','work','leisure']][index],funding=[['self','self','mixed'],['family','family','self'],['partner','partner','self'],['self','debt','self'],['self','self','self'],['mixed','self','self'],['self','self','family'],['mixed','self','family']][index];set('activity.mode',modes[option]);set('activity.funding',funding[option]);if(index===5&&option===0)set('employment.status','gig');if(index===5&&option===2)set('employment.status','selfEmployed');if(index===6&&option===1){set('employment.status','employed');set('employment.career','基层服务岗位');set('employment.employerType','private');set('employment.sector','services')}if(index===7&&option===1){set('employment.status','employed');set('employment.career','全职企业岗位');set('employment.employerType','private');set('employment.sector','general')}add('desires.freedom.fulfillment',[4,6,-1][option]);add('capabilities.employability',[-1,-4,2][option]);add('finance.cash',[-5000,-9000,2000][option])}
+  if(id==='leisure'&&!episode){const modes=[['sabbatical','leisure','flexible'],['sabbatical','leisure','leisure'],['care','leisure','seeking'],['leisure','leisure','seeking'],['sabbatical','leisure','leisure'],['flexible','leisure','work'],['study','work','leisure'],['flexible','work','leisure']][index],funding=[['self','self','mixed'],['family','family','self'],['partner','partner','self'],['self','debt','self'],['self','self','self'],['mixed','self','self'],['self','self','family'],['mixed','self','family']][index];set('activity.mode',modes[option]);set('activity.funding',funding[option]);if(index===5&&option===0)effects.push(c('applyEmploymentProfile','employment','remote_contractor'));if(index===5&&option===2)effects.push(c('applyEmploymentProfile','employment','small_shop_owner'));if(index===6&&option===1)effects.push(c('applyEmploymentProfile','employment','store_clerk'));if(index===7&&option===1)effects.push(c('applyEmploymentProfile','employment','admin_assistant'));add('desires.freedom.fulfillment',[4,6,-1][option]);add('capabilities.employability',[-1,-4,2][option]);add('finance.cash',[-5000,-9000,2000][option])}
   if(episode?.id==='career_break'){
     if(episode.phase===1){
-      set('employment.status',['none','none','gig'][option]);set('employment.employerType','none');set('activity.mode',['sabbatical','sabbatical','flexible'][option]);set('activity.funding',['self','family','mixed'][option]);add('finance.cash',[-5000,-2500,1000][option]);add('capabilities.employability',[-1,-1,1][option]);
+      if(option<2)effects.push(c('leaveEmployment','employment','careerBreak'));else effects.push(c('applyEmploymentProfile','employment','remote_contractor'));set('activity.mode',['sabbatical','sabbatical','flexible'][option]);set('activity.funding',['self','family','mixed'][option]);add('finance.cash',[-5000,-2500,1000][option]);add('capabilities.employability',[-1,-1,1][option]);
     }
     if(episode.phase===2){
       set('activity.mode',['leisure','leisure','seeking'][option]);set('activity.funding',['self','self','mixed'][option]);add('finance.cash',[-4500,-2500,-7000][option]);add('capabilities.employability',[-1,-2,2][option]);add('pressures.money',[0,-1,5][option]);
     }
     if(episode.phase===3){
-      set('employment.status',['none','gig','employed','employed'][option]);set('employment.employerType',['none','none','private','private'][option]);set('employment.career',['非求职生活','低强度项目','受雇岗位','过渡岗位'][option]);set('activity.mode',['leisure','flexible','work','work'][option]);set('activity.funding',['self','mixed','self','self'][option]);add('finance.cash',[-3000,1500,3000,1000][option]);add('capabilities.employability',[-2,2,4,1][option]);add('pressures.career',[-2,-1,-3,3][option]);
+      if(option===0)effects.push(c('leaveEmployment','employment','leisure'));
+      if(option===1)effects.push(c('applyEmploymentProfile','employment','remote_contractor'));
+      if(option===2)effects.push(c('applyEmploymentProfile','employment','admin_assistant'));
+      if(option===3)effects.push(c('applyEmploymentProfile','employment','store_clerk'));
+      set('activity.mode',['leisure','flexible','work','work'][option]);set('activity.funding',['self','mixed','self','self'][option]);add('finance.cash',[-3000,1500,3000,1000][option]);add('capabilities.employability',[-2,2,4,1][option]);add('pressures.career',[-2,-1,-3,3][option]);
     }
     add('desires.freedom.fulfillment',[4,3,1,-2][option]??0);
   }
@@ -705,7 +787,11 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
   }
   if(episode?.id==='retirement_transition'){
     if(episode.phase===1)set('later.retirement',['reviewing','phased','delayed'][option]);
-    else{set('later.retirement',['retired','semiRetired','working','forced'][option]);set('activity.mode',['retired','flexible','work','retired'][option]);set('employment.status',['retired','gig','employed','retired'][option])}
+    else{
+      set('later.retirement',['retired','semiRetired','working','forced'][option]);
+      if(option===1)effects.push(c('applyEmploymentProfile','employment','remote_contractor'));
+      if(option===0||option===3)effects.push(c('leaveEmployment','employment','retired'));
+    }
     add('desires.peace.fulfillment',episode.phase===1?[1,2,-1][option]:[5,3,0,-2][option]);add('pressures.career',episode.phase===1?[-1,-2,2][option]:[-4,-2,1,4][option]);
   }
   if(episode?.id==='parental_inheritance'){
@@ -724,10 +810,23 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     else{set('later.will',['documented','partial','deferred','invalidated'][option]);set('legacy.plan',['documented','partial','none','none'][option])}
     add('desires.peace.fulfillment',episode.phase===1?[2,1,0][option]:[5,2,-1,-1][option]);add('pressures.family',episode.phase===1?[-1,0,1][option]:[-3,-1,2,3][option]);
   }
+  const authoredChoice=authoredDecision?.choices?.[option];
+  if(Array.isArray(authoredChoice?.effects))effects.push(...authoredChoice.effects);
+  if(authoredDecision?.seedId)effects.push(c('tag','history',`research:${authoredDecision.seedId}`));
   const habitStage=id==='habits'?effects.find(effect=>effect.type==='set'&&effect.target==='habits.stage')?.value:null,outcomeTags=id==='habits'?['habits',`habits:${authoredDecision.type}`,`habits:${authoredDecision.habitKind}`,`habits:${route}`,habitStage?`habits:${habitStage}`:'habits:turn',`episode:${episode.id}`,...(habitStage==='recovery'?['recovery']:[])]:episode?[id,`${id}:${route}`,`episode:${episode.id}`]:[id,`${id}:${route}`,index===7?`${id}:legacy`:`${id}:turn`];
   return{effects,route,outcomeTags};
 };
 
+const RESEARCH_SEED_PROFILES={
+  E17:['crowd_rider','station_rider'],E20:['crowd_rider','station_rider'],
+  E24:['warehouse_picker'],E25:['warehouse_picker'],E26:['loading_gig','cleaning_worker'],
+  E30:['store_clerk','store_supervisor'],E34:['food_hourly','store_clerk','store_supervisor'],
+  E37:['store_supervisor'],E41:['factory_operator','skilled_technician'],
+  E44:['customer_service'],E51:['software_engineer','engineering_specialist','rd_engineer','algorithm_engineer'],
+  E52:['accountant'],E55:['software_engineer','engineering_specialist','designer','research_specialist','rd_engineer'],
+  E56:['software_engineer','engineering_specialist','designer','research_specialist','rd_engineer'],
+  E59:['junior_manager'],E62:['junior_manager','department_executive']
+};
 const decisions=[],authoredDecisionById=new Map();
 for(const id of trackOrder){
   const spec=TRACKS[id];
@@ -736,10 +835,12 @@ for(const id of trackOrder){
     const eventId=slot.id,echoId=eventId.replace('decision_','echo_'),requirements=requirementsFor(id),actors=id==='habits'?[]:authoredDecision.episode?episodeActorsFor(authoredDecision):actorsFor(id,index,'decision'),ageRange=authoredDecision.age||(id==='habits'?authoredDecision.age:TRACK_NODE_AGES[id][index]);
     if(id==='business'&&authoredDecision.episode?.phase>1)requirements.all=requirements.all.filter(rule=>rule.path!=='finance.available');
     if(id==='employment'&&!authoredDecision.episode){
-      if(index===0)requirements.all.push(p('education.nextStage','eq','career'),p('employment.status','in',['unemployed','gig']));
+      if(authoredDecision.seedId){
+        requirements.all.push(p('employment.status','in',['employed','gig','selfEmployed']),p('employment.profileId','in',RESEARCH_SEED_PROFILES[authoredDecision.seedId]));
+      }else if(index===0)requirements.all.push(p('education.nextStage','eq','career'),p('employment.status','in',['unemployed','gig']));
       else requirements.all.push(p('employment.status','eq','employed'));
     }
-    if(id==='employment'&&authoredDecision.episode?.role==='start'&&authoredDecision.episode.id!=='first_job_application'&&index>0)requirements.all.push(p('employment.status','eq','employed'));
+    if(id==='employment'&&authoredDecision.episode?.role==='start'&&!['first_job_application','long_term_first_job_reentry'].includes(authoredDecision.episode.id)&&index>0)requirements.all.push(p('employment.status','eq','employed'));
     if(id==='public'&&authoredDecision.episode?.role==='start')requirements.none.push(p('employment.employerType','eq','public'));
     if(id==='public'&&index>1)requirements.all.push(p('employment.employerType','eq','public'));
     if(id==='remote'&&index>0)requirements.any.push(p('employment.arrangement','in',['remote','hybrid']),p('mobility.mode','in',['domesticNomad','overseasNomad']));
@@ -789,6 +890,14 @@ for(const id of trackOrder){
     if(authoredDecision.episode?.id==='postgraduate_europe')requirements.all.push(p('education.status','eq','enrolled'),p('education.postgraduateSystem','eq','europe'),p('education.nextStage','eq','postgraduate'));
     if(authoredDecision.episode?.id==='overseas_postgraduate_belonging')requirements.all.push(p('education.status','eq','enrolled'),p('education.postgraduateSystem','in',['us','europe']));
     if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.nextStage','eq','firstJob'),p('employment.status','notIn',['employed','selfEmployed']));
+    if(authoredDecision.episode?.id==='professional_entry_qualification'){
+      requirements.all.push(p('education.highestCompleted','eq','postgraduate'),p('employment.status','notIn',['employed','selfEmployed']));
+      if(authoredDecision.episode.phase===1)requirements.all.push(p('education.professionalQualificationIntent','eq','none'));
+      else requirements.all.push(p('education.professionalQualificationIntent','in',['medical_practice','legal_practice','university_teaching']));
+    }
+    if(authoredDecision.episode?.id==='long_term_first_job_reentry'){
+      requirements.all.push(p('age','gte',32),p('education.status','notIn',['notStarted','enrolled']),p('employment.status','notIn',['employed','selfEmployed']),p('employment.firstJobAge','eq',null));
+    }
     if(authoredDecision.episode?.id==='professional_certification'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.status','notIn',['notStarted','enrolled']));
     if(authoredDecision.episode?.id==='adult_reeducation'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.status','notIn',['notStarted','enrolled']));
     if(authoredDecision.episode?.id==='business_expansion'&&authoredDecision.episode.phase===1)requirements.all.push(p('business.status','eq','operating'),p('business.operatingSkill','gte',45),p('business.equity','gte',30000));
@@ -808,8 +917,9 @@ for(const id of trackOrder){
       if(authoredDecision.episode?.id==='postgraduate_application'&&authoredDecision.episode.phase===3&&option===0)choiceRules.all.push(p('education.graduateApplicationIntent','eq','domestic'));
       if(authoredDecision.episode?.id==='postgraduate_application'&&authoredDecision.episode.phase===3&&option===1)choiceRules.all.push(p('education.graduateApplicationIntent','in',['us','europe']));
       if(authoredDecision.episode?.id==='undergraduate_change'&&authoredDecision.episode.phase===2&&option<3)choiceRules.all.push(p('education.changeIntent','eq',['major','leave','transfer'][option]));
-      if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===2){if(option===0)choiceRules.all.push(p('employment.entryCredential','in',['bachelor','undergraduateIncomplete']));if(option===1)choiceRules.all.push(p('employment.entryCredential','eq','postgraduate'))}
-      if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===4){if(option<2)choiceRules.all.push(p('employment.entryCredential','in',['bachelor','undergraduateIncomplete']));if(option>=2&&option<4)choiceRules.all.push(p('employment.entryCredential','eq','postgraduate'));if(option<4)choiceRules.all.push(p('employment.applicationStatus','eq','offered'))}
+      if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===4&&option<2)choiceRules.all.push(p('employment.applicationStatus','eq','offered'),p('employment.pendingOfferId','neq','none'));
+      if(id==='employment'&&!authoredDecision.episode&&index===5&&option===0)
+        choiceRules.all.push(p('employment.profileId','in',Object.keys(EMPLOYMENT_CATALOG_SOURCE.promotionMap)));
       return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences:[{eventId:echoId,delayMin:1+option,delayMax:3+option}],outcomeTags:result.outcomeTags,memoryKey,route:result.route};
     });
     decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{situation:authoredDecision.situation,episode:authoredDecision.episode}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:16+index%3,contentRevision:CONTENT_REVISION});
@@ -823,7 +933,7 @@ const globalRows=[
 ];
 for(const [sourceIndex,row] of globalRows.entries()){
   const slot=resolveAuthorSlot(authorSlots,'decisions',decisionAuthorKey(row.track,row.prompt,row.verbs),`globalRows[${sourceIndex}]`),globalIndex=slot.localIndex,id=slot.id,echoId=id.replace('decision_','echo_');
-  const choices=row.verbs.map((text,index)=>{const educationStatus=row.age[0]===18?(index===0?'enrolled':'completed'):(index===2?'completed':'enrolled'),effects=[row.education?c('transition','education',row.education[index],{status:educationStatus}):c('claimDesire','desires',row.desire[index],{replace:Boolean(row.reclaim)})],cardInteraction=cardInteractionFor(row.track,globalIndex,index);if(row.age[0]===18&&index===1)effects.push(c('set','employment.status','employed'),c('set','employment.career','基层岗位'),c('set','employment.sector','services'),c('set','activity.mode','work'));if(row.age[0]===18&&index===2)effects.push(c('set','employment.status','gig'),c('set','employment.career','灵活就业'),c('set','employment.sector','platform'),c('set','activity.mode','work'));return{id:`${id}_choice_${index+1}`,text,resultText:row.results[index],hints:[],requirements:[],mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects,commitments:[],consequences:[{eventId:echoId,delayMin:2,delayMax:5}],outcomeTags:[row.track,index===0?'chosenA':index===1?'chosenB':'chosenC'],memoryKey:`${id}_c${index+1}`,route:['deliberate','stable','open'][index]}});
+  const choices=row.verbs.map((text,index)=>{const educationStatus=row.age[0]===18?(index===0?'enrolled':'completed'):(index===2?'completed':'enrolled'),effects=[row.education?c('transition','education',row.education[index],{status:educationStatus}):c('claimDesire','desires',row.desire[index],{replace:Boolean(row.reclaim)})],cardInteraction=cardInteractionFor(row.track,globalIndex,index);if(row.age[0]===18&&index===1)effects.push(c('applyEmploymentProfile','employment','store_clerk'));if(row.age[0]===18&&index===2)effects.push(c('applyEmploymentProfile','employment','crowd_rider'));return{id:`${id}_choice_${index+1}`,text,resultText:row.results[index],hints:[],requirements:[],mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects,commitments:[],consequences:[{eventId:echoId,delayMin:2,delayMax:5}],outcomeTags:[row.track,index===0?'chosenA':index===1?'chosenB':'chosenC'],memoryKey:`${id}_c${index+1}`,route:['deliberate','stable','open'][index]}});
   decisions.push({id,kind:'decision',track:row.track,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'◎',prompt:row.prompt,requirements:{all:[row.reclaim?p('desires.reclaimed','eq',false):p('age','gte',row.age[0])],any:[],none:[]},actors:[],choices,assertions:[],priority:30,weight:30,contentRevision:CONTENT_REVISION});
   authoredDecisionById.set(id,{echoText:row.echoText,choices:row.consequences.map(consequenceText=>({consequenceText}))});
 }
@@ -934,7 +1044,14 @@ codex.push(
 
 const realityRules={education:'家庭资源、关系安全、习惯、出勤、学校支持和个人能力共同形成准备度；金钱不直接生成成绩。国内外本科的申请、录取、资金与报到分别记录。',employment:'裁员、晋升和排班只适用于真实受雇者；求职、退出劳动市场与主动休闲不得混用。',retirement:'退休取决于出生年代、单位类型、缴费年限和个人选择，不用固定年龄覆盖。',debt:'个人债务逐笔计息；生活缺口合并记录，担保、逾期、重组和遗产处理保留独立状态。',family:'伴侣与子女是带年龄、存亡、关系和法律身份的人物实体；家庭资源、父母在场和情感安全相互独立。',platform:'远程与旅居需要可迁移能力或真实远程收入，平台依赖增加波动。',franchise:'加盟成本包含品牌、装修、设备、原料、投流和担保，成功需要技能、现金缓冲与低锁定。'};
 const trackCoverage=Object.fromEntries(trackOrder.map(id=>[id,{beats:annualBeats.filter(event=>event.track===id).length,episodes:decisions.filter(event=>event.track===id&&event.episode).length,transitions:decisions.filter(event=>event.track===id&&!event.episode).length,roles:['entry','development','daily','conflict','crisis','recovery','exit','legacy']} ]));
-const data={version:VERSION,gameVersion:VERSION,schemaVersion:SCHEMA_VERSION,contentRevision:CONTENT_REVISION,stages,locations,desires,conflicts,familyArchetypes,familySecrets,cards,events:[...annualBeats,...decisions,...echoes,...blackSwans],episodeCatalog:EPISODE_CATALOG,endingProfiles,endingTitles,codex,realityRules,trackCoverage,cardInteractionCoverage,cardInteractionWitnesses:CARD_INTERACTION_WITNESSES};
+const employmentCatalog={
+  ...EMPLOYMENT_CATALOG_SOURCE,
+  recruitmentScenarios:EMPLOYMENT_CATALOG_SOURCE.recruitmentScenarios.map(scenario=>({
+    ...scenario,
+    ...RECRUITMENT_SCENARIO_COPY[scenario.id]
+  }))
+};
+const data={version:VERSION,gameVersion:VERSION,schemaVersion:SCHEMA_VERSION,contentRevision:CONTENT_REVISION,stages,locations,desires,conflicts,familyArchetypes,familySecrets,employmentCatalog,cards,events:[...annualBeats,...decisions,...echoes,...blackSwans],episodeCatalog:EPISODE_CATALOG,endingProfiles,endingTitles,codex,realityRules,trackCoverage,cardInteractionCoverage,cardInteractionWitnesses:CARD_INTERACTION_WITNESSES};
 validateGeneratedData(data);
 fs.writeFileSync(output,`${JSON.stringify(data,null,2)}\n`,'utf8');
 console.log(JSON.stringify({version:VERSION,events:{beat:annualBeats.length,decision:decisions.length,consequence:echoes.length,blackSwan:blackSwans.length,total:data.events.length},cards:cards.length,families:familyArchetypes.length,secrets:familySecrets.length,endings:endingTitles.length,codex:codex.length},null,2));

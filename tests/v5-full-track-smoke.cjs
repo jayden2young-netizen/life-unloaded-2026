@@ -5,13 +5,15 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.3-full-track');
+const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.4-full-track');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const decisions=data.events.filter(event=>event.kind==='decision');
+const laterBeats=data.events.filter(event=>event.kind==='beat'&&event.track==='later');
 const eventFor=(id,phase)=>decisions.find(event=>event.episode?.id===id&&(phase===undefined||event.episode.phase===phase));
+const laterBeat=text=>laterBeats.find(event=>event.text===text);
 const episodeIds=['secondary_diversion','professional_certification','adult_reeducation','business_expansion','wealth_peak','retirement_transition','parental_inheritance','long_term_care','will_planning'];
 const expectedRoutes={
   secondary_diversion:['academic','vocational','employment','alternative_school'],
@@ -62,6 +64,15 @@ async function fitDrawer(page,label){
   assert.match(geometry.text,/照护·安排稳定/);
 }
 
+async function drawerTextFor(page,education){
+  await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({education:value}),education);
+  await page.locator('[data-act="open-drawer"]').click();
+  await page.waitForTimeout(900);
+  const text=await page.locator('.drawer').innerText();
+  await page.locator('.drawer [data-act="close-drawer"]').click();
+  return text;
+}
+
 async function startChoice(page,event){
   assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),event.id),event.id);
   let run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
@@ -107,10 +118,17 @@ async function prepareFinal(page,id,event){
 }
 
 (async()=>{
-  assert.equal(data.version,'0.6.3');
+  assert.equal(data.version,'0.6.4');
   assert.equal(data.schemaVersion,11);
-  assert.equal(data.contentRevision,21);
+  assert.equal(data.contentRevision,22);
   assert.ok(decisions.every(event=>!('arc' in event)));
+  assert.ok(laterBeats.every(event=>event.ageMin>=55),'later beat appeared before midlife');
+  const retirementTrip=laterBeat('退休旅行群出发前，先讨论了半月药盒。');
+  const rehireOvertime=laterBeat('返聘单位临时加班，你第一次直接说不去。');
+  const ordinaryCheckup=laterBeat('体检日期写在月历上，旁边是买菜清单。');
+  assert.deepEqual(retirementTrip.requirements.all.find(rule=>rule.path==='later.retirement')?.value,['retired','semiRetired','forced']);
+  assert.deepEqual(rehireOvertime.requirements.all.find(rule=>rule.path==='later.retirement')?.value,['semiRetired']);
+  assert.equal(ordinaryCheckup.requirements.all.some(rule=>rule.path==='later.retirement'),false);
   for(const id of episodeIds){
     const rows=decisions.filter(event=>event.episode?.id===id).sort((a,b)=>a.episode.phase-b.episode.phase);
     assert.ok(rows.length>=1&&rows.length<=3,`${id}: phase count`);
@@ -133,7 +151,7 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.6.3');
+    assert.equal(migrated.gameVersion,'0.6.4');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
@@ -203,12 +221,31 @@ async function prepareFinal(page,id,event){
     eligible=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'));
     assert.ok(!eligible.includes(eventFor('retirement_transition',1).id),'two active episodes allowed a third start');
 
+    await page.evaluate(({retirementTripId,ordinaryCheckupId})=>window.__LIFE_DEBUG__.patchRun({age:55,later:{retirement:'none',inheritance:'limited',care:'stable',will:'documented'},employment:{status:'employed'},activity:{mode:'work'},seen:{events:{[retirementTripId]:0,[ordinaryCheckupId]:0}}}),{retirementTripId:retirementTrip.id,ordinaryCheckupId:ordinaryCheckup.id});
+    let eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
+    assert.ok(!eligibleBeats.includes(retirementTrip.id),'retirement trip available while still working');
+    assert.ok(eligibleBeats.includes(ordinaryCheckup.id),'ordinary later-life beat incorrectly requires retirement');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({later:{retirement:'retired'}}));
+    eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
+    assert.ok(eligibleBeats.includes(retirementTrip.id),'retirement trip unavailable after retirement');
+
+    const educationBase={status:'completed',level:3,path:'highSchool',applicationStatus:'vocationalExit',graduateApplicationStatus:'none'};
+    let drawerText=await drawerTextFor(page,{...educationBase,courseworkEvidence:0,campusEvidence:0,practiceEvidence:0,researchEvidence:0});
+    assert.match(drawerText,/高等教育\s+尚无明显侧重 · 本科改走职教 · 研究生未申请/);
+    assert.doesNotMatch(drawerText,/学习证据|本科申请|研究生申请|求职记录|已经报到|vocationalExit/);
+    drawerText=await drawerTextFor(page,{...educationBase,courseworkEvidence:1,campusEvidence:2,practiceEvidence:8,researchEvidence:3});
+    assert.match(drawerText,/侧重实践/);
+    drawerText=await drawerTextFor(page,{...educationBase,courseworkEvidence:8,campusEvidence:2,practiceEvidence:8,researchEvidence:3});
+    assert.match(drawerText,/课程与实践并重/);
+    drawerText=await drawerTextFor(page,{...educationBase,courseworkEvidence:8,campusEvidence:8,practiceEvidence:8,researchEvidence:3});
+    assert.match(drawerText,/方向较均衡/);
+
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({later:{retirement:'retired',inheritance:'limited',care:'stable',will:'documented'}}));
     const drawerViewports=[[360,773],[360,640],[320,568]];
     for(const[width,height]of drawerViewports){
       await page.setViewportSize({width,height});
       await page.locator('[data-act="open-drawer"]').click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(900);
       await fitDrawer(page,`drawer-${width}x${height}`);
       await page.screenshot({path:path.join(OUT,`drawer-${width}x${height}.png`),fullPage:false});
       await page.locator('.drawer [data-act="close-drawer"]').click();

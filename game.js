@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.3');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.4');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.3',
+  const VERSION = '0.6.4',
     SCHEMA_VERSION = 11,
-    CONTENT_REVISION = 21;
+    CONTENT_REVISION = 22;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -456,6 +456,8 @@
       graduateApplicationResult: 'none',
       graduateOfferRegion: 'none',
       graduateFundingStatus: 'none',
+      credentials: [],
+      professionalQualificationIntent: 'none',
     };
     run.development = {
       learningHabit: clamp(35 + context.educationCapital * 0.2, 25, 60),
@@ -484,12 +486,22 @@
     run.roles = ['child'];
     run.employment = {
       status: 'none',
+      profileId: 'none',
       career: '尚未进入社会',
       sector: 'none',
       employerType: 'none',
       rank: 0,
       contract: 'none',
+      contractType: 'none',
       salary: 0,
+      incomeAnnualGross: 0,
+      incomeStability: 'none',
+      jobTier: null,
+      firstJobEntryPath: 'none',
+      firstJobAge: null,
+      pendingOfferId: 'none',
+      lastJob: null,
+      careLeaveUntilAge: null,
       benefits: 0,
       tenure: 0,
       experience: 0,
@@ -829,10 +841,17 @@
     merged.development.routeExposure = Array.isArray(run.development?.routeExposure)
       ? run.development.routeExposure
       : [];
+    merged.education.credentials = Array.isArray(run.education?.credentials)
+      ? Array.from(new Set(run.education.credentials))
+      : [];
     merged.employment.schedule = {
       ...fresh.employment.schedule,
       ...(run.employment?.schedule || {}),
     };
+    merged.employment.lastJob =
+      run.employment?.lastJob && typeof run.employment.lastJob === 'object'
+        ? copy(run.employment.lastJob)
+        : null;
     merged.episodes = { ...fresh.episodes, ...(run.episodes || {}) };
     merged.sceneQueue = Array.isArray(run.sceneQueue) ? run.sceneQueue : [];
     for (const key of Object.keys(fresh.desires))
@@ -1334,46 +1353,369 @@
       { domestic: '国内', us: '美国', europe: '欧洲' }[run.education.graduateOfferRegion] || '当前';
     return ` ${region}录取已经形成；${run.education.graduateFundingStatus === 'ready' ? '资金条件可进入报到' : '资金仍有缺口，不能直接报到'}。`;
   }
-  function resolveFirstJobApplication(run, route) {
+  const JOB_TIER_INDEX = Object.freeze({ T0: 0, T1: 1, T2: 2, T3: 3, T4: 4 });
+  function employmentProfiles() {
+    return Array.isArray(DATA.employmentCatalog?.profiles) ? DATA.employmentCatalog.profiles : [];
+  }
+  function employmentProfile(id) {
+    return employmentProfiles().find((profile) => profile.id === id) || null;
+  }
+  function educationTierRange(run, reentry = false) {
     const credential = run.employment.entryCredential,
-      evidence =
-        run.education.practiceEvidence * 0.8 +
-        run.education.courseworkEvidence * 0.35 +
-        run.education.researchEvidence * (credential === 'postgraduate' ? 0.65 : 0.25) +
-        run.capabilities.employability * 0.35,
-      currentRegion = run.employment.applicationRegion,
+      completed = run.education.highestCompleted;
+    let range =
+      credential === 'postgraduate' || completed === 'postgraduate'
+        ? [2, 3]
+        : credential === 'bachelor' || completed === 'undergraduate'
+          ? [1, 2]
+          : credential === 'middleSchool' || completed === 'middleSchool'
+            ? [0, 0]
+            : [0, 1];
+    if (reentry) range = [Math.max(0, range[0] - 1), range[1]];
+    return range;
+  }
+  function profileCredentialsReady(run, profile) {
+    const held = new Set(run.education.credentials || []);
+    return (profile.credentials || []).every((credential) => held.has(credential));
+  }
+  function profileIncome(run, profile, salaryBandOverride = null) {
+    const catalog = DATA.employmentCatalog,
+      tier = catalog?.tiers?.[profile.tier],
+      overseasReference = ['us', 'europe'].includes(run.employment.applicationRegion),
+      locationFactor = overseasReference
+        ? catalog?.regionalCoefficients?.tier1 || 1.2
+        : catalog?.regionalCoefficients?.[run.location.id] || 1,
+      bandName = salaryBandOverride || profile.salaryBand || 'mid',
+      band = catalog?.salaryBands?.[bandName] || 1,
+      monthlyBase =
+        profile.tier === 'T4'
+          ? Math.max(25000, (catalog?.tiers?.T3?.monthlyBase || 20000) * 1.25)
+          : tier?.monthlyBase || 0,
+      monthly = profile.incomeStability === 'business'
+        ? 0
+        : Math.round((monthlyBase * locationFactor * band) / 100) * 100;
+    let annual = monthly * 12;
+    if (profile.incomeStability === 'fixedPlusBonus')
+      annual = Math.round(monthly * 13 * (.92 + stable(run.seed, `income:${profile.id}:${run.age}`, 17) / 100));
+    if (profile.incomeStability === 'piecework')
+      annual = Math.round(monthly * 12 * (.8 + stable(run.seed, `income:${profile.id}:${run.age}`, 41) / 100));
+    if (profile.incomeStability === 'project')
+      annual = Math.round(monthly * 12 * (.7 + stable(run.seed, `income:${profile.id}:${run.age}`, 61) / 100));
+    if (profile.incomeStability === 'business') annual = 0;
+    return { monthly, annual: Math.max(0, annual), bandName };
+  }
+  function snapshotCurrentJob(run) {
+    if (!['employed', 'gig', 'selfEmployed'].includes(run.employment.status)) return;
+    run.employment.lastJob = {
+      profileId: run.employment.profileId,
+      career: run.employment.career,
+      tier: run.employment.jobTier,
+      sector: run.employment.sector,
+      employerType: run.employment.employerType,
+      contractType: run.employment.contractType,
+      salary: run.employment.salary,
+      incomeAnnualGross: run.employment.incomeAnnualGross,
+      incomeStability: run.employment.incomeStability,
+      tenure: run.employment.tenure,
+    };
+  }
+  function resolveProfileAlias(run, value) {
+    if (!value.includes(':') && employmentProfile(value)) {
+      const profile = employmentProfile(value);
+      return { profile: profileCredentialsReady(run, profile) ? profile : null };
+    }
+    const current = employmentProfile(run.employment.profileId);
+    if (value.startsWith('current:') && current && profileCredentialsReady(run, current))
+      return { profile: current, salaryBand: value.split(':')[1] };
+    const previous = run.employment.lastJob,
+      previousTier = JOB_TIER_INDEX[previous?.tier] ?? JOB_TIER_INDEX[run.employment.jobTier] ?? 1,
+      previousSector = previous?.sector || run.employment.sector;
+    if (value === 'sameField' && previous?.profileId) {
+      const profile = employmentProfile(previous.profileId);
+      return { profile: profile && profileCredentialsReady(run, profile) ? profile : null };
+    }
+    let candidates = employmentProfiles();
+    if (value === 'bridgeJob')
+      candidates = candidates.filter(
+        (profile) => JOB_TIER_INDEX[profile.tier] === Math.max(0, previousTier - 1)
+      );
+    if (value === 'careerChange')
+      candidates = candidates.filter(
+        (profile) =>
+          profile.sector !== previousSector &&
+          [previousTier, Math.max(0, previousTier - 1)].includes(JOB_TIER_INDEX[profile.tier])
+      );
+    candidates = candidates.filter(
+      (profile) => profile.firstJobEligible && profileCredentialsReady(run, profile)
+    );
+    const profile = candidates[stable(run.seed, `profile-alias:${value}:${run.age}`, Math.max(1, candidates.length))];
+    return { profile: profile || null };
+  }
+  function applyEmploymentProfile(run, value, { firstJob = false } = {}) {
+    const resolved = resolveProfileAlias(run, value),
+      profile = resolved.profile;
+    if (!profile) return false;
+    if (
+      ['employed', 'gig', 'selfEmployed'].includes(run.employment.status) &&
+      run.employment.profileId !== profile.id
+    ) {
+      snapshotCurrentJob(run);
+      run.employment.tenure = 0;
+    }
+    const income = profileIncome(run, profile, resolved.salaryBand);
+    run.employment.profileId = profile.id;
+    run.employment.career = profile.name;
+    run.employment.jobTier = profile.tier;
+    run.employment.rank = JOB_TIER_INDEX[profile.tier];
+    run.employment.sector = profile.sector;
+    run.employment.employerType = profile.employerType;
+    run.employment.contractType = profile.contractType;
+    run.employment.contract = profile.contractType;
+    run.employment.arrangement = profile.arrangement;
+    run.employment.schedule = {
+      stability: ['fixed', 'fixedPlusBonus'].includes(profile.incomeStability) ? 78 : 55,
+      splitGapHours: profile.arrangement === 'splitShift' ? 4 : 0,
+      timezoneLoad: profile.arrangement === 'remote' ? 4 : 0,
+    };
+    run.employment.incomeStability = profile.incomeStability;
+    run.employment.salary = income.monthly;
+    run.employment.incomeAnnualGross = income.annual;
+    run.employment.status =
+      profile.incomeStability === 'business'
+        ? 'selfEmployed'
+        : ['platform', 'dayLabor', 'project'].includes(profile.contractType)
+          ? 'gig'
+          : 'employed';
+    run.employment.applicationStatus = 'employed';
+    run.employment.pendingOfferId = 'none';
+    run.employment.careLeaveUntilAge = null;
+    run.activity.mode = run.employment.status === 'gig' ? 'flexible' : 'work';
+    if (firstJob || run.employment.firstJobAge === null) {
+      run.employment.firstJobAge = run.age;
+      run.employment.firstJobOutcome = profile.id;
+      if (run.employment.firstJobEntryPath === 'none')
+        run.employment.firstJobEntryPath = profile.entryPaths?.[0] || 'openRecruitment';
+    }
+    return true;
+  }
+  function leaveEmployment(run, outcome = 'unemployed') {
+    if (
+      ['businessClosed', 'businessSold'].includes(outcome) &&
+      run.employment.incomeStability !== 'business'
+    )
+      return false;
+    snapshotCurrentJob(run);
+    const retired = outcome === 'retired',
+      careLeave = outcome === 'careLeave';
+    run.employment.status = retired ? 'retired' : careLeave ? 'careLeave' : 'unemployed';
+    run.employment.profileId = 'none';
+    run.employment.career = retired ? '已退休' : careLeave ? '停薪留职' : '待业中';
+    run.employment.sector = 'none';
+    run.employment.employerType = 'none';
+    run.employment.contractType = 'none';
+    run.employment.contract = 'none';
+    run.employment.arrangement = 'onsite';
+    run.employment.schedule = { stability: 70, splitGapHours: 0, timezoneLoad: 0 };
+    run.employment.salary = 0;
+    run.employment.incomeAnnualGross = 0;
+    run.employment.incomeStability = 'none';
+    run.employment.jobTier = null;
+    run.employment.rank = 0;
+    run.employment.tenure = 0;
+    run.employment.pendingOfferId = 'none';
+    run.employment.careLeaveUntilAge = null;
+    run.employment.applicationStatus =
+      ['declined', 'offerDeclined', 'retired', 'careLeave', 'leisure', 'careerBreak'].includes(outcome)
+        ? 'withdrawn'
+        : 'searching';
+    if (run.employment.firstJobAge === null) run.employment.firstJobOutcome = 'longSearch';
+    run.activity.mode = retired
+      ? 'retired'
+      : careLeave
+        ? 'flexible'
+        : outcome === 'leisure' || outcome === 'careerBreak'
+          ? 'leisure'
+          : 'seeking';
+    return true;
+  }
+  function takeCareLeave(run) {
+    const returnAge = run.age + 1;
+    if (!leaveEmployment(run, 'careLeave')) return false;
+    run.employment.careLeaveUntilAge = returnAge;
+    return true;
+  }
+  function completeEmploymentHandover(run) {
+    if (!['employed', 'gig'].includes(run.employment.status)) return false;
+    snapshotCurrentJob(run);
+    const previous = copy(run.employment.lastJob),
+      handoverIncome = Math.round(
+        (run.employment.incomeAnnualGross || run.employment.salary * 12) / 4
+      );
+    run.finance.cash += Math.max(0, handoverIncome);
+    leaveEmployment(run, 'contractEnded');
+    run.employment.lastJob = previous;
+    return true;
+  }
+  function resumeCareLeaveIfDue(run) {
+    if (
+      run.employment.status !== 'careLeave' ||
+      !Number.isFinite(run.employment.careLeaveUntilAge) ||
+      run.age < run.employment.careLeaveUntilAge
+    )
+      return false;
+    const previous = copy(run.employment.lastJob),
+      restored = previous?.profileId && applyEmploymentProfile(run, previous.profileId);
+    if (!restored) {
+      leaveEmployment(run, 'longSearch');
+      return false;
+    }
+    run.employment.salary = Math.max(0, Number(previous.salary) || 0);
+    run.employment.incomeAnnualGross = Math.max(0, Number(previous.incomeAnnualGross) || 0);
+    run.employment.incomeStability = previous.incomeStability || run.employment.incomeStability;
+    run.employment.tenure = Math.max(0, Number(previous.tenure) || 0);
+    return true;
+  }
+  function firstJobCandidates(run, { reentry = false } = {}) {
+    const [minimum, maximum] = educationTierRange(run, reentry),
+      region = run.location.id,
+      overseas = ['us', 'europe'].includes(run.employment.applicationRegion),
+      authorizationReady = !overseas || run.mobility.workAuthorization === 'verified',
+      entryPath = run.employment.firstJobEntryPath;
+    if (!authorizationReady) return [];
+    return employmentProfiles().filter((profile) => {
+      const tier = JOB_TIER_INDEX[profile.tier];
+      return (
+        profile.firstJobEligible &&
+        tier >= minimum &&
+        tier <= maximum &&
+        (profile.regions || []).includes(region) &&
+        profileCredentialsReady(run, profile) &&
+        (entryPath === 'none' ||
+          (reentry && entryPath === 'reentry' && (profile.entryPaths || []).includes('reentry')) ||
+          (profile.entryPaths || []).includes(entryPath))
+      );
+    });
+  }
+  function selectFirstJobOffer(run, route = 'domestic', reentry = false, scenario = null, choice = null) {
+    let candidates = firstJobCandidates(run, { reentry });
+    const profileIds = choice?.profileIds || scenario?.profileIds,
+      tiers = scenario?.tiers;
+    if (profileIds?.length) candidates = candidates.filter((profile) => profileIds.includes(profile.id));
+    if (tiers?.length) candidates = candidates.filter((profile) => tiers.includes(profile.tier));
+    const credentialProfiles = candidates.filter(
+      (profile) => (profile.credentials || []).length && profileCredentialsReady(run, profile)
+    );
+    if (credentialProfiles.length) candidates = credentialProfiles;
+    if (!candidates.length) return null;
+    const evidence =
+        run.education.practiceEvidence * .8 +
+        run.education.courseworkEvidence * .35 +
+        run.education.researchEvidence * (run.employment.entryCredential === 'postgraduate' ? .65 : .25) +
+        run.capabilities.employability * .35,
+      threshold = run.employment.entryCredential === 'postgraduate' ? 47 : 34;
+    if (!reentry && evidence < threshold) return null;
+    return candidates[
+      stable(
+        run.seed,
+        `first-job:${route}:${run.employment.firstJobEntryPath}:${scenario?.id || 'base'}:${choice?.index ?? 0}`,
+        candidates.length
+      )
+    ];
+  }
+  function resolveFirstJobApplication(run, route, scenarioId = null, choiceIndex = 0) {
+    const currentRegion = run.employment.applicationRegion,
       region =
         route === 'return'
           ? 'domestic'
           : route === 'overseas'
-            ? currentRegion === 'none'
-              ? run.mobility.lastOverseasSystem
-              : currentRegion
+            ? ['us', 'europe'].includes(currentRegion)
+              ? currentRegion
+              : ['us', 'europe'].includes(run.mobility.lastOverseasSystem)
+                ? run.mobility.lastOverseasSystem
+                : 'none'
             : ['us', 'europe'].includes(currentRegion)
               ? currentRegion
               : 'domestic',
-      overseasRegion = ['us', 'europe'].includes(region);
-    if (overseasRegion && !['verified', 'restricted'].includes(run.mobility.workAuthorization))
+      overseas = ['us', 'europe'].includes(region);
+    if (route === 'overseas' && !overseas) {
+      run.employment.pendingOfferId = 'none';
+      run.employment.applicationStatus = 'searching';
+      run.employment.firstJobOutcome = 'longSearch';
+      return;
+    }
+    if (overseas && !['verified', 'restricted'].includes(run.mobility.workAuthorization))
       run.mobility.workAuthorization =
-        run.mobility.hostLanguage >= 12 && run.mobility.visaPressure < 85
-          ? 'verified'
-          : 'restricted';
-    const authorizationReady = !overseasRegion || run.mobility.workAuthorization === 'verified',
-      networkBonus = overseasRegion
-        ? run.mobility.localTies * 0.2
-        : run.relationships.network * 0.08,
-      channelBonus =
-        {
-          graduate: 2,
-          conversion: run.education.practiceEvidence * 0.1,
-          specialist: run.education.researchEvidence * 0.12,
-          bridge: run.capabilities.employability * 0.08,
-        }[run.employment.applicationChannel] || 0,
-      threshold = credential === 'postgraduate' ? 47 : 42,
-      offered = evidence + networkBonus + channelBonus >= threshold && authorizationReady;
+        run.mobility.hostLanguage >= 12 && run.mobility.visaPressure < 85 ? 'verified' : 'restricted';
     run.employment.applicationRegion = region;
-    run.employment.applicationStatus = offered ? 'offered' : 'searching';
-    run.employment.firstJobOutcome = offered ? 'pending' : 'longSearch';
+    const scenario =
+        DATA.employmentCatalog?.recruitmentScenarios?.find((item) => item.id === scenarioId) || null,
+      choice = scenario?.choices?.[choiceIndex] ? { ...scenario.choices[choiceIndex], index: choiceIndex } : null;
+    if (choice?.entryPath || scenario?.entryPath)
+      run.employment.firstJobEntryPath = choice?.entryPath || scenario.entryPath;
+    const offer = selectFirstJobOffer(run, route, false, scenario, choice);
+    run.employment.pendingOfferId = offer?.id || 'none';
+    run.employment.applicationStatus = offer ? 'offered' : 'searching';
+    run.employment.firstJobOutcome = offer ? 'pending' : 'longSearch';
+  }
+  function acceptFirstJobOffer(run, route) {
+    let profile = employmentProfile(run.employment.pendingOfferId);
+    if (!profile && route === 'reentry') {
+      run.employment.firstJobEntryPath = 'reentry';
+      profile = selectFirstJobOffer(run, 'reentry', true);
+    }
+    const validPending =
+      profile &&
+      profile.firstJobEligible &&
+      profile.tier !== 'T4' &&
+      profileCredentialsReady(run, profile) &&
+      firstJobCandidates(run, { reentry: route === 'reentry' }).some(
+        (candidate) => candidate.id === profile.id
+      );
+    if (!validPending) {
+      leaveEmployment(run, 'longSearch');
+      return false;
+    }
+    return applyEmploymentProfile(run, profile.id, { firstJob: true });
+  }
+  function adjustJobTier(run, delta) {
+    const current = employmentProfile(run.employment.profileId);
+    if (!current) return false;
+    const step = clamp(Math.trunc(Number(delta) || 0), -1, 1);
+    if (step === 0) return applyEmploymentProfile(run, `current:${current.salaryBand || 'mid'}`);
+    const targetIndex = clamp(JOB_TIER_INDEX[current.tier] + step, 0, 4);
+    if (step > 0) {
+      const targetId = DATA.employmentCatalog?.promotionMap?.[current.id],
+        target = targetId ? employmentProfile(targetId) : null;
+      return target && profileCredentialsReady(run, target)
+        && JOB_TIER_INDEX[target.tier] === targetIndex
+        ? applyEmploymentProfile(run, target.id)
+        : false;
+    }
+    const candidates = employmentProfiles().filter(
+      (profile) =>
+        JOB_TIER_INDEX[profile.tier] === targetIndex &&
+        profileCredentialsReady(run, profile) &&
+        profile.sector === current.sector
+    );
+    const target =
+      candidates[stable(run.seed, `tier:${current.id}:${targetIndex}:${run.age}`, Math.max(1, candidates.length))];
+    return target ? applyEmploymentProfile(run, target.id) : false;
+  }
+  function resolveLayoff(run, route) {
+    const monthly = Math.round((run.employment.incomeAnnualGross || run.employment.salary * 12) / 12),
+      months = ['fixedTerm', 'openEnded', 'service'].includes(run.employment.contractType)
+        ? route === 'documented'
+          ? 2
+          : 1
+        : 0;
+    run.finance.cash += Math.max(0, monthly * months);
+    leaveEmployment(run, 'layoff');
+  }
+  function grantCredential(run, value) {
+    const credential =
+      value === 'selected' ? run.education.professionalQualificationIntent : value;
+    if (!['medical_practice', 'legal_practice', 'university_teaching'].includes(credential)) return;
+    if (!run.education.credentials.includes(credential)) run.education.credentials.push(credential);
   }
   function firstJobApplicationResult(run) {
     return run.employment.applicationStatus === 'offered'
@@ -1454,7 +1796,28 @@
       else if (command.type === 'resolveGraduateApplication')
         resolveGraduateApplication(run, command.value);
       else if (command.type === 'resolveFirstJobApplication')
-        resolveFirstJobApplication(run, command.value);
+        resolveFirstJobApplication(
+          run,
+          command.value,
+          command.scenarioId,
+          command.scenarioChoiceIndex
+        );
+      else if (command.type === 'acceptFirstJobOffer')
+        acceptFirstJobOffer(run, command.value);
+      else if (command.type === 'applyEmploymentProfile')
+        applyEmploymentProfile(run, command.value);
+      else if (command.type === 'leaveEmployment')
+        leaveEmployment(run, command.value);
+      else if (command.type === 'takeCareLeave')
+        takeCareLeave(run);
+      else if (command.type === 'completeEmploymentHandover')
+        completeEmploymentHandover(run);
+      else if (command.type === 'adjustJobTier')
+        adjustJobTier(run, command.value);
+      else if (command.type === 'resolveLayoff')
+        resolveLayoff(run, command.value);
+      else if (command.type === 'grantCredential')
+        grantCredential(run, command.value);
       else if (command.type === 'createPerson') createRelatedPerson(run, command);
       else if (command.type === 'transitionPartner') transitionPartner(run, command);
       else if (command.type === 'transition' && command.target === 'education')
@@ -1638,6 +2001,79 @@
     }
     run.episodes[episode.id] = record;
   }
+  function recruitmentScenarioEligible(run, scenario) {
+    const [minimum, maximum] = educationTierRange(run, false),
+      channel =
+        run.employment.applicationChannel === 'none'
+          ? 'openRecruitment'
+          : run.employment.applicationChannel || 'openRecruitment',
+      region = run.employment.applicationRegion;
+    return (
+      run.age >= scenario.age[0] &&
+      run.age <= scenario.age[1] &&
+      scenario.tiers.some((tier) => {
+        const index = JOB_TIER_INDEX[tier];
+        return index >= minimum && index <= maximum;
+      }) &&
+      (!scenario.locations?.length || scenario.locations.includes(run.location.id)) &&
+      (!scenario.applicationRegions?.length || scenario.applicationRegions.includes(region)) &&
+      (!scenario.applicationChannels?.length || scenario.applicationChannels.includes(channel))
+    );
+  }
+  function recruitmentScenarioFor(run) {
+    const scenarios = DATA.employmentCatalog?.recruitmentScenarios || [],
+      candidates = scenarios.filter((scenario) => recruitmentScenarioEligible(run, scenario));
+    if (!candidates.length) return null;
+    return candidates[
+      stable(
+        run.seed,
+        `recruitment:${run.age}:${run.location.id}:${run.employment.applicationRegion}:${run.employment.applicationChannel}`,
+        candidates.length
+      )
+    ];
+  }
+  function prepareRecruitmentDecision(event, run) {
+    if (event.episode?.id !== 'first_job_application' || event.episode.phase !== 3) return event;
+    const scenario = recruitmentScenarioFor(run);
+    if (!scenario) return event;
+    return {
+      ...event,
+      situation: scenario.situation,
+      prompt: scenario.prompt,
+      recruitmentScenarioId: scenario.id,
+      choices: scenario.choices.map((scenarioChoice, index) => {
+        const base = event.choices[Math.min(index, event.choices.length - 1)],
+          route = scenarioChoice.route || 'domestic',
+          effects = [
+            { type: 'tag', target: 'history', value: `research:${scenario.id}` },
+            { type: 'add', target: 'agency', value: scenarioChoice.offerIntent ? 2 : 1 },
+          ];
+        if (scenarioChoice.offerIntent)
+          effects.push({
+            type: 'resolveFirstJobApplication',
+            target: 'employment',
+            value: route,
+            scenarioId: scenario.id,
+            scenarioChoiceIndex: index,
+          });
+        else
+          effects.push(
+            { type: 'set', target: 'employment.pendingOfferId', value: 'none' },
+            { type: 'set', target: 'employment.applicationStatus', value: 'searching' },
+            { type: 'set', target: 'employment.firstJobOutcome', value: 'longSearch' },
+            { type: 'set', target: 'activity.mode', value: 'seeking' }
+          );
+        return {
+          ...base,
+          text: scenarioChoice.text,
+          resultText: scenarioChoice.resultText,
+          effects,
+          route: `${scenario.id}_${index + 1}`,
+          outcomeTags: ['employment', `recruitment:${scenario.id}`, 'episode:first_job_application'],
+        };
+      }),
+    };
+  }
   function startEpisodePhase(event) {
     const run = state.run;
     if (
@@ -1660,6 +2096,7 @@
         run.education.fundingStatus = 'overseasFamily';
       syncDerived(run);
     }
+    event = prepareRecruitmentDecision(event, run);
     run.currentDecision = event;
     run.phase = 'episode';
     run.sceneQueue = [
@@ -1719,7 +2156,10 @@
   }
   function finishEpisodeResult(scene) {
     const run = state.run,
-      event = INDEX.event.get(scene.eventId),
+      event =
+        run.currentDecision?.id === scene.eventId
+          ? run.currentDecision
+          : INDEX.event.get(scene.eventId),
       choice = event?.choices?.[scene.choiceIndex];
     if (!event?.episode || !choice) return;
     const resultText = scene.text || choice.resultText;
@@ -2040,18 +2480,13 @@
     identity: '欲望',
   };
   function baseSalary(run) {
-    if (run.employment.status !== 'employed') return 0;
-    const education = [0.65, 0.75, 0.85, 1, 1.25, 1.55][run.education.level] || 0.65,
-      rank = 1 + run.employment.rank * 0.18,
-      sector =
-        run.employment.employerType === 'public'
-          ? 0.92
-          : run.employment.sector === 'digital'
-            ? 1.35
-            : 1,
-      market = 0.75 + run.world.laborMarket / 200;
-    return Math.round(
-      Math.max(18000, 36000 * education * rank * sector * market + run.employment.salary)
+    if (!['employed', 'gig'].includes(run.employment.status)) return 0;
+    return Math.max(
+      0,
+      Math.round(
+        Number(run.employment.incomeAnnualGross) ||
+          (Number(run.employment.salary) || 0) * 12
+      )
     );
   }
   function livingCost(run) {
@@ -2119,14 +2554,10 @@
   }
   function settleYear(run) {
     if (run.age === 0 && run.timeline.length < 2) return;
+    resumeCareLeaveIfDue(run);
     run.world = worldAt(run.age, run.location);
     let income = baseSalary(run),
       expense = livingCost(run);
-    if (run.employment.status === 'gig')
-      income = Math.round(
-        (12000 + stable(run.seed, `gig-${run.age}`, 52000)) *
-          (1 - run.mobility.platformDependence / 180)
-      );
     if (run.activity.mode === 'leisure' || run.activity.mode === 'sabbatical') {
       income =
         run.activity.funding === 'family'
@@ -2203,14 +2634,24 @@
       run.age === 14 &&
       run.education.path === 'middleSchool' &&
       run.education.status === 'enrolled'
-    )
+    ) {
       run.education.status = 'completed';
+      run.education.highestCompleted = 'middleSchool';
+      run.education.nextStage = 'firstJob';
+      run.employment.entryCredential = 'middleSchool';
+    }
     if (
       run.age === 17 &&
       ['highSchool', 'vocational'].includes(run.education.path) &&
       run.education.status === 'enrolled'
-    )
+    ) {
       run.education.status = 'completed';
+      run.education.highestCompleted =
+        run.education.path === 'vocational' ? 'vocational' : 'secondary';
+      run.education.nextStage = 'firstJob';
+      run.employment.entryCredential =
+        run.education.path === 'vocational' ? 'vocational' : 'highSchool';
+    }
   }
   function updatePeople(run) {
     for (const item of run.people) {
@@ -2458,14 +2899,22 @@
           event.episode.id === 'school_harm' &&
           run.development.severeSchoolHarm &&
           !run.development.schoolHarmResolved
+      ),
+      firstJobReentry = candidates.find(
+        (event) =>
+          event.episode.id === 'long_term_first_job_reentry' &&
+          run.age >= 32 &&
+          run.employment.firstJobAge === null &&
+          ['none', 'unemployed'].includes(run.employment.status)
       );
-    return unresolvedSchoolHarm || weighted(candidates, eventWeight);
+    return unresolvedSchoolHarm || firstJobReentry || weighted(candidates, eventWeight);
   }
   function startDecision(run) {
     const forced = mandatoryDecision(run),
       episode = activeEpisodeDecision(run),
       ageBound = ageBoundEpisodeStart(run),
       crisis = crisisDecision(run);
+    if (ageBound?.episode?.id === 'long_term_first_job_reentry') return ageBound;
     if (forced || episode || ageBound || crisis) return forced || episode || ageBound || crisis;
     const starts = INDEX.kinds.decision.filter(
       (event) => event.episode?.role === 'start' && eligible(event, run)
@@ -2983,44 +3432,56 @@
     return `${habit} · ${support} · 准备度${Math.round(run.education.readiness)}`;
   }
   function applicationLabel(run) {
-    const offered =
-        run.education.domesticOffer && run.education.overseasOffer
-          ? `国内录取／海外${run.education.overseasOfferType === 'conditional' ? '条件录取' : '直接录取'}`
-          : run.education.domesticOffer
-            ? '国内本科已录取'
-            : run.education.overseasOffer
-              ? `海外本科${run.education.overseasOfferType === 'conditional' ? '条件录取' : '直接录取'}`
-              : '已提交',
-      status =
-        {
-          none: '尚未开始',
-          planning: '准备中',
-          submitted: '已提交',
-          offered,
-          notAdmitted: '本轮未录取',
-          funded: '资金已落实，待报到步骤',
-          deferred: '延期或重申',
-          withdrawn: '已退出',
-          enrolled:
-            run.education.enrollmentRegion === 'overseas' ? '海外本科已报到' : '国内本科已报到',
-        }[run.education.applicationStatus] || run.education.applicationStatus;
-    return status;
+    return (
+      {
+        none: '本科未申请',
+        planning: '本科准备中',
+        submitted: '本科已提交',
+        offered: '本科已录取',
+        notAdmitted: '本科未录取',
+        funded: '本科待报到',
+        deferred: '本科已延期',
+        retrying: '本科准备再申请',
+        withdrawn: '本科已退出',
+        vocationalExit: '本科改走职教',
+        enrolled: '本科已入学',
+      }[run.education.applicationStatus] || '本科未记录'
+    );
   }
   function graduateApplicationLabel(run) {
-    const region = { domestic: '国内', us: '美国', europe: '欧洲' }[
-        run.education.graduateOfferRegion
+    return (
+      {
+        none: '研究生未申请',
+        planning: '研究生准备中',
+        submitted: '研究生已提交',
+        offered: '研究生已录取',
+        waitlisted: '研究生候补中',
+        notAdmitted: '研究生未录取',
+        deferred: '研究生已延期',
+        retrying: '研究生准备再申请',
+        withdrawn: '研究生已退出',
+        enrolled: '研究生已入学',
+      }[run.education.graduateApplicationStatus] || '研究生未记录'
+    );
+  }
+  function higherEducationLabel(run) {
+    const evidence = [
+        ['课程', Math.max(0, Number(run.education.courseworkEvidence) || 0)],
+        ['校园', Math.max(0, Number(run.education.campusEvidence) || 0)],
+        ['实践', Math.max(0, Number(run.education.practiceEvidence) || 0)],
+        ['研究', Math.max(0, Number(run.education.researchEvidence) || 0)],
       ],
-      status = {
-        none: '尚未开始',
-        planning: '准备中',
-        submitted: '已提交',
-        offered: `${region || '研究生'}录取 · ${run.education.graduateFundingStatus === 'ready' ? '资金可报到' : '资金有缺口'}`,
-        waitlisted: '候补或延期中',
-        notAdmitted: '本轮未录取',
-        withdrawn: '已退出',
-        enrolled: `${region || { domestic: '国内', us: '美国', europe: '欧洲' }[run.education.postgraduateSystem] || ''}研究生已报到`,
-      }[run.education.graduateApplicationStatus];
-    return status || run.education.graduateApplicationStatus;
+      maximum = Math.max(...evidence.map(([, value]) => value)),
+      leaders = maximum > 0 ? evidence.filter(([, value]) => value === maximum) : [],
+      focus =
+        leaders.length === 0
+          ? '尚无明显侧重'
+          : leaders.length === 1
+            ? `侧重${leaders[0][0]}`
+            : leaders.length === 2
+              ? `${leaders[0][0]}与${leaders[1][0]}并重`
+              : '方向较均衡';
+    return `${focus} · ${applicationLabel(run)} · ${graduateApplicationLabel(run)}`;
   }
   function overseasLifeLabel(run) {
     if (run.mobility.lastOverseasSystem === 'none') return '尚无海外在读生活';
@@ -3056,9 +3517,41 @@
         selfEmployed: '自主经营',
         unemployed: '求职中',
         retired: '已退休',
-        careLeave: '照护离岗',
+        careLeave: '停薪留职',
       }[run.employment.status] || run.employment.status
     );
+  }
+  function employmentDetailLabel(run) {
+    if (!['employed', 'gig', 'selfEmployed'].includes(run.employment.status))
+      return employmentLabel(run);
+    const contract =
+        {
+          fixedTerm: '固定期限合同',
+          openEnded: '无固定期限合同',
+          service: '聘用或服务合同',
+          dispatch: '劳务派遣',
+          platform: '平台接单',
+          dayLabor: '日结零工',
+          hourly: '小时工',
+          project: '项目合同',
+          business: '经营收入',
+        }[run.employment.contractType] || run.employment.contractType,
+      stability =
+        {
+          fixed: '固定收入',
+          fixedPlusBonus: '固定收入加奖金',
+          piecework: '计件浮动',
+          project: '项目浮动',
+          business: '经营浮动',
+        }[run.employment.incomeStability] || run.employment.incomeStability,
+      overseasReference = ['us', 'europe'].includes(run.employment.applicationRegion),
+      monthly = run.employment.salary
+        ? `${money(run.employment.salary)}/${run.employment.incomeStability === 'fixed' || run.employment.incomeStability === 'fixedPlusBonus' ? '月' : '月均参考'}`
+        : '按经营结果结算',
+      annual = run.employment.incomeAnnualGross
+        ? `${money(run.employment.incomeAnnualGross)}/年${overseasReference ? '（人民币折合参考）' : ''}`
+        : '年收入随经营结算';
+    return `${run.employment.career} · ${contract} · ${monthly} · ${annual} · ${stability}`;
   }
   function constitutionLabel(run) {
     return run.attrs.physique >= 8 ? '体质强健' : run.attrs.physique >= 5 ? '体质尚稳' : '体质偏弱';
@@ -3191,7 +3684,9 @@
     return `${type}·${stage}`;
   }
   function roleLine(run) {
-    const job = run.employment.status === 'employed' ? run.employment.career : activityLabel(run),
+    const job = ['employed', 'gig', 'selfEmployed'].includes(run.employment.status)
+      ? run.employment.career
+      : activityLabel(run),
       partner = {
         none: '单身',
         dating: '恋爱中',
@@ -3299,7 +3794,7 @@
       }[run.relationships.partnerStatus],
       liabilities = run.finance.liabilities.filter((item) => item.status !== 'settled'),
       episodes = activeEpisodes(run);
-    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>成长证据</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>学习证据</dt><dd>课程${Math.round(run.education.courseworkEvidence)} · 校园${Math.round(run.education.campusEvidence)} · 实践${Math.round(run.education.practiceEvidence)} · 研究${Math.round(run.education.researchEvidence)}</dd></div><div class="spec"><dt>本科申请</dt><dd>${esc(applicationLabel(run))}</dd></div><div class="spec"><dt>研究生申请</dt><dd>${esc(graduateApplicationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${run.employment.status === 'employed' ? `${run.employment.career} · ${money(baseSalary(run))}/年` : employmentLabel(run)}</dd></div><div class="spec"><dt>求职记录</dt><dd>${esc({ none: '尚未开始', applying: '申请中', offered: '有可用录用', searching: '持续求职', withdrawn: '已撤回', employed: '已经报到' }[run.employment.applicationStatus] || run.employment.applicationStatus)}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner} · 关系 ${Math.round(run.relationships.partnerBond)}</dd></div><div class="spec"><dt>子女</dt><dd>${
+    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>成长证据</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner} · 关系 ${Math.round(run.relationships.partnerBond)}</dd></div><div class="spec"><dt>子女</dt><dd>${
       run.relationships.childCount
         ? childPeople(run)
             .map((child) => `${personAge(child, run)}岁`)
@@ -3402,7 +3897,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.3-存档.json';
+    link.download = '人生尚未加载-v0.6.4-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }
@@ -3734,6 +4229,7 @@
           forceAge: (age) =>
             patchRun({ age: clamp(age, 0, 105), yearStarted: false, yearQueue: [] }),
           forceDecision,
+          nextDecisionId: () => startDecision(state.run)?.id || null,
           forceCardDraw: (age) => {
             startCardDraw(Number(age));
             return copy(state.run.cardOptions);
