@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.4');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.5');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.4',
+  const VERSION = '0.6.5',
     SCHEMA_VERSION = 11,
-    CONTENT_REVISION = 22;
+    CONTENT_REVISION = 23;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -534,6 +534,16 @@
       activePartnerId: null,
       lastPartnerId: null,
       parenthoodIntent: 'undecided',
+      familyPlanningOffered: false,
+      familyPlanningDeferred: false,
+      familyPlanningClosed: false,
+      plannedConceptionResolved: false,
+      unplannedConceptionChecked: false,
+      pregnancyStatus: 'none',
+      pregnancyDecision: 'none',
+      pregnancyDecisionDeferred: false,
+      adoptionOffered: false,
+      adoptionStatus: 'none',
       childCount: 0,
       childBond: 0,
       network: clamp(35 + location.mods.network / 3, 30, 75),
@@ -1717,6 +1727,18 @@
     if (!['medical_practice', 'legal_practice', 'university_teaching'].includes(credential)) return;
     if (!run.education.credentials.includes(credential)) run.education.credentials.push(credential);
   }
+  function conceptionChance(run) {
+    const ageAdjustment = run.age <= 29 ? 5 : run.age <= 34 ? 0 : run.age <= 37 ? -10 : -20,
+      healthAdjustment = run.health.physical >= 75 ? 5 : run.health.physical < 50 ? -10 : 0;
+    return clamp(80 + ageAdjustment + healthAdjustment, 50, 90);
+  }
+  function resolveConception(run, key = 'planned') {
+    if (run.relationships.plannedConceptionResolved) return run.relationships.pregnancyStatus;
+    run.relationships.plannedConceptionResolved = true;
+    const conceived = stable(run.seed, `conception:${key}:${run.age}`, 100) < conceptionChance(run);
+    run.relationships.pregnancyStatus = conceived ? 'confirmed' : 'notPregnant';
+    return run.relationships.pregnancyStatus;
+  }
   function firstJobApplicationResult(run) {
     return run.employment.applicationStatus === 'offered'
       ? ' 一份能核合同、岗位和报到条件的录用留下了。'
@@ -1818,6 +1840,8 @@
         resolveLayoff(run, command.value);
       else if (command.type === 'grantCredential')
         grantCredential(run, command.value);
+      else if (command.type === 'resolveConception')
+        resolveConception(run, command.value);
       else if (command.type === 'createPerson') createRelatedPerson(run, command);
       else if (command.type === 'transitionPartner') transitionPartner(run, command);
       else if (command.type === 'transition' && command.target === 'education')
@@ -1854,15 +1878,18 @@
       const consequence = INDEX.event.get(spec.eventId);
       if (!consequence?.choiceOutcomes?.[choice.memoryKey]) continue;
       const dueAge =
-        state.run.age + spec.delayMin + Math.floor(rng() * (spec.delayMax - spec.delayMin + 1));
+          state.run.age + spec.delayMin + Math.floor(rng() * (spec.delayMax - spec.delayMin + 1)),
+        id = `${spec.eventId}:${choice.memoryKey}:${state.run.age}`;
+      if (state.run.scheduledConsequences.some((item) => item.id === id)) continue;
       state.run.scheduledConsequences.push({
-        id: `${spec.eventId}:${choice.memoryKey}:${state.run.age}`,
+        id,
         eventId: spec.eventId,
         memoryKey: choice.memoryKey,
         sourceDecisionId: event.id,
         sourceChoiceId: choice.id,
         dueAge,
         expiresAge: Math.min(105, dueAge + 6),
+        priority: Number(spec.priority) || 0,
         status: 'scheduled',
       });
     }
@@ -1953,7 +1980,8 @@
       abandoned =
         (catalog.abandonedRoutes || fallbackAbandoned).includes(choice.route),
       earlyClosure = abandoned || fallbackEarly.includes(choice.route),
-      terminal = episode.role === 'resolve' || episodePhaseCount(episode.id) === 1 || earlyClosure,
+      resolvedEarly = (catalog.resolvedRoutes || []).includes(choice.route),
+      terminal = episode.role === 'resolve' || episodePhaseCount(episode.id) === 1 || earlyClosure || resolvedEarly,
       terminalReason = choice.route;
     let record = run.episodes[episode.id];
     if (episode.role === 'start') {
@@ -2132,12 +2160,17 @@
         (command) => command.type === 'resolveGraduateApplication'
       ),
       resolvedJob = choice.effects.some((command) => command.type === 'resolveFirstJobApplication'),
+      resolvedConception = choice.effects.some((command) => command.type === 'resolveConception'),
       suffix = resolvedApplication
         ? undergraduateApplicationResult(run)
         : resolvedGraduate
           ? graduateApplicationResult(run)
           : resolvedJob
-            ? firstJobApplicationResult(run)
+          ? firstJobApplicationResult(run)
+          : resolvedConception
+            ? run.relationships.pregnancyStatus === 'confirmed'
+              ? ' 检查确认了怀孕，接下来由你决定是否继续。'
+              : ' 这段时间没有确认怀孕。一次未成功没有被写成诊断。'
             : '',
       resultText = `${choice.resultText}${suffix}`;
     run.sceneQueue = [
@@ -2192,7 +2225,12 @@
           INDEX.event.get(item.eventId)?.track === 'education' &&
           INDEX.event.get(item.eventId)?.episode
       ).length,
-      canContinueSameAge =
+      pregnancyEventsThisAge = run.decisionHistory.filter(
+        (item) =>
+          item.age === run.age &&
+          INDEX.event.get(item.eventId)?.episode?.id === 'pregnancy_decision'
+      ).length,
+      canContinueEducationSameAge =
         event.track === 'education' &&
         event.episode.ageAdvanceYears === 0 &&
         educationEventsThisAge < 2 &&
@@ -2201,8 +2239,15 @@
             candidate.track === 'education' &&
             candidate.episode &&
             eligible(candidate, run)
+        ),
+      canContinuePregnancySameAge =
+        event.episode.id === 'pregnancy_decision' &&
+        event.episode.ageAdvanceYears === 0 &&
+        pregnancyEventsThisAge < 2 &&
+        INDEX.kinds.decision.some(
+          (candidate) => candidate.episode?.id === 'pregnancy_decision' && eligible(candidate, run)
         );
-    if (canContinueSameAge) {
+    if (canContinueEducationSameAge || canContinuePregnancySameAge) {
       run.yearStarted = true;
       save();
       render();
@@ -2220,6 +2265,12 @@
       id === 'undergraduate_application' &&
       run.education.fullTimeUndergraduateClosed &&
       run.education.status !== 'enrolled'
+    )
+      return true;
+    if (
+      id === 'adoption_process' &&
+      (run.relationships.activePartnerId ||
+        !['none', 'divorced', 'widowed'].includes(run.relationships.partnerStatus))
     )
       return true;
     for (const binding of Object.values(record.boundActors || {})) {
@@ -2335,6 +2386,8 @@
       run.relationships.partnerStatus = 'none';
       syncDerived(run);
     }
+    if (id === 'adoption_process' && reason === 'invalidated')
+      run.relationships.adoptionStatus = 'invalidated';
     record.status = 'abandoned';
     record.closureReason = reason;
     record.phase = Math.max(1, record.phase);
@@ -2735,7 +2788,7 @@
         (item) =>
           item.status === 'scheduled' && item.dueAge <= run.age && item.expiresAge >= run.age
       )
-      .sort((a, b) => a.dueAge - b.dueAge)[0];
+      .sort((a, b) => (b.priority || 0) - (a.priority || 0) || a.dueAge - b.dueAge)[0];
     if (!schedule) return null;
     const event = INDEX.event.get(schedule.eventId),
       outcome = event?.choiceOutcomes?.[schedule.memoryKey];
@@ -2750,6 +2803,100 @@
       runtimeTags: outcome.outcomeTags,
       scheduleId: schedule.id,
     };
+  }
+  function validPlanningPartner(run) {
+    return Boolean(
+      run.relationships.activePartnerId &&
+        ['dating', 'partnered', 'married'].includes(run.relationships.partnerStatus)
+    );
+  }
+  function prepareFamilyState(run) {
+    const relationships = run.relationships;
+    if (
+      !relationships.familyPlanningOffered &&
+      !relationships.familyPlanningClosed &&
+      run.age >= 23 &&
+      run.age <= 39 &&
+      validPlanningPartner(run)
+    ) {
+      relationships.familyPlanningOffered = true;
+      if (stable(run.seed, 'family-planning-opportunity', 100) >= 85)
+        relationships.familyPlanningClosed = true;
+    }
+    if (
+      !relationships.adoptionOffered &&
+      run.age >= 30 &&
+      !relationships.activePartnerId &&
+      ['none', 'divorced', 'widowed'].includes(relationships.partnerStatus) &&
+      relationships.childCount <= 1
+    ) {
+      relationships.adoptionOffered = true;
+      relationships.adoptionStatus =
+        stable(run.seed, 'single-adoption-opportunity', 100) < 50 ? 'offered' : 'notOffered';
+    }
+    const planning = run.episodes.becoming_parent;
+    const conceptionDue =
+      planning &&
+      !relationships.plannedConceptionResolved &&
+      ((planning.status === 'active' &&
+        planning.phase === 2 &&
+        run.age >= planning.nextPhaseAge &&
+        ['planned', 'deferred'].includes(planning.route)) ||
+        (planning.status === 'resolved' &&
+          planning.route === 'planned_review' &&
+          run.age > planning.nextPhaseAge));
+    if (conceptionDue && !validPlanningPartner(run))
+      return queueEpisodeClosure('becoming_parent', planning, 'invalidated');
+    const adoption = run.episodes.adoption_process;
+    if (
+      adoption &&
+      relationships.adoptionStatus === 'waiting' &&
+      validPlanningPartner(run)
+    )
+      return queueEpisodeClosure('adoption_process', adoption, 'invalidated');
+    if (
+      planning?.status === 'resolved' &&
+      planning.route === 'planned_review' &&
+      !relationships.plannedConceptionResolved &&
+      run.age > planning.nextPhaseAge
+    ) {
+      resolveConception(run, `review:${planning.startedAt}`);
+      planning.closureReason =
+        relationships.pregnancyStatus === 'confirmed' ? 'conceived' : 'notPregnant';
+      if (relationships.pregnancyStatus === 'confirmed') return false;
+      relationships.parenthoodIntent = 'undecided';
+      return queueEpisodeClosure('becoming_parent', planning, 'notPregnant');
+    }
+    if (
+      !planning ||
+      planning.status !== 'active' ||
+      planning.phase !== 2 ||
+      run.age < planning.nextPhaseAge
+    )
+      return false;
+    if (planning.route === 'planned' && !relationships.plannedConceptionResolved) {
+      resolveConception(run, `initial:${planning.startedAt}`);
+      relationships.familyPlanningClosed = true;
+      if (relationships.pregnancyStatus === 'confirmed') {
+        planning.status = 'resolved';
+        planning.closureReason = 'conceived';
+        planning.nextPhaseAge = run.age;
+        return false;
+      }
+      relationships.parenthoodIntent = 'undecided';
+      return queueEpisodeClosure('becoming_parent', planning, 'notPregnant');
+    }
+    if (planning.route === 'deferred' && !relationships.unplannedConceptionChecked) {
+      relationships.unplannedConceptionChecked = true;
+      if (stable(run.seed, `unplanned-conception:${planning.startedAt}`, 100) < 10) {
+        relationships.pregnancyStatus = 'confirmed';
+        relationships.familyPlanningClosed = true;
+        planning.status = 'resolved';
+        planning.closureReason = 'unplannedPregnancy';
+        planning.nextPhaseAge = run.age;
+      }
+    }
+    return false;
   }
   function dueSecret(run) {
     const secret = run.originHousehold.secret;
@@ -2798,6 +2945,11 @@
       weight *= 1.6;
     if (event.track === 'habits' && run.habits.risk > 30) weight *= 1.5;
     if (event.track === 'children' && run.relationships.childCount) weight *= 1.35;
+    if (
+      event.episode?.id === 'relationship_start' &&
+      ['none', 'divorced', 'widowed'].includes(run.relationships.partnerStatus)
+    )
+      weight *= 3;
     if (event.track === 'partnership' && run.relationships.partnerStatus !== 'none') weight *= 1.25;
     if (run.timeline.at(-1)?.track === event.track) weight *= 0.45;
     if (state.meta.seen.events[event.id]) weight *= 0.75;
@@ -2837,10 +2989,17 @@
     return null;
   }
   function mandatoryDecision(run) {
-    const globals = INDEX.kinds.decision.filter((event) => !event.episode && eligible(event, run)),
+    const pendingPregnancy = INDEX.kinds.decision.find(
+        (event) =>
+          event.episode?.id === 'pregnancy_decision' &&
+          event.episode.role === 'start' &&
+          eligible(event, run)
+      ),
+      globals = INDEX.kinds.decision.filter((event) => !event.episode && eligible(event, run)),
       hasClaimedDesire = Object.values(run.desires).some(
         (value) => value && typeof value === 'object' && value.claimed
       );
+    if (pendingPregnancy) return pendingPregnancy;
     if (run.age >= 14 && !hasClaimedDesire) {
       const event = globals.find((item) => item.track === 'identity' && item.ageMin === 14);
       if (event) return event;
@@ -2900,6 +3059,8 @@
           run.development.severeSchoolHarm &&
           !run.development.schoolHarmResolved
       ),
+      familyPlanning = candidates.find((event) => event.episode.id === 'becoming_parent'),
+      singleAdoption = candidates.find((event) => event.episode.id === 'adoption_process'),
       firstJobReentry = candidates.find(
         (event) =>
           event.episode.id === 'long_term_first_job_reentry' &&
@@ -2907,7 +3068,7 @@
           run.employment.firstJobAge === null &&
           ['none', 'unemployed'].includes(run.employment.status)
       );
-    return unresolvedSchoolHarm || firstJobReentry || weighted(candidates, eventWeight);
+    return familyPlanning || singleAdoption || unresolvedSchoolHarm || firstJobReentry || weighted(candidates, eventWeight);
   }
   function startDecision(run) {
     const forced = mandatoryDecision(run),
@@ -2977,6 +3138,7 @@
     }
     educationMilestones(run);
     updatePeople(run);
+    if (prepareFamilyState(run)) return true;
     run.yearStarted = true;
     run.yearQueue = [];
     if (dueEpisodeClosure(run)) return true;
@@ -3897,7 +4059,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.4-存档.json';
+    link.download = '人生尚未加载-v0.6.5-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }

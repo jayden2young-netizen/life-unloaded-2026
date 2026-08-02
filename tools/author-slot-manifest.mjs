@@ -776,6 +776,39 @@ export const CARD_AUTHOR_SLOT_HASHES = Object.freeze([
 export const BEAT_SLOT_REGISTRATIONS = [];
 export const DECISION_SLOT_REGISTRATIONS = [
   {
+    key: '@author/decision/b3b43bb4fa5ae116023f73f6',
+    slot: { id: 'decision_096', track: 'children', localIndex: 0 },
+    replaces: '@author/decision/cd856243e78d407f0739ee24',
+  },
+  {
+    key: '@author/decision/0fd758c1af8f3d6c08275d78',
+    slot: { id: 'decision_097', track: 'children', localIndex: 1 },
+    replaces: '@author/decision/fea27e6414c521a0a45d25e8',
+  },
+  {
+    key: '@author/decision/e72df5fc9f0de396b2e33d7a',
+    slot: { id: 'decision_098', track: 'children', localIndex: 2 },
+    replaces: '@author/decision/56fcecd5faa89eec2232bce8',
+  },
+  {
+    key: '@author/decision/a3fd80f929c74519786e6612',
+    slot: { id: 'decision_099', track: 'children', localIndex: 3 },
+    replaces: '@author/decision/5872c436dd0702f7f843ea24',
+  },
+  {
+    key: '@author/decision/fba5f1f51590078c8d49f7b8',
+    slot: { id: 'decision_100', track: 'children', localIndex: 4 },
+    replaces: '@author/decision/60b60e47a4ced24b081231dc',
+  },
+  {
+    key: '@author/decision/151d805cd8e82712a52db499',
+    slot: { id: 'decision_184', track: 'children', localIndex: 10 },
+  },
+  {
+    key: '@author/decision/b5c17ede9b8c5a6c7f7364a8',
+    slot: { id: 'decision_185', track: 'children', localIndex: 11 },
+  },
+  {
     key: '@author/decision/1469fdaa36dfd996caee71c9',
     slot: { id: 'decision_006', track: 'education', localIndex: 5 },
     replaces: '@author/decision/ed63a0ea6c6f7b23732c4851',

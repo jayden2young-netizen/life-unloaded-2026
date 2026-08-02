@@ -56,9 +56,25 @@ const genericPatch=(mechanic,track)=>{
 
 const genericInteraction=(mechanic,track)=>({primaryMechanic:mechanic,mode:modes[mechanic],explanation:explanations[mechanic],patch:genericPatch(mechanic,track),resultSuffix:suffixes[mechanic]});
 
-export function cardInteractionFor(track,index,option){
+export function cardInteractionFor(track,index,option,authoredDecision){
   const rotation=rotations[track];
   if(!rotation)return null;
+  const episodeId=authoredDecision?.episode?.id,phase=authoredDecision?.episode?.phase;
+  if(track==='children'&&episodeId==='becoming_parent'&&phase===1&&option===0)return{
+    primaryMechanic:'cashBuffer',mode:'costShift',explanation:'你预留的缓冲能垫住检查和最急的一段请假。',patch:[{type:'add',target:'finance.cash',value:1200}],resultSuffix:'那点缓冲垫住了眼前的账单，却不能替检查单提前写答案。'
+  };
+  if(track==='children'&&episodeId==='becoming_parent'&&option===2)return{
+    primaryMechanic:'boundary',mode:'resultVariant',explanation:'你已经练过把自己的决定说清楚。',patch:[{type:'add',target:'agency',value:1}],resultSuffix:'伴侣听见了一个清楚的答案。'
+  };
+  if(track==='children'&&episodeId==='pregnancy_decision'&&((phase===1&&option===1)||(phase===2&&option===1)))return{
+    primaryMechanic:'boundary',mode:'resultVariant',explanation:'你没有把最后决定交给旁人的态度。',patch:[{type:'add',target:'agency',value:1}],resultSuffix:'最后那句话，还是由你自己说出口。'
+  };
+  if(track==='children'&&episodeId==='adoption_process'&&phase===1&&option===0)return{
+    primaryMechanic:'evidence',mode:'resultVariant',explanation:'你留存材料的习惯减少了来回补件。',patch:[{type:'add',target:'capabilities.evidence',value:1}],resultSuffix:'材料少补了几趟，评估和匹配仍得照程序往下走。'
+  };
+  if(track==='children'&&episodeId==='adoption_process'&&phase===2&&option===1)return{
+    primaryMechanic:'network',mode:'resultVariant',explanation:'愿意帮忙的人把能接送、能陪诊的时段说清了。',patch:[{type:'add',target:'relationships.network',value:2}],resultSuffix:'支持人的电话写进了表格，登记回执还没有下来。'
+  };
   if(track==='education'&&index===3&&option===1)return{
     primaryMechanic:'network',mode:'unlock',explanation:'有人把可靠的申请信息递到了你手里。',patch:[{type:'expose',target:'development.routeExposure',value:'overseas'}],resultSuffix:'那条原本够不着的信息线，终于接上了。',
     activeShowWhen:{all:[],any:[],none:[]},activeRequirements:{all:[{path:'development.languagePreparation',op:'gte',value:8},{path:'development.routeKnowledge',op:'gte',value:18}],any:[],none:[]}

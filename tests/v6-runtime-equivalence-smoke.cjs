@@ -120,8 +120,8 @@ async function advanceDeterministically(page, trace, step) {
 (async () => {
   assert.deepEqual(
     [DATA.schemaVersion, DATA.contentRevision],
-    [11, 22],
-    'equivalence fixture only applies to the v0.6.4 Schema 11 runtime',
+    [11, 23],
+    'equivalence fixture only applies to the v0.6.5 Schema 11 runtime',
   );
 
   browser = await chromium.launch({ headless: true, executablePath: CHROME });
@@ -215,7 +215,7 @@ async function advanceDeterministically(page, trace, step) {
   const output = {
     seed: SEED,
     schemaVersion: 11,
-    contentRevision: 22,
+    contentRevision: 23,
     trace,
   };
 

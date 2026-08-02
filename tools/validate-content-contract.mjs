@@ -248,8 +248,8 @@ function validateReferences(data) {
 
   for (const event of data.events) {
     if (event.episode?.ageAdvanceYears !== undefined) {
-      if (event.track !== 'education')
-        fail(`events.${event.id}.episode.ageAdvanceYears`, '只允许教育事件声明年龄推进');
+      if (event.track !== 'education' && event.episode.id !== 'pregnancy_decision')
+        fail(`events.${event.id}.episode.ageAdvanceYears`, '只允许教育事件和怀孕短期复议声明年龄推进');
       if (event.episode.ageAdvanceYears !== 0)
         fail(`events.${event.id}.episode.ageAdvanceYears`, '当前只允许声明同龄续接 0');
     }

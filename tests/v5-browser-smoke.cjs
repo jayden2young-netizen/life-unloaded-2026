@@ -5,7 +5,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = process.env.BROWSER_SMOKE_OUT || path.join(os.tmpdir(), 'life-unloaded-v0.6.4-browser');
+const OUT = process.env.BROWSER_SMOKE_OUT || path.join(os.tmpdir(), 'life-unloaded-v0.6.5-browser');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY = 'life-unloaded-2026-v1';
 const SYSTEM_CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
@@ -100,7 +100,7 @@ let browser;
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
   assert.equal(migrated.state.schemaVersion, 11);
-  assert.equal(migrated.state.gameVersion, '0.6.4');
+  assert.equal(migrated.state.gameVersion, '0.6.5');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
@@ -178,8 +178,21 @@ let browser;
   run = await forceChoice(page, decisionId({ episodeId: 'becoming_parent', episodePhase: 1 }), 0);
   assert.equal(run.relationships.parenthoodIntent, 'planned');
   assert.equal(run.relationships.childCount, 0);
-  run = await forceChoice(page, decisionId({ episodeId: 'becoming_parent', episodePhase: 2 }), 0);
-  assert.equal(run.relationships.childCount, 1);
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({ relationships: { pregnancyStatus: 'confirmed', plannedConceptionResolved: true }, episodes: { relationship_start: { status: 'resolved' }, becoming_parent: { status: 'resolved' } }, scheduledConsequences: [] }));
+  run = await forceChoice(page, decisionId({ episodeId: 'pregnancy_decision', episodePhase: 1 }), 0);
+  assert.equal(run.relationships.pregnancyStatus, 'continued');
+  assert.equal(run.relationships.childCount, 0);
+  const birth = run.scheduledConsequences.find(item => item.sourceDecisionId === decisionId({ episodeId: 'pregnancy_decision', episodePhase: 1 }));
+  assert.ok(birth);
+  await page.evaluate(age => window.__LIFE_DEBUG__.forceAge(age), birth.dueAge);
+  for (let guard = 0; guard < 6; guard++) {
+    const current = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
+    if (current.usedConsequences.includes(birth.id)) break;
+    await page.evaluate(() => window.__LIFE_DEBUG__.advance());
+  }
+  run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
+  assert.equal(run.relationships.childCount, 1, JSON.stringify({age:run.age,phase:run.phase,yearStarted:run.yearStarted,queue:run.yearQueue.map(item=>item.id),schedule:run.scheduledConsequences,used:run.usedConsequences,scene:run.sceneQueue,current:run.currentDecision?.id}));
+  assert.equal(run.relationships.pregnancyStatus, 'completed');
   run = await forceChoice(page, decisionId({ episodeId: 'habit_gambling_formation', episodePhase: 1 }), 2);
   assert.equal(run.habits.type, 'gambling');
   assert.equal(run.habits.stage, 'repeating');
