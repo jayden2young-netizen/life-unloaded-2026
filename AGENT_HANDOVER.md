@@ -21,9 +21,9 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前发布版本：v0.6.4
-- 当前本地版本：v0.6.5（已实现，未提交／推送／合并／部署）
-- 当前 `main` 基线版本：v0.6.4
+- 当前发布版本：v0.6.5
+- 当前本地版本：v0.6.5（已发布）
+- 当前 `main` 基线版本：v0.6.5
 - 下一规划版本：v0.6.6 债务执行与生活后果
 - 当前规划范围：v0.6.3—v0.6.10
 - `schemaVersion`：11
@@ -31,7 +31,7 @@
 - localStorage 键：`life-unloaded-2026-v1`
 - v0.6.0 功能提交：`82beb1432e3bad1df2c222735cce493e3c34495f`
 - 功能提交说明：`feat: ship v0.6.0 card participation`
-- 当前检出分支：`codex/v0.6.5-family-planning`
+- 当前检出分支：`main`
 - 当前基线分支：`main`
 - 本轮起点版本：`v0.5.12`
 
@@ -125,7 +125,7 @@ tests/                            当前核心浏览器检查
 
 ## v0.6.5 生育计划、怀孕决定与单身收养
 
-- 本地分支 `codex/v0.6.5-family-planning` 从已发布的 `main@a30e317` 开始实施；当前没有提交、推送、合并或部署。
+- 开发分支 `codex/v0.6.5-family-planning` 从已发布的 `main@a30e317` 开始实施；功能提交 `e1fe3da` 已通过 fast-forward 发布到 `main`，没有创建合并提交或 PR。`legacy/0.6.4` 固定在发布前的 `a30e317`。
 - 版本为 v0.6.5、Schema 11、content revision 23。A/B/C 研究档案位于 `docs/research/v0.6.5-生育计划与单身收养.md`。
 - `relationships` 新增一次性生育计划、计划受孕、意外怀孕、怀孕决定和收养状态。刷新不会重抽机会或重复应用结果，作者键不会进入存档。
 - 有有效伴侣且 23—39 岁时只抽取一次 85% 生育计划入口；开始备孕后在下一年龄按 80% 基础、50%—90% 封顶的年龄和健康梯度结算。暂缓只检查一次 10% 意外怀孕。
@@ -133,6 +133,7 @@ tests/                            当前核心浏览器检查
 - 单身、30 岁以上、0—1 名既有子女时只抽取一次 50% 收养入口。三阶段覆盖准备、家访评估、匹配、登记、等待和撤回；中途形成伴侣时本轮单身收养失效，不转共同收养。
 - 实际试玩反馈后，v0.6.5 新增家庭文案按 `CopyWriting_Guideline.md` 全量复核，收养入口第一屏明确写出“单身收养申请”，并清除“抽取、结算、年龄节点、生成事实”等状态机口吻。无有效伴侣时 `relationship_start` 获得 3 倍候选权重；全局决定频率和后续结婚选项不变。
 - 数据为 408 beats、185 decisions、185 consequences、20 black swans，共 798 个事件和 72 张卡牌。正式生成器双跑 SHA-256 均为 `991B95BC33740533F0658C338E45F148CAAD97D82F9EDEB46C56D63665FA30D4`。family 与 core profile 已通过，覆盖机会命中／未命中、意外怀孕、同岁复议、出生只执行一次、终止无孩子、收养四类结尾、恋爱起始权重、刷新恢复、三种窄屏和控制台零错误；单身收养入口 360×773 截图已人工目检。
+- GitHub Pages 运行 `30750913588` 已成功部署功能提交 `e1fe3da`；线上 `index.html`、`game.js` 和 `data.json` 均返回 200，并显示 v0.6.5／Schema 11／Content Revision 23、798 个事件、72 张卡牌和“单身收养申请”文案。
 - 本版没有实现不孕治疗、辅助生殖、代孕、共同／海外收养、犯罪记录系统或单身异性收养 40 周岁年龄差；后者在研究档案中明确标为产品抽象。
 
 ## v0.5.2 已完成
