@@ -21,9 +21,9 @@
 - 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前发布版本：v0.6.5
-- 当前本地版本：v0.6.6（已实现并验证，未提交、未发布）
-- 当前 `main` 基线版本：v0.6.5
+- 当前发布版本：v0.6.6
+- 当前本地版本：v0.6.6（已发布）
+- 当前 `main` 基线版本：v0.6.6
 - 下一规划版本：v0.6.7 晚年生活
 - 当前规划范围：v0.6.3—v0.6.10
 - `schemaVersion`：11
@@ -31,6 +31,8 @@
 - localStorage 键：`life-unloaded-2026-v1`
 - v0.6.0 功能提交：`82beb1432e3bad1df2c222735cce493e3c34495f`
 - 功能提交说明：`feat: ship v0.6.0 card participation`
+- v0.6.6 功能提交：`182009a195620ba24ba7bcb78f74d424b500bba7`
+- v0.6.6 Pages 运行：`31023146164`
 - 当前检出分支：`main`
 - 当前基线分支：`main`
 - 本轮起点版本：`v0.5.12`
@@ -138,13 +140,14 @@ tests/                            当前核心浏览器检查
 
 ## v0.6.6 债务执行与生活后果
 
-- 当前工作区在 `main@33de22f` 上完成本地实现；未创建开发分支，未提交、推送、合并或部署。线上仍是 v0.6.5。
+- v0.6.6 已从 `codex/v0.6.6-debt-enforcement` 以功能提交 `182009a` 快进发布到 `main`，没有创建合并提交或 PR；`legacy/0.6.5` 固定在发布前的 `main@33de22f`，开发分支、legacy 和 `main` 均已推送。
 - 版本为 v0.6.6、Schema 11、Content Revision 24。新增 `debt_enforcement` 三阶段事件簇，以显式债务来源、逾期、执行通知前提和绑定 liability 推进；生活缺口与未配置来源不会进入执行。
 - 执行未清按既定产品规则显示“游戏内失信”与限制消费；购房、新信贷、主要经营融资、高成本教育、主动备孕和部分 T3 晋升／首职会收缩，但基础工作、租住、法律咨询、分期履约与继续拒绝仍保留。
 - 自有或按揭住房才能处置；处置款先清住房担保债和本案执行债，余款回到现金。原房处置历史不回滚。本案债务清偿或履约后，经过一个同龄行政收尾节点解除标记，不受无关生活缺口阻断。
 - A/B/C 研究归档为 `docs/research/v0.6.6-债务执行与生活后果.md`；玩家文案以账单、通知书、工资记录、财产报告、评估与搬离动作承载压力，明确区分现实法律与游戏压缩。
 - 数据为 408 beats、188 decisions、188 consequences、20 black swans，共 804 个事件和 72 张卡牌。生成器双跑 SHA-256 均为 `33003C5F416F01F63EE002C0085B54A8E6254864A9A2A1B4E4FBDAD27688382C`。
 - `debt`、`cards`、`core`、`episodes`、`runtime-refactor`、`career`、`education` 和 `family` 相关检查已通过；覆盖 360×773、360×640、320×568，控制台错误为 0。
+- GitHub Pages 运行 `31023146164` 成功；线上 `index.html`、`game.js` 和 `data.json` 均为 v0.6.6／Schema 11／Content Revision 24，并包含 804 个事件、72 张卡牌、债务来源目录和三阶段债务执行事件。首次推送未自动入队，使用 Pages build 接口补触发后成功构建 `182009a`。
 
 ## v0.5.2 已完成
 
@@ -355,9 +358,9 @@ tests/run-checks.cjs
 本次改动实际命中的 profile 及其引用测试
 ```
 
-保留用户已有改动。v0.6.6 已完成本地实现和定向验证，但尚未提交、推送、合并或部署；当前线上仍应按 v0.6.5 核对。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
+保留用户已有改动。v0.6.6 已提交、推送并部署，当前线上为 v0.6.6。后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
 
-下一窗口处理 v0.6.6 提交／发布或准备 v0.6.7 时，先读：
+下一窗口准备 v0.6.7 时，先读：
 
 ```text
 roadmap/00-总体策略.md
@@ -365,7 +368,7 @@ roadmap/v0.6.6-债务执行与生活后果.md
 roadmap/v0.6.7-晚年生活.md
 ```
 
-实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。v0.6.6 发布前仍以当前分支实际 diff 为准；未经明确授权不得提交、推送、合并或部署。
+实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。后续版本发布前仍以当前分支实际 diff 为准；未经明确授权不得提交、推送、合并或部署。
 
 ## 常用验证
 
