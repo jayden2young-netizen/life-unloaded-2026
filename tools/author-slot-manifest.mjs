@@ -902,5 +902,17 @@ export const DECISION_SLOT_REGISTRATIONS = [
     key: '@author/decision/85e3f4dbbd58ab6f392834b0',
     slot: { id: 'decision_183', track: 'employment', localIndex: 30 },
   },
+  {
+    key: '@author/decision/4640574f33736d2ce0e3218d',
+    slot: { id: 'decision_186', track: 'finance', localIndex: 8 },
+  },
+  {
+    key: '@author/decision/42a3907ba97e69badbc963a7',
+    slot: { id: 'decision_187', track: 'finance', localIndex: 9 },
+  },
+  {
+    key: '@author/decision/137ca98e3e731d2cfbd92d77',
+    slot: { id: 'decision_188', track: 'finance', localIndex: 10 },
+  },
 ];
 export const CARD_SLOT_REGISTRATIONS = [];

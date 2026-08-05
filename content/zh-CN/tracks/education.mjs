@@ -76,7 +76,7 @@ export const EDUCATION_COPY=track('教育',[
       '第一轮结果回来了：几家欢喜几家愁，录取了的还得核对好学费、资助、押金和走之前的开销。几张纸不能混成一个结果。',
       '这一轮接下来怎么收？','录取、钱和走之前要办的，第一次拆开规划。',
     c('确认国内录取和第一年费用或资助','你对了通知、费用、资助和报到日。不再把家里口头说的当成已经付了。','国内本科的录取和第一年费用——都有了能核的着落。',{requirements:rules([q('education.domesticOffer','eq',true),q('education.domesticFundingReady','eq',true)]),reason:'国内录取已经形成，但首年费用或资助还没有落实',visibility:'whenExposed',showWhen:shownWhen('education.domesticOffer','eq',true)}),
-    c('用家里的预算把海外录取接下来','预算表加上了押金、保险、交通、教材和机票。家里也写清了能给多少。','钱有了着落。海外路线进了下一步——入境和启程。',{requirements:rules([q('education.overseasFundingReady','eq',true)]),reason:'家庭预算尚不足以持续兑现这份海外录取',visibility:'whenExposed',showWhen:shownWhen('education.overseasOffer','eq',true)}),
+    c('用家里的预算把海外录取接下来','预算表加上了押金、保险、交通、教材和机票。家里也写清了能给多少。','钱有了着落。海外路线进了下一步——入境和启程。',{requirements:rules([q('education.overseasFundingReady','eq',true)]),reason:'家庭预算尚不足以持续兑现这份海外录取',visibility:'whenExposed',showWhen:shownWhen('education.overseasOffer','eq',true),debtGate:'highCostEducation'}),
     c('用奖学金把海外录取接下来','你的成绩和材料到了竞争的门槛。奖学金通知盖住了关键的缺口。','家里负担轻了。但入境和报到——还得走。',{requirements:rules([q('education.scholarshipReady','eq',true)]),reason:'当前成绩或语言尚未达到这次竞争门槛',visibility:'whenExposed',showWhen:rules([q('education.overseasOffer','eq',true),q('development.routeExposure','includes','scholarship')])}),
         c('用掉唯一的补申年','你把退件、条件录取或资金缺口摊在桌上，只留一套还能补齐的材料。复读和海外重申共用这一次，不能各来一遍。','日历往后翻了一年。下一次结果无论怎样，都是一战决定成败。',{visibility:'always'})),
   e({id:'undergraduate_application',lane:'education',phase:4,role:'resolve',delayYears:0,deadlineYears:4,ageAdvanceYears:0,age:[19,21]},

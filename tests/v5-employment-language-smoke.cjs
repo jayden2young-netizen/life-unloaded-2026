@@ -5,7 +5,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.EMPLOYMENT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.5-employment');
+const OUT=process.env.EMPLOYMENT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.6-employment');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const DATA=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));

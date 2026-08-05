@@ -1,7 +1,7 @@
 {
   "seed": "v061-readable-runtime-equivalence",
   "schemaVersion": 11,
-  "contentRevision": 23,
+  "contentRevision": 24,
   "trace": [
     {
       "label": "boot",

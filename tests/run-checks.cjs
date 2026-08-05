@@ -16,6 +16,7 @@ const CHECKS = Object.freeze({
   'full-track': 'tests/v5-full-track-smoke.cjs',
   'university-career': 'tests/v5-university-career-smoke.cjs',
   cards: 'tests/v6-card-interaction-smoke.cjs',
+  debt: 'tests/v6-debt-enforcement-smoke.cjs',
   'runtime-equivalence': 'tests/v6-runtime-equivalence-smoke.cjs',
 });
 
@@ -26,6 +27,7 @@ const PROFILES = Object.freeze({
   fast: ['correctness'],
   core: ['correctness', 'browser'],
   cards: ['correctness', 'cards'],
+  debt: ['correctness', 'debt'],
   family: ['correctness', 'family-education'],
   education: ['correctness', 'family-education', 'university-career'],
   career: ['correctness', 'employment', 'university-career'],
@@ -226,10 +228,12 @@ function inferChangedPlan(paths) {
       continue;
     }
 
-    if (
-      pathname === 'content/zh-CN/tracks/finance.mjs' ||
-      pathname === 'content/zh-CN/tracks/later.mjs'
-    ) {
+    if (pathname === 'content/zh-CN/tracks/finance.mjs') {
+      profiles.add('debt');
+      continue;
+    }
+
+    if (pathname === 'content/zh-CN/tracks/later.mjs') {
       profiles.add('episodes');
       continue;
     }

@@ -160,7 +160,7 @@ export const EMPLOYMENT_COPY={
       prompt:'主管岗位空出来了。接下它，你要开始给以前一起吃午饭的同事打绩效。',
       echoText:'那次晋升后来落到了具体的人身上。',
       choices:[
-        {text:'接下管理岗',resultText:'人事给你换了职级，原来的同事开始叫你领导。',consequenceText:'第一次末位沟通时，坐你对面的是带你入职的人。'},
+        {text:'接下管理岗',resultText:'人事给你换了职级，原来的同事开始叫你领导。',consequenceText:'第一次末位沟通时，坐你对面的是带你入职的人。',debtGate:'midHighJob'},
         {text:'只走专业线',resultText:'你保留了项目和涨薪，不再参加排班审批会。',consequenceText:'几年后公司另设专家岗，你的技术记录终于能直接算业绩。'},
         {text:'这次不升了',resultText:'名单发出前，你把名字撤了回来。',consequenceText:'新主管上任后，你的工作没少，只是不再由你决定优先级。'}
       ]

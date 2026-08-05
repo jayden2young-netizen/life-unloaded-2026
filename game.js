@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.5');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.6');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.5',
+  const VERSION = '0.6.6',
     SCHEMA_VERSION = 11,
-    CONTENT_REVISION = 23;
+    CONTENT_REVISION = 24;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -525,6 +525,16 @@
       netWorth: 0,
       lastIncome: 0,
       lastExpense: 0,
+      debtStage: 'current',
+      enforcementStatus: 'none',
+      enforcementDebtId: null,
+      dishonestStatus: 'clear',
+      restrictedConsumption: false,
+      seizedAssets: [],
+      housingDisposition: 'none',
+      repaymentAgreement: null,
+      repaymentAgreementFulfilled: false,
+      reliefPending: false,
     };
     run.housing = { status: 'family', value: 0 };
     run.relationships = {
@@ -638,6 +648,74 @@
       .filter((item) => item.status !== 'settled')
       .reduce((sum, item) => sum + Math.max(0, item.principal), 0);
   }
+  function debtSourceSpec(kind) {
+    return (
+      DATA?.debtSourceCatalog?.[kind] || {
+        label: '未配置来源',
+        enforcementEligible: false,
+        housingSecured: false,
+      }
+    );
+  }
+  function unresolvedLiabilities(run) {
+    return run.finance.liabilities.filter(
+      (item) => item.status !== 'settled' && Number(item.principal) > 0
+    );
+  }
+  function enforceableLiabilities(run) {
+    return unresolvedLiabilities(run).filter((item) => item.enforcementEligible !== false);
+  }
+  function activeEnforcementDebt(run) {
+    const selected = enforceableLiabilities(run).find(
+      (item) => item.id === run.finance.enforcementDebtId
+    );
+    if (selected) return selected;
+    return [...enforceableLiabilities(run)]
+      .filter((item) => item.status === 'delinquent' || (item.arrears || 0) >= 2)
+      .sort((a, b) => (b.arrears || 0) - (a.arrears || 0) || b.principal - a.principal)[0] || null;
+  }
+  function markDebtReliefIfDue(run) {
+    const boundId = run.finance.enforcementDebtId,
+      boundDebt = boundId
+        ? run.finance.liabilities.find((item) => item.id === boundId)
+        : null,
+      boundUnresolved = Boolean(
+        boundDebt && boundDebt.status !== 'settled' && Number(boundDebt.principal) > 0
+      ),
+      restricted =
+      run.finance.dishonestStatus === 'listed' ||
+      run.finance.restrictedConsumption ||
+      ['active', 'consequence'].includes(run.finance.enforcementStatus);
+    if (restricted) {
+      const executionStillUnpaid = boundId
+        ? boundUnresolved
+        : enforceableLiabilities(run).length > 0;
+      if (executionStillUnpaid) return false;
+      run.finance.debtStage = 'resolved';
+      run.finance.repaymentAgreementFulfilled = Boolean(
+        run.finance.repaymentAgreement &&
+          (!boundId || run.finance.repaymentAgreement.debtId === boundId)
+      );
+      run.finance.reliefPending = true;
+      return true;
+    }
+    if (boundId && !boundUnresolved) {
+      if (run.finance.repaymentAgreement?.debtId === boundId) {
+        run.finance.repaymentAgreementFulfilled = true;
+        run.finance.repaymentAgreement = {
+          ...run.finance.repaymentAgreement,
+          status: 'fulfilled',
+          fulfilledAt: run.age,
+        };
+      }
+      run.finance.enforcementDebtId = null;
+      run.finance.enforcementStatus = 'resolved';
+      run.finance.debtStage = unresolvedLiabilities(run).length ? 'current' : 'resolved';
+    }
+    if (!unresolvedLiabilities(run).length && run.finance.debtStage !== 'current')
+      run.finance.debtStage = 'resolved';
+    return false;
+  }
   function personalAssets(run) {
     return (
       run.finance.assets.reduce((sum, item) => sum + (item.value || 0), 0) +
@@ -679,6 +757,22 @@
     run.finance.hasArrears = run.finance.liabilities.some(
       (item) => item.status === 'delinquent' || (item.arrears || 0) > 0
     );
+    run.finance.hasEnforceableArrears = enforceableLiabilities(run).some(
+      (item) => item.status === 'delinquent' || (item.arrears || 0) >= 2
+    );
+    if (
+      run.finance.hasEnforceableArrears &&
+      ['current', 'resolved'].includes(run.finance.debtStage) &&
+      !run.finance.reliefPending
+    )
+      run.finance.debtStage = 'overdue';
+    if (
+      !run.finance.hasEnforceableArrears &&
+      run.finance.debtStage === 'overdue' &&
+      !['active', 'consequence'].includes(run.finance.enforcementStatus)
+    )
+      run.finance.debtStage = 'current';
+    markDebtReliefIfDue(run);
     run.finance.available = run.finance.cash;
     run.business.control = clamp(run.business.control, 0, 100);
     run.finance.netWorth = run.finance.cash + personalAssets(run) - run.finance.totalDebt;
@@ -862,6 +956,31 @@
       run.employment?.lastJob && typeof run.employment.lastJob === 'object'
         ? copy(run.employment.lastJob)
         : null;
+    merged.housing = { ...fresh.housing, ...(run.housing || {}) };
+    merged.finance.liabilities = (Array.isArray(run.finance?.liabilities)
+      ? run.finance.liabilities
+      : []
+    ).map((item) => {
+      const kind = item.kind || item.sourceId || 'consumer',
+        source = debtSourceSpec(kind);
+      return {
+        ...item,
+        kind,
+        sourceId: item.sourceId || kind,
+        enforcementEligible: item.enforcementEligible ?? source.enforcementEligible,
+        housingSecured: item.housingSecured ?? source.housingSecured,
+      };
+    });
+    merged.finance.seizedAssets = Array.isArray(run.finance?.seizedAssets)
+      ? Array.from(new Set(run.finance.seizedAssets))
+      : [];
+    if (merged.housing.status === 'mortgaged') {
+      const mortgage = merged.finance.liabilities.find((item) => item.kind === 'mortgage');
+      if (!(merged.housing.value > 0))
+        merged.housing.value = Math.max(260000, Number(mortgage?.principal) || 0);
+      if (!mortgage || mortgage.status === 'settled' || !(Number(mortgage.principal) > 0))
+        merged.housing.status = 'owned';
+    }
     merged.episodes = { ...fresh.episodes, ...(run.episodes || {}) };
     merged.sceneQueue = Array.isArray(run.sceneQueue) ? run.sceneQueue : [];
     for (const key of Object.keys(fresh.desires))
@@ -926,10 +1045,12 @@
     try {
       const parsed = JSON.parse(raw),
         oldSchema = Number(parsed.schemaVersion || parsed.run?.schemaVersion || 0),
-        sameRelease = oldSchema === SCHEMA_VERSION && parsed.gameVersion === VERSION;
+        compatibleRelease =
+          oldSchema === SCHEMA_VERSION &&
+          [VERSION, '0.6.5'].includes(parsed.gameVersion);
       state = base;
       base.meta = normalizeMeta(parsed.meta || {});
-      if (sameRelease) base.run = parsed.run ? normalizeRun(parsed.run) : null;
+      if (compatibleRelease) base.run = parsed.run ? normalizeRun(parsed.run) : null;
       else {
         base.run = null;
         base.meta.migrationNotice = true;
@@ -1034,9 +1155,52 @@
     const effective = resolveCardChoice(choice, run).choice;
     return !effective?.showWhen || requirementsMatch(effective.showWhen, run);
   }
+  function debtGateAllows(choice, run = state.run) {
+    if (!choice?.debtGate) return true;
+    if (choice.debtGate === 'housingDisposition')
+      return (
+        ['owned', 'mortgaged'].includes(run.housing.status) && Number(run.housing.value) > 0
+      );
+    const restricted =
+      run.finance.restrictedConsumption || run.finance.dishonestStatus === 'listed';
+    if (!restricted) return true;
+    if (choice.debtGate === 'midHighJob') {
+      const current = employmentProfile(run.employment.profileId),
+        targetId = current && DATA.employmentCatalog?.promotionMap?.[current.id],
+        target = targetId && employmentProfile(targetId);
+      return !target || (JOB_TIER_INDEX[target.tier] ?? 0) < 3;
+    }
+    return ![
+      'homePurchase',
+      'highCostEducation',
+      'businessFinance',
+      'familyExpansion',
+      'newCredit',
+    ].includes(choice.debtGate);
+  }
+  function debtGateReason(choice, run = state.run) {
+    if (debtGateAllows(choice, run)) return null;
+    if (choice?.debtGate === 'housingDisposition') return '名下没有可处置的自有或按揭住房';
+    if (choice?.debtGate === 'homePurchase') return '执行限制仍在，当前不能新增购房安排';
+    if (choice?.debtGate === 'highCostEducation')
+      return '执行未结，眼下不能兑现这笔高额教育费用';
+    if (choice?.debtGate === 'businessFinance')
+      return '执行未结，当前拿不到这笔新增经营融资';
+    if (choice?.debtGate === 'familyExpansion')
+      return '执行未结，眼下的收入和住处还撑不起主动备孕安排';
+    if (choice?.debtGate === 'newCredit')
+      return '执行未结，当前不能再开一笔新信贷';
+    if (choice?.debtGate === 'midHighJob')
+      return '这次中高阶岗位审查没有通过，基础工作仍可继续';
+    return '当前债务执行状态不支持这项安排';
+  }
   function choiceEnabled(choice, run = state.run) {
     const effective = resolveCardChoice(choice, run).choice;
-    return choiceVisible(effective, run) && requirementsMatch(choiceRequirements(effective), run);
+    return (
+      choiceVisible(effective, run) &&
+      requirementsMatch(choiceRequirements(effective), run) &&
+      debtGateAllows(effective, run)
+    );
   }
   function personAge(item, run = state.run) {
     return run.age - item.bornAt;
@@ -1112,7 +1276,8 @@
   }
   function addLiability(run, command) {
     const kind = command.kind || 'consumer',
-      value = Math.max(0, Number(command.value) || 0);
+      value = Math.max(0, Number(command.value) || 0),
+      source = debtSourceSpec(kind);
     if (kind === 'living') {
       const existing = run.finance.liabilities.find(
         (item) => item.kind === 'living' && item.status !== 'settled'
@@ -1130,10 +1295,14 @@
       rate: Number(command.rate) || 0.06,
       status: 'current',
       guaranteed: Boolean(command.guaranteed),
+      sourceId: kind,
+      enforcementEligible: source.enforcementEligible,
+      housingSecured: source.housingSecured,
       startedAt: run.age,
       arrears: 0,
     };
     run.finance.liabilities.push(liability);
+    if (run.finance.debtStage === 'resolved') run.finance.debtStage = 'current';
     return liability;
   }
   function repayDebt(run, amount) {
@@ -1148,10 +1317,13 @@
       if (debt.principal <= 0) {
         debt.principal = 0;
         debt.status = 'settled';
+        if (debt.housingSecured && run.housing.status === 'mortgaged')
+          run.housing.status = 'owned';
       } else debt.status = 'current';
       if (remaining <= 0) break;
     }
     if (amount > remaining) addTag(run, 'finance:repaid');
+    markDebtReliefIfDue(run);
   }
   function restructureDebt(run, rate = 0.05) {
     for (const debt of run.finance.liabilities) {
@@ -1161,7 +1333,116 @@
       debt.status = 'current';
     }
     run.pressures.money = clamp(run.pressures.money - 10, 0, 100);
+    if (!run.finance.hasEnforceableArrears && run.finance.debtStage === 'overdue')
+      run.finance.debtStage = 'current';
     addTag(run, 'finance:restructured');
+  }
+  function resolveDebtEnforcement(run, action) {
+    const debt = activeEnforcementDebt(run);
+    if (!debt) return false;
+    run.finance.enforcementDebtId = debt.id;
+    const agreement = (type) => {
+      run.finance.repaymentAgreement = {
+        type,
+        debtId: debt.id,
+        startedAt: run.age,
+        status: 'active',
+      };
+      run.finance.repaymentAgreementFulfilled = false;
+    };
+    const enterEnforcement = () => {
+      run.finance.debtStage = 'enforcement';
+      run.finance.enforcementStatus = 'active';
+      run.finance.dishonestStatus = 'listed';
+      run.finance.restrictedConsumption = true;
+      run.finance.seizedAssets = Array.from(
+        new Set([...(run.finance.seizedAssets || []), 'account'])
+      );
+      addTag(run, 'finance:enforcement');
+    };
+    if (action === 'overdue_agreement') {
+      debt.rate = Math.min(debt.rate || 0.05, 0.05);
+      debt.arrears = 0;
+      debt.status = 'current';
+      run.finance.debtStage = 'current';
+      run.finance.enforcementStatus = 'agreement';
+      agreement('preEnforcement');
+      run.pressures.money = clamp(run.pressures.money - 6, 0, 100);
+      return true;
+    }
+    if (action === 'overdue_consult' || action === 'overdue_refuse') {
+      run.finance.debtStage = 'overdue';
+      run.finance.enforcementStatus =
+        action === 'overdue_consult' ? 'noticePending' : 'noticeExpired';
+      run.pressures.money = clamp(
+        run.pressures.money + (action === 'overdue_refuse' ? 5 : 1),
+        0,
+        100
+      );
+      return true;
+    }
+    if (action.startsWith('enforcement_')) {
+      enterEnforcement();
+      if (action === 'enforcement_income') {
+        agreement('incomeDeduction');
+        run.finance.seizedAssets.push('income');
+        run.pressures.money = clamp(run.pressures.money + 4, 0, 100);
+      } else if (action === 'enforcement_report') {
+        agreement('reportedInstallment');
+        run.pressures.money = clamp(run.pressures.money + 3, 0, 100);
+      } else {
+        run.pressures.money = clamp(run.pressures.money + 9, 0, 100);
+        run.pressures.family = clamp(run.pressures.family + 4, 0, 100);
+      }
+      run.finance.seizedAssets = Array.from(new Set(run.finance.seizedAssets));
+      return true;
+    }
+    run.finance.debtStage = 'consequence';
+    run.finance.enforcementStatus = 'consequence';
+    if (action === 'consequence_housing') {
+      const hasHousing =
+        ['owned', 'mortgaged'].includes(run.housing.status) && Number(run.housing.value) > 0;
+      if (!hasHousing) return false;
+      const proceeds = Math.max(0, Number(run.housing.value) || 0);
+      run.finance.housingDisposition = 'disposed';
+      run.finance.seizedAssets = Array.from(
+        new Set([...(run.finance.seizedAssets || []), 'housing'])
+      );
+      run.housing.status = 'renting';
+      run.housing.value = 0;
+      let remaining = proceeds;
+      const securedDebts = unresolvedLiabilities(run).filter((item) => item.housingSecured),
+        targets = [...securedDebts, debt].filter(
+          (item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index
+        );
+      for (const target of targets) {
+        const paid = Math.min(remaining, Math.max(0, Number(target.principal) || 0));
+        target.principal -= paid;
+        remaining -= paid;
+        target.arrears = 0;
+        target.status = target.principal <= 0 ? 'settled' : 'current';
+        if (remaining <= 0) break;
+      }
+      run.finance.cash += remaining;
+      if (proceeds > remaining) addTag(run, 'finance:repaid');
+      markDebtReliefIfDue(run);
+      run.pressures.family = clamp(run.pressures.family + 8, 0, 100);
+      addTag(run, 'finance:housingDisposed');
+    } else if (action === 'consequence_installment') {
+      agreement('incomeDeduction');
+      run.pressures.money = clamp(run.pressures.money + 3, 0, 100);
+    } else if (action === 'consequence_minimum') {
+      agreement('minimumLiving');
+      run.pressures.money = clamp(run.pressures.money + 5, 0, 100);
+      run.pressures.family = clamp(run.pressures.family + 2, 0, 100);
+    } else {
+      run.finance.repaymentAgreement = null;
+      run.pressures.money = clamp(run.pressures.money + 10, 0, 100);
+      run.pressures.family = clamp(run.pressures.family + 5, 0, 100);
+      run.health.mental = clamp(run.health.mental - 3, 0, 100);
+    }
+    markDebtReliefIfDue(run);
+    return true;
   }
   function constitutionProtection(run) {
     return (
@@ -1587,6 +1868,10 @@
   }
   function firstJobCandidates(run, { reentry = false } = {}) {
     const [minimum, maximum] = educationTierRange(run, reentry),
+      debtMaximum =
+        run.finance.dishonestStatus === 'listed' || run.finance.restrictedConsumption
+          ? Math.min(maximum, 2)
+          : maximum,
       region = run.location.id,
       overseas = ['us', 'europe'].includes(run.employment.applicationRegion),
       authorizationReady = !overseas || run.mobility.workAuthorization === 'verified',
@@ -1597,7 +1882,7 @@
       return (
         profile.firstJobEligible &&
         tier >= minimum &&
-        tier <= maximum &&
+        tier <= debtMaximum &&
         (profile.regions || []).includes(region) &&
         profileCredentialsReady(run, profile) &&
         (entryPath === 'none' ||
@@ -1696,6 +1981,12 @@
     if (step > 0) {
       const targetId = DATA.employmentCatalog?.promotionMap?.[current.id],
         target = targetId ? employmentProfile(targetId) : null;
+      if (
+        target &&
+        (run.finance.dishonestStatus === 'listed' || run.finance.restrictedConsumption) &&
+        JOB_TIER_INDEX[target.tier] >= 3
+      )
+        return false;
       return target && profileCredentialsReady(run, target)
         && JOB_TIER_INDEX[target.tier] === targetIndex
         ? applyEmploymentProfile(run, target.id)
@@ -1811,6 +2102,8 @@
       else if (command.type === 'addLiability') addLiability(run, command);
       else if (command.type === 'repayDebt') repayDebt(run, command.value);
       else if (command.type === 'restructureDebt') restructureDebt(run, command.rate);
+      else if (command.type === 'resolveDebtEnforcement')
+        resolveDebtEnforcement(run, command.value);
       else if (command.type === 'healthIncident') healthIncident(run, command);
       else if (command.type === 'healthRecovery') healthRecovery(run, command);
       else if (command.type === 'resolveApplication')
@@ -1952,6 +2245,7 @@
       partner: run.relationships.partnerStatus,
       children: run.relationships.childCount,
       netWorth: run.finance.netWorth,
+      debtStage: run.finance.debtStage,
       health: run.health.physical,
       habit: run.habits.stage,
     };
@@ -2161,16 +2455,24 @@
       ),
       resolvedJob = choice.effects.some((command) => command.type === 'resolveFirstJobApplication'),
       resolvedConception = choice.effects.some((command) => command.type === 'resolveConception'),
+      resolvedDebtHousing = choice.effects.some(
+        (command) =>
+          command.type === 'resolveDebtEnforcement' && command.value === 'consequence_housing'
+      ),
       suffix = resolvedApplication
         ? undergraduateApplicationResult(run)
         : resolvedGraduate
           ? graduateApplicationResult(run)
           : resolvedJob
           ? firstJobApplicationResult(run)
-          : resolvedConception
-            ? run.relationships.pregnancyStatus === 'confirmed'
-              ? ' 检查确认了怀孕，接下来由你决定是否继续。'
-              : ' 这段时间没有确认怀孕。一次未成功没有被写成诊断。'
+            : resolvedConception
+              ? run.relationships.pregnancyStatus === 'confirmed'
+                ? ' 检查确认了怀孕，接下来由你决定是否继续。'
+                : ' 这段时间没有确认怀孕。一次未成功没有被写成诊断。'
+              : resolvedDebtHousing
+                ? before.housing.status === 'mortgaged'
+                  ? ' 成交款先抵了按揭和执行款，剩下的余额才是以后要继续对的数字。'
+                  : ' 成交款按执行余额扣划，房本从你的账本里消失了。'
             : '',
       resultText = `${choice.resultText}${suffix}`;
     run.sceneQueue = [
@@ -2255,6 +2557,10 @@
     }
     run.yearStarted = false;
     settleYear(run);
+    if (run.finance.reliefPending) {
+      queueDebtRelief(run, true);
+      return;
+    }
     run.age++;
     syncDerived(run);
     save();
@@ -2300,6 +2606,17 @@
       id === 'guarantee_recourse' &&
       record.phase > 2 &&
       !run.finance.liabilities.some((item) => item.guaranteed && item.status !== 'settled')
+    )
+      return true;
+    if (
+      id === 'debt_enforcement' &&
+      (!run.finance.enforcementDebtId ||
+        !run.finance.liabilities.some(
+          (item) =>
+            item.id === run.finance.enforcementDebtId &&
+            item.status !== 'settled' &&
+            item.enforcementEligible !== false
+        ))
     )
       return true;
     if (id === 'acute_illness' && record.phase > 1 && run.health.status === 'well') return true;
@@ -2399,6 +2716,58 @@
     render();
     return true;
   }
+  function queueDebtRelief(run, advanceAge) {
+    if (!run.finance.reliefPending) return false;
+    run.sceneQueue = [
+      {
+        kind: 'result',
+        debtRelief: true,
+        advanceAge: Boolean(advanceAge),
+        text: '履约证明交上去后，查询页没有立刻变化。几天后，限制状态显示解除。已经扣走的钱和搬离的住处没有跟着回来。',
+      },
+    ];
+    run.currentDecision = null;
+    run.phase = 'episode';
+    save();
+    render();
+    return true;
+  }
+  function finishDebtRelief(scene) {
+    const run = state.run;
+    run.finance.debtStage = unresolvedLiabilities(run).length ? 'current' : 'resolved';
+    run.finance.enforcementStatus = 'resolved';
+    run.finance.dishonestStatus = 'clear';
+    run.finance.restrictedConsumption = false;
+    run.finance.seizedAssets = [];
+    run.finance.reliefPending = false;
+    run.finance.enforcementDebtId = null;
+    if (run.finance.repaymentAgreement)
+      run.finance.repaymentAgreement = {
+        ...run.finance.repaymentAgreement,
+        status: 'fulfilled',
+        fulfilledAt: run.age,
+      };
+    const episode = run.episodes.debt_enforcement;
+    if (episode?.status === 'active') {
+      episode.status = 'resolved';
+      episode.closureReason = 'relieved';
+      episode.nextPhaseAge = run.age;
+    }
+    addTag(run, 'finance:relieved');
+    addTimeline(
+      { id: `debt_relief_${run.age}`, kind: 'consequence', track: 'finance', icon: '¥' },
+      scene.text,
+      'chosen'
+    );
+    run.sceneQueue = [];
+    run.currentDecision = null;
+    run.phase = 'playing';
+    run.yearStarted = false;
+    if (scene.advanceAge) run.age++;
+    syncDerived(run);
+    save();
+    render();
+  }
   function dueEpisodeClosure(run) {
     for (const [id, record] of Object.entries(run.episodes)) {
       if (record.status !== 'active') continue;
@@ -2426,6 +2795,10 @@
     run.phase = 'playing';
     run.yearStarted = false;
     settleYear(run);
+    if (run.finance.reliefPending) {
+      queueDebtRelief(run, true);
+      return;
+    }
     run.age++;
     syncDerived(run);
     save();
@@ -2442,7 +2815,8 @@
       return;
     }
     if (scene.kind === 'result') {
-      if (scene.forced) finishForcedEpisode(scene);
+      if (scene.debtRelief) finishDebtRelief(scene);
+      else if (scene.forced) finishForcedEpisode(scene);
       else finishEpisodeResult(scene);
     }
   }
@@ -2566,12 +2940,14 @@
         debt.principal = Math.max(0, debt.principal - principalPayment);
         debt.arrears = Math.max(0, (debt.arrears || 0) - 1);
         debt.status = debt.principal === 0 ? 'settled' : 'current';
+        if (debt.status === 'settled' && debt.housingSecured && run.housing.status === 'mortgaged')
+          run.housing.status = 'owned';
       } else {
         const paid = Math.max(0, run.finance.cash);
         run.finance.cash = 0;
         debt.principal = Math.max(0, debt.principal + interest - paid);
         debt.arrears = (debt.arrears || 0) + 1;
-        debt.status = debt.arrears >= 2 ? 'delinquent' : 'current';
+        debt.status = 'delinquent';
         run.pressures.money = clamp(run.pressures.money + (debt.arrears >= 2 ? 8 : 4), 0, 100);
       }
     }
@@ -2643,6 +3019,15 @@
     run.finance.lastExpense = expense;
     run.finance.cash += income - expense;
     settleLiabilities(run);
+    if (
+      ['enforcement', 'consequence'].includes(run.finance.debtStage) &&
+      !run.finance.reliefPending
+    ) {
+      run.pressures.money = clamp(run.pressures.money + 4, 0, 100);
+      run.pressures.family = clamp(run.pressures.family + 2, 0, 100);
+      run.pressures.body = clamp(run.pressures.body + 1, 0, 100);
+      run.health.mental = clamp(run.health.mental - 1, 0, 100);
+    }
     if (run.finance.cash < 0) {
       addLiability(run, { value: Math.abs(run.finance.cash), kind: 'living', rate: 0.06 });
       run.finance.cash = 0;
@@ -3139,6 +3524,7 @@
     educationMilestones(run);
     updatePeople(run);
     if (prepareFamilyState(run)) return true;
+    if (run.finance.reliefPending && queueDebtRelief(run, false)) return true;
     run.yearStarted = true;
     run.yearQueue = [];
     if (dueEpisodeClosure(run)) return true;
@@ -3198,6 +3584,7 @@
       }
     }
     settleYear(run);
+    if (run.finance.reliefPending) return queueDebtRelief(run, true);
     run.yearStarted = false;
     run.age++;
     syncDerived(run);
@@ -3742,6 +4129,22 @@
       }[run.housing.status] || run.housing.status
     );
   }
+  function debtStatusLabel(run) {
+    const stage =
+        {
+          current: '正常偿还',
+          overdue: '已经逾期',
+          enforcement: '执行中',
+          consequence: '执行后果持续',
+          resolved: '已结清',
+        }[run.finance.debtStage] || '状态待核',
+      flags = [];
+    if (run.finance.dishonestStatus === 'listed') flags.push('游戏内失信');
+    if (run.finance.restrictedConsumption) flags.push('限制消费');
+    if (run.finance.reliefPending) flags.push('等待解除');
+    if (run.finance.housingDisposition === 'disposed') flags.push('原住房已处置');
+    return `${stage}${flags.length ? ` · ${flags.join(' · ')}` : ''}`;
+  }
   function laterStatusLabel(run) {
     const labels = {
         retirement: {
@@ -3929,7 +4332,7 @@
         const resolved = resolveCardChoice(choice),
           effective = resolved.choice,
           enabled = choiceEnabled(choice);
-        return `<button class="choice ${enabled ? '' : 'locked'} ${resolved.card ? 'card-active' : ''}" data-choice="${index}" ${enabled ? '' : 'disabled'}>${esc(effective.text)}${resolved.card ? `<small class="card-effect"><b>◇ “${esc(resolved.card.displayName)}”</b><span> · ${esc(resolved.spec.explanation)}</span></small>` : enabled && effective.hints?.length ? `<small>${esc(effective.hints.join(' · '))}</small>` : !enabled ? `<small>暂不可选：${esc(effective.reason || '当前条件不足')}</small>` : ''}</button>`;
+        return `<button class="choice ${enabled ? '' : 'locked'} ${resolved.card ? 'card-active' : ''}" data-choice="${index}" ${enabled ? '' : 'disabled'}>${esc(effective.text)}${!enabled ? `<small>暂不可选：${esc(debtGateReason(effective) || effective.reason || '当前条件不足')}</small>` : resolved.card ? `<small class="card-effect"><b>◇ “${esc(resolved.card.displayName)}”</b><span> · ${esc(resolved.spec.explanation)}</span></small>` : effective.hints?.length ? `<small>${esc(effective.hints.join(' · '))}</small>` : ''}</button>`;
       })
       .join('')}</div></section></div>`;
   }
@@ -3962,7 +4365,7 @@
             .map((child) => `${personAge(child, run)}岁`)
             .join('、')
         : '无'
-    }</dd></div><div class="spec"><dt>住房</dt><dd>${housingLabel(run)}</dd></div><div class="spec"><dt>${esc(UI_COPY.netWorthField)}</dt><dd>${money(run.finance.netWorth)}</dd></div><div class="spec"><dt>债务</dt><dd>${liabilities.length ? `${liabilities.length}笔 · ${money(run.finance.totalDebt)}` : '无'}</dd></div><div class="spec"><dt>健康</dt><dd>${constitutionLabel(run)} · ${healthStatusLabel(run)} · ${Math.round(run.health.physical)}／${Math.round(run.health.mental)}</dd></div><div class="spec"><dt>${esc(UI_COPY.habitField)}</dt><dd>${habitLabel(run)}</dd></div><div class="spec"><dt>晚年安排</dt><dd>${esc(laterStatusLabel(run))}</dd></div><div class="spec"><dt>压力</dt><dd>${pressureLevel(run)}</dd></div></dl><div class="section-title">最在意的事</div><div class="desire-list">${topDesires(
+    }</dd></div><div class="spec"><dt>住房</dt><dd>${housingLabel(run)}</dd></div><div class="spec"><dt>${esc(UI_COPY.netWorthField)}</dt><dd>${money(run.finance.netWorth)}</dd></div><div class="spec"><dt>债务</dt><dd>${liabilities.length ? `${liabilities.length}笔 · ${money(run.finance.totalDebt)} · ${esc(debtStatusLabel(run))}` : run.finance.housingDisposition === 'disposed' ? `无未清债务 · ${esc(debtStatusLabel(run))}` : '无'}</dd></div><div class="spec"><dt>健康</dt><dd>${constitutionLabel(run)} · ${healthStatusLabel(run)} · ${Math.round(run.health.physical)}／${Math.round(run.health.mental)}</dd></div><div class="spec"><dt>${esc(UI_COPY.habitField)}</dt><dd>${habitLabel(run)}</dd></div><div class="spec"><dt>晚年安排</dt><dd>${esc(laterStatusLabel(run))}</dd></div><div class="spec"><dt>压力</dt><dd>${pressureLevel(run)}</dd></div></dl><div class="section-title">最在意的事</div><div class="desire-list">${topDesires(
       run
     )
       .map(
@@ -4059,7 +4462,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.5-存档.json';
+    link.download = '人生尚未加载-v0.6.6-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }
@@ -4319,7 +4722,18 @@
               totalDebt: run.finance.totalDebt,
               netWorth: run.finance.netWorth,
               liabilities: run.finance.liabilities,
+              debtStage: run.finance.debtStage,
+              enforcementStatus: run.finance.enforcementStatus,
+              enforcementDebtId: run.finance.enforcementDebtId,
+              dishonestStatus: run.finance.dishonestStatus,
+              restrictedConsumption: run.finance.restrictedConsumption,
+              seizedAssets: run.finance.seizedAssets,
+              housingDisposition: run.finance.housingDisposition,
+              repaymentAgreement: run.finance.repaymentAgreement,
+              repaymentAgreementFulfilled: run.finance.repaymentAgreementFulfilled,
+              reliefPending: run.finance.reliefPending,
             },
+            housing: run.housing,
             relationships: {
               partnerStatus: run.relationships.partnerStatus,
               activePartnerId: run.relationships.activePartnerId,
@@ -4355,7 +4769,7 @@
                       memoryKey: choice.memoryKey,
                       visible: choiceVisible(choice, run),
                       enabled: choiceEnabled(choice, run),
-                      reason: choice.reason || null,
+                      reason: debtGateReason(choice, run) || choice.reason || null,
                     }))
                     .filter((choice) => choice.visible),
                 }

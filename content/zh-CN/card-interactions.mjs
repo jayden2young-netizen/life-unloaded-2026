@@ -60,6 +60,15 @@ export function cardInteractionFor(track,index,option,authoredDecision){
   const rotation=rotations[track];
   if(!rotation)return null;
   const episodeId=authoredDecision?.episode?.id,phase=authoredDecision?.episode?.phase;
+  if(track==='finance'&&episodeId==='debt_enforcement'&&phase===1&&option===0)return{
+    primaryMechanic:'negotiation',mode:'resultVariant',explanation:'你把收入、必要开支和能还的数一起带上了桌。',patch:[{type:'add',target:'agency',value:1}],resultSuffix:'方案里的数字能和你的工资、房租逐项对上。'
+  };
+  if(track==='finance'&&episodeId==='debt_enforcement'&&phase===2&&option===1)return{
+    primaryMechanic:'evidence',mode:'resultVariant',explanation:'合同、流水和名下资产都有能核对的凭据。',patch:[{type:'add',target:'capabilities.evidence',value:1}],resultSuffix:'这次没有靠一张说不清来源的清单。'
+  };
+  if(track==='finance'&&episodeId==='debt_enforcement'&&phase===3&&option===2)return{
+    primaryMechanic:'boundary',mode:'resultVariant',explanation:'你能把必要生活费和逃避还款分开说清。',patch:[{type:'add',target:'agency',value:1}],resultSuffix:'留下的是基本生活，不是一笔藏起来的钱。'
+  };
   if(track==='children'&&episodeId==='becoming_parent'&&phase===1&&option===0)return{
     primaryMechanic:'cashBuffer',mode:'costShift',explanation:'你预留的缓冲能垫住检查和最急的一段请假。',patch:[{type:'add',target:'finance.cash',value:1200}],resultSuffix:'那点缓冲垫住了眼前的账单，却不能替检查单提前写答案。'
   };

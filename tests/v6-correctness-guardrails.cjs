@@ -120,17 +120,21 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.5', 11, 23]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.6', 11, 24]);
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
-    {beat:408,decision:185,consequence:185,blackSwan:20},
+    {beat:408,decision:188,consequence:188,blackSwan:20},
   );
   assert.equal(summary.evidenceRecords, 3);
-  for (const type of ['resolveConception']) assert.ok(contract.COMMAND_TYPES.includes(type));
+  for (const type of ['resolveConception','resolveDebtEnforcement'])
+    assert.ok(contract.COMMAND_TYPES.includes(type));
   for (const pathName of [
     'relationships.familyPlanningOffered','relationships.familyPlanningDeferred','relationships.familyPlanningClosed',
     'relationships.plannedConceptionResolved','relationships.unplannedConceptionChecked','relationships.pregnancyStatus',
     'relationships.pregnancyDecision','relationships.pregnancyDecisionDeferred','relationships.adoptionOffered','relationships.adoptionStatus',
+    'finance.debtStage','finance.enforcementStatus','finance.enforcementDebtId','finance.dishonestStatus',
+    'finance.restrictedConsumption','finance.seizedAssets','finance.housingDisposition','finance.repaymentAgreement',
+    'finance.repaymentAgreementFulfilled','finance.reliefPending',
   ]) {
     assert.ok(contract.READ_PATHS.includes(pathName), `missing family read path ${pathName}`);
     assert.ok(contract.WRITE_PATHS.includes(pathName), `missing family write path ${pathName}`);
@@ -430,7 +434,7 @@ function neutralTrace(multiplier) {
   assert.match(unregisteredFailure, /未登记定义/);
 
   assert.ok(
-    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.5')") <
+    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.6')") <
       gameSource.indexOf('fetch(`./data.json?v=${VERSION}`'),
     'shared contract import must precede data fetch',
   );
