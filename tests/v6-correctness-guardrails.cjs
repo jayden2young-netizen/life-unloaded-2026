@@ -4,12 +4,10 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { chromium } = require('playwright');
+const { launchChromium } = require('./playwright-runtime.cjs');
 
 const ROOT = path.resolve(__dirname, '..');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
-const CHROME =
-  process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'data.json'), 'utf8'));
 const SAVE_KEY = 'life-unloaded-2026-v1';
 let browser;
@@ -439,7 +437,7 @@ function neutralTrace(multiplier) {
     'shared contract import must precede data fetch',
   );
 
-  browser = await chromium.launch({ headless: true, executablePath: CHROME });
+  browser = await launchChromium();
   const context = await browser.newContext({ viewport: { width: 360, height: 773 } });
   const page = await context.newPage();
   const requests = [];

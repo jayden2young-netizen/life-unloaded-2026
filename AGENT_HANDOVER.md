@@ -18,7 +18,7 @@
 
 ## 仓库与版本
 
-- 正确的本地仓库：`C:\Users\Administrator\Documents\Life unloaded`
+- 正确的本地仓库：以 `git rev-parse --show-toplevel` 的现场输出为准，不依赖某台机器的绝对路径
 - GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
 - 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
 - 当前发布版本：v0.6.6
@@ -39,12 +39,6 @@
 
 v0.6.4 于 2026-07-31 从 `codex/v0.6.4-first-job-bridge` 快进发布到 `main`；功能提交为 `92e4123ee7c62bf13f3659416835f65ad0e70d45`，`legacy/0.6.3` 固定在发布前的 `main@3ba0490cb089d5a7cd31618e660b51cc1f12ee6e`。最终提交、ahead/behind、当前分支和线上状态仍必须以新窗口现场执行的 Git 与 Pages 检查为准。
 
-旧检出目录已经失效，不要再使用：
-
-```text
-C:\Users\Administrator\Documents\Codex\2026-07-20\...\life-unloaded-2026
-```
-
 ## Git 状态
 
 v0.5.2 的开发分支是 `agent/v0.5.2-native-copy`，分支提交为 `1068ebf`。内容已经通过合并提交进入 `main`，但当时没有先创建 PR。
@@ -57,10 +51,11 @@ No commits between main and agent/v0.5.2-native-copy
 
 不要为了补 PR 回滚 `main`、制造空提交或重写历史。下一版本应从最新 `main` 创建独立分支，完成验证后先推送并创建 PR，确认后再合并。
 
-GitHub CLI 不在当前 Codex 子进程的 PATH 中，绝对路径可用：
+GitHub CLI 应直接从 PATH 调用，并在使用前现场确认登录状态：
 
-```text
-C:\Users\Administrator\Documents\Codex\tools\gh\bin\gh.exe
+```shell
+command -v gh
+gh auth status
 ```
 
 交接时登录账号为 `jayden2young-netizen`。
@@ -332,8 +327,9 @@ v0.6.3—v0.6.9 必须在每版交付可发布玩家文案，不能把模板化�
 
 先执行只读核验：
 
-```powershell
-Get-Location
+```shell
+pwd
+git rev-parse --show-toplevel
 git status --short --branch
 git branch --show-current
 git remote -v
@@ -370,11 +366,26 @@ roadmap/v0.6.7-晚年生活.md
 
 实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。后续版本发布前仍以当前分支实际 diff 为准；未经明确授权不得提交、推送、合并或部署。
 
+## 本地开发依赖
+
+项目仍是无需构建的静态站点；Node.js 和 Playwright 只用于生成内容和运行自动化测试，不进入玩家运行时。本仓库暂不维护 `package.json`，因此首次配置或清理 `node_modules/` 后，需要在仓库根目录重新安装本地测试依赖。
+
+macOS 推荐使用 Homebrew 的 Node.js 24 LTS：
+
+```shell
+brew install node@24
+export PATH="/opt/homebrew/opt/node@24/bin:$PATH"
+npm install --no-save --no-package-lock playwright@1.62.0
+npx playwright install chromium
+```
+
+长期使用时，应将上述 `export PATH=...` 放进 `~/.zprofile`，不要每次手工输入。Windows 安装 Node.js 24 LTS 后，只需运行相同的两条 `npm`／`npx` 命令。测试默认启动 Playwright 管理的 Chromium；只有显式设置 `CHROME_PATH` 时才使用自定义浏览器。
+
 ## 常用验证
 
 统一入口：
 
-```powershell
+```shell
 node tests/run-checks.cjs --list
 node tests/run-checks.cjs --changed main --dry-run
 node tests/run-checks.cjs --changed main --scope <profile>
@@ -382,7 +393,7 @@ node tests/run-checks.cjs --changed main --scope <profile>
 
 常用显式 profile：
 
-```powershell
+```shell
 node tests/run-checks.cjs --profile syntax
 node tests/run-checks.cjs --profile fast
 node tests/run-checks.cjs --profile core

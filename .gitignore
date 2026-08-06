@@ -1,10 +1,7 @@
 node_modules/
+.DS_Store
 .agents/
 _bmad/
 _bmad-output/
 roadmap/
 docs/Claude+Fable+5_Third_party_analysis/
-
-# Local-only launcher for manual browser testing.
-run-local-manual-test.bat
-local-manual-test-server.py

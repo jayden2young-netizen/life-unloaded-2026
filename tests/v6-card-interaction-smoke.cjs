@@ -2,13 +2,12 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
-const {chromium}=require('playwright');
+const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
 const OUT=process.env.CARD_INTERACTION_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.6-cards');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
-const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const decisions=data.events.filter(event=>event.kind==='decision');
 fs.mkdirSync(OUT,{recursive:true});
@@ -30,7 +29,7 @@ async function forceOrdinary(page,target,cards){
   assert.deepEqual(data.cardInteractionCoverage,{decisionPanels:188,activePanels:188,interactions:197,witnesses:2});
   assert.deepEqual(new Set(choices.filter(choice=>choice.cardInteraction).map(choice=>choice.cardInteraction.mode)),new Set(['unlock','requirementShift','costShift','riskShift','resultVariant']));
 
-  const browser=await chromium.launch({headless:true,...(fs.existsSync(CHROME)?{executablePath:CHROME}:{})});
+  const browser=await launchChromium();
   try{
     const errors=[];
     const context=await browser.newContext({viewport:{width:360,height:773},deviceScaleFactor:1});

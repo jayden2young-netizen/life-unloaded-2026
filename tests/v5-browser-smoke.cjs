@@ -2,13 +2,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { chromium } = require('playwright');
+const { launchChromium } = require('./playwright-runtime.cjs');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT = process.env.BROWSER_SMOKE_OUT || path.join(os.tmpdir(), 'life-unloaded-v0.6.6-browser');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY = 'life-unloaded-2026-v1';
-const SYSTEM_CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'data.json'), 'utf8'));
 const DECISIONS = DATA.events.filter(event => event.kind === 'decision');
 fs.mkdirSync(OUT, { recursive: true });
@@ -57,8 +56,7 @@ async function fit(page, label) {
 
 let browser;
 (async () => {
-  const executablePath = process.env.CHROME_PATH || (fs.existsSync(SYSTEM_CHROME) ? SYSTEM_CHROME : null);
-  browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
+  browser = await launchChromium();
   const errors = [];
   const preparePage = async contextValue => {
     const pageValue = await contextValue.newPage();

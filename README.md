@@ -65,10 +65,18 @@
 
 ## 本地试玩
 
-下载项目后，在项目目录启动一个本地服务器：
+下载项目后，在项目目录启动一个本地服务器。
+
+macOS 或 Linux：
 
 ```bash
-python -m http.server 8765
+python3 -m http.server 8765
+```
+
+Windows：
+
+```shell
+py -m http.server 8765
 ```
 
 然后打开 `http://127.0.0.1:8765/`。游戏通过浏览器读取本地数据，直接双击 `index.html` 无法正常启动。

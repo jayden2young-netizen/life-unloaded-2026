@@ -1,14 +1,12 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium } = require('playwright');
+const { launchChromium } = require('./playwright-runtime.cjs');
 
 const ROOT = path.resolve(__dirname, '..');
 const FIXTURE = path.join(__dirname, 'fixtures', 'v0.6.0-runtime-equivalence.json');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY = 'life-unloaded-2026-v1';
-const CHROME =
-  process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const RECORD = process.env.RECORD_EQUIVALENCE === '1';
 const DEBUG_TRACE = process.env.DEBUG_EQUIVALENCE === '1';
 const SEED = 'v061-readable-runtime-equivalence';
@@ -124,7 +122,7 @@ async function advanceDeterministically(page, trace, step) {
     'equivalence fixture only applies to the v0.6.6 Schema 11 runtime',
   );
 
-  browser = await chromium.launch({ headless: true, executablePath: CHROME });
+  browser = await launchChromium();
   const context = await browser.newContext({
     viewport: { width: 360, height: 773 },
     deviceScaleFactor: 1,

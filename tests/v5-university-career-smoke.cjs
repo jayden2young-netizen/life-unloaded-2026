@@ -2,13 +2,12 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
-const {chromium}=require('playwright');
+const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
 const OUT=process.env.UNIVERSITY_CAREER_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.6-university-career');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
-const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const decisions=data.events.filter(event=>event.kind==='decision');
 const eventFor=(id,phase)=>decisions.find(event=>event.episode?.id===id&&event.episode.phase===phase);
@@ -128,7 +127,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
   assert.ok(laterJobOpportunity.requirements.all.some(rule=>rule.path==='education.nextStage'&&rule.op==='eq'&&rule.value==='career'));
   assert.ok(laterJobOpportunity.requirements.all.some(rule=>rule.path==='employment.status'&&rule.op==='in'&&rule.value.includes('unemployed')));
 
-  const browser=await chromium.launch({headless:true,executablePath:fs.existsSync(CHROME)?CHROME:undefined});
+  const browser=await launchChromium();
   const errors=[];
   try{
     let context=await browser.newContext({viewport:{width:360,height:773}});

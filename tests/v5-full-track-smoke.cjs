@@ -2,13 +2,12 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
-const {chromium}=require('playwright');
+const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
 const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.6-full-track');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
-const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const decisions=data.events.filter(event=>event.kind==='decision');
 const laterBeats=data.events.filter(event=>event.kind==='beat'&&event.track==='later');
@@ -137,7 +136,7 @@ async function prepareFinal(page,id,event){
     assert.ok(data.episodeCatalog[id]?.deadline&&data.episodeCatalog[id]?.invalidated,`${id}: closure copy`);
   }
 
-  const browser=await chromium.launch({headless:true,executablePath:fs.existsSync(CHROME)?CHROME:undefined});
+  const browser=await launchChromium();
   const errors=[];
   try{
     let context=await browser.newContext({viewport:{width:360,height:773},deviceScaleFactor:1});

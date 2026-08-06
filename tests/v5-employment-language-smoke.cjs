@@ -2,19 +2,18 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
-const {chromium}=require('playwright');
+const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
 const OUT=process.env.EMPLOYMENT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.6-employment');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
-const CHROME=process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const DATA=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const EMPLOYMENT_DECISION=DATA.events.find(event=>event.kind==='decision'&&event.track==='employment'&&!event.episode);
 const EMPLOYMENT_ECHO=DATA.events.find(event=>event.kind==='consequence'&&event.sourceDecisionId===EMPLOYMENT_DECISION.id);
 fs.mkdirSync(OUT,{recursive:true});
 
 (async()=>{
-  const browser=await chromium.launch({headless:true,executablePath:CHROME});
+  const browser=await launchChromium();
   const context=await browser.newContext({viewport:{width:360,height:773},deviceScaleFactor:1});
   const page=await context.newPage();
   const errors=[];
