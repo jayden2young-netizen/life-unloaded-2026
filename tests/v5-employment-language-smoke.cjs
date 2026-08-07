@@ -5,7 +5,7 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.EMPLOYMENT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.6-employment');
+const OUT=process.env.EMPLOYMENT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.7-employment');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const DATA=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const EMPLOYMENT_DECISION=DATA.events.find(event=>event.kind==='decision'&&event.track==='employment'&&!event.episode);

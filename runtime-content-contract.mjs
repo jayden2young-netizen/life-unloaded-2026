@@ -124,11 +124,13 @@ export const READ_PATHS = Object.freeze([
   'health.physical',
   'health.status',
   'later.care',
+  'later.inheritance',
   'later.retirement',
   'later.will',
   'legacy.medicalDirective',
   'legacy.plan',
   'mobility.mode',
+  'mobility.localTies',
   'mobility.platformDependence',
   'originHousehold.context.emotionalSafety',
   'originHousehold.context.housingStability',
@@ -138,6 +140,7 @@ export const READ_PATHS = Object.freeze([
   'pressures.body',
   'pressures.career',
   'pressures.family',
+  'pressures.loneliness',
   'pressures.money',
   'relationships.activePartnerId',
   'relationships.childCount',
@@ -153,6 +156,8 @@ export const READ_PATHS = Object.freeze([
   'relationships.adoptionOffered',
   'relationships.adoptionStatus',
   'relationships.partnerStatus',
+  'relationships.network',
+  'housing.status',
 ]);
 
 export const WRITE_PATHS = Object.freeze([

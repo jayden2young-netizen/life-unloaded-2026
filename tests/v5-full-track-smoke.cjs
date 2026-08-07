@@ -5,14 +5,14 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.6-full-track');
+const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.7-full-track');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const decisions=data.events.filter(event=>event.kind==='decision');
 const laterBeats=data.events.filter(event=>event.kind==='beat'&&event.track==='later');
 const eventFor=(id,phase)=>decisions.find(event=>event.episode?.id===id&&(phase===undefined||event.episode.phase===phase));
-const laterBeat=text=>laterBeats.find(event=>event.text===text);
+const beatFor=id=>laterBeats.find(event=>event.id===id);
 const episodeIds=['secondary_diversion','professional_certification','adult_reeducation','business_expansion','wealth_peak','retirement_transition','parental_inheritance','long_term_care','will_planning'];
 const expectedRoutes={
   secondary_diversion:['academic','vocational','employment','alternative_school'],
@@ -59,7 +59,7 @@ async function fitDrawer(page,label){
   assert.ok(geometry.scrollWidth<=geometry.innerWidth+1,`${label}: horizontal overflow`);
   assert.ok(geometry.rect&&geometry.rect.left>=-1&&geometry.rect.right<=geometry.innerWidth+1,`${label}: drawer outside viewport`);
   assert.ok(geometry.rect.top>=-1&&geometry.rect.bottom<=geometry.innerHeight+1,`${label}: drawer outside viewport height`);
-  assert.match(geometry.text,/退休·已退休/);
+  assert.match(geometry.text,/工作转段·已退出工作/);
   assert.match(geometry.text,/照护·安排稳定/);
 }
 
@@ -117,17 +117,54 @@ async function prepareFinal(page,id,event){
 }
 
 (async()=>{
-    assert.equal(data.version,'0.6.6');
+  assert.equal(data.version,'0.6.7');
   assert.equal(data.schemaVersion,11);
-    assert.equal(data.contentRevision,24);
+  assert.equal(data.contentRevision,25);
+  assert.deepEqual(
+    Object.fromEntries(['beat','decision','consequence','blackSwan'].map(kind=>[
+      kind,
+      data.events.filter(event=>event.kind===kind).length
+    ])),
+    {beat:424,decision:192,consequence:192,blackSwan:20}
+  );
   assert.ok(decisions.every(event=>!('arc' in event)));
   assert.ok(laterBeats.every(event=>event.ageMin>=55),'later beat appeared before midlife');
-  const retirementTrip=laterBeat('退休旅行群出发前，先讨论了半月药盒。');
-  const rehireOvertime=laterBeat('返聘单位临时加班，你第一次直接说不去。');
-  const ordinaryCheckup=laterBeat('体检日期写在月历上，旁边是买菜清单。');
-  assert.deepEqual(retirementTrip.requirements.all.find(rule=>rule.path==='later.retirement')?.value,['retired','semiRetired','forced']);
-  assert.deepEqual(rehireOvertime.requirements.all.find(rule=>rule.path==='later.retirement')?.value,['semiRetired']);
-  assert.equal(ordinaryCheckup.requirements.all.some(rule=>rule.path==='later.retirement'),false);
+  assert.equal(laterBeats.length,48);
+  const recurringBeats=laterBeats.filter(event=>event.recurrence);
+  assert.deepEqual(recurringBeats.map(event=>event.id),Array.from({length:16},(_,index)=>`beat_${409+index}`));
+  assert.deepEqual(
+    Object.fromEntries(['later.errands','later.digital_learning','later.daily_pleasure','later.solitude_participation'].map(key=>[
+      key,recurringBeats.filter(event=>event.recurrence.key===key).map(event=>event.id)
+    ])),
+    {
+      'later.errands':['beat_409','beat_410','beat_411','beat_412'],
+      'later.digital_learning':['beat_413','beat_414','beat_415','beat_416'],
+      'later.daily_pleasure':['beat_417','beat_418','beat_419','beat_420'],
+      'later.solitude_participation':['beat_421','beat_422','beat_423','beat_424']
+    }
+  );
+  assert.ok(recurringBeats.every(event=>event.weight===7&&event.intensity==='low'&&event.effects.length===0));
+  assert.ok(recurringBeats.every(event=>event.recurrence.sameEventYears===8&&event.recurrence.sameGroupYears===3));
+  assert.deepEqual(beatFor('beat_353').requirements.all.find(rule=>rule.path==='later.retirement')?.value,['retired','forced']);
+  assert.equal(beatFor('beat_356').requirements.all.find(rule=>rule.path==='employment.firstJobAge')?.op,'neq');
+  assert.equal(beatFor('beat_360').actors[0]?.slot,'child');
+  assert.equal(beatFor('beat_369').requirements.all.find(rule=>rule.path==='housing.status')?.value,'renting');
+  assert.equal(beatFor('beat_370').requirements.all.find(rule=>rule.path==='employment.firstJobAge')?.op,'eq');
+  assert.equal(beatFor('beat_375').actors[0]?.slot,'partner');
+  assert.equal(beatFor('beat_380').requirements.all.find(rule=>rule.path==='pressures.loneliness')?.op,'gte');
+  assert.equal(decisions.filter(event=>event.track==='later').length,13);
+  assert.deepEqual(beatFor('beat_384').requirements.all,[{path:'health.status',op:'in',value:['treating','managed','limited']}]);
+  const workResolution=eventFor('retirement_transition',2);
+  assert.ok(workResolution.choices.slice(0,3).every(choice=>choice.requirements.all.some(rule=>rule.path==='employment.status'&&rule.op==='in')));
+  assert.equal(workResolution.choices[3].requirements.all.some(rule=>rule.path==='employment.status'),false);
+  assert.ok(data.episodeCatalog.long_term_care.abandonedRoutes.includes('refused'));
+  for(const decisionId of ['decision_189','decision_190','decision_191','decision_192']){
+    const decision=decisions.find(event=>event.id===decisionId),echo=data.events.find(event=>event.id===decisionId.replace('decision_','echo_'));
+    assert.equal(decision.ageMax,103,`${decisionId}: consequence can be scheduled after the playable lifespan`);
+    assert.ok(decision.choices.every(choice=>choice.consequences.every(spec=>spec.delayMin===1&&spec.delayMax===1)),`${decisionId}: consequence delay is not fixed to one year`);
+    assert.ok(Object.values(echo.choiceOutcomes).every(outcome=>!outcome.effects.some(effect=>effect.target==='pressures.loneliness'&&effect.value===4)),`${decisionId}: generic loneliness echo leaked into an authored route`);
+  }
+  assert.ok(decisions.find(event=>event.id==='decision_192').choices.every(choice=>choice.effects.some(effect=>effect.type==='add'&&effect.target==='finance.cash'&&effect.value===-500)),'health marketing deposit was not settled on every route');
   for(const id of episodeIds){
     const rows=decisions.filter(event=>event.episode?.id===id).sort((a,b)=>a.episode.phase-b.episode.phase);
     assert.ok(rows.length>=1&&rows.length<=3,`${id}: phase count`);
@@ -150,7 +187,7 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.6.6');
+    assert.equal(migrated.gameVersion,'0.6.7');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
@@ -165,6 +202,20 @@ async function prepareFinal(page,id,event){
     page.on('pageerror',error=>errors.push(`pageerror: ${error.message}`));
     page.on('console',message=>{if(message.type()==='error')errors.push(`console: ${message.text()}`)});
     await openPlayable(page);
+
+    const previousReleaseSave=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
+    previousReleaseSave.gameVersion='0.6.6';
+    previousReleaseSave.run.gameVersion='0.6.6';
+    previousReleaseSave.run.age=42;
+    const preservedAge=previousReleaseSave.run.age;
+    await page.addInitScript(({key,value})=>{
+      if(sessionStorage.getItem('v067-previous-release-loaded'))return;
+      localStorage.setItem(key,JSON.stringify(value));
+      sessionStorage.setItem('v067-previous-release-loaded','1');
+    },{key:SAVE_KEY,value:previousReleaseSave});
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age,preservedAge,'v0.6.6 Schema 11 run was not preserved');
 
     const diversion=eventFor('secondary_diversion',1);
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({attrs:{intellect:10},education:{status:'completed',level:2,path:'middleSchool'},development:{learningHabit:90,attendance:96,teacherSupport:82,peerSupport:70,selfAdvocacy:75,careLoad:2,traumaLoad:2,routeKnowledge:75,languagePreparation:20}}));
@@ -220,13 +271,120 @@ async function prepareFinal(page,id,event){
     eligible=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'));
     assert.ok(!eligible.includes(eventFor('retirement_transition',1).id),'two active episodes allowed a third start');
 
-    await page.evaluate(({retirementTripId,ordinaryCheckupId})=>window.__LIFE_DEBUG__.patchRun({age:55,later:{retirement:'none',inheritance:'limited',care:'stable',will:'documented'},employment:{status:'employed'},activity:{mode:'work'},seen:{events:{[retirementTripId]:0,[ordinaryCheckupId]:0}}}),{retirementTripId:retirementTrip.id,ordinaryCheckupId:ordinaryCheckup.id});
+    const workTransition=eventFor('retirement_transition',1);
+    const noActiveEpisodes={
+      adult_reeducation:{status:'resolved'},
+      business_expansion:{status:'resolved'},
+      retirement_transition:{status:'inactive'}
+    };
+    for(const status of ['employed','gig','selfEmployed']){
+      await page.evaluate(({status,episodes})=>window.__LIFE_DEBUG__.patchRun({age:60,episodes,usedEvents:[],timeline:[],yearQueue:[],later:{retirement:'none',inheritance:'none',care:'none',will:'none'},employment:{status,firstJobAge:25},activity:{mode:'work'}}),{status,episodes:noActiveEpisodes});
+      eligible=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'));
+      assert.ok(eligible.includes(workTransition.id),`${status}: current paid work could not enter work transition`);
+    }
+    for(const sample of [
+      {label:'long-search',status:'unemployed',firstJobAge:25,mode:'seeking'},
+      {label:'never-worked',status:'unemployed',firstJobAge:null,mode:'seeking'},
+      {label:'left-labour-force',status:'unemployed',firstJobAge:25,mode:'leisure'}
+    ]){
+      await page.evaluate(({sample,episodes})=>window.__LIFE_DEBUG__.patchRun({age:60,episodes,usedEvents:[],later:{retirement:'none'},employment:{status:sample.status,firstJobAge:sample.firstJobAge},activity:{mode:sample.mode}}),{sample,episodes:noActiveEpisodes});
+      eligible=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'));
+      assert.ok(!eligible.includes(workTransition.id),`${sample.label}: non-working player entered work transition`);
+    }
+    for(const age of [54,81]){
+      await page.evaluate(({age,episodes})=>window.__LIFE_DEBUG__.patchRun({age,episodes,usedEvents:[],employment:{status:'employed',firstJobAge:25},activity:{mode:'work'}}),{age,episodes:noActiveEpisodes});
+      eligible=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'));
+      assert.ok(!eligible.includes(workTransition.id),`${age}: work transition escaped 55-80 age window`);
+    }
+
+    await page.evaluate(episodes=>window.__LIFE_DEBUG__.patchRun({
+      age:65,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,episodes,
+      health:{status:'limited',conditionSeverity:30,disability:'persistent',careNeed:2}
+    }),noActiveEpisodes);
+    run=await chooseAndFinish(page,eventFor('long_term_care',1),2);
+    assert.equal(run.episodes.long_term_care.status,'abandoned','refusing assessment did not end the current care episode');
+    assert.equal(run.episodes.long_term_care.closureReason,'refused','refusing assessment received the wrong closure reason');
+
+    await page.evaluate(episodes=>window.__LIFE_DEBUG__.patchRun({
+      age:70,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,
+      episodes:{...episodes,long_term_care:{status:'active',phase:2,startedAt:68,nextPhaseAge:70,deadlineAge:72,route:'assessed',boundActors:{},commitments:[],closureReason:null}},
+      health:{status:'well',conditionSeverity:0,disability:'none',careNeed:0}
+    }),noActiveEpisodes);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.sceneQueue[0]?.reason,'invalidated','recovered care episode did not use invalidated closure');
+    await page.locator('[data-act="episode-next"]').click();
+
+    await page.evaluate(episodes=>window.__LIFE_DEBUG__.patchRun({
+      age:62,episodes,usedEvents:[],timeline:[],yearQueue:[],people:[],
+      later:{retirement:'none',inheritance:'none',care:'none',will:'none'},
+      employment:{status:'unemployed',firstJobAge:null,firstJobOutcome:'longSearch'},
+      activity:{mode:'seeking'},housing:{status:'renting',value:0},
+      relationships:{partnerStatus:'none',activePartnerId:null,childCount:0,network:12},
+      health:{status:'well',disability:'none',careNeed:0,conditionSeverity:0},
+      pressures:{loneliness:45}
+    }),noActiveEpisodes);
     let eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
-    assert.ok(!eligibleBeats.includes(retirementTrip.id),'retirement trip available while still working');
-    assert.ok(eligibleBeats.includes(ordinaryCheckup.id),'ordinary later-life beat incorrectly requires retirement');
-    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({later:{retirement:'retired'}}));
+    assert.ok(eligibleBeats.includes('beat_354'),'ordinary later-life beat unavailable in vertical slice');
+    assert.ok(eligibleBeats.includes('beat_370'),'never-worked echo unavailable in vertical slice');
+    assert.ok(eligibleBeats.includes('beat_409'),'recurring daily beat unavailable in vertical slice');
+    assert.ok(eligibleBeats.includes('beat_380'),'loneliness echo unavailable despite matching pressure');
+    for(const id of ['beat_353','beat_356','beat_360','beat_375'])
+      assert.ok(!eligibleBeats.includes(id),`${id}: vertical slice received a false career or family fact`);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:65,later:{will:'documented'},health:{status:'well',conditionSeverity:0,disability:'none',careNeed:0}}));
     eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
-    assert.ok(eligibleBeats.includes(retirementTrip.id),'retirement trip unavailable after retirement');
+    assert.ok(!eligibleBeats.includes('beat_384'),'will status alone fabricated an active treatment goal');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({health:{status:'treating'}}));
+    eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
+    assert.ok(eligibleBeats.includes('beat_384'),'active treatment state could not reach treatment-goal beat');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:62,later:{will:'none'},health:{status:'well',conditionSeverity:0,disability:'none',careNeed:0}}));
+    eligible=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'));
+    assert.ok(eligible.includes('decision_189'),'course waitlist choice unavailable in vertical slice');
+    assert.ok(eligible.includes('decision_191'),'emotional inducement choice unavailable in vertical slice');
+
+    for(const id of ['beat_354','beat_370']){
+      await page.evaluate(event=>window.__LIFE_DEBUG__.patchRun({yearQueue:[event],yearStarted:true}),beatFor(id));
+      await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+      assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).timeline.at(-1).id,id,`${id}: representative beat was not actually displayed`);
+    }
+    const decisionHistoryBefore=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot().decisionHistory.length);
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceDecision('decision_191')),'decision_191');
+    assert.match(await page.locator('.choice-sheet').innerText(),/连续几周|设预算/);
+    await fitSheet(page,'later-risk-360x773');
+    await page.screenshot({path:path.join(OUT,'04-later-risk-360x773.png'),fullPage:false});
+    await page.locator('[data-choice="0"]').click();
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).decisionHistory.length,decisionHistoryBefore+1);
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).decisionHistory.length,decisionHistoryBefore+1,'refresh duplicated later-life decision settlement');
+
+    const recurring=beatFor('beat_409'),sameGroup=beatFor('beat_410');
+    await page.evaluate(id=>window.__LIFE_DEBUG__.patchRun({age:70,usedEvents:[id],timeline:[],yearQueue:[]}),recurring.id);
+    eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
+    assert.ok(eligibleBeats.includes(recurring.id),'recurring beat remained permanently blocked by usedEvents');
+    await page.evaluate(id=>window.__LIFE_DEBUG__.patchRun({timeline:[{id,age:63,kind:'beat',track:'later',text:'old'}]}),recurring.id);
+    eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
+    assert.ok(!eligibleBeats.includes(recurring.id),'same recurring sentence returned before eight years');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:71}));
+    eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
+    assert.ok(eligibleBeats.includes(recurring.id),'same recurring sentence did not return after eight years');
+    await page.evaluate(id=>window.__LIFE_DEBUG__.patchRun({timeline:[{id,age:69,kind:'beat',track:'later',text:'same group'}]}),sameGroup.id);
+    eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
+    assert.ok(!eligibleBeats.includes(recurring.id),'recurrence group returned before three years');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:72}));
+    eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
+    assert.ok(eligibleBeats.includes(recurring.id),'recurrence group did not return after three years');
+    await page.evaluate(event=>window.__LIFE_DEBUG__.patchRun({yearQueue:[event]}),sameGroup);
+    eligibleBeats=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('beat'));
+    assert.ok(!eligibleBeats.includes(recurring.id),'same recurrence group entered one year queue twice');
+    await page.evaluate(event=>window.__LIFE_DEBUG__.patchRun({timeline:[],yearQueue:[event],yearStarted:true,usedEvents:[event.id]}),recurring);
+    const beforeRecurring=await page.evaluate(()=>{const run=window.__LIFE_DEBUG__.snapshot();return{peace:run.desires.peace.fulfillment,network:run.relationships.network,used:run.usedEvents.filter(id=>id==='beat_409').length}});
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    const afterRecurring=await page.evaluate(()=>{const run=window.__LIFE_DEBUG__.snapshot();return{peace:run.desires.peace.fulfillment,network:run.relationships.network,used:run.usedEvents.filter(id=>id==='beat_409').length,timeline:run.timeline.filter(item=>item.id==='beat_409').length}});
+    assert.deepEqual(afterRecurring,{...beforeRecurring,timeline:1},'recurring beat accumulated durable effects or unique history');
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).timeline.filter(item=>item.id==='beat_409').length,1,'refresh duplicated recurring beat');
 
     const educationBase={status:'completed',level:3,path:'highSchool',applicationStatus:'vocationalExit',graduateApplicationStatus:'none'};
     let drawerText=await drawerTextFor(page,{...educationBase,courseworkEvidence:0,campusEvidence:0,practiceEvidence:0,researchEvidence:0});
@@ -251,7 +409,7 @@ async function prepareFinal(page,id,event){
     }
 
     assert.deepEqual(errors,[]);
-    console.log(JSON.stringify({ok:true,migration:'v0.5.8-run-cleared-meta-preserved',episodes:episodeIds.length,endings:Object.values(expectedRoutes).reduce((sum,routes)=>sum+routes.length,0),routeResults,sameAgeCards:true,refreshRestored:['choice','result'],laneLimit:true,legacyArcFields:0,laterStateDrawer:true,viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));
+    console.log(JSON.stringify({ok:true,migration:'v0.5.8-run-cleared-meta-preserved',episodes:episodeIds.length,endings:Object.values(expectedRoutes).reduce((sum,routes)=>sum+routes.length,0),routeResults,sameAgeCards:true,refreshRestored:['choice','result','later-decision'],laneLimit:true,legacyArcFields:0,laterStateDrawer:true,representativeLaterPath:true,viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));
     await context.close();
   }finally{
     await browser.close();

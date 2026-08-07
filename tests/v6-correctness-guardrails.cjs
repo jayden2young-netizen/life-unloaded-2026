@@ -118,10 +118,10 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.6', 11, 24]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.7', 11, 25]);
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
-    {beat:408,decision:188,consequence:188,blackSwan:20},
+    {beat:424,decision:192,consequence:192,blackSwan:20},
   );
   assert.equal(summary.evidenceRecords, 3);
   for (const type of ['resolveConception','resolveDebtEnforcement'])
@@ -132,7 +132,8 @@ function neutralTrace(multiplier) {
     'relationships.pregnancyDecision','relationships.pregnancyDecisionDeferred','relationships.adoptionOffered','relationships.adoptionStatus',
     'finance.debtStage','finance.enforcementStatus','finance.enforcementDebtId','finance.dishonestStatus',
     'finance.restrictedConsumption','finance.seizedAssets','finance.housingDisposition','finance.repaymentAgreement',
-    'finance.repaymentAgreementFulfilled','finance.reliefPending',
+    'finance.repaymentAgreementFulfilled','finance.reliefPending','later.inheritance','housing.status',
+    'relationships.network','pressures.loneliness','mobility.localTies',
   ]) {
     assert.ok(contract.READ_PATHS.includes(pathName), `missing family read path ${pathName}`);
     assert.ok(contract.WRITE_PATHS.includes(pathName), `missing family write path ${pathName}`);
@@ -401,15 +402,15 @@ function neutralTrace(multiplier) {
       TRACK_COPY.leisure.beats.splice(1, 0, { ...TRACK_COPY.leisure.beats[0], text });
       BEAT_SLOT_REGISTRATIONS.push({
         key: beatAuthorKey('leisure', text),
-        slot: { id: 'beat_409', track: 'leisure', localIndex: 32 },
+        slot: { id: 'beat_425', track: 'leisure', localIndex: 32 },
       });
       await import(${JSON.stringify(generatorUrl)});
     `,
     'author-insert',
   );
-  const insertedBeat = insertedData.events.find(event => event.id === 'beat_409');
+  const insertedBeat = insertedData.events.find(event => event.id === 'beat_425');
   assert.equal(insertedBeat.track, 'leisure');
-  insertedData.events = insertedData.events.filter(event => event.id !== 'beat_409');
+  insertedData.events = insertedData.events.filter(event => event.id !== 'beat_425');
   insertedData.trackCoverage.leisure.beats -= 1;
   assert.deepEqual(
     insertedData,
@@ -432,7 +433,7 @@ function neutralTrace(multiplier) {
   assert.match(unregisteredFailure, /未登记定义/);
 
   assert.ok(
-    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.6')") <
+    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.7')") <
       gameSource.indexOf('fetch(`./data.json?v=${VERSION}`'),
     'shared contract import must precede data fetch',
   );

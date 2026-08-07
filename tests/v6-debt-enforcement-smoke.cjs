@@ -5,7 +5,7 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.DEBT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.6-debt');
+const OUT=process.env.DEBT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.7-debt');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
@@ -67,7 +67,7 @@ async function fit(page,label){
 }
 
 (async()=>{
-  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.6',11,24]);
+  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.7',11,25]);
   assert.deepEqual(decisions.filter(event=>event.episode?.id==='debt_enforcement').map(event=>event.id),['decision_186','decision_187','decision_188']);
   assert.deepEqual(Object.fromEntries(Object.entries(data.debtSourceCatalog).map(([id,spec])=>[id,spec.enforcementEligible])),{
     mortgage:true,consumer:true,business:true,guarantee:true,habit:true,living:false,
@@ -92,15 +92,15 @@ async function fit(page,label){
     await page.locator('[data-card]').first().click();
 
     const currentSave=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    currentSave.gameVersion='0.6.5';
-    currentSave.run.gameVersion='0.6.5';
+    currentSave.gameVersion='0.6.6';
+    currentSave.run.gameVersion='0.6.6';
     for(const key of Object.keys(resetFinance))delete currentSave.run.finance[key];
     await page.evaluate(({key,value})=>localStorage.setItem(key,JSON.stringify(value)),{key:SAVE_KEY,value:currentSave});
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     let run=await snapshot(page);
-    assert.ok(run,'v0.6.5 Schema 11 run is retained');
-    assert.equal(run.gameVersion,'0.6.6');
+    assert.ok(run,'v0.6.6 Schema 11 run is retained');
+    assert.equal(run.gameVersion,'0.6.7');
     assert.equal(run.finance.debtStage,'current');
     assert.equal(run.finance.restrictedConsumption,false);
 

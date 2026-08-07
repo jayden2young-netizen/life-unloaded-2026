@@ -1,8 +1,22 @@
-Original prompt: Implement the approved 《人生尚未加载 · 2026》v0.3.0 人生叙事重构 plan in the existing four-file static GitHub Pages game. Preserve the mobile black UI, offline/localStorage/seed flow, add schema migration, gender, life DNA, desires, family archetypes, conflicts, weighted event selection, event chains, cross-run freshness, richer cards/endings, 320+ base events, 48 chains, 536+ total nodes, tests, and publish through a reviewed branch. Run only five automated life simulations, not 200.
-Current prompt (2026-07-23): 修复卡牌中的“起步／转折／中段”等内部阶段词、重复卡和不可达卡牌，让72张卡按真实年龄池出现，并使用玩家能理解的名称与说明。其他人生事件、数值和界面保持不变。
+# 《人生尚未加载 · 2026》开发进度
 
-## Progress
+本文件按时间倒序保留历史工作记录，不作为当前任务授权。当前版本与下一步以 `AGENT_HANDOVER.md`、现场 Git／版本常量和 `roadmap/00-总体策略.md` 为准；较早条目中的分支状态、版本编号、模型委托和未来计划可能已被后续记录取代。
 
+## 当前状态
+
+- 当前发布基线：v0.6.6；当前本地实现：v0.6.7／Schema 11／Content Revision 25，尚未提交、推送或部署。
+- v0.6.7 晚年生活已完成本地实现、三路独立代码审查与 `cards,episodes` 合并 profile 验证，等待用户试玩和后续 Git 授权。
+- 下一规划版本是 v0.6.8 住房；v0.6.9 社会交往仍在其后，v0.6.10 必须等待两者完成。
+
+## 历史任务起点
+
+- 初始任务：实施《人生尚未加载 · 2026》v0.3.0 人生叙事重构，并将自动人生模拟限制为五局。
+- 2026-07-23 任务：修复卡牌内部阶段词、重复卡和不可达卡牌，让 72 张卡按真实年龄池出现；其他人生事件、数值和界面保持不变。
+
+## 进度记录
+
+- 2026-08-07: 完成 v0.6.7“晚年生活”本地实现与三路独立代码审查。Schema 保持 11，Content Revision 升至 25；数据扩展为 424 beats、192 decisions、192 consequences、20 black swans，共 828 个事件。晚年轨道从 32 条 beat 与 9 组 decision/consequence 扩到 48／13／13，保留原 4 个事件簇和 9 个阶段；新增课程候补、固定帮忙边界、情感诱导付款和私域健康营销四个一次性选择。16 条普通日常分四组使用 `timeline` 做同句 8 年、同组 3 年冷却，不写入 `usedEvents`，唯一事件语义不变。工作转段只对 55—80 岁且当前正式就业、零工或自营者开放；无职业史、长期求职、租住、无伴侣子女等代表状态不再被补造退休、养老金、家庭或住房事实。三路审查提出的 11 项可执行问题已全部修复，9 项其余发现经复核无需修改；`cards,episodes` 合并 profile 通过 syntax、correctness、browser、full-track 与 cards，覆盖旧版本同 Schema 存档、六类职业史、事实门槛、复发冷却、刷新不重复结算、9 个事件簇 36 条路线、192 个选择面板、201 条交互路线、三种窄屏和控制台零错误。生成器双跑 SHA-256 均为 `A56FD7F169308972D05C320FB96549B2E1E91A327C0E9FFBFC030C69106DB54D`；未运行批量人生模拟，也未执行任何 Git 写操作或发布。
+- 2026-08-07: 同步项目文档状态与来源优先级；明确 v0.6.0—v0.6.6 已发布、v0.6.7—v0.6.9 为待专项规划的占位版本、v0.6.10 受前序依赖阻断。没有修改游戏代码、数据、测试、玩家文案或版本常量。
 - 2026-08-05: v0.6.6 债务执行与生活后果已从 `codex/v0.6.6-debt-enforcement` 以功能提交 `182009a` 快进发布到 `main`，没有创建合并提交或 PR；`legacy/0.6.5` 固定在发布前的 `main@33de22f`，开发分支、legacy 和 `main` 均已推送。版本为 v0.6.6／Schema 11／Content Revision 24；数据为 408 beats、188 decisions、188 consequences、20 black swans，共 804 个事件和 72 张卡牌。新增逾期、强制执行、资产与生活后果三阶段债务簇，以显式来源、执行通知前提和绑定 liability 保证合法入口；无房不凭空处置住房，有房处置款优先清住房担保债和本案债务且余款回现金；本案履约后经同龄行政节点解除游戏内失信与限消，不恢复原房。新信贷、购房、主要经营融资、高成本教育、主动备孕和部分中高阶职业机会会收缩，基础工作、租住、咨询、分期和拒绝路线保留。A/B/C 研究归档于 `docs/research/v0.6.6-债务执行与生活后果.md`，文案按 `CopyWriting_Guideline.md` 完成。`debt`、`cards`、`core`、`episodes`、`runtime-refactor` 及相关职业／教育／家庭检查通过，三种窄屏均无横向溢出，控制台错误为 0。生成器双跑 SHA-256 均为 `33003C5F416F01F63EE002C0085B54A8E6254864A9A2A1B4E4FBDAD27688382C`。GitHub Pages 运行 `31023146164` 成功，线上页面、运行时和生成数据均为 v0.6.6／Schema 11／Content Revision 24，并包含 804 个事件、72 张卡牌和三阶段债务执行事件。
 - 2026-08-02: v0.6.5 生育计划、怀孕决定与单身收养已从 `codex/v0.6.5-family-planning` 以功能提交 `e1fe3da` 快进发布到 `main`，没有创建合并提交或 PR；`legacy/0.6.4` 固定在发布前的 `main@a30e317`，开发分支、legacy 和 `main` 均已推送。版本为 v0.6.5／Schema 11／Content Revision 23；数据为 408 beats、185 decisions、185 consequences、20 black swans，共 798 个事件和 72 张卡牌，正式生成器双跑 SHA-256 均为 `991B95BC33740533F0658C338E45F148CAAD97D82F9EDEB46C56D63665FA30D4`。伴侣生育计划采用一次性 85% 入口，备孕在下一年龄按 80% 基础和 50%—90% 年龄／健康梯度结算；暂缓路线仅检查一次 10% 意外怀孕。怀孕继续、终止和同岁复议由玩家决定，只有继续后的高优先级出生后果创建孩子。单身 30 岁以上、0—1 名子女时有一次 50% 收养入口，三阶段覆盖评估、匹配、完成、等待、退出和中途结伴失效。实际试玩反馈后，v0.6.5 家庭文案按 `CopyWriting_Guideline.md` 全量复核，收养首屏明确写出“单身收养申请”；无有效伴侣时关系建立事件的候选权重提高为原来的 3 倍，结婚仍由后续选项决定。A/B/C 研究归档位于 `docs/research/v0.6.5-生育计划与单身收养.md`；family 与 core profile 已通过，覆盖刷新恢复、恋爱权重断言、三种窄屏和控制台零错误，收养入口截图已人工目检。GitHub Pages 运行 `30750913588` 成功，线上页面、运行时和生成数据均为 v0.6.5／Schema 11／Content Revision 23，并包含 798 个事件、72 张卡牌和新的收养入口文案。
 - 2026-07-31: v0.6.4 从 `codex/v0.6.4-first-job-bridge` 快进发布到 `main`，没有创建合并提交或 PR；`legacy/0.6.3` 固定在发布前的 `main@3ba0490`。开发分支、保留分支和 `main` 已同步 GitHub，GitHub Pages 部署后核对页面、运行时和生成数据均为 v0.6.4／Schema 11／Content Revision 22。

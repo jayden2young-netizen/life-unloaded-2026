@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.6');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.7');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.6',
+  const VERSION = '0.6.7',
     SCHEMA_VERSION = 11,
-    CONTENT_REVISION = 24;
+    CONTENT_REVISION = 25;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -1047,7 +1047,7 @@
         oldSchema = Number(parsed.schemaVersion || parsed.run?.schemaVersion || 0),
         compatibleRelease =
           oldSchema === SCHEMA_VERSION &&
-          [VERSION, '0.6.5'].includes(parsed.gameVersion);
+          [VERSION, '0.6.6'].includes(parsed.gameVersion);
       state = base;
       base.meta = normalizeMeta(parsed.meta || {});
       if (compatibleRelease) base.run = parsed.run ? normalizeRun(parsed.run) : null;
@@ -1261,11 +1261,29 @@
   function eligible(event, run = state.run) {
     if (
       !event ||
-      run.usedEvents.includes(event.id) ||
       run.age < event.ageMin ||
       run.age > event.ageMax
     )
       return false;
+    if (event.recurrence) {
+      if (event.kind !== 'beat') return false;
+      const sameEventAge = Math.max(
+          -Infinity,
+          ...run.timeline.filter((item) => item.id === event.id).map((item) => item.age)
+        ),
+        sameGroupAge = Math.max(
+          -Infinity,
+          ...run.timeline
+            .filter(
+              (item) => INDEX.event.get(item.id)?.recurrence?.key === event.recurrence.key
+            )
+            .map((item) => item.age)
+        );
+      if (run.age - sameEventAge < event.recurrence.sameEventYears) return false;
+      if (run.age - sameGroupAge < event.recurrence.sameGroupYears) return false;
+      if (run.yearQueue.some((item) => item.recurrence?.key === event.recurrence.key))
+        return false;
+    } else if (run.usedEvents.includes(event.id)) return false;
     if (!(event.stage || []).includes(stageForAge(run.age))) return false;
     if (!requirementsMatch(event.requirements, run) || !episodeEligible(event, run)) return false;
     return Boolean(resolveActors(event, run));
@@ -2620,6 +2638,14 @@
     )
       return true;
     if (id === 'acute_illness' && record.phase > 1 && run.health.status === 'well') return true;
+    if (
+      id === 'long_term_care' &&
+      record.phase > 1 &&
+      run.health.careNeed < 1 &&
+      run.health.status !== 'limited' &&
+      run.health.disability === 'none'
+    )
+      return true;
     if (id === 'business_expansion' && record.phase > 1 && run.business.status !== 'operating')
       return true;
     if (
@@ -2902,7 +2928,7 @@
     finance: '财务',
     health: '健康',
     habits: '成瘾与戒断',
-    later: '晚年',
+    later: '晚年生活',
     origin: '出身',
     identity: '欲望',
   };
@@ -3505,7 +3531,7 @@
     applyCommands(event.runtimeEffects || event.effects || [], event);
     for (const tag of event.runtimeTags || []) addTag(run, tag);
     addTimeline(event, event.runtimeText || event.text);
-    run.usedEvents.push(event.id);
+    if (!event.recurrence) run.usedEvents.push(event.id);
     if (event.kind === 'secret') run.secretRevealed = true;
     if (event.scheduleId) {
       const schedule = run.scheduledConsequences.find((item) => item.id === event.scheduleId);
@@ -4151,10 +4177,10 @@
           reviewing: '资格核对中',
           phased: '分阶段退出',
           delayed: '明确延后',
-          retired: '已退休',
+          retired: '已退出工作',
           semiRetired: '半退休',
           working: '继续工作',
-          forced: '被动退休',
+          forced: '被迫退出',
         },
         inheritance: {
           inventory: '清点中',
@@ -4186,11 +4212,11 @@
           invalidated: '失效重做',
         },
       },
-      names = { retirement: '退休', inheritance: '继承', care: '照护', will: '遗嘱' },
+      names = { retirement: '工作转段', inheritance: '继承', care: '照护', will: '遗嘱' },
       items = Object.entries(run.later || {})
         .filter(([, value]) => value && value !== 'none')
         .map(([key, value]) => `${names[key]}·${labels[key]?.[value] || value}`);
-    return items.join('；') || '尚未进入晚年安排';
+    return items.join('；') || '尚无晚年状态记录';
   }
   function habitLabel(run) {
     const type = {
@@ -4365,7 +4391,7 @@
             .map((child) => `${personAge(child, run)}岁`)
             .join('、')
         : '无'
-    }</dd></div><div class="spec"><dt>住房</dt><dd>${housingLabel(run)}</dd></div><div class="spec"><dt>${esc(UI_COPY.netWorthField)}</dt><dd>${money(run.finance.netWorth)}</dd></div><div class="spec"><dt>债务</dt><dd>${liabilities.length ? `${liabilities.length}笔 · ${money(run.finance.totalDebt)} · ${esc(debtStatusLabel(run))}` : run.finance.housingDisposition === 'disposed' ? `无未清债务 · ${esc(debtStatusLabel(run))}` : '无'}</dd></div><div class="spec"><dt>健康</dt><dd>${constitutionLabel(run)} · ${healthStatusLabel(run)} · ${Math.round(run.health.physical)}／${Math.round(run.health.mental)}</dd></div><div class="spec"><dt>${esc(UI_COPY.habitField)}</dt><dd>${habitLabel(run)}</dd></div><div class="spec"><dt>晚年安排</dt><dd>${esc(laterStatusLabel(run))}</dd></div><div class="spec"><dt>压力</dt><dd>${pressureLevel(run)}</dd></div></dl><div class="section-title">最在意的事</div><div class="desire-list">${topDesires(
+    }</dd></div><div class="spec"><dt>住房</dt><dd>${housingLabel(run)}</dd></div><div class="spec"><dt>${esc(UI_COPY.netWorthField)}</dt><dd>${money(run.finance.netWorth)}</dd></div><div class="spec"><dt>债务</dt><dd>${liabilities.length ? `${liabilities.length}笔 · ${money(run.finance.totalDebt)} · ${esc(debtStatusLabel(run))}` : run.finance.housingDisposition === 'disposed' ? `无未清债务 · ${esc(debtStatusLabel(run))}` : '无'}</dd></div><div class="spec"><dt>健康</dt><dd>${constitutionLabel(run)} · ${healthStatusLabel(run)} · ${Math.round(run.health.physical)}／${Math.round(run.health.mental)}</dd></div><div class="spec"><dt>${esc(UI_COPY.habitField)}</dt><dd>${habitLabel(run)}</dd></div><div class="spec"><dt>晚年状态</dt><dd>${esc(laterStatusLabel(run))}</dd></div><div class="spec"><dt>压力</dt><dd>${pressureLevel(run)}</dd></div></dl><div class="section-title">最在意的事</div><div class="desire-list">${topDesires(
       run
     )
       .map(
@@ -4462,7 +4488,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.6-存档.json';
+    link.download = '人生尚未加载-v0.6.7-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }

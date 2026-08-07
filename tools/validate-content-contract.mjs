@@ -90,6 +90,20 @@ function validateRequirements(requirements, location) {
   }
 }
 
+function validateRecurrence(event, location) {
+  if (event.recurrence === undefined) return;
+  if (event.kind !== 'beat') fail(`${location}.recurrence`, '只允许 beat 声明复发');
+  if (!isObject(event.recurrence)) fail(`${location}.recurrence`, 'recurrence 必须是对象');
+  for (const key of Object.keys(event.recurrence))
+    if (!['key', 'sameEventYears', 'sameGroupYears'].includes(key))
+      fail(`${location}.recurrence.${key}`, '未知 recurrence 字段');
+  if (typeof event.recurrence.key !== 'string' || !event.recurrence.key.trim())
+    fail(`${location}.recurrence.key`, 'key 必须是非空稳定字符串');
+  for (const key of ['sameEventYears', 'sameGroupYears'])
+    if (!Number.isInteger(event.recurrence[key]) || event.recurrence[key] <= 0)
+      fail(`${location}.recurrence.${key}`, '冷却年数必须是正整数');
+}
+
 export function validateCommand(command, location = 'command') {
   if (!isObject(command)) fail(location, 'command 必须是对象');
   if (!isCommandType(command.type)) fail(location, `未知 command：${String(command.type)}`);
@@ -247,6 +261,7 @@ function validateReferences(data) {
   }
 
   for (const event of data.events) {
+    validateRecurrence(event, `events.${event.id}`);
     if (event.episode?.ageAdvanceYears !== undefined) {
       if (event.track !== 'education' && event.episode.id !== 'pregnancy_decision')
         fail(`events.${event.id}.episode.ageAdvanceYears`, '只允许教育事件和怀孕短期复议声明年龄推进');
