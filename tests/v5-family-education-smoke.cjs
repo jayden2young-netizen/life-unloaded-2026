@@ -102,6 +102,7 @@ async function advanceToPhase(page,id,number){
   assert.ok(decisions.filter(event=>event.episode?.id==='undergraduate_application').every(event=>event.episode.ageAdvanceYears===0));
   assert.ok(decisions.filter(event=>event.episode?.id==='undergraduate_application').every(event=>event.requirements.all.some(rule=>rule.path==='education.fullTimeUndergraduateClosed'&&rule.op==='eq'&&rule.value===false)));
   assert.ok(phase('undergraduate_application',1).requirements.all.some(rule=>rule.path==='education.fullTimeUndergraduateClosed'&&rule.op==='eq'&&rule.value===false));
+  assert.ok(phase('undergraduate_application',1).requirements.all.some(rule=>rule.path==='education.nextStage'&&rule.op==='eq'&&rule.value==='undergraduateApplication'));
   assert.ok(phase('undergraduate_application',1).requirements.all.some(rule=>rule.path==='age'&&rule.op==='lt'&&rule.value===30));
   assert.ok(phase('undergraduate_application',3).choices[3].requirements.all.some(rule=>rule.path==='education.extraApplicationYearUsed'&&rule.op==='eq'&&rule.value===false));
   assert.deepEqual(phase('undergraduate_application',4).choices.map(choice=>choice.route),['domestic_enrolled','overseas_enrolled','vocational_exit','work_exit']);
@@ -201,18 +202,57 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
     assert.equal(run.education.status,'completed');
+    assert.equal(run.education.nextStage,'secondary');
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(phase('first_job_application',1).id),false);
     await enterPhase(page,phase('secondary_diversion',1),{age:14,education:{status:'completed',level:2,path:'middleSchool'},employment:{status:'none'},usedEvents:[],decisionHistory:[]});
     run=await chooseAndFinish(page,2);
     assert.notEqual(run.employment.status,'employed');
     assert.equal(run.activity.mode,'seeking');
 
-    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:17,education:{status:'enrolled',level:3,path:'highSchool'},employment:{status:'none'},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[],usedEvents:[],decisionHistory:[],timeline:[]}));
+    await page.evaluate(()=>{
+      const current=window.__LIFE_DEBUG__.snapshot(),desires=structuredClone(current.desires);
+      const claim=Object.keys(desires).find(key=>desires[key]&&typeof desires[key]==='object'&&Object.hasOwn(desires[key],'claimed'));
+      desires[claim].claimed=true;
+      window.__LIFE_DEBUG__.patchRun({
+        age:16,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],
+        education:{status:'completed',level:2,path:'middleSchool',nextStage:'secondary'},
+        employment:{status:'none'},health:{status:'treating'},desires,usedEvents:[],decisionHistory:[],timeline:[],
+        episodes:{
+          secondary_diversion:{status:'inactive'},
+          school_harm:{status:'active',phase:2,startedAt:15,nextPhaseAge:16,deadlineAge:19,route:'disclosure',boundActors:{},commitments:[],closureReason:null},
+          acute_illness:{status:'active',phase:2,startedAt:15,nextPhaseAge:16,deadlineAge:19,route:'treatment',boundActors:{},commitments:[],closureReason:null}
+        }
+      });
+    });
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),phase('secondary_diversion',1).id);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.currentDecision.episode.id,'secondary_diversion');
+    assert.equal(run.episodes.school_harm.status,'active');
+    assert.equal(run.episodes.school_harm.nextPhaseAge,17);
+    assert.equal(run.episodes.school_harm.deadlineAge,20);
+    assert.equal(run.episodes.acute_illness.status,'active');
+    assert.equal(run.episodes.acute_illness.nextPhaseAge,17);
+    assert.equal(run.episodes.acute_illness.deadlineAge,20);
+    await page.locator('[data-act="episode-next"]').click();
+    run=await chooseAndFinish(page,1);
+    assert.equal(run.age,17);
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),phase('school_harm',2).id);
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:17,education:{status:'enrolled',level:3,path:'highSchool'},employment:{status:'none'},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[],episodes:null,usedEvents:[],decisionHistory:[],timeline:[]}));
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
     assert.equal(run.education.status,'completed');
+    assert.equal(run.education.nextStage,'undergraduateApplication');
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(phase('undergraduate_application',1).id),true);
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(phase('first_job_application',1).id),false);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({yearStarted:true,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null}));
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.currentDecision.episode.id,'undergraduate_application');
 
     const unsafeContext={...run.originHousehold.context,resourceTier:'strained',resources:25,emotionalSafety:30,parentPresence:55};
-    await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({age:2,originHousehold:{context:value},yearStarted:false,yearQueue:[],usedEvents:[],timeline:[]}),unsafeContext);
+    await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({age:2,originHousehold:{context:value},phase:'playing',sceneQueue:[],currentDecision:null,episodes:null,yearStarted:false,yearQueue:[],usedEvents:[],timeline:[]}),unsafeContext);
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
     assert.equal(run.timeline.at(-1).id,'origin_context_2_strained_unsafe');
@@ -248,7 +288,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await page.waitForTimeout(900);
     await page.screenshot({path:path.join(OUT,'01-secondary-locked-360x640.png'),fullPage:true});
 
-    const strongEducation={status:'completed',level:3,path:'highSchool',applicationIntent:'none',applicationRoute:'none',applicationAttemptCount:0,extraApplicationYearUsed:false,gaokaoAttemptCount:0,overseasUndergradAttemptCount:0,lastApplicationOutcome:'none',gapYears:0,fullTimeUndergraduateClosed:false,timelineOffsetYears:0,applicationStatus:'none',domesticOffer:false,overseasOffer:false,fundingStatus:'none',entryPermitReady:false,enrollmentRegion:'none'};
+    const strongEducation={status:'completed',level:3,path:'highSchool',nextStage:'undergraduateApplication',applicationIntent:'none',applicationRoute:'none',applicationAttemptCount:0,extraApplicationYearUsed:false,gaokaoAttemptCount:0,overseasUndergradAttemptCount:0,lastApplicationOutcome:'none',gapYears:0,fullTimeUndergraduateClosed:false,timelineOffsetYears:0,applicationStatus:'none',domesticOffer:false,overseasOffer:false,fundingStatus:'none',entryPermitReady:false,enrollmentRegion:'none'};
     const strongDevelopment={learningHabit:90,attendance:96,teacherSupport:85,peerSupport:75,selfAdvocacy:80,careLoad:5,traumaLoad:4,routeKnowledge:88,languagePreparation:82,routeExposure:['overseas','scholarship']};
     await page.setViewportSize({width:360,height:773});
     await enterPhase(page,phase('undergraduate_application',1),{age:18,attrs:{intellect:10},originHousehold:{context:presentContext},education:strongEducation,development:strongDevelopment,episodes:{undergraduate_application:{status:'inactive'}},usedEvents:[]},{reloadChoice:true});

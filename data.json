@@ -31518,6 +31518,11 @@
             "value": "completed"
           },
           {
+            "path": "education.nextStage",
+            "op": "eq",
+            "value": "undergraduateApplication"
+          },
+          {
             "path": "age",
             "op": "lt",
             "value": 30
@@ -46107,8 +46112,11 @@
           },
           {
             "path": "education.nextStage",
-            "op": "eq",
-            "value": "firstJob"
+            "op": "in",
+            "value": [
+              "firstJob",
+              "workOrVocational"
+            ]
           },
           {
             "path": "employment.status",

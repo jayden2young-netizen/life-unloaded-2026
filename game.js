@@ -1235,6 +1235,29 @@
         }, { sourceEventId: 'normalize' }, { skipBudget: true });
     }
     merged.episodes = { ...fresh.episodes, ...(run.episodes || {}) };
+    const firstJobStarted = ['active', 'resolved', 'abandoned'].includes(
+        merged.episodes.first_job_application?.status
+      ),
+      diversionResolved = ['resolved', 'abandoned'].includes(
+        merged.episodes.secondary_diversion?.status
+      );
+    if (
+      !firstJobStarted &&
+      !diversionResolved &&
+      merged.education.status === 'completed' &&
+      merged.education.level === 2 &&
+      merged.education.path === 'middleSchool' &&
+      merged.education.nextStage === 'firstJob'
+    )
+      merged.education.nextStage = 'secondary';
+    if (
+      !firstJobStarted &&
+      merged.education.status === 'completed' &&
+      merged.education.level === 3 &&
+      ['highSchool', 'vocational'].includes(merged.education.path) &&
+      merged.education.nextStage === 'firstJob'
+    )
+      merged.education.nextStage = 'undergraduateApplication';
     merged.sceneQueue = Array.isArray(run.sceneQueue) ? run.sceneQueue : [];
     for (const key of Object.keys(fresh.desires))
       if (key !== 'reclaimed')
@@ -1570,16 +1593,19 @@
       const housingChoiceKind = episodeHousingChoiceKind(episode.id);
       if (housingChoiceKind && !housingChoiceAllowed(run, housingChoiceKind, false).allowed)
         return false;
+      const immediateEducationGateway =
+        episode.id === 'secondary_diversion' && episodePhaseCount(episode.id) === 1;
       return (
         (!record || record.status === 'inactive') &&
-        activeEpisodes(run).length < 2 &&
-        (!activeEpisodes(run).some((item) => item.lane === episode.lane) ||
-          (episode.id === 'postgraduate_application' &&
-            activeEpisodes(run).some(
-              (item) =>
-                item.id.startsWith('undergraduate_') &&
-                item.phase === episodePhaseCount(item.id)
-            )))
+        (immediateEducationGateway ||
+          (activeEpisodes(run).length < 2 &&
+            (!activeEpisodes(run).some((item) => item.lane === episode.lane) ||
+              (episode.id === 'postgraduate_application' &&
+                activeEpisodes(run).some(
+                  (item) =>
+                    item.id.startsWith('undergraduate_') &&
+                    item.phase === episodePhaseCount(item.id)
+                )))))
       );
     }
     return Boolean(
@@ -3701,7 +3727,7 @@
     ) {
       run.education.status = 'completed';
       run.education.highestCompleted = 'middleSchool';
-      run.education.nextStage = 'firstJob';
+      run.education.nextStage = 'secondary';
       run.employment.entryCredential = 'middleSchool';
     }
     if (
@@ -3712,7 +3738,7 @@
       run.education.status = 'completed';
       run.education.highestCompleted =
         run.education.path === 'vocational' ? 'vocational' : 'secondary';
-      run.education.nextStage = 'firstJob';
+      run.education.nextStage = 'undergraduateApplication';
       run.employment.entryCredential =
         run.education.path === 'vocational' ? 'vocational' : 'highSchool';
     }
@@ -4082,13 +4108,33 @@
       );
     return familyPlanning || singleAdoption || unresolvedSchoolHarm || firstJobReentry || weighted(candidates, eventWeight);
   }
+  function educationGatewayDecision(run) {
+    return (
+      INDEX.kinds.decision.find(
+        (event) =>
+          event.episode?.role === 'start' &&
+          ['secondary_diversion', 'undergraduate_application'].includes(event.episode.id) &&
+          eligible(event, run)
+      ) || null
+    );
+  }
+  function deferEpisodesForEducationGateway(run, event) {
+    if (!['secondary_diversion', 'undergraduate_application'].includes(event.episode?.id)) return;
+    for (const record of Object.values(run.episodes || {})) {
+      if (record.status !== 'active' || run.age < record.nextPhaseAge) continue;
+      record.nextPhaseAge = run.age + 1;
+      if (Number.isFinite(record.deadlineAge)) record.deadlineAge += 1;
+    }
+  }
   function startDecision(run) {
     const forced = mandatoryDecision(run),
+      educationGateway = educationGatewayDecision(run),
       episode = activeEpisodeDecision(run),
       ageBound = ageBoundEpisodeStart(run),
       crisis = crisisDecision(run);
     if (ageBound?.episode?.id === 'long_term_first_job_reentry') return ageBound;
-    if (forced || episode || ageBound || crisis) return forced || episode || ageBound || crisis;
+    if (forced || educationGateway || episode || ageBound || crisis)
+      return forced || educationGateway || episode || ageBound || crisis;
     const starts = INDEX.kinds.decision.filter(
       (event) => event.episode?.role === 'start' && eligible(event, run)
     );
@@ -4101,7 +4147,12 @@
     );
   }
   function shouldOfferDecision(run) {
-    if (mandatoryDecision(run) || activeEpisodeDecision(run) || ageBoundEpisodeStart(run))
+    if (
+      mandatoryDecision(run) ||
+      educationGatewayDecision(run) ||
+      activeEpisodeDecision(run) ||
+      ageBoundEpisodeStart(run)
+    )
       return true;
     if (run.decisionCount >= run.targetDecisions || run.decisionCount >= decisionAllowance(run))
       return false;
@@ -4200,6 +4251,7 @@
     if (shouldOfferDecision(run)) {
       const event = startDecision(run);
       if (event) {
+        deferEpisodesForEducationGateway(run, event);
         if (event.episode) startEpisodePhase(event);
         else {
           run.currentDecision = event;

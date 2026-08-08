@@ -945,7 +945,7 @@ for(const id of trackOrder){
     if(authoredDecision.episode?.id==='establish_base'&&authoredDecision.episode.phase===1)requirements.all.push(p('mobility.mode','in',['domesticNomad','overseasNomad']));
     if(authoredDecision.episode?.id==='school_harm'&&authoredDecision.episode.phase===1)requirements.all.push(p('development.severeSchoolHarm','eq',true),p('development.schoolHarmResolved','eq',false));
     if(authoredDecision.episode?.id==='secondary_diversion')requirements.all.push(p('education.level','eq',2),p('education.status','eq','completed'));
-    if(authoredDecision.episode?.id==='undergraduate_application'){requirements.all.push(p('education.fullTimeUndergraduateClosed','eq',false));if(authoredDecision.episode.phase===1)requirements.all.push(p('education.level','gte',3),p('education.status','eq','completed'),p('age','lt',30))}
+    if(authoredDecision.episode?.id==='undergraduate_application'){requirements.all.push(p('education.fullTimeUndergraduateClosed','eq',false));if(authoredDecision.episode.phase===1)requirements.all.push(p('education.level','gte',3),p('education.status','eq','completed'),p('education.nextStage','eq','undergraduateApplication'),p('age','lt',30))}
     if(authoredDecision.episode?.id==='undergraduate_domestic')requirements.all.push(p('education.status','eq','enrolled'),p('education.enrollmentRegion','eq','domestic'),p('education.nextStage','eq','undergraduate'));
     if(authoredDecision.episode?.id==='undergraduate_overseas_orientation')requirements.all.push(p('education.status','eq','enrolled'),p('education.enrollmentRegion','eq','overseas'),p('education.nextStage','eq','undergraduate'),p('education.undergraduateSystem','eq','none'));
     if(authoredDecision.episode?.id==='undergraduate_us')requirements.all.push(p('education.status','eq','enrolled'),p('education.undergraduateSystem','eq','us'),p('education.nextStage','eq','undergraduate'));
@@ -960,7 +960,7 @@ for(const id of trackOrder){
     if(authoredDecision.episode?.id==='postgraduate_us')requirements.all.push(p('education.status','eq','enrolled'),p('education.postgraduateSystem','eq','us'),p('education.nextStage','eq','postgraduate'));
     if(authoredDecision.episode?.id==='postgraduate_europe')requirements.all.push(p('education.status','eq','enrolled'),p('education.postgraduateSystem','eq','europe'),p('education.nextStage','eq','postgraduate'));
     if(authoredDecision.episode?.id==='overseas_postgraduate_belonging')requirements.all.push(p('education.status','eq','enrolled'),p('education.postgraduateSystem','in',['us','europe']));
-    if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.nextStage','eq','firstJob'),p('employment.status','notIn',['employed','selfEmployed']));
+    if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.nextStage','in',['firstJob','workOrVocational']),p('employment.status','notIn',['employed','selfEmployed']));
     if(authoredDecision.episode?.id==='professional_entry_qualification'){
       requirements.all.push(p('education.highestCompleted','eq','postgraduate'),p('employment.status','notIn',['employed','selfEmployed']));
       if(authoredDecision.episode.phase===1)requirements.all.push(p('education.professionalQualificationIntent','eq','none'));

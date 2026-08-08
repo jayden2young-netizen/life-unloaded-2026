@@ -94,6 +94,8 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     decisions.filter(event=>event.episode?.id==='first_job_application').map(event=>[event.ageMin,event.ageMax]),
     [[16,28],[17,29],[18,30],[19,31]]
   );
+  assert.ok(eventFor('undergraduate_application',1).requirements.all.some(rule=>rule.path==='education.nextStage'&&rule.op==='eq'&&rule.value==='undergraduateApplication'));
+  assert.deepEqual(eventFor('first_job_application',1).requirements.all.find(rule=>rule.path==='education.nextStage'),{path:'education.nextStage',op:'in',value:['firstJob','workOrVocational']});
   for(const id of episodeIds){
     const rows=decisions.filter(event=>event.episode?.id===id).sort((a,b)=>a.episode.phase-b.episode.phase);
     assert.ok(rows.length>=1&&rows.length<=4,`${id}: phase count`);
@@ -157,6 +159,34 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     page.on('console',message=>{if(message.type()==='error')errors.push(`console: ${message.text()}`)});
     await openPlayable(page);
 
+    let run=await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:17,education:{status:'completed',level:3,path:'highSchool',nextStage:'firstJob'},employment:{status:'none'},episodes:null,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[]}));
+    assert.equal(run.education.nextStage,'undergraduateApplication');
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:16,education:{status:'completed',level:2,path:'middleSchool',nextStage:'firstJob'},episodes:{secondary_diversion:{status:'abandoned',route:'employment'}}}));
+    assert.equal(run.education.nextStage,'firstJob');
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(eventFor('first_job_application',1).id),true);
+
+    await page.evaluate(()=>{
+      const current=window.__LIFE_DEBUG__.snapshot(),desires=structuredClone(current.desires);
+      const claim=Object.keys(desires).find(key=>desires[key]&&typeof desires[key]==='object'&&Object.hasOwn(desires[key],'claimed'));
+      desires[claim].claimed=true;
+      window.__LIFE_DEBUG__.patchRun({
+        age:17,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],
+        education:{status:'completed',level:3,path:'highSchool',nextStage:'undergraduateApplication',fullTimeUndergraduateClosed:false},
+        employment:{status:'none'},activity:{mode:'study'},desires,usedEvents:[],decisionHistory:[],timeline:[],
+        episodes:{
+          undergraduate_application:{status:'inactive'},
+          acute_illness:{status:'active',phase:2,startedAt:16,nextPhaseAge:17,deadlineAge:20,route:'treatment',boundActors:{},commitments:[],closureReason:null}
+        }
+      });
+    });
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),eventFor('undergraduate_application',1).id);
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(eventFor('first_job_application',1).id),false);
+
+    await preparePhase(page,'undergraduate_application',1,{age:17,education:{status:'completed',level:3,path:'highSchool',nextStage:'undergraduateApplication',fullTimeUndergraduateClosed:false},employment:{status:'none'},activity:{mode:'study'}});
+    run=await choose(page,3);
+    assert.equal(run.education.nextStage,'workOrVocational');
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(eventFor('first_job_application',1).id),true);
+
     const firstJobPhase3=eventFor('first_job_application',3),scenarioWitnesses={};
     for(const scenario of data.employmentCatalog.recruitmentScenarios){
       const tier=scenario.tiers[0],credential=tier==='T3'?'postgraduate':tier==='T2'?'bachelor':tier==='T0'?'middleSchool':'highSchool';
@@ -187,7 +217,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
       scenarioWitnesses[scenario.id]=found.seed;
     }
     await page.locator('[data-act="episode-next"]').click();
-    let run=await choose(page,0);
+    run=await choose(page,0);
     assert.equal(run.employment.applicationStatus,'searching');
     assert.equal(run.employment.pendingOfferId,'none');
 
