@@ -1,5 +1,12 @@
 import {
   COMMAND_TYPES,
+  HOUSING_ACCESSIBILITY,
+  HOUSING_ARRANGEMENTS,
+  HOUSING_CHOICE_KINDS,
+  HOUSING_COST_SHARES,
+  HOUSING_REGIONS,
+  HOUSING_STABILITY,
+  HOUSING_STATUS,
   READ_PATHS,
   RUNTIME_OPERATORS,
   TRACK_DESIRE_EVIDENCE,
@@ -36,6 +43,7 @@ const COMMAND_TARGETS = Object.freeze({
   grantCredential: 'education',
   createPerson: 'people',
   transitionPartner: 'people',
+  transitionHousing: 'housing',
   transition: 'education',
   claimDesire: 'desires',
 });
@@ -63,6 +71,46 @@ function validateOperand(rule, location) {
       (typeof rule.value === 'object' && rule.value !== null))
   )
     fail(location, `${rule.op} 的 value 必须是标量`);
+}
+
+function validateHousingTransition(value, location) {
+  if (!isObject(value)) fail(location, 'transitionHousing.value 必须是对象');
+  const allowed = new Set([
+    'status', 'value', 'arrangement', 'region', 'stability', 'accessibility', 'costShare',
+    'coResidentRefs', 'kind', 'reason', 'housingChoiceKind', 'debtException',
+  ]);
+  for (const key of Object.keys(value))
+    if (!allowed.has(key)) fail(`${location}.${key}`, '未知住房转换字段');
+  const enumFields = [
+    ['status', HOUSING_STATUS],
+    ['arrangement', HOUSING_ARRANGEMENTS],
+    ['region', HOUSING_REGIONS],
+    ['stability', HOUSING_STABILITY],
+    ['accessibility', HOUSING_ACCESSIBILITY],
+    ['costShare', HOUSING_COST_SHARES],
+  ];
+  for (const [key, values] of enumFields)
+    if (
+      Object.hasOwn(value, key) &&
+      !values.includes(value[key]) &&
+      !(key === 'region' && ['$educationRegion', '$homeRegion'].includes(value[key]))
+    )
+      fail(`${location}.${key}`, `非法枚举：${String(value[key])}`);
+  if (Object.hasOwn(value, 'value') && !finite(value.value)) fail(`${location}.value`, '必须是有限数值');
+  if (Object.hasOwn(value, 'coResidentRefs') &&
+      (!Array.isArray(value.coResidentRefs) || value.coResidentRefs.some((id) => typeof id !== 'string')))
+    fail(`${location}.coResidentRefs`, '必须是字符串数组');
+  if (!['origin', 'background', 'choice', 'forced', 'finance'].includes(value.kind))
+    fail(`${location}.kind`, '必须声明合法 kind');
+  if (typeof value.reason !== 'string' || !value.reason.trim())
+    fail(`${location}.reason`, '必须是非空字符串');
+  if (Object.hasOwn(value, 'housingChoiceKind') &&
+      !HOUSING_CHOICE_KINDS.includes(value.housingChoiceKind))
+    fail(`${location}.housingChoiceKind`, '非法住房选择类型');
+  if (Object.hasOwn(value, 'debtException') && typeof value.debtException !== 'boolean')
+    fail(`${location}.debtException`, '必须是布尔值');
+  if (value.kind === 'choice' && !HOUSING_CHOICE_KINDS.includes(value.housingChoiceKind))
+    fail(`${location}.housingChoiceKind`, '住房选择必须声明类型');
 }
 
 export function validatePredicate(rule, location = 'predicate') {
@@ -122,6 +170,8 @@ export function validateCommand(command, location = 'command') {
   ]);
   for (const key of Object.keys(command))
     if (!allowedFields.has(key)) fail(`${location}.${key}`, `${command.type} 不允许该字段`);
+
+  if (command.type === 'transitionHousing') validateHousingTransition(command.value, `${location}.value`);
 
   if (
     [

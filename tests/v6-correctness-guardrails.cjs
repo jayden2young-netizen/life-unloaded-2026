@@ -118,13 +118,13 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.7', 11, 25]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.8', 12, 26]);
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
-    {beat:424,decision:192,consequence:192,blackSwan:20},
+    {beat:456,decision:197,consequence:197,blackSwan:20},
   );
   assert.equal(summary.evidenceRecords, 3);
-  for (const type of ['resolveConception','resolveDebtEnforcement'])
+  for (const type of ['resolveConception','resolveDebtEnforcement','transitionHousing'])
     assert.ok(contract.COMMAND_TYPES.includes(type));
   for (const pathName of [
     'relationships.familyPlanningOffered','relationships.familyPlanningDeferred','relationships.familyPlanningClosed',
@@ -132,12 +132,31 @@ function neutralTrace(multiplier) {
     'relationships.pregnancyDecision','relationships.pregnancyDecisionDeferred','relationships.adoptionOffered','relationships.adoptionStatus',
     'finance.debtStage','finance.enforcementStatus','finance.enforcementDebtId','finance.dishonestStatus',
     'finance.restrictedConsumption','finance.seizedAssets','finance.housingDisposition','finance.repaymentAgreement',
-    'finance.repaymentAgreementFulfilled','finance.reliefPending','later.inheritance','housing.status',
+    'finance.repaymentAgreementFulfilled','finance.reliefPending','later.inheritance',
+    'housing.status','housing.arrangement','housing.region','housing.stability','housing.accessibility',
+    'housing.costShare','housing.coResidentRefs','housing.sinceAge','housing.keyChoiceCount','housing.history',
     'relationships.network','pressures.loneliness','mobility.localTies',
   ]) {
     assert.ok(contract.READ_PATHS.includes(pathName), `missing family read path ${pathName}`);
-    assert.ok(contract.WRITE_PATHS.includes(pathName), `missing family write path ${pathName}`);
   }
+  assert.ok(contract.WRITE_PATHS.includes('housing'), 'missing atomic housing write path');
+  assert.equal(
+    collect(DATA, value => value.type === 'set' && String(value.target || '').startsWith('housing.')).length,
+    0,
+    'housing fields must not be written with set commands',
+  );
+  const housingTransitions = collect(DATA, value => value.type === 'transitionHousing');
+  assert.ok(housingTransitions.length >= 6, 'housing track must use atomic transitions');
+  assert.ok(
+    housingTransitions
+      .filter(command => command.value.arrangement === 'shared')
+      .every(command => !command.value.coResidentRefs?.length),
+    'anonymous shared housing must not create person references',
+  );
+  assert.deepEqual(
+    new Set(DATA.events.filter(event=>event.kind==='decision'&&event.track==='housing').flatMap(event=>event.choices.map(choice=>choice.housingChoiceKind))),
+    new Set(['educationHousing','firstIndependent','workMigration','partnerReconfiguration','homePurchase','laterFit']),
+  );
 
   const predicates = collect(
     DATA,
@@ -235,6 +254,13 @@ function neutralTrace(multiplier) {
       delete findObject(data, value => value.type === 'set').value;
     },
     /缺少 value/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    data => {
+      findObject(data, value => value.type === 'transitionHousing').value.status = 'investmentVilla';
+    },
+    /非法枚举/,
   );
   expectContractFailure(
     validator.validateGeneratedData,
@@ -402,15 +428,15 @@ function neutralTrace(multiplier) {
       TRACK_COPY.leisure.beats.splice(1, 0, { ...TRACK_COPY.leisure.beats[0], text });
       BEAT_SLOT_REGISTRATIONS.push({
         key: beatAuthorKey('leisure', text),
-        slot: { id: 'beat_425', track: 'leisure', localIndex: 32 },
+        slot: { id: 'beat_457', track: 'leisure', localIndex: 32 },
       });
       await import(${JSON.stringify(generatorUrl)});
     `,
     'author-insert',
   );
-  const insertedBeat = insertedData.events.find(event => event.id === 'beat_425');
+  const insertedBeat = insertedData.events.find(event => event.id === 'beat_457');
   assert.equal(insertedBeat.track, 'leisure');
-  insertedData.events = insertedData.events.filter(event => event.id !== 'beat_425');
+  insertedData.events = insertedData.events.filter(event => event.id !== 'beat_457');
   insertedData.trackCoverage.leisure.beats -= 1;
   assert.deepEqual(
     insertedData,
@@ -433,7 +459,7 @@ function neutralTrace(multiplier) {
   assert.match(unregisteredFailure, /未登记定义/);
 
   assert.ok(
-    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.7')") <
+    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.8')") <
       gameSource.indexOf('fetch(`./data.json?v=${VERSION}`'),
     'shared contract import must precede data fetch',
   );
@@ -453,10 +479,10 @@ function neutralTrace(multiplier) {
       localStorage.setItem(
         key,
         JSON.stringify({
-          schemaVersion: 11,
+          schemaVersion: data.schemaVersion,
           gameVersion: data.version,
           meta: {
-            schemaVersion: 11,
+            schemaVersion: data.schemaVersion,
             gameVersion: data.version,
             histories: [],
             codex: [],
@@ -467,9 +493,9 @@ function neutralTrace(multiplier) {
           },
           run: {
             seed: 'v062-correctness-guardrails',
-            schemaVersion: 11,
+            schemaVersion: data.schemaVersion,
             gameVersion: data.version,
-            contentRevision: 21,
+            contentRevision: data.contentRevision,
             phase: 'birth',
           },
         }),

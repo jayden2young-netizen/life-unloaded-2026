@@ -36,8 +36,31 @@ export const COMMAND_TYPES = Object.freeze([
   'resolveConception',
   'createPerson',
   'transitionPartner',
+  'transitionHousing',
   'transition',
   'claimDesire',
+]);
+
+export const HOUSING_STATUS = Object.freeze([
+  'family', 'renting', 'owned', 'mortgaged', 'supported', 'unstable',
+]);
+export const HOUSING_ARRANGEMENTS = Object.freeze([
+  'originFamily', 'dormitory', 'solo', 'shared', 'partner', 'multigenerational', 'service',
+]);
+export const HOUSING_REGIONS = Object.freeze([
+  'tier1', 'tier2', 'county', 'town', 'us', 'europe',
+]);
+export const HOUSING_STABILITY = Object.freeze(['stable', 'conditional', 'temporary']);
+export const HOUSING_ACCESSIBILITY = Object.freeze(['standard', 'adapted', 'supported']);
+export const HOUSING_COST_SHARES = Object.freeze(['self', 'joint', 'supported']);
+export const HOUSING_CHOICE_KINDS = Object.freeze([
+  'educationHousing',
+  'firstIndependent',
+  'workMigration',
+  'partnerReconfiguration',
+  'homePurchase',
+  'laterFit',
+  'debtRelief',
 ]);
 
 export const READ_PATHS = Object.freeze([
@@ -131,6 +154,7 @@ export const READ_PATHS = Object.freeze([
   'legacy.plan',
   'mobility.mode',
   'mobility.localTies',
+  'mobility.lastOverseasSystem',
   'mobility.platformDependence',
   'originHousehold.context.emotionalSafety',
   'originHousehold.context.housingStability',
@@ -158,6 +182,16 @@ export const READ_PATHS = Object.freeze([
   'relationships.partnerStatus',
   'relationships.network',
   'housing.status',
+  'housing.value',
+  'housing.arrangement',
+  'housing.region',
+  'housing.stability',
+  'housing.accessibility',
+  'housing.costShare',
+  'housing.coResidentRefs',
+  'housing.sinceAge',
+  'housing.keyChoiceCount',
+  'housing.history',
 ]);
 
 export const WRITE_PATHS = Object.freeze([
@@ -292,8 +326,7 @@ export const WRITE_PATHS = Object.freeze([
   'health.physical',
   'health.status',
   'history',
-  'housing.status',
-  'housing.value',
+  'housing',
   'later.care',
   'later.inheritance',
   'later.retirement',

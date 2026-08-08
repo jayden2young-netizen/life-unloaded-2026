@@ -34,13 +34,14 @@ const trackRotations={
   health:['healthLiteracy','resilience','careSkill','boundary','riskSense','network','learning','healthLiteracy'],
   habits:['resilience','boundary','healthLiteracy','network','riskSense','careSkill','resilience','boundary','healthLiteracy','network'],
   later:['careSkill','evidence','negotiation','healthLiteracy','boundary','network','riskSense','resilience','careSkill'],
+  housing:['cashBuffer','riskSense','boundary','negotiation','evidence','careSkill'],
   identity:['creativity','resilience']
 };
 
 const universalRotation=['evidence','portableSkill','cashBuffer','healthLiteracy','riskSense','resilience','negotiation','network','learning','creativity','careSkill','boundary'];
 const rotations=Object.fromEntries(Object.keys(trackRotations).map(track=>[track,universalRotation]));
-const rotationOffsets={education:0,employment:1,public:2,remote:3,business:4,leisure:5,partnership:6,children:7,finance:8,health:9,habits:10,later:11,identity:4};
-const pressureForTrack={education:'career',employment:'career',public:'career',remote:'loneliness',business:'money',leisure:'money',partnership:'family',children:'family',finance:'money',health:'body',habits:'body',later:'family',identity:'loneliness'};
+const rotationOffsets={education:0,employment:1,public:2,remote:3,business:4,leisure:5,partnership:6,children:7,finance:8,health:9,habits:10,later:11,housing:5,identity:4};
+const pressureForTrack={education:'career',employment:'career',public:'career',remote:'loneliness',business:'money',leisure:'money',partnership:'family',children:'family',finance:'money',health:'body',habits:'body',later:'family',housing:'money',identity:'loneliness'};
 
 const genericPatch=(mechanic,track)=>{
   if(mechanic==='cashBuffer')return[{type:'add',target:'finance.cash',value:1200}];

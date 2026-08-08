@@ -5,7 +5,7 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.UNIVERSITY_CAREER_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.7-university-career');
+const OUT=process.env.UNIVERSITY_CAREER_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.8-university-career');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
@@ -55,7 +55,7 @@ async function fit(page,label){
 async function optionEnabled(page,index){return page.locator(`[data-choice="${index}"]`).isEnabled()}
 
 (async()=>{
-  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.7',11,25]);
+  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.8',12,26]);
   assert.deepEqual(data.employmentCatalog.regionalCoefficients,{tier1:1.2,tier2:1,county:.82,town:.72});
   assert.deepEqual(data.employmentCatalog.salaryBands,{low:.9,mid:1,high:1.1});
   assert.deepEqual(
@@ -141,7 +141,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[11,'0.6.7',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[12,'0.6.8',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.11完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,11);

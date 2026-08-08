@@ -5,7 +5,7 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.7-full-track');
+const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.8-full-track');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
@@ -117,15 +117,15 @@ async function prepareFinal(page,id,event){
 }
 
 (async()=>{
-  assert.equal(data.version,'0.6.7');
-  assert.equal(data.schemaVersion,11);
-  assert.equal(data.contentRevision,25);
+  assert.equal(data.version,'0.6.8');
+  assert.equal(data.schemaVersion,12);
+  assert.equal(data.contentRevision,26);
   assert.deepEqual(
     Object.fromEntries(['beat','decision','consequence','blackSwan'].map(kind=>[
       kind,
       data.events.filter(event=>event.kind===kind).length
     ])),
-    {beat:424,decision:192,consequence:192,blackSwan:20}
+    {beat:456,decision:197,consequence:197,blackSwan:20}
   );
   assert.ok(decisions.every(event=>!('arc' in event)));
   assert.ok(laterBeats.every(event=>event.ageMin>=55),'later beat appeared before midlife');
@@ -153,11 +153,16 @@ async function prepareFinal(page,id,event){
   assert.equal(beatFor('beat_375').actors[0]?.slot,'partner');
   assert.equal(beatFor('beat_380').requirements.all.find(rule=>rule.path==='pressures.loneliness')?.op,'gte');
   assert.equal(decisions.filter(event=>event.track==='later').length,13);
+  assert.equal(data.events.filter(event=>event.kind==='beat'&&event.track==='housing').length,32);
+  assert.equal(decisions.filter(event=>event.track==='housing').length,6);
   assert.deepEqual(beatFor('beat_384').requirements.all,[{path:'health.status',op:'in',value:['treating','managed','limited']}]);
   const workResolution=eventFor('retirement_transition',2);
   assert.ok(workResolution.choices.slice(0,3).every(choice=>choice.requirements.all.some(rule=>rule.path==='employment.status'&&rule.op==='in')));
   assert.equal(workResolution.choices[3].requirements.all.some(rule=>rule.path==='employment.status'),false);
   assert.ok(data.episodeCatalog.long_term_care.abandonedRoutes.includes('refused'));
+  const establishBaseStart=eventFor('establish_base',1),establishBaseFollowup=eventFor('establish_base',2);
+  assert.ok(establishBaseStart.choices.every(choice=>choice.housingChoiceKind==='workMigration'&&choice.effects.some(effect=>effect.type==='transitionHousing'&&effect.value.kind==='choice')),'establish-base trial did not consume the work-migration housing choice');
+  assert.ok(establishBaseFollowup.choices.every(choice=>!choice.housingChoiceKind&&choice.effects.some(effect=>effect.type==='transitionHousing'&&effect.value.kind==='background')),'establish-base follow-up could be locked by repeating the same housing choice kind');
   for(const decisionId of ['decision_189','decision_190','decision_191','decision_192']){
     const decision=decisions.find(event=>event.id===decisionId),echo=data.events.find(event=>event.id===decisionId.replace('decision_','echo_'));
     assert.equal(decision.ageMax,103,`${decisionId}: consequence can be scheduled after the playable lifespan`);
@@ -187,7 +192,7 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.6.7');
+    assert.equal(migrated.gameVersion,'0.6.8');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
@@ -204,18 +209,24 @@ async function prepareFinal(page,id,event){
     await openPlayable(page);
 
     const previousReleaseSave=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    previousReleaseSave.gameVersion='0.6.6';
-    previousReleaseSave.run.gameVersion='0.6.6';
+    previousReleaseSave.schemaVersion=11;
+    previousReleaseSave.meta.schemaVersion=11;
+    previousReleaseSave.gameVersion='0.6.7';
+    previousReleaseSave.run.schemaVersion=11;
+    previousReleaseSave.run.gameVersion='0.6.7';
     previousReleaseSave.run.age=42;
     const preservedAge=previousReleaseSave.run.age;
     await page.addInitScript(({key,value})=>{
-      if(sessionStorage.getItem('v067-previous-release-loaded'))return;
+      if(sessionStorage.getItem('v068-previous-release-loaded'))return;
       localStorage.setItem(key,JSON.stringify(value));
-      sessionStorage.setItem('v067-previous-release-loaded','1');
+      sessionStorage.setItem('v068-previous-release-loaded','1');
     },{key:SAVE_KEY,value:previousReleaseSave});
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
-    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age,preservedAge,'v0.6.6 Schema 11 run was not preserved');
+    const schema11Migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
+    assert.equal(schema11Migrated.run,null,'v0.6.7 Schema 11 active run was not cleared');
+    assert.notEqual(preservedAge,undefined);
+    await openPlayable(page);
 
     const diversion=eventFor('secondary_diversion',1);
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({attrs:{intellect:10},education:{status:'completed',level:2,path:'middleSchool'},development:{learningHabit:90,attendance:96,teacherSupport:82,peerSupport:70,selfAdvocacy:75,careLoad:2,traumaLoad:2,routeKnowledge:75,languagePreparation:20}}));
@@ -306,7 +317,7 @@ async function prepareFinal(page,id,event){
     assert.equal(run.episodes.long_term_care.closureReason,'refused','refusing assessment received the wrong closure reason');
 
     await page.evaluate(episodes=>window.__LIFE_DEBUG__.patchRun({
-      age:70,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,
+      age:70,naturalDeathAge:105,rngState:123456789,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,
       episodes:{...episodes,long_term_care:{status:'active',phase:2,startedAt:68,nextPhaseAge:70,deadlineAge:72,route:'assessed',boundActors:{},commitments:[],closureReason:null}},
       health:{status:'well',conditionSeverity:0,disability:'none',careNeed:0}
     }),noActiveEpisodes);
@@ -396,6 +407,97 @@ async function prepareFinal(page,id,event){
     assert.match(drawerText,/课程与实践并重/);
     drawerText=await drawerTextFor(page,{...educationBase,courseworkEvidence:8,campusEvidence:8,practiceEvidence:8,researchEvidence:3});
     assert.match(drawerText,/方向较均衡/);
+
+    const longTermCareStartId=eventFor('long_term_care',1).id;
+    await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__,run=debug.snapshot(),state={...run.housing};
+      debug.patchRun({
+        age:70,
+        health:{...run.health,careNeed:2,status:'limited'},
+        episodes:{long_term_care:{status:'inactive'}},
+        housing:{...run.housing,history:[...(run.housing.history||[]),{age:69,year:2095,kind:'choice',reason:'usedLaterFit',sourceEventId:'used-later-fit',choiceId:'used-later-fit',housingChoiceKind:'laterFit',debtException:false,state}]}
+      });
+    });
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(longTermCareStartId),false,'long-term-care episode started after laterFit was already consumed');
+
+    const affordabilityCashGate=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({
+        age:30,
+        finance:{cash:0,liabilities:[]},
+        employment:{status:'employed',incomeAnnualGross:150000,incomeStability:'fixed'},
+        housing:{status:'renting',value:0,arrangement:'solo',region:'tier2',stability:'stable',accessibility:'standard',costShare:'self',coResidentRefs:[],history:[]}
+      });
+      const candidate={status:'renting',value:0,arrangement:'solo',region:'tier2',stability:'stable',accessibility:'standard',costShare:'self',coResidentRefs:[]};
+      return{current:debug.housingAffordability(candidate,{current:true}),newLease:debug.housingAffordability(candidate,{current:false})};
+    });
+    assert.notEqual(affordabilityCashGate.current.reason?.startsWith('现金还差'),true,'current renting incorrectly required a new deposit');
+    assert.equal(affordabilityCashGate.newLease.level,'infeasible');
+    assert.match(affordabilityCashGate.newLease.reason,/现金还差/);
+
+    const partnerContributionCap=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__,run=debug.snapshot(),partner={id:'affordability_partner',relation:'partner',alive:true,bornAt:5,bond:70,housingIncomeAnnualGross:2000000,housingIncomeStability:'fixed'};
+      debug.patchRun({
+        age:35,
+        finance:{cash:100000,liabilities:[]},
+        employment:{status:'employed',incomeAnnualGross:20000,incomeStability:'fixed'},
+        relationships:{activePartnerId:partner.id,partnerStatus:'partnered'},
+        people:[...run.people.filter(item=>item.id!==partner.id),partner],
+        housing:{status:'family',value:0,arrangement:'originFamily',region:'tier1',stability:'stable',accessibility:'standard',costShare:'supported',coResidentRefs:[],history:[]}
+      });
+      return debug.housingAffordability({status:'renting',value:0,arrangement:'partner',region:'tier1',stability:'stable',accessibility:'standard',costShare:'joint',coResidentRefs:[partner.id]},{current:false});
+    });
+    assert.equal(partnerContributionCap.level,'infeasible','partner gross income bypassed the capped housing contribution');
+    assert.ok(partnerContributionCap.availableIncome<partnerContributionCap.reliableIncome,'full partner income was still counted as spendable housing income');
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:35,
+      finance:{cash:1000,liabilities:[]},
+      employment:{status:'employed',incomeAnnualGross:150000,incomeStability:'fixed'},
+      housing:{status:'family',value:0,arrangement:'originFamily',region:'tier2',stability:'stable',accessibility:'standard',costShare:'supported',coResidentRefs:[],history:[]}
+    }));
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes('decision_197'),false,'purchase panel appeared before any purchase route was affordable');
+    await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__,run=debug.snapshot();
+      debug.patchRun({
+      age:35,
+      finance:{cash:500000,liabilities:[]},
+      employment:{status:'employed',incomeAnnualGross:150000,incomeStability:'fixed'},
+      relationships:{activePartnerId:'housing_partner',partnerStatus:'partnered'},
+      people:[...run.people,{id:'housing_partner',relation:'partner',alive:true,bornAt:5,bond:70,housingIncomeAnnualGross:100000,housingIncomeStability:'fixed'}],
+      housing:{status:'family',value:0,arrangement:'originFamily',region:'tier2',stability:'stable',accessibility:'standard',costShare:'supported',coResidentRefs:[],history:[]}
+      });
+    });
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes('decision_197'),true,'affordable purchase panel was not eligible');
+    const housingTransitions=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__,apply=(kind,value,index)=>debug.transitionHousing({...value,kind:'choice',housingChoiceKind:kind},{sourceEventId:`housing-test-${index}`,choiceId:`housing-test-${index}`});
+      const dorm=debug.transitionHousing({status:'supported',arrangement:'dormitory',stability:'conditional',costShare:'supported',coResidentRefs:[],kind:'background',reason:'testDormitory'},{sourceEventId:'housing-test-dormitory'});
+      const first=apply('firstIndependent',{status:'renting',arrangement:'shared',stability:'conditional',costShare:'self',coResidentRefs:[],reason:'testFirst'},1);
+      const second=apply('partnerReconfiguration',{status:'renting',arrangement:'partner',stability:'stable',costShare:'joint',coResidentRefs:['housing_partner'],reason:'testPartnerMove'},2);
+      const third=apply('homePurchase',{status:'mortgaged',arrangement:'partner',region:'tier2',stability:'stable',costShare:'joint',coResidentRefs:['housing_partner'],reason:'testBuy'},3);
+      const fourth=apply('laterFit',{accessibility:'adapted',reason:'testFourth'},4);
+      const propertyOverwrite=debug.transitionHousing({status:'renting',value:0,arrangement:'solo',kind:'background',reason:'invalidPropertyOverwrite'},{sourceEventId:'housing-test-property-overwrite'});
+      const afterPurchase=debug.snapshot();
+      debug.patchRun({
+        employment:{...afterPurchase.employment,incomeAnnualGross:20000,incomeStability:'fixed'},
+        people:afterPurchase.people.map(item=>item.id==='housing_partner'?{...item,housingIncomeAnnualGross:0}:item)
+      });
+      const mortgageOnlyException=debug.housingChoiceAllowed('debtRelief',true);
+      const debt=debug.transitionHousing({accessibility:'adapted',kind:'choice',reason:'testDebtRelief',housingChoiceKind:'debtRelief',debtException:true},{sourceEventId:'housing-test-debt',choiceId:'housing-test-debt'});
+      const repeat=debug.transitionHousing({accessibility:'adapted',kind:'choice',reason:'testDebtRelief',housingChoiceKind:'debtRelief',debtException:true},{sourceEventId:'housing-test-debt',choiceId:'housing-test-debt'});
+      return{dorm,first,second,third,fourth,propertyOverwrite,mortgageOnlyException,debt,repeat,state:debug.snapshot().housing};
+    });
+    assert.equal(housingTransitions.dorm.result.applied,true,'education dormitory background was not recorded');
+    assert.ok(housingTransitions.first.result.applied&&housingTransitions.second.result.applied&&housingTransitions.third.result.applied);
+    assert.equal(housingTransitions.fourth.result.applied,false,'fourth ordinary housing choice was allowed');
+    assert.equal(housingTransitions.propertyOverwrite.result.applied,false,'ordinary move erased an owned or mortgaged home');
+    assert.match(housingTransitions.propertyOverwrite.result.reason,/产权住房/);
+    assert.equal(housingTransitions.mortgageOnlyException.allowed,true,'mortgage-only failure did not open the one debt housing exception');
+    assert.equal(housingTransitions.debt.result.applied,true,'debt-caused fourth housing choice was blocked');
+    assert.equal(housingTransitions.repeat.result.reason,'duplicate','refresh-equivalent housing transition duplicated history');
+    assert.equal(housingTransitions.state.keyChoiceCount,4);
+    assert.equal(housingTransitions.state.history.at(-1).housingChoiceKind,'debtRelief');
+    assert.equal(housingTransitions.state.history.at(-1).debtException,true);
 
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({later:{retirement:'retired',inheritance:'limited',care:'stable',will:'documented'}}));
     const drawerViewports=[[360,773],[360,640],[320,568]];

@@ -238,6 +238,12 @@ function inferChangedPlan(paths) {
       continue;
     }
 
+    if (pathname === 'content/zh-CN/tracks/housing.mjs') {
+      profiles.add('episodes');
+      profiles.add('debt');
+      continue;
+    }
+
     if (
       pathname === 'index.html' ||
       pathname === 'style.css' ||

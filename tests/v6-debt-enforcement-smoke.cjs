@@ -5,7 +5,7 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.DEBT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.7-debt');
+const OUT=process.env.DEBT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.8-debt');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
@@ -67,7 +67,7 @@ async function fit(page,label){
 }
 
 (async()=>{
-  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.7',11,25]);
+  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.8',12,26]);
   assert.deepEqual(decisions.filter(event=>event.episode?.id==='debt_enforcement').map(event=>event.id),['decision_186','decision_187','decision_188']);
   assert.deepEqual(Object.fromEntries(Object.entries(data.debtSourceCatalog).map(([id,spec])=>[id,spec.enforcementEligible])),{
     mortgage:true,consumer:true,business:true,guarantee:true,habit:true,living:false,
@@ -92,15 +92,28 @@ async function fit(page,label){
     await page.locator('[data-card]').first().click();
 
     const currentSave=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    currentSave.gameVersion='0.6.6';
-    currentSave.run.gameVersion='0.6.6';
+    currentSave.schemaVersion=11;
+    currentSave.meta.schemaVersion=11;
+    currentSave.gameVersion='0.6.7';
+    currentSave.run.schemaVersion=11;
+    currentSave.run.gameVersion='0.6.7';
     for(const key of Object.keys(resetFinance))delete currentSave.run.finance[key];
-    await page.evaluate(({key,value})=>localStorage.setItem(key,JSON.stringify(value)),{key:SAVE_KEY,value:currentSave});
+    await page.addInitScript(({key,value})=>{
+      if(sessionStorage.getItem('v068-debt-previous-release-loaded'))return;
+      localStorage.setItem(key,JSON.stringify(value));
+      sessionStorage.setItem('v068-debt-previous-release-loaded','1');
+    },{key:SAVE_KEY,value:currentSave});
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    let stored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
+    assert.equal(stored.run,null,'v0.6.7 Schema 11 active run is cleared');
+    await page.locator('[data-act="new"]').click();
+    await page.locator('[data-act="birth-next"]').click();
+    await page.locator('[data-act="random-attributes"]').click();
+    await page.locator('[data-act="attributes-done"]').click();
+    await page.locator('[data-card]').first().click();
     let run=await snapshot(page);
-    assert.ok(run,'v0.6.6 Schema 11 run is retained');
-    assert.equal(run.gameVersion,'0.6.7');
+    assert.equal(run.gameVersion,'0.6.8');
     assert.equal(run.finance.debtStage,'current');
     assert.equal(run.finance.restrictedConsumption,false);
 
@@ -196,7 +209,7 @@ async function fit(page,label){
 
     await page.setViewportSize({width:360,height:773});
     await openEpisodeChoice(page,phase('debt_enforcement',3),{
-      ...restricted,housing:{status:'owned',value:150000},finance:{...restricted.finance,liabilities:[liability('consumer',{principal:40000}),liability('consumer',{id:'other_debt',principal:50000,rate:.2,status:'current',arrears:0})]},
+      ...restricted,employment:{status:'employed',incomeAnnualGross:100000,incomeStability:'fixed'},housing:{status:'owned',value:150000},finance:{...restricted.finance,liabilities:[liability('consumer',{principal:40000}),liability('consumer',{id:'other_debt',principal:50000,rate:.2,status:'current',arrears:0})]},
     });
     const ownedBefore=await snapshot(page);
     run=await choose(page,0);
@@ -206,20 +219,49 @@ async function fit(page,label){
     assert.match(run.sceneQueue[0].text,/房本/);
     assert.equal(run.finance.liabilities.find(item=>item.id==='consumer_debt').status,'settled','sale pays the bound execution debt');
     assert.equal(run.finance.liabilities.find(item=>item.id==='other_debt').principal,50000,'unrelated higher-rate debt does not steal execution proceeds');
-    assert.equal(run.finance.netWorth,ownedBefore.finance.netWorth,'sale proceeds preserve net worth before annual costs');
+    const rentalEntryCash=ownedBefore.finance.netWorth-run.finance.netWorth;
+    assert.ok(rentalEntryCash>=720&&rentalEntryCash<=3600,'sale did not preserve proceeds apart from the location-adjusted two-month shared-rental entry cash');
 
     await openEpisodeChoice(page,phase('debt_enforcement',3),{
-      ...restricted,housing:{status:'mortgaged',value:200000},finance:{...restricted.finance,enforcementDebtId:'mortgage_debt',liabilities:[liability('mortgage',{principal:120000})]},
+      ...restricted,
+      housing:{status:'mortgaged',value:200000,history:[]},
+      finance:{...resetFinance,...restricted.finance,housingDisposition:'none',enforcementDebtId:'mortgage_debt',liabilities:[liability('mortgage',{principal:120000})]},
     });
     run=await choose(page,0);
     assert.equal(run.housing.status,'renting');
     assert.equal(run.finance.housingDisposition,'disposed');
     assert.match(run.sceneQueue[0].text,/按揭/);
 
+    await openEpisodeChoice(page,phase('debt_enforcement',3),{
+      ...restricted,
+      employment:{status:'none',incomeAnnualGross:0,incomeStability:'fixed'},
+      housing:{status:'owned',value:40000,history:[]},
+      finance:{...resetFinance,...restricted.finance,cash:0,housingDisposition:'none',liabilities:[liability('consumer',{principal:40000})]},
+    });
+    run=await choose(page,0);
+    assert.equal(run.housing.status,'unstable','forced disposition invented an unaffordable rental');
+    assert.equal(run.housing.stability,'temporary');
+
     await patchPlaying(page,{housing:{status:'mortgaged',value:0},finance:{...resetFinance,liabilities:[liability('mortgage',{principal:0,status:'settled',arrears:0})]}});
     run=await snapshot(page);
     assert.equal(run.housing.status,'owned');
     assert.equal(run.housing.value,260000,'old mortgaged saves retain a concrete home value after payoff');
+
+    await patchPlaying(page,{
+      housing:{status:'mortgaged',value:500000,history:[]},
+      finance:{...resetFinance,liabilities:[
+        liability('mortgage',{id:'secured_one',principal:0,status:'settled',arrears:0}),
+        liability('mortgage',{id:'secured_two',principal:100000,status:'current',arrears:0}),
+      ]},
+    });
+    run=await snapshot(page);
+    assert.equal(run.housing.status,'mortgaged','one settled secured debt hid another active housing debt');
+    await patchPlaying(page,{
+      housing:{status:'mortgaged',value:500000,history:run.housing.history},
+      finance:{...resetFinance,liabilities:run.finance.liabilities.map(item=>({...item,principal:0,status:'settled',arrears:0}))},
+    });
+    run=await snapshot(page);
+    assert.equal(run.housing.status,'owned','housing did not become owned after the final secured debt settled');
 
     await patchPlaying(page,{
       yearStarted:false,

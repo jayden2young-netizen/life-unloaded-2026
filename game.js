@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.7');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.8');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.7',
-    SCHEMA_VERSION = 11,
-    CONTENT_REVISION = 25;
+  const VERSION = '0.6.8',
+    SCHEMA_VERSION = 12,
+    CONTENT_REVISION = 26;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -82,6 +82,61 @@
   }
   function stable(seed, key, max = 100) {
     return hashSeed(`${seed}:${key}`) % max;
+  }
+
+  const HOUSING_ANCHORS = Object.freeze({
+    tier1: Object.freeze({ rent: 36000, purchase: 1800000 }),
+    tier2: Object.freeze({ rent: 24000, purchase: 900000 }),
+    county: Object.freeze({ rent: 12000, purchase: 420000 }),
+    town: Object.freeze({ rent: 7200, purchase: 260000 }),
+    us: Object.freeze({ rent: 96000, purchase: null }),
+    europe: Object.freeze({ rent: 72000, purchase: null }),
+  });
+  const HOUSING_RELIABILITY = Object.freeze({
+    fixed: 0.9,
+    fixedPlusBonus: 0.8,
+    piecework: 0.65,
+    project: 0.6,
+    business: 0.5,
+    none: 0,
+  });
+  const housingSnapshot = (housing) => ({
+    status: housing.status,
+    value: Math.max(0, Number(housing.value) || 0),
+    arrangement: housing.arrangement,
+    region: housing.region,
+    stability: housing.stability,
+    accessibility: housing.accessibility,
+    costShare: housing.costShare,
+    coResidentRefs: [...(housing.coResidentRefs || [])],
+  });
+  function initialHousing(run) {
+    const stability = run.originHousehold.context.housingStability >= 60 ? 'stable' : 'conditional',
+      housing = {
+        status: 'family',
+        value: 0,
+        arrangement: 'originFamily',
+        region: run.location.id,
+        stability,
+        accessibility: 'standard',
+        costShare: 'supported',
+        coResidentRefs: [],
+        sinceAge: 0,
+        keyChoiceCount: 0,
+        history: [],
+      };
+    housing.history.push({
+      age: 0,
+      year: 2026,
+      kind: 'origin',
+      reason: 'birthHousehold',
+      sourceEventId: 'birth',
+      choiceId: null,
+      housingChoiceKind: null,
+      debtException: false,
+      state: housingSnapshot(housing),
+    });
+    return housing;
   }
 
   function defaultMeta() {
@@ -536,7 +591,7 @@
       repaymentAgreementFulfilled: false,
       reliefPending: false,
     };
-    run.housing = { status: 'family', value: 0 };
+    run.housing = initialHousing(run);
     run.relationships = {
       originBond: 55,
       partnerStatus: 'none',
@@ -641,6 +696,194 @@
     run.ending = null;
     syncDerived(run);
     return run;
+  }
+
+  function normalizeHousing(run, source = {}) {
+    const fresh = initialHousing(run),
+      housing = { ...fresh, ...(source || {}) };
+    housing.status = CONTRACT.HOUSING_STATUS.includes(housing.status) ? housing.status : fresh.status;
+    housing.arrangement = CONTRACT.HOUSING_ARRANGEMENTS.includes(housing.arrangement)
+      ? housing.arrangement
+      : fresh.arrangement;
+    housing.region = CONTRACT.HOUSING_REGIONS.includes(housing.region)
+      ? housing.region
+      : run.location.id;
+    housing.stability = CONTRACT.HOUSING_STABILITY.includes(housing.stability)
+      ? housing.stability
+      : fresh.stability;
+    housing.accessibility = CONTRACT.HOUSING_ACCESSIBILITY.includes(housing.accessibility)
+      ? housing.accessibility
+      : 'standard';
+    housing.costShare = CONTRACT.HOUSING_COST_SHARES.includes(housing.costShare)
+      ? housing.costShare
+      : 'self';
+    housing.value = ['owned', 'mortgaged'].includes(housing.status)
+      ? Math.max(0, Number(housing.value) || 0)
+      : 0;
+    housing.coResidentRefs = Array.from(new Set(Array.isArray(housing.coResidentRefs)
+      ? housing.coResidentRefs.filter((id) => run.people.some((item) => item.id === id && item.alive))
+      : []));
+    housing.history = (Array.isArray(source?.history) ? source.history : fresh.history)
+      .filter((record) => record && typeof record === 'object' && record.state)
+      .map((record) => ({
+        age: clamp(record.age, 0, 105),
+        year: Number(record.year) || 2026 + clamp(record.age, 0, 105),
+        kind: ['origin', 'background', 'choice', 'forced', 'finance'].includes(record.kind)
+          ? record.kind
+          : 'background',
+        reason: String(record.reason || 'normalized'),
+        sourceEventId: record.sourceEventId || null,
+        choiceId: record.choiceId || null,
+        housingChoiceKind: CONTRACT.HOUSING_CHOICE_KINDS.includes(record.housingChoiceKind)
+          ? record.housingChoiceKind
+          : null,
+        debtException: Boolean(record.debtException),
+        state: housingSnapshot({ ...fresh, ...(record.state || {}) }),
+      }));
+    if (!housing.history.length) housing.history = fresh.history;
+    housing.sinceAge = clamp(housing.sinceAge, 0, run.age);
+    housing.keyChoiceCount = housing.history.filter((record) => record.kind === 'choice').length;
+    return housing;
+  }
+
+  function housingChoiceRecords(run) {
+    return (run.housing.history || []).filter((record) => record.kind === 'choice');
+  }
+  function currentHousingContext(run) {
+    return {
+      ...housingSnapshot(run.housing),
+      sinceAge: run.housing.sinceAge,
+      keyChoiceCount: run.housing.keyChoiceCount,
+      affordability: housingAffordability(run, run.housing, { current: true }),
+    };
+  }
+  function validHousingPartner(run, housing = run.housing) {
+    const id = run.relationships.activePartnerId,
+      item = run.people.find((personItem) => personItem.id === id);
+    return item && item.alive && item.relation === 'partner' &&
+      ['dating', 'partnered', 'married'].includes(run.relationships.partnerStatus) &&
+      housing.costShare === 'joint' && housing.coResidentRefs.includes(id)
+      ? item
+      : null;
+  }
+  function housingChoiceAllowed(run, housingChoiceKind, debtException = false) {
+    if (!CONTRACT.HOUSING_CHOICE_KINDS.includes(housingChoiceKind))
+      return { allowed: false, reason: '住房选择类型无效' };
+    const records = housingChoiceRecords(run),
+      kinds = new Set(records.map((record) => record.housingChoiceKind).filter(Boolean)),
+      ordinaryCount = records.filter((record) => !record.debtException).length,
+      exceptionUsed = records.some((record) => record.debtException);
+    if (kinds.has(housingChoiceKind)) return { allowed: false, reason: '这类住房选择已经做过一次' };
+    if (!debtException)
+      return ordinaryCount < 3
+        ? { allowed: true, reason: null }
+        : { allowed: false, reason: '这一生的三次普通住房选择已经用完' };
+    if (housingChoiceKind !== 'debtRelief' || exceptionUsed)
+      return { allowed: false, reason: '债务住房例外已经使用或类型不符' };
+    if (ordinaryCount < 3)
+      return { allowed: false, reason: '尚未达到债务第四次住房选择的条件' };
+    const withDebt = housingAffordability(run, run.housing, { current: true }),
+      withoutDebt = housingAffordability(run, run.housing, { current: true, ignoreDebts: true });
+    return withDebt.level === 'infeasible' && withoutDebt.level !== 'infeasible'
+      ? { allowed: true, reason: null }
+      : { allowed: false, reason: '债务没有把当前住处从可维持推到不成立' };
+  }
+  function transitionHousing(run, value = {}, context = {}, options = {}) {
+    const previous = normalizeHousing(run, run.housing),
+      kind = value.kind || 'background',
+      sourceEventId = context.sourceEventId || context.eventId || context.id || value.sourceEventId || null,
+      choiceId = context.choiceId || value.choiceId || null,
+      housingChoiceKind = value.housingChoiceKind || null,
+      debtException = Boolean(value.debtException),
+      duplicate = previous.history.some((record) =>
+        record.kind === kind && record.sourceEventId === sourceEventId && record.choiceId === choiceId &&
+        record.housingChoiceKind === housingChoiceKind && record.reason === value.reason
+      );
+    if (duplicate) {
+      run.housing = previous;
+      return { applied: false, reason: 'duplicate' };
+    }
+    if (kind === 'choice' && !options.skipBudget) {
+      const budget = housingChoiceAllowed(run, housingChoiceKind, debtException);
+      if (!budget.allowed) return { applied: false, reason: budget.reason };
+    }
+    const transitionValue = { ...value };
+    if (Array.isArray(transitionValue.coResidentRefs))
+      transitionValue.coResidentRefs = transitionValue.coResidentRefs.flatMap((id) => {
+        if (id === '$activePartner') return run.relationships.activePartnerId ? [run.relationships.activePartnerId] : [];
+        if (id === '$firstChild') return childPeople(run)[0]?.id ? [childPeople(run)[0].id] : [];
+        return [id];
+      });
+    const replacesProperty = ['owned', 'mortgaged'].includes(previous.status) &&
+      Object.hasOwn(transitionValue, 'status') &&
+      !['owned', 'mortgaged'].includes(transitionValue.status);
+    if (
+      replacesProperty &&
+      !options.allowPropertyDisposition
+    ) return { applied: false, reason: '名下产权住房必须先经过真实处置' };
+    if (transitionValue.region === '$homeRegion') transitionValue.region = run.location.id;
+    if (transitionValue.region === '$educationRegion') {
+      const system = run.education.postgraduateSystem !== 'none'
+        ? run.education.postgraduateSystem
+        : run.education.undergraduateSystem !== 'none'
+          ? run.education.undergraduateSystem
+          : run.mobility.lastOverseasSystem;
+      transitionValue.region = system === 'us' ? 'us' : system === 'europe' ? 'europe' : run.location.id;
+    }
+    if (housingChoiceKind === 'homePurchase' && transitionValue.status === 'mortgaged') {
+      transitionValue.value = Number(transitionValue.value) ||
+        Number(HOUSING_ANCHORS[transitionValue.region || previous.region]?.purchase) || 0;
+      const affordability = housingAffordability(run, { ...previous, ...transitionValue });
+      if (affordability.level === 'infeasible')
+        return { applied: false, reason: affordability.reason };
+    }
+    const next = normalizeHousing(run, {
+      ...previous,
+      ...Object.fromEntries(Object.entries(transitionValue).filter(([key]) => [
+        'status', 'value', 'arrangement', 'region', 'stability', 'accessibility', 'costShare',
+        'coResidentRefs',
+      ].includes(key))),
+      history: previous.history,
+    });
+    if (next.arrangement === 'shared') next.coResidentRefs = [];
+    if (next.costShare === 'joint' && !validHousingPartner(run, next))
+      return { applied: false, reason: '共同住房需要在世且有效的同住伴侣' };
+    const changed = JSON.stringify(housingSnapshot(previous)) !== JSON.stringify(housingSnapshot(next));
+    if (!changed && kind !== 'choice') {
+      run.housing = previous;
+      return { applied: false, reason: 'unchanged' };
+    }
+    if (housingChoiceKind === 'homePurchase' && next.status === 'mortgaged') {
+      const purchase = housingAffordability(run, next);
+      run.finance.cash -= purchase.cashRequired;
+      addLiability(run, {
+        value: purchase.purchasePrincipal,
+        kind: 'mortgage',
+        rate: 0.04,
+      });
+    } else if (
+      kind === 'choice' &&
+      (housingChoiceKind !== 'debtRelief' || options.chargeEntryCost) &&
+      next.status === 'renting' &&
+      changed
+    ) {
+      run.finance.cash -= Math.round((housingRentAnnual(next) / 12) * 2);
+    }
+    next.sinceAge = changed ? run.age : previous.sinceAge;
+    next.history = [...previous.history, {
+      age: run.age,
+      year: run.world?.year || 2026 + run.age,
+      kind,
+      reason: String(value.reason || 'housingTransition'),
+      sourceEventId,
+      choiceId,
+      housingChoiceKind,
+      debtException,
+      state: housingSnapshot(next),
+    }];
+    next.keyChoiceCount = next.history.filter((record) => record.kind === 'choice').length;
+    run.housing = next;
+    return { applied: true, reason: null };
   }
 
   function totalDebt(run) {
@@ -956,7 +1199,7 @@
       run.employment?.lastJob && typeof run.employment.lastJob === 'object'
         ? copy(run.employment.lastJob)
         : null;
-    merged.housing = { ...fresh.housing, ...(run.housing || {}) };
+    merged.housing = normalizeHousing(merged, run.housing || fresh.housing);
     merged.finance.liabilities = (Array.isArray(run.finance?.liabilities)
       ? run.finance.liabilities
       : []
@@ -975,11 +1218,21 @@
       ? Array.from(new Set(run.finance.seizedAssets))
       : [];
     if (merged.housing.status === 'mortgaged') {
-      const mortgage = merged.finance.liabilities.find((item) => item.kind === 'mortgage');
+      const mortgage = merged.finance.liabilities.find(
+        (item) => item.housingSecured && item.status !== 'settled' && Number(item.principal) > 0
+      );
       if (!(merged.housing.value > 0))
-        merged.housing.value = Math.max(260000, Number(mortgage?.principal) || 0);
-      if (!mortgage || mortgage.status === 'settled' || !(Number(mortgage.principal) > 0))
-        merged.housing.status = 'owned';
+        transitionHousing(merged, {
+          value: Math.max(260000, Number(mortgage?.principal) || 0),
+          kind: 'finance',
+          reason: 'mortgageValueNormalized',
+        }, { sourceEventId: 'normalize' }, { skipBudget: true });
+      if (!mortgage)
+        transitionHousing(merged, {
+          status: 'owned',
+          kind: 'finance',
+          reason: 'mortgageSettledOnNormalize',
+        }, { sourceEventId: 'normalize' }, { skipBudget: true });
     }
     merged.episodes = { ...fresh.episodes, ...(run.episodes || {}) };
     merged.sceneQueue = Array.isArray(run.sceneQueue) ? run.sceneQueue : [];
@@ -1000,6 +1253,9 @@
         run.development &&
         run.employment &&
         run.finance &&
+        run.housing &&
+        Array.isArray(run.housing.history) &&
+        Array.isArray(run.housing.coResidentRefs) &&
         Array.isArray(run.people) &&
         run.relationships &&
         run.health &&
@@ -1199,8 +1455,77 @@
     return (
       choiceVisible(effective, run) &&
       requirementsMatch(choiceRequirements(effective), run) &&
-      debtGateAllows(effective, run)
+      debtGateAllows(effective, run) &&
+      housingChoiceGate(effective, run).allowed
     );
+  }
+  function housingTransitionCommand(choice) {
+    return (choice?.effects || []).find((command) => command.type === 'transitionHousing') || null;
+  }
+  function housingChoiceGate(choice, run = state.run) {
+    const kind = choice?.housingChoiceKind;
+    if (!kind) return { allowed: true, reason: null, affordability: null };
+    const ordinaryCount = housingChoiceRecords(run).filter((record) => !record.debtException).length,
+      debtAction = (choice.effects || []).some((command) =>
+        command.type === 'resolveDebtEnforcement' && command.value === 'consequence_housing'
+      ),
+      debtException = kind === 'debtRelief' && ordinaryCount >= 3,
+      budget = housingChoiceAllowed(run, kind, debtException);
+    if (!budget.allowed) return { ...budget, affordability: null };
+    if (debtAction) {
+      const hasHousing = ['owned', 'mortgaged'].includes(run.housing.status) && run.housing.value > 0;
+      return hasHousing
+        ? { allowed: true, reason: null, affordability: housingAffordability(run, run.housing, { current: true }) }
+        : { allowed: false, reason: '名下没有可处置的自有或按揭住房', affordability: null };
+    }
+    const command = housingTransitionCommand(choice);
+    if (!command) return { allowed: false, reason: '住房选择缺少住房转换', affordability: null };
+    const stateFields = ['status','value','arrangement','region','stability','accessibility','costShare','coResidentRefs'];
+    if (!stateFields.some((field) => Object.hasOwn(command.value || {}, field)))
+      return { allowed: true, reason: null, affordability: null };
+    const candidateValue = { ...command.value };
+    if (candidateValue.region === '$homeRegion') candidateValue.region = run.location.id;
+    if (candidateValue.region === '$educationRegion') {
+      const system = run.education.postgraduateSystem !== 'none'
+        ? run.education.postgraduateSystem
+        : run.education.undergraduateSystem !== 'none'
+          ? run.education.undergraduateSystem
+          : run.mobility.lastOverseasSystem;
+      candidateValue.region = system === 'us' ? 'us' : system === 'europe' ? 'europe' : run.location.id;
+    }
+    if (Array.isArray(candidateValue.coResidentRefs))
+      candidateValue.coResidentRefs = candidateValue.coResidentRefs.flatMap((id) =>
+        id === '$activePartner'
+          ? run.relationships.activePartnerId ? [run.relationships.activePartnerId] : []
+          : id === '$firstChild'
+            ? childPeople(run)[0]?.id ? [childPeople(run)[0].id] : []
+            : [id]
+      );
+    const candidate = { ...run.housing, ...candidateValue };
+    if (kind === 'homePurchase' && !candidate.value)
+      candidate.value = HOUSING_ANCHORS[candidate.region]?.purchase || 0;
+    if (
+      ['owned', 'mortgaged'].includes(run.housing.status) &&
+      Object.hasOwn(candidateValue, 'status') &&
+      !['owned', 'mortgaged'].includes(candidate.status)
+    ) return { allowed: false, reason: '名下产权住房必须先经过真实处置', affordability: null };
+    if (JSON.stringify(housingSnapshot(normalizeHousing(run, candidate))) === JSON.stringify(housingSnapshot(run.housing)))
+      return { allowed: true, reason: null, affordability: housingAffordability(run, run.housing, { current: true }) };
+    if (['family', 'supported'].includes(candidate.status))
+      return { allowed: true, reason: null, affordability: { level: 'feasible', reason: null } };
+    const affordability = housingAffordability(run, candidate, { current: false });
+    return affordability.level === 'infeasible'
+      ? { allowed: false, reason: affordability.reason, affordability }
+      : { allowed: true, reason: null, affordability };
+  }
+  function housingChoiceReason(choice, run = state.run) {
+    const gate = housingChoiceGate(choice, run);
+    return gate.allowed ? null : gate.reason;
+  }
+  function housingChoiceHint(choice, run = state.run) {
+    const gate = housingChoiceGate(choice, run);
+    if (!gate.allowed || gate.affordability?.level !== 'strained') return null;
+    return `可承受但吃紧：${gate.affordability.reason}${gate.affordability.partnerContribution > 0 ? '；伴侣贡献中断时需重新核对' : ''}`;
   }
   function personAge(item, run = state.run) {
     return run.age - item.bornAt;
@@ -1234,11 +1559,17 @@
       .filter(([, record]) => record.status === 'active')
       .map(([id, record]) => ({ ...record, id, lane: episodeSpec(id)?.lane }));
   }
+  function episodeHousingChoiceKind(id) {
+    return id === 'long_term_care' ? 'laterFit' : null;
+  }
   function episodeEligible(event, run) {
     if (!event.episode) return true;
     const episode = event.episode,
       record = run.episodes[episode.id];
-    if (episode.role === 'start')
+    if (episode.role === 'start') {
+      const housingChoiceKind = episodeHousingChoiceKind(episode.id);
+      if (housingChoiceKind && !housingChoiceAllowed(run, housingChoiceKind, false).allowed)
+        return false;
       return (
         (!record || record.status === 'inactive') &&
         activeEpisodes(run).length < 2 &&
@@ -1250,6 +1581,7 @@
                 item.phase === episodePhaseCount(item.id)
             )))
       );
+    }
     return Boolean(
       record &&
         record.status === 'active' &&
@@ -1286,6 +1618,19 @@
     } else if (run.usedEvents.includes(event.id)) return false;
     if (!(event.stage || []).includes(stageForAge(run.age))) return false;
     if (!requirementsMatch(event.requirements, run) || !episodeEligible(event, run)) return false;
+    if (event.kind === 'decision') {
+      const purchaseChoices = (event.choices || []).filter((choice) =>
+        housingTransitionCommand(choice)?.value?.status === 'mortgaged'
+      );
+      if (purchaseChoices.length && !purchaseChoices.some((choice) => choiceEnabled(choice, run)))
+        return false;
+    }
+    if (
+      event.kind === 'decision' &&
+      event.choices?.length &&
+      event.choices.every((choice) => choice.housingChoiceKind) &&
+      !event.choices.some((choice) => choiceEnabled(choice, run))
+    ) return false;
     return Boolean(resolveActors(event, run));
   }
 
@@ -1335,8 +1680,16 @@
       if (debt.principal <= 0) {
         debt.principal = 0;
         debt.status = 'settled';
-        if (debt.housingSecured && run.housing.status === 'mortgaged')
-          run.housing.status = 'owned';
+        if (
+          debt.housingSecured &&
+          run.housing.status === 'mortgaged' &&
+          !unresolvedLiabilities(run).some((item) => item.housingSecured)
+        )
+          transitionHousing(run, {
+            status: 'owned',
+            kind: 'finance',
+            reason: 'mortgageRepaid',
+          }, { sourceEventId: `repayDebt:${run.age}` }, { skipBudget: true });
       } else debt.status = 'current';
       if (remaining <= 0) break;
     }
@@ -1355,7 +1708,7 @@
       run.finance.debtStage = 'current';
     addTag(run, 'finance:restructured');
   }
-  function resolveDebtEnforcement(run, action) {
+  function resolveDebtEnforcement(run, action, context = {}) {
     const debt = activeEnforcementDebt(run);
     if (!debt) return false;
     run.finance.enforcementDebtId = debt.id;
@@ -1415,19 +1768,20 @@
       run.finance.seizedAssets = Array.from(new Set(run.finance.seizedAssets));
       return true;
     }
-    run.finance.debtStage = 'consequence';
-    run.finance.enforcementStatus = 'consequence';
     if (action === 'consequence_housing') {
       const hasHousing =
         ['owned', 'mortgaged'].includes(run.housing.status) && Number(run.housing.value) > 0;
       if (!hasHousing) return false;
+      const debtException = housingChoiceRecords(run).filter((record) => !record.debtException).length >= 3,
+        budget = housingChoiceAllowed(run, 'debtRelief', debtException);
+      if (!budget.allowed) return false;
+      run.finance.debtStage = 'consequence';
+      run.finance.enforcementStatus = 'consequence';
       const proceeds = Math.max(0, Number(run.housing.value) || 0);
       run.finance.housingDisposition = 'disposed';
       run.finance.seizedAssets = Array.from(
         new Set([...(run.finance.seizedAssets || []), 'housing'])
       );
-      run.housing.status = 'renting';
-      run.housing.value = 0;
       let remaining = proceeds;
       const securedDebts = unresolvedLiabilities(run).filter((item) => item.housingSecured),
         targets = [...securedDebts, debt].filter(
@@ -1442,11 +1796,50 @@
         if (remaining <= 0) break;
       }
       run.finance.cash += remaining;
+      const sharedRental = {
+          status: 'renting',
+          value: 0,
+          arrangement: 'shared',
+          region: run.housing.region,
+          stability: 'temporary',
+          accessibility: 'standard',
+          costShare: 'self',
+          coResidentRefs: [],
+        },
+        canRent = housingAffordability(run, sharedRental, { current: false }).level !== 'infeasible',
+        destination = canRent
+          ? sharedRental
+          : {
+              status: 'unstable',
+              value: 0,
+              arrangement: 'solo',
+              region: run.housing.region,
+              stability: 'temporary',
+              accessibility: 'standard',
+              costShare: 'self',
+              coResidentRefs: [],
+            };
+      transitionHousing(run, {
+        ...destination,
+        kind: 'choice',
+        reason: canRent ? 'debtHousingDispositionRental' : 'debtHousingDispositionTemporary',
+        housingChoiceKind: 'debtRelief',
+        debtException,
+      }, context, {
+        skipBudget: true,
+        allowPropertyDisposition: true,
+        chargeEntryCost: canRent,
+      });
       if (proceeds > remaining) addTag(run, 'finance:repaid');
-      markDebtReliefIfDue(run);
       run.pressures.family = clamp(run.pressures.family + 8, 0, 100);
       addTag(run, 'finance:housingDisposed');
-    } else if (action === 'consequence_installment') {
+      markDebtReliefIfDue(run);
+      return true;
+    } else {
+      run.finance.debtStage = 'consequence';
+      run.finance.enforcementStatus = 'consequence';
+    }
+    if (action === 'consequence_installment') {
       agreement('incomeDeduction');
       run.pressures.money = clamp(run.pressures.money + 3, 0, 100);
     } else if (action === 'consequence_minimum') {
@@ -2062,12 +2455,56 @@
       });
     run.people.push(item);
     if (relation === 'partner') {
+      initializePartnerHousingProfile(run, item);
       run.relationships.activePartnerId = item.id;
       run.relationships.partnerStatus = 'dating';
     }
     if (['child', 'adoptedChild', 'stepChild'].includes(relation))
       run.relationships.parenthoodIntent = 'parent';
     return item;
+  }
+  function initializePartnerHousingProfile(run, item) {
+    if (!item || item.housingIncomeAnnualGross !== undefined) return item;
+    const modes = ['fixed', 'fixedPlusBonus', 'piecework', 'project', 'business'],
+      stability = modes[stable(run.seed, `partner-housing-stability:${item.id}`, modes.length)],
+      region = run.housing?.region || run.location.id,
+      regionFactor = region === 'us' ? 2.4 : region === 'europe' ? 1.9
+        : DATA.employmentCatalog?.regionalCoefficients?.[region] || 1,
+      playerTier = JOB_TIER_INDEX[run.employment.jobTier] ?? 1,
+      partnerTierIndex = clamp(
+        playerTier + stable(run.seed, `partner-housing-tier:${item.id}`, 3) - 1,
+        0,
+        3
+      ),
+      tierId = `T${partnerTierIndex}`,
+      monthlyBase = DATA.employmentCatalog?.tiers?.[tierId]?.monthlyBase || 6000,
+      variation = 0.85 + stable(run.seed, `partner-housing-income:${item.id}`, 31) / 100,
+      gross = Math.round(monthlyBase * 12 * regionFactor * variation / 100) * 100;
+    item.housingIncomeStability = stability;
+    item.housingIncomeAnnualGross = Math.max(24000, gross);
+    return item;
+  }
+  function cleanupHousingCoResidents(run, reason, sourceEventId) {
+    const refs = (run.housing.coResidentRefs || []).filter((id) => {
+        const personItem = run.people.find((item) => item.id === id);
+        return Boolean(personItem?.alive && ['partner', 'child', 'adoptedChild', 'stepChild', 'father', 'mother', 'sibling'].includes(personItem.relation));
+      }),
+      partner = run.people.find((item) => item.id === run.relationships.activePartnerId),
+      jointValid = run.housing.costShare !== 'joint' || Boolean(
+        partner?.alive && partner.relation === 'partner' && refs.includes(partner.id) &&
+        ['dating', 'partnered', 'married'].includes(run.relationships.partnerStatus)
+      );
+    if (refs.length === (run.housing.coResidentRefs || []).length && jointValid) return false;
+    const arrangement = run.housing.arrangement === 'partner' && !jointValid
+      ? (run.housing.status === 'family' ? 'originFamily' : 'solo')
+      : run.housing.arrangement;
+    return transitionHousing(run, {
+      arrangement,
+      costShare: jointValid ? run.housing.costShare : 'self',
+      coResidentRefs: refs,
+      kind: 'background',
+      reason,
+    }, { sourceEventId }, { skipBudget: true }).applied;
   }
   function transitionPartner(run, command) {
     const restoring = command.value === 'partner',
@@ -2083,6 +2520,7 @@
       item.relation = 'exPartner';
       run.relationships.lastPartnerId = item.id;
       run.relationships.activePartnerId = null;
+      cleanupHousingCoResidents(run, 'partnerNoLongerCoResident', `partner:${run.age}`);
     }
   }
   function applyCommands(commands = [], context = {}) {
@@ -2121,7 +2559,7 @@
       else if (command.type === 'repayDebt') repayDebt(run, command.value);
       else if (command.type === 'restructureDebt') restructureDebt(run, command.rate);
       else if (command.type === 'resolveDebtEnforcement')
-        resolveDebtEnforcement(run, command.value);
+        resolveDebtEnforcement(run, command.value, context);
       else if (command.type === 'healthIncident') healthIncident(run, command);
       else if (command.type === 'healthRecovery') healthRecovery(run, command);
       else if (command.type === 'resolveApplication')
@@ -2155,6 +2593,11 @@
         resolveConception(run, command.value);
       else if (command.type === 'createPerson') createRelatedPerson(run, command);
       else if (command.type === 'transitionPartner') transitionPartner(run, command);
+      else if (command.type === 'transitionHousing') {
+        const transition = transitionHousing(run, command.value, context);
+        if (!transition.applied && !['duplicate', 'unchanged'].includes(transition.reason))
+          console.error(`[住房转换] ${transition.reason}`);
+      }
       else if (command.type === 'transition' && command.target === 'education')
         transitionEducation(run, command);
       else if (command.type === 'claimDesire') {
@@ -2462,7 +2905,12 @@
       return;
     inputLocked = true;
     const before = copy(run),
-      result = applyCommands(choice.effects, event);
+      result = applyCommands(choice.effects, {
+        ...event,
+        sourceEventId: event.id,
+        choiceId: choice.id,
+        housingChoiceKind: choice.housingChoiceKind || null,
+      });
     for (const tag of choice.outcomeTags || []) addTag(run, tag);
     const resolvedApplication =
         event.episode.id === 'undergraduate_application' &&
@@ -2528,6 +2976,8 @@
       stateAfter: episodeState(run),
       outcomeTags: [...(choice.outcomeTags || [])],
       commitments: choice.commitments || [],
+      housingChoiceKind: choice.housingChoiceKind || null,
+      debtException: Boolean(run.housing.history.at(-1)?.choiceId === choice.id && run.housing.history.at(-1)?.debtException),
       impact: scene.impact,
     });
     run.usedEvents.push(event.id);
@@ -2585,6 +3035,12 @@
     render();
   }
   function episodeBindingInvalid(id, record, run) {
+    const housingChoiceKind = episodeHousingChoiceKind(id);
+    if (
+      record.phase > 1 &&
+      housingChoiceKind &&
+      !housingChoiceAllowed(run, housingChoiceKind, false).allowed
+    ) return true;
     if (
       id === 'undergraduate_application' &&
       run.education.fullTimeUndergraduateClosed &&
@@ -2868,7 +3324,12 @@
     if (!choice || inputLocked || !choiceEnabled(originalChoice, run)) return;
     inputLocked = true;
     const snapshot = copy(run),
-      result = applyCommands(choice.effects, event);
+      result = applyCommands(choice.effects, {
+        ...event,
+        sourceEventId: event.id,
+        choiceId: choice.id,
+        housingChoiceKind: choice.housingChoiceKind || null,
+      });
     for (const tag of choice.outcomeTags || []) addTag(run, tag);
     scheduleConsequence(event, choice);
     run.decisionHistory.push({
@@ -2897,6 +3358,8 @@
       },
       outcomeTags: [...(choice.outcomeTags || [])],
       commitments: choice.commitments || [],
+      housingChoiceKind: choice.housingChoiceKind || null,
+      debtException: Boolean(run.housing.history.at(-1)?.choiceId === choice.id && run.housing.history.at(-1)?.debtException),
       impact: impactScore(result.before, result.after, choice),
     });
     run.usedEvents.push(event.id);
@@ -2929,6 +3392,7 @@
     health: '健康',
     habits: '成瘾与戒断',
     later: '晚年生活',
+    housing: '住房',
     origin: '出身',
     identity: '欲望',
   };
@@ -2942,6 +3406,132 @@
       )
     );
   }
+  function housingRentAnnual(housing) {
+    const anchor = HOUSING_ANCHORS[housing.region]?.rent || 0;
+    if (housing.status !== 'renting') return 0;
+    if (housing.arrangement === 'shared') return Math.round(anchor * 0.6);
+    if (['partner', 'multigenerational'].includes(housing.arrangement))
+      return Math.round(anchor * 1.15);
+    return anchor;
+  }
+  function debtAnnualDue(debt) {
+    if (!debt || debt.status === 'settled' || !(Number(debt.principal) > 0)) return 0;
+    return Math.round(
+      debt.principal * (Number(debt.rate) || 0.06) +
+      debt.principal * (debt.kind === 'mortgage' ? 0.04 : 0.08)
+    );
+  }
+  function playerHousingIncome(run) {
+    const stability = run.employment.incomeStability || 'none',
+      annual = stability === 'business'
+        ? Math.max(0, Number(run.finance.lastIncome) || 0)
+        : Math.max(0, Number(run.employment.incomeAnnualGross) || baseSalary(run));
+    return { gross: annual, stability, reliable: annual * (HOUSING_RELIABILITY[stability] || 0) };
+  }
+  function partnerHousingIncome(run, housing = run.housing) {
+    const partner = validHousingPartner(run, housing);
+    if (!partner) return { gross: 0, stability: 'none', reliable: 0, partner: null };
+    const stability = partner.housingIncomeStability || 'none',
+      gross = Math.max(0, Number(partner.housingIncomeAnnualGross) || 0);
+    return { gross, stability, reliable: gross * (HOUSING_RELIABILITY[stability] || 0), partner };
+  }
+  function nonHousingLivingCost(run) {
+    if (
+      run.age < 18 ||
+      run.activity.mode === 'childhood' ||
+      (run.activity.mode === 'study' && run.activity.funding === 'family')
+    ) return 0;
+    const base = 16000 * (run.location.mods.cost / 100),
+      children = childPeople(run).filter((child) => personAge(child, run) < 18).length * 9000,
+      care = run.activity.mode === 'care' ? 8000 : 0;
+    return Math.max(0, Math.round(base + children + care));
+  }
+  function housingPaymentBreakdown(run, housing = run.housing, options = {}) {
+    let gross = housingRentAnnual(housing);
+    if (housing.status === 'mortgaged') {
+      if (options.purchasePrincipal)
+        gross = Math.round(options.purchasePrincipal * 0.08);
+      else {
+        const mortgage = unresolvedLiabilities(run).find((debt) => debt.kind === 'mortgage');
+        gross = debtAnnualDue(mortgage);
+      }
+    }
+    const partner = partnerHousingIncome(run, housing),
+      contribution = Math.round(Math.min(gross * 0.5, partner.reliable * 0.3));
+    return { gross, partnerContribution: contribution, playerDue: Math.max(0, gross - contribution) };
+  }
+  function housingAffordability(run, candidate = run.housing, options = {}) {
+    const housing = normalizeHousing(run, { ...run.housing, ...candidate, history: run.housing.history }),
+      anchor = HOUSING_ANCHORS[housing.region],
+      purchase = housing.status === 'mortgaged' && !options.current,
+      purchaseValue = purchase ? Number(housing.value) || Number(anchor?.purchase) || 0 : 0,
+      purchasePrincipal = purchase ? Math.round(purchaseValue * 0.8) : 0,
+      payment = options.ignoreDebts && options.current && housing.status === 'mortgaged'
+        ? { gross: 0, partnerContribution: 0, playerDue: 0 }
+        : housingPaymentBreakdown(run, housing, { purchasePrincipal }),
+      playerIncome = playerHousingIncome(run),
+      partnerIncome = partnerHousingIncome(run, housing),
+      reliableIncome = playerIncome.reliable + partnerIncome.reliable,
+      availableIncome = playerIncome.reliable + payment.partnerContribution,
+      existingDebts = options.ignoreDebts
+        ? 0
+        : unresolvedLiabilities(run)
+            .filter((debt) => !(options.current && housing.status === 'mortgaged' && debt.kind === 'mortgage'))
+            .reduce((sum, debt) => sum + debtAnnualDue(debt), 0),
+      cashRequired = options.current
+        ? 0
+        : purchase
+          ? Math.round(purchaseValue * 0.23)
+          : housing.status === 'renting'
+            ? Math.round((housingRentAnnual(housing) / 12) * 2)
+            : 0,
+      remaining = availableIncome - nonHousingLivingCost(run) - existingDebts - payment.gross,
+      supportedHousing = ['family', 'supported'].includes(housing.status),
+      restricted = purchase && (
+        run.finance.restrictedConsumption ||
+        run.finance.dishonestStatus === 'listed' ||
+        ['active', 'consequence'].includes(run.finance.enforcementStatus)
+      ),
+      secondHome = purchase && ['owned', 'mortgaged'].includes(run.housing.status),
+      overseasPurchase = purchase && !anchor?.purchase,
+      cashShort = run.finance.cash < cashRequired;
+    let level = 'feasible', reason = null;
+    if (restricted) [level, reason] = ['infeasible', '执行或消费限制仍在，不能新增购房安排'];
+    else if (secondHome) [level, reason] = ['infeasible', '原有自有或按揭住房尚未处置'];
+    else if (overseasPurchase) [level, reason] = ['infeasible', '本版不开放海外购房'];
+    else if (cashShort) [level, reason] = ['infeasible', `现金还差 ${money(cashRequired - run.finance.cash)}`];
+    else if (!supportedHousing && remaining < 0)
+      [level, reason] = ['infeasible', '可靠收入扣除必要开支和债务后不足'];
+    else if (!supportedHousing) {
+      const unstable = ['piecework', 'project', 'business'].includes(playerIncome.stability) ||
+          (payment.partnerContribution > 0 &&
+            ['piecework', 'project', 'business'].includes(partnerIncome.stability)),
+        ratio = availableIncome > 0 ? (existingDebts + payment.gross) / availableIncome : Infinity;
+      if (remaining < Math.max(12000, availableIncome * 0.15) || ratio > 0.4 || unstable) {
+        level = 'strained';
+        reason = unstable
+          ? '主要住房收入会随计件、项目或经营结果波动'
+          : ratio > 0.4
+            ? '住房与债务年度应付超过可靠收入四成'
+            : '付完必要开支后的年度余量较薄';
+      }
+    }
+    return {
+      level,
+      reason,
+      cashRequired,
+      reliableIncome: Math.round(reliableIncome),
+      availableIncome: Math.round(availableIncome),
+      necessaryExpense: nonHousingLivingCost(run),
+      existingDebtDue: Math.round(existingDebts),
+      housingDue: payment.gross,
+      partnerContribution: payment.partnerContribution,
+      playerHousingDue: payment.playerDue,
+      remaining: Math.round(remaining),
+      purchaseValue,
+      purchasePrincipal,
+    };
+  }
   function livingCost(run) {
     if (
       run.age < 18 ||
@@ -2949,27 +3539,37 @@
       (run.activity.mode === 'study' && run.activity.funding === 'family')
     )
       return 0;
-    const base = 16000 * (run.location.mods.cost / 100),
-      children = childPeople(run).filter((child) => personAge(child, run) < 18).length * 9000,
-      housing = run.housing.status === 'renting' ? 12000 * (run.location.mods.cost / 100) : 0,
-      care = run.activity.mode === 'care' ? 8000 : 0;
-    return Math.max(0, Math.round(base + children + housing + care));
+    const payment = housingPaymentBreakdown(run, run.housing);
+    return nonHousingLivingCost(run) + (run.housing.status === 'renting' ? payment.playerDue : 0);
   }
   function settleLiabilities(run) {
     for (const debt of run.finance.liabilities) {
       if (debt.status === 'settled') continue;
       const interest = Math.round(debt.principal * (debt.rate || 0.06)),
         principalPayment = Math.round(debt.principal * (debt.kind === 'mortgage' ? 0.04 : 0.08)),
-        due = interest + principalPayment;
-      if (run.finance.cash >= due) {
-        run.finance.cash -= due;
+        due = interest + principalPayment,
+        partnerContribution = debt.kind === 'mortgage' && run.housing.status === 'mortgaged'
+          ? housingPaymentBreakdown(run, run.housing).partnerContribution
+          : 0,
+        playerDue = Math.max(0, due - partnerContribution);
+      if (run.finance.cash >= playerDue) {
+        run.finance.cash -= playerDue;
         debt.principal = Math.max(0, debt.principal - principalPayment);
         debt.arrears = Math.max(0, (debt.arrears || 0) - 1);
         debt.status = debt.principal === 0 ? 'settled' : 'current';
-        if (debt.status === 'settled' && debt.housingSecured && run.housing.status === 'mortgaged')
-          run.housing.status = 'owned';
+        if (
+          debt.status === 'settled' &&
+          debt.housingSecured &&
+          run.housing.status === 'mortgaged' &&
+          !unresolvedLiabilities(run).some((item) => item.housingSecured)
+        )
+          transitionHousing(run, {
+            status: 'owned',
+            kind: 'finance',
+            reason: 'mortgageSettled',
+          }, { sourceEventId: `annual:${run.age}` }, { skipBudget: true });
       } else {
-        const paid = Math.max(0, run.finance.cash);
+        const paid = Math.max(0, run.finance.cash) + partnerContribution;
         run.finance.cash = 0;
         debt.principal = Math.max(0, debt.principal + interest - paid);
         debt.arrears = (debt.arrears || 0) + 1;
@@ -3146,6 +3746,7 @@
           run.relationships.partnerStatus = 'widowed';
           addTag(run, 'widowed');
         }
+        cleanupHousingCoResidents(run, 'coResidentDied', `personLoss:${item.id}:${run.age}`);
         addTimeline(
           {
             id: `person_loss_${item.id}_${run.age}`,
@@ -4144,16 +4745,29 @@
     );
   }
   function housingLabel(run) {
-    return (
-      {
+    const status = {
         family: '与原生家庭同住',
         renting: '租住',
         owned: '自有住房',
         mortgaged: '按揭住房',
         supported: '由家人或伴侣提供',
         unstable: '临时住所',
-      }[run.housing.status] || run.housing.status
-    );
+      }[run.housing.status] || run.housing.status,
+      arrangement = {
+        originFamily: '原生家庭', dormitory: '宿舍', solo: '独住', shared: '匿名合租',
+        partner: '伴侣同住', multigenerational: '多代同住', service: '服务型居住',
+      }[run.housing.arrangement] || run.housing.arrangement,
+      region = { tier1: '一线', tier2: '二线', county: '县城', town: '乡镇', us: '美国', europe: '欧洲' }[run.housing.region],
+      stability = { stable: '稳定', conditional: '有条件', temporary: '临时' }[run.housing.stability];
+    return `${status} · ${arrangement} · ${region} · ${stability}`;
+  }
+  function housingCostLabel(run) {
+    const affordability = housingAffordability(run, run.housing, { current: true }),
+      level = { feasible: '成立', strained: '可承受但吃紧', infeasible: '不成立' }[affordability.level],
+      sharing = run.housing.costShare === 'joint'
+        ? `共同分担${affordability.partnerContribution ? ` · 伴侣参考抵扣 ${money(affordability.partnerContribution)}/年` : ''}`
+        : run.housing.costShare === 'supported' ? '由家庭、单位或服务支持' : '自行承担';
+    return `${level} · ${sharing}`;
   }
   function debtStatusLabel(run) {
     const stage =
@@ -4358,7 +4972,15 @@
         const resolved = resolveCardChoice(choice),
           effective = resolved.choice,
           enabled = choiceEnabled(choice);
-        return `<button class="choice ${enabled ? '' : 'locked'} ${resolved.card ? 'card-active' : ''}" data-choice="${index}" ${enabled ? '' : 'disabled'}>${esc(effective.text)}${!enabled ? `<small>暂不可选：${esc(debtGateReason(effective) || effective.reason || '当前条件不足')}</small>` : resolved.card ? `<small class="card-effect"><b>◇ “${esc(resolved.card.displayName)}”</b><span> · ${esc(resolved.spec.explanation)}</span></small>` : effective.hints?.length ? `<small>${esc(effective.hints.join(' · '))}</small>` : ''}</button>`;
+        const housingHint = housingChoiceHint(effective),
+          enabledDetail = resolved.card
+            ? `<small class="card-effect"><b>◇ “${esc(resolved.card.displayName)}”</b><span> · ${esc(resolved.spec.explanation)}</span>${housingHint ? `<span> · ${esc(housingHint)}</span>` : ''}</small>`
+            : housingHint
+              ? `<small>${esc(housingHint)}</small>`
+              : effective.hints?.length
+                ? `<small>${esc(effective.hints.join(' · '))}</small>`
+                : '';
+        return `<button class="choice ${enabled ? '' : 'locked'} ${resolved.card ? 'card-active' : ''}" data-choice="${index}" ${enabled ? '' : 'disabled'}>${esc(effective.text)}${!enabled ? `<small>暂不可选：${esc(housingChoiceReason(effective) || debtGateReason(effective) || effective.reason || '当前条件不足')}</small>` : enabledDetail}</button>`;
       })
       .join('')}</div></section></div>`;
   }
@@ -4391,7 +5013,7 @@
             .map((child) => `${personAge(child, run)}岁`)
             .join('、')
         : '无'
-    }</dd></div><div class="spec"><dt>住房</dt><dd>${housingLabel(run)}</dd></div><div class="spec"><dt>${esc(UI_COPY.netWorthField)}</dt><dd>${money(run.finance.netWorth)}</dd></div><div class="spec"><dt>债务</dt><dd>${liabilities.length ? `${liabilities.length}笔 · ${money(run.finance.totalDebt)} · ${esc(debtStatusLabel(run))}` : run.finance.housingDisposition === 'disposed' ? `无未清债务 · ${esc(debtStatusLabel(run))}` : '无'}</dd></div><div class="spec"><dt>健康</dt><dd>${constitutionLabel(run)} · ${healthStatusLabel(run)} · ${Math.round(run.health.physical)}／${Math.round(run.health.mental)}</dd></div><div class="spec"><dt>${esc(UI_COPY.habitField)}</dt><dd>${habitLabel(run)}</dd></div><div class="spec"><dt>晚年状态</dt><dd>${esc(laterStatusLabel(run))}</dd></div><div class="spec"><dt>压力</dt><dd>${pressureLevel(run)}</dd></div></dl><div class="section-title">最在意的事</div><div class="desire-list">${topDesires(
+    }</dd></div><div class="spec"><dt>住房</dt><dd>${housingLabel(run)}</dd></div><div class="spec"><dt>住房负担</dt><dd>${housingCostLabel(run)}</dd></div><div class="spec"><dt>${esc(UI_COPY.netWorthField)}</dt><dd>${money(run.finance.netWorth)}</dd></div><div class="spec"><dt>债务</dt><dd>${liabilities.length ? `${liabilities.length}笔 · ${money(run.finance.totalDebt)} · ${esc(debtStatusLabel(run))}` : run.finance.housingDisposition === 'disposed' ? `无未清债务 · ${esc(debtStatusLabel(run))}` : '无'}</dd></div><div class="spec"><dt>健康</dt><dd>${constitutionLabel(run)} · ${healthStatusLabel(run)} · ${Math.round(run.health.physical)}／${Math.round(run.health.mental)}</dd></div><div class="spec"><dt>${esc(UI_COPY.habitField)}</dt><dd>${habitLabel(run)}</dd></div><div class="spec"><dt>晚年状态</dt><dd>${esc(laterStatusLabel(run))}</dd></div><div class="spec"><dt>压力</dt><dd>${pressureLevel(run)}</dd></div></dl><div class="section-title">最在意的事</div><div class="desire-list">${topDesires(
       run
     )
       .map(
@@ -4488,7 +5110,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.7-存档.json';
+    link.download = '人生尚未加载-v0.6.8-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }
@@ -4690,6 +5312,7 @@
       );
       run.people.push(found);
       if (actor.personIdPath === 'relationships.activePartnerId') {
+        initializePartnerHousingProfile(run, found);
         run.relationships.activePartnerId = found.id;
         run.relationships.partnerStatus =
           run.relationships.partnerStatus === 'none'
@@ -4795,7 +5418,7 @@
                       memoryKey: choice.memoryKey,
                       visible: choiceVisible(choice, run),
                       enabled: choiceEnabled(choice, run),
-                      reason: debtGateReason(choice, run) || choice.reason || null,
+                      reason: housingChoiceReason(choice, run) || debtGateReason(choice, run) || choice.reason || null,
                     }))
                     .filter((choice) => choice.visible),
                 }
@@ -4863,6 +5486,17 @@
           endingAxes: () => endingAxes(state.run),
           routeTags: () => routeTags(state.run),
           decisionAllowance: () => decisionAllowance(state.run),
+          housingContext: () => copy(currentHousingContext(state.run)),
+          housingAffordability: (candidate = state.run.housing, options = {}) =>
+            copy(housingAffordability(state.run, candidate, options)),
+          housingChoiceAllowed: (kind, debtException = false) =>
+            copy(housingChoiceAllowed(state.run, kind, debtException)),
+          transitionHousing: (value, context = { sourceEventId: 'debug', choiceId: 'debug' }) => {
+            const result = transitionHousing(state.run, value, context);
+            syncDerived(state.run);
+            render();
+            return { result, housing: copy(state.run.housing) };
+          },
           eventWeight: (eventId, mainConflict = state.run.mainConflict) => {
             const event = INDEX.event.get(eventId);
             if (!event) throw new Error(`未知事件：${eventId}`);
