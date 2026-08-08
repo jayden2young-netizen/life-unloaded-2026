@@ -33,6 +33,8 @@
 - 功能提交说明：`feat: ship v0.6.0 card participation`
 - v0.6.6 功能提交：`182009a195620ba24ba7bcb78f74d424b500bba7`
 - v0.6.6 Pages 运行：`31023146164`
+- v0.6.8 功能提交：`4e5d6d65d94b4c93903646a6deae30fb7a6837ee`
+- v0.6.8 Pages 运行：`31260886809`
 - 当前检出分支：`main`
 - 当前基线分支：`main`
 - 本轮起点版本：`v0.5.12`
@@ -165,6 +167,7 @@ start-local-play.command          macOS 一键启动本地服务器与浏览器
 - 普通住房选择最多三次且类型不重复；只有债务把当前住房从可维持推到不成立时，允许一次 `debtRelief` 第四次。共同住房只读取真实在世伴侣的一次性住房收入参考，不建立伴侣完整账本，按揭仍归玩家。
 - 新增独立 housing 轨 32 beats 与 6 decisions；删除旧 `decision_106` 全国通用租／买／回家题。价格只在签约时按地区锚点生成并固化，不模拟年度房价、第二套房或经营性住房。
 - 生成数据为 456 beats、197 decisions、197 consequences、20 black swans，共 870 个事件；图鉴使用新 ID `codex_31/32`，不覆盖既有跨局图鉴语义。生成器双跑 SHA-256 均为 `639C18ED9D2081E1866A7E19AABE831B6C26ACA432A80E1F52C1D8C6279F29D8`。`core,debt,episodes` 覆盖语法、合同、Schema 12 迁移、浏览器核心路径、住房代表纵切片、三种窄屏、按揭与债务处置；`cards` 另行覆盖住房吃紧提示与卡牌说明并存。
+- `legacy/0.6.7` 固定在发布前的 `main@665431e`；功能提交 `4e5d6d6` 与保留分支均已推送。GitHub Pages 运行 `31260886809` 成功，线上 `index.html`、`game.js`、`runtime-content-contract.mjs`、`data.json` 与一键试玩脚本均可访问；线上数据 SHA-256 与本地一致。
 
 ## v0.5.2 已完成
 
