@@ -5,14 +5,14 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.CARD_INTERACTION_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.8-cards');
+const OUT=process.env.CARD_INTERACTION_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-card-interaction');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const decisions=data.events.filter(event=>event.kind==='decision');
 fs.mkdirSync(OUT,{recursive:true});
 
-const interaction=(mode,episode=false)=>{for(const event of decisions)if(Boolean(event.episode)===episode){const index=event.choices.findIndex(choice=>choice.cardInteraction?.mode===mode);if(index>=0)return{event,index,choice:event.choices[index]}}throw new Error(`missing ${mode}/${episode?'episode':'ordinary'} interaction`)};
+const interaction=(mode,episode=false)=>{let fallback=null;for(const event of decisions)if(Boolean(event.episode)===episode){const index=event.choices.findIndex(choice=>choice.cardInteraction?.mode===mode&&!choice.debtGate&&!choice.housingChoiceKind);if(index>=0)return{event,index,choice:event.choices[index]};const anyIndex=event.choices.findIndex(choice=>choice.cardInteraction?.mode===mode);if(anyIndex>=0&&!fallback)fallback={event,index:anyIndex,choice:event.choices[anyIndex]}}if(fallback)return fallback;throw new Error(`missing ${mode}/${episode?'episode':'ordinary'} interaction`)};
 const cardFor=mechanic=>data.cards.find(card=>card.mechanic===mechanic);
 const snapshot=page=>page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
 
@@ -23,9 +23,10 @@ async function forceOrdinary(page,target,cards){
 }
 
 (async()=>{
-  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.8',12,26]);
   const choices=decisions.flatMap(event=>event.choices);
   assert.ok(choices.every(choice=>Array.isArray(choice.mechanicTags)&&Object.hasOwn(choice,'cardInteraction')),'every choice has explicit card fields');
+  assert.ok(choices.filter(choice=>choice.cardInteraction).every(choice=>choice.cardInteraction.source==='eventAuthored'),'every active interaction comes from event-authored configuration');
+  assert.ok(choices.filter(choice=>choice.cardInteraction).every(choice=>!choice.cardInteraction.explanation.includes('面对“')&&!choice.cardInteraction.resultSuffix.includes('这一次谈的是')),'no universal presentation template survives');
   assert.deepEqual(data.cardInteractionCoverage,{decisionPanels:197,activePanels:197,interactions:206,witnesses:2});
   assert.deepEqual(new Set(choices.filter(choice=>choice.cardInteraction).map(choice=>choice.cardInteraction.mode)),new Set(['unlock','requirementShift','costShift','riskShift','resultVariant']));
 
@@ -41,7 +42,7 @@ async function forceOrdinary(page,target,cards){
     await page.addInitScript(({key,value})=>localStorage.setItem(key,JSON.stringify(value)),{key:SAVE_KEY,value:oldSave});
     await page.goto(URL,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[12,'0.6.8',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.9',null]);
     assert.equal(migrated.meta.histories[0].title,'旧人生');
     await page.evaluate(key=>localStorage.removeItem(key),SAVE_KEY);await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     await page.locator('[data-act="new"]').click();await page.locator('[data-act="birth-next"]').click();await page.locator('[data-act="random-attributes"]').click();await page.locator('[data-act="attributes-done"]').click();await page.locator('[data-card]').first().click();

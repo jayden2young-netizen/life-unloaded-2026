@@ -5,7 +5,7 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.FAMILY_EDUCATION_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.8-family-education');
+const OUT=process.env.FAMILY_EDUCATION_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-family-education');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
@@ -94,7 +94,6 @@ async function advanceToPhase(page,id,number){
 }
 
 (async()=>{
-  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.8',12,26]);
   assert.equal(data.events.filter(event=>event.id.startsWith('origin_context_')).length,24);
   assert.ok(data.familyArchetypes.find(family=>family.name==='医护家庭').parentJobs.every(job=>/护士|医生|医技|医院/.test(job)));
   assert.ok(data.familyArchetypes.find(family=>family.name==='平台劳动家庭').parentJobs.every(job=>/平台|骑手|网约车|电商|直播/.test(job)));
@@ -142,13 +141,15 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
   assert.match(adoptionStart.situation,/单身收养申请/);
   assert.ok(adoptionStart.requirements.all.some(rule=>rule.path==='relationships.childCount'&&rule.op==='lte'&&rule.value===1));
   assert.ok(adoptionStart.requirements.all.some(rule=>rule.path==='relationships.activePartnerId'&&rule.op==='eq'&&rule.value===null));
+  assert.ok(adoptionStart.requirements.all.some(rule=>rule.path==='health.physical'&&rule.op==='gte'&&rule.value===45));
+  assert.ok(adoptionStart.requirements.all.some(rule=>rule.path==='health.careNeed'&&rule.op==='lte'&&rule.value===1));
   assert.ok(adoptionResolve.choices[0].effects.some(effect=>effect.type==='createPerson'&&effect.relation==='adoptedChild'));
   const prenatal=data.events.find(event=>event.kind==='beat'&&event.track==='children'&&event.text.includes('产检单'));
   assert.ok(prenatal.requirements.all.some(rule=>rule.path==='relationships.pregnancyStatus'&&rule.op==='in'));
   assert.ok(!prenatal.requirements.all.some(rule=>rule.path==='relationships.parenthoodIntent'));
   for(const event of data.events.filter(event=>event.kind==='beat'&&event.track==='children'&&event.id!==prenatal.id)){
     assert.ok(event.requirements.all.some(rule=>rule.path==='relationships.childCount'&&rule.op==='gte'&&rule.value===1));
-    assert.ok(event.actors.some(actor=>actor.slot==='child'&&actor.mustExist!==false));
+    assert.ok(event.actors.some(actor=>actor.slot==='child'&&actor.optional===false));
   }
   assert.equal(familyPlan.choices[0].cardInteraction.primaryMechanic,'cashBuffer');
   assert.equal(familyPlan.choices[2].cardInteraction.primaryMechanic,'boundary');
@@ -174,7 +175,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[12,'0.6.8',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.9',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.9完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,9);
@@ -404,14 +405,34 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:30,education:{status:'completed',level:3,fullTimeUndergraduateClosed:false}}));
     assert.equal((await snapshot(page)).education.fullTimeUndergraduateClosed,true);
 
-    const partner={id:'family_partner',relation:'partner',bornAt:2,alive:true,status:'living',bond:62,legalStatus:'none'};
+    const partner={id:'family_partner',relation:'partner',bornAt:2,alive:true,status:'living',bond:62,legalStatus:'none',gender:'male',health:72};
     const child={id:'existing_child',relation:'child',bornAt:26,alive:true,status:'living',bond:60,legalStatus:'biological'};
-    await page.evaluate(({partner,child})=>window.__LIFE_DEBUG__.patchRun({seed:'seed-0',age:30,people:[partner,child],relationships:{partnerStatus:'partnered',activePartnerId:partner.id,familyPlanningOffered:false,familyPlanningClosed:false,childCount:1},cardAges:[0,18,35,55],yearStarted:false,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null,episodes:{},usedEvents:[],decisionHistory:[],timeline:[]}),{partner,child});
+    await page.evaluate(({partner,child})=>window.__LIFE_DEBUG__.patchRun({seed:'seed-0',gender:'female',age:30,people:[partner,child],relationships:{partnerStatus:'partnered',activePartnerId:partner.id,familyPlanningOffered:false,familyPlanningClosed:false,childCount:1},cardAges:[0,18,35,55],yearStarted:false,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null,episodes:{},usedEvents:[],decisionHistory:[],timeline:[]}),{partner,child});
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
     assert.equal(run.relationships.familyPlanningOffered,true);
     assert.equal(run.relationships.familyPlanningClosed,true);
     assert.equal(run.relationships.childCount,1);
+
+    const carrierProfiles=await page.evaluate(({partner,child})=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({gender:'female',age:39,health:{physical:49},people:[{id:'male_partner',relation:'partner',alive:true,bornAt:8,gender:'male',health:95,bond:60}],relationships:{partnerStatus:'partnered',activePartnerId:'male_partner'}});
+      const female=debug.conceptionProfile();
+      debug.patchRun({gender:'male',age:60,health:{physical:25},people:[{id:'female_partner',relation:'partner',alive:true,bornAt:30,gender:'female',health:82,bond:60}],relationships:{partnerStatus:'partnered',activePartnerId:'female_partner'}});
+      const male=debug.conceptionProfile();
+      debug.patchRun({people:[],relationships:{partnerStatus:'none',activePartnerId:null}});
+      const noPartner=debug.conceptionProfile();
+      debug.patchRun({gender:'female',age:30,people:[partner,child],health:{physical:75},relationships:{partnerStatus:'partnered',activePartnerId:partner.id}});
+      return{female,male,noPartner};
+    },{partner,child});
+    assert.equal(carrierProfiles.female.carrier.source,'player');
+    assert.equal(carrierProfiles.female.carrier.age,39);
+    assert.equal(carrierProfiles.female.carrier.health,49);
+    assert.equal(carrierProfiles.male.carrier.source,'partner');
+    assert.equal(carrierProfiles.male.carrier.age,30);
+    assert.equal(carrierProfiles.male.carrier.health,82);
+    assert.equal(carrierProfiles.noPartner.carrier,null);
+    assert.equal(carrierProfiles.noPartner.chance,0);
 
     await page.evaluate(({partner,child})=>window.__LIFE_DEBUG__.patchRun({seed:'seed-1',age:30,people:[partner,child],relationships:{partnerStatus:'partnered',activePartnerId:partner.id,familyPlanningOffered:false,familyPlanningClosed:false,familyPlanningDeferred:false,plannedConceptionResolved:false,unplannedConceptionChecked:false,pregnancyStatus:'none',pregnancyDecision:'none',pregnancyDecisionDeferred:false},yearStarted:false,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null,episodes:{},usedEvents:[],decisionHistory:[],timeline:[]}),{partner,child});
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
@@ -490,6 +511,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     assert.equal(run.relationships.pregnancyStatus,'continued');
     assert.equal(run.scheduledConsequences.length,1);
     assert.equal(run.scheduledConsequences[0].dueAge,pregnancyAge+1);
+    await page.evaluate(age=>window.__LIFE_DEBUG__.forceAge(age),pregnancyAge+1);
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);

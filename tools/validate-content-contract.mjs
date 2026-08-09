@@ -37,6 +37,7 @@ const COMMAND_TARGETS = Object.freeze({
   resolveFirstJobApplication: 'employment',
   acceptFirstJobOffer: 'employment',
   applyEmploymentProfile: 'employment',
+  scaleEmployment: 'employment',
   leaveEmployment: 'employment',
   adjustJobTier: 'employment',
   resolveLayoff: 'employment',
@@ -44,13 +45,15 @@ const COMMAND_TARGETS = Object.freeze({
   createPerson: 'people',
   transitionPartner: 'people',
   transitionHousing: 'housing',
+  resolveInheritance: 'originHousehold.assets',
   transition: 'education',
   claimDesire: 'desires',
 });
 
 const COMMAND_EXTRA_FIELDS = Object.freeze({
-  addLiability: ['kind', 'rate', 'guaranteed'],
-  restructureDebt: ['rate'],
+  addLiability: ['kind', 'rate', 'guaranteed', 'bindEpisode'],
+  repayDebt: ['scope'],
+  restructureDebt: ['rate', 'scope'],
   healthIncident: ['condition'],
   healthRecovery: ['resolve'],
   createPerson: ['relation'],
@@ -77,7 +80,7 @@ function validateHousingTransition(value, location) {
   if (!isObject(value)) fail(location, 'transitionHousing.value 必须是对象');
   const allowed = new Set([
     'status', 'value', 'arrangement', 'region', 'stability', 'accessibility', 'costShare',
-    'coResidentRefs', 'kind', 'reason', 'housingChoiceKind', 'debtException',
+    'coResidentRefs', 'kind', 'reason', 'housingChoiceKind', 'debtException', 'residenceOnly',
   ]);
   for (const key of Object.keys(value))
     if (!allowed.has(key)) fail(`${location}.${key}`, '未知住房转换字段');
@@ -109,6 +112,8 @@ function validateHousingTransition(value, location) {
     fail(`${location}.housingChoiceKind`, '非法住房选择类型');
   if (Object.hasOwn(value, 'debtException') && typeof value.debtException !== 'boolean')
     fail(`${location}.debtException`, '必须是布尔值');
+  if (Object.hasOwn(value, 'residenceOnly') && typeof value.residenceOnly !== 'boolean')
+    fail(`${location}.residenceOnly`, '必须是布尔值');
   if (value.kind === 'choice' && !HOUSING_CHOICE_KINDS.includes(value.housingChoiceKind))
     fail(`${location}.housingChoiceKind`, '住房选择必须声明类型');
 }
@@ -172,6 +177,10 @@ export function validateCommand(command, location = 'command') {
     if (!allowedFields.has(key)) fail(`${location}.${key}`, `${command.type} 不允许该字段`);
 
   if (command.type === 'transitionHousing') validateHousingTransition(command.value, `${location}.value`);
+  if (command.type === 'scaleEmployment' && (!finite(command.value) || command.value <= 0 || command.value > 1))
+    fail(location, 'scaleEmployment.value 必须是 0 到 1 之间的有限数值');
+  if (command.type === 'resolveInheritance' && !['accepted', 'limited', 'renounced', 'disputed'].includes(command.value))
+    fail(location, 'resolveInheritance.value 非法');
 
   if (
     [
@@ -239,8 +248,20 @@ export function validateCommand(command, location = 'command') {
     typeof command.guaranteed !== 'boolean'
   )
     fail(location, 'addLiability.guaranteed 必须是布尔值');
+  if (
+    command.type === 'addLiability' &&
+    Object.hasOwn(command, 'bindEpisode') &&
+    typeof command.bindEpisode !== 'string'
+  )
+    fail(location, 'addLiability.bindEpisode 必须是字符串');
   if (command.type === 'restructureDebt' && !finite(command.rate))
     fail(location, 'restructureDebt.rate 必须是有限数值');
+  if (
+    ['repayDebt', 'restructureDebt'].includes(command.type) &&
+    Object.hasOwn(command, 'scope') &&
+    command.scope !== 'episodeBound'
+  )
+    fail(location, `${command.type}.scope 只允许 episodeBound`);
   if (Object.values(command).some((value) => typeof value === 'number' && !Number.isFinite(value)))
     fail(location, 'command 含非有限数值');
 }

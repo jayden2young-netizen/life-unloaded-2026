@@ -81,7 +81,7 @@ function neutralTrace(multiplier) {
     { id: 'public', track: 'public', weight: 13 },
     { id: 'finance', track: 'finance', weight: 9 },
   ];
-  const desires = ['security', 'achievement'];
+  const desires = ['exploration', 'status'];
   let state = 0x61c0ffee;
   const next = () => {
     let x = state;
@@ -118,13 +118,13 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.8', 12, 26]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.9', 13, 27]);
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
     {beat:456,decision:197,consequence:197,blackSwan:20},
   );
-  assert.equal(summary.evidenceRecords, 3);
-  for (const type of ['resolveConception','resolveDebtEnforcement','transitionHousing'])
+  assert.equal(summary.evidenceRecords, 11);
+  for (const type of ['resolveConception','resolveDebtEnforcement','transitionHousing','scaleEmployment','resolveInheritance'])
     assert.ok(contract.COMMAND_TYPES.includes(type));
   for (const pathName of [
     'relationships.familyPlanningOffered','relationships.familyPlanningDeferred','relationships.familyPlanningClosed',
@@ -133,6 +133,7 @@ function neutralTrace(multiplier) {
     'finance.debtStage','finance.enforcementStatus','finance.enforcementDebtId','finance.dishonestStatus',
     'finance.restrictedConsumption','finance.seizedAssets','finance.housingDisposition','finance.repaymentAgreement',
     'finance.repaymentAgreementFulfilled','finance.reliefPending','later.inheritance',
+    'finance.mortgagePaymentStress',
     'housing.status','housing.arrangement','housing.region','housing.stability','housing.accessibility',
     'housing.costShare','housing.coResidentRefs','housing.sinceAge','housing.keyChoiceCount','housing.history',
     'relationships.network','pressures.loneliness','mobility.localTies',
@@ -157,6 +158,33 @@ function neutralTrace(multiplier) {
     new Set(DATA.events.filter(event=>event.kind==='decision'&&event.track==='housing').flatMap(event=>event.choices.map(choice=>choice.housingChoiceKind))),
     new Set(['educationHousing','firstIndependent','workMigration','partnerReconfiguration','homePurchase','laterFit']),
   );
+  const childBeats = DATA.events.filter(event=>event.kind==='beat'&&event.track==='children');
+  assert.equal(childBeats.length,32);
+  assert.ok(childBeats.slice(1).every(event=>event.actors.length===1&&event.actors[0].optional===false));
+  assert.ok(childBeats.every(event=>!event.actors.length||event.actors[0].ageMin<=event.actors[0].ageMax));
+  assert.equal(new Set(DATA.familySecrets.map(secret=>secret.text)).size,44);
+  assert.ok(DATA.familySecrets.every(secret=>!secret.text.includes('原始凭据')));
+  const contingentGuarantee=DATA.familySecrets.find(secret=>secret.id==='secret_02');
+  assert.ok(contingentGuarantee,'missing contingent guarantee family secret');
+  assert.ok(!contingentGuarantee.effects.some(effect=>effect.target==='originHousehold.debt'),'unclaimed guarantee became settled household debt');
+  assert.ok(DATA.events.filter(event=>event.kind==='blackSwan').every(event=>event.requirements&&Array.isArray(event.effects)&&event.effects.length>=2));
+  const wageCorrectionSwan=DATA.events.find(event=>event.kind==='blackSwan'&&event.text.includes('少发款'));
+  assert.ok(wageCorrectionSwan.requirements.all.some(rule=>rule.path==='employment.status'&&rule.op==='eq'&&rule.value==='employed'));
+  assert.ok(!DATA.events.some(event=>event.kind==='blackSwan'&&event.effects.some(command=>command.type==='addLiability'&&command.kind==='guarantee')));
+  const mortgagePressure=DATA.events.find(event=>event.kind==='decision'&&event.prompt.includes('房贷加其他还款'));
+  assert.ok(mortgagePressure.requirements.all.some(rule=>rule.path==='housing.status'&&rule.op==='eq'&&rule.value==='mortgaged'));
+  assert.ok(mortgagePressure.requirements.all.some(rule=>rule.path==='finance.mortgagePaymentStress'&&rule.op==='eq'&&rule.value===true));
+  const allChoices=DATA.events.filter(event=>event.kind==='decision').flatMap(event=>event.choices);
+  assert.equal(allChoices.filter(choice=>choice.cardInteraction).length,206);
+  const cardSource=fs.readFileSync(path.join(ROOT,'content/zh-CN/card-interactions.mjs'),'utf8');
+  assert.doesNotMatch(cardSource,/universalRotation|genericInteraction|genericPatch|authoredMechanics|eventAuthoredInteraction|\(index\s*\+/);
+  assert.match(cardSource,/EXPLICIT_CARD_INTERACTIONS/);
+  const indexSource=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  assert.doesNotMatch(indexSource,/user-scalable\s*=\s*no/i);
+  const activeCardChoices=allChoices.filter(choice=>choice.cardInteraction);
+  assert.ok(activeCardChoices.every(choice=>choice.cardInteraction.source==='eventAuthored'));
+  assert.ok(new Set(activeCardChoices.map(choice=>choice.cardInteraction.explanation)).size>=175);
+  assert.ok(new Set(activeCardChoices.map(choice=>choice.cardInteraction.resultSuffix)).size>=190);
 
   const predicates = collect(
     DATA,
@@ -334,6 +362,10 @@ function neutralTrace(multiplier) {
   assert.equal(contract.conflictWeightMultiplier('later', ['peace']), 1.2);
   assert.equal(contract.conflictWeightMultiplier('health', ['body']), 1.2);
   assert.equal(contract.conflictWeightMultiplier('employment', ['security', 'achievement']), 1);
+  for (const [track,desire] of [
+    ['children','familyBelonging'],['finance','security'],['education','achievement'],
+    ['partnership','love'],['business','wealth'],['public','recognition'],['later','creation'],['later','care'],
+  ]) assert.equal(contract.conflictWeightMultiplier(track,[desire]),1.2,`${track} must have ${desire} evidence`);
   assert.equal(contract.conflictWeightMultiplier('future-track', ['future-desire']), 1);
 
   const baselineTrace = neutralTrace(() => 1);
@@ -395,6 +427,9 @@ function neutralTrace(multiplier) {
   );
 
   const gameSource = fs.readFileSync(path.join(ROOT, 'game.js'), 'utf8');
+  assert.match(gameSource,/aria-pressed/);
+  assert.match(gameSource,/role="dialog"/);
+  assert.match(gameSource,/aria-modal="true"/);
   const generatorUrl = pathToFileURL(path.join(ROOT, 'tools', 'generate-v5-data.mjs')).href;
   const trackCopyUrl = pathToFileURL(
     path.join(ROOT, 'content', 'zh-CN', 'tracks', 'index.mjs'),
@@ -459,7 +494,7 @@ function neutralTrace(multiplier) {
   assert.match(unregisteredFailure, /未登记定义/);
 
   assert.ok(
-    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.8')") <
+    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.9')") <
       gameSource.indexOf('fetch(`./data.json?v=${VERSION}`'),
     'shared contract import must precede data fetch',
   );

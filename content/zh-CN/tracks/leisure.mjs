@@ -20,9 +20,9 @@ export const LEISURE_COPY=track('停下来不工作',[
   b('awkward','朋友约工作日晚饭，临时加班的还是他。'),
   b('friction','空窗期越写越长，面试总从这一段问起。'),
   b('friction','家里愿意给钱，也开始过问你每天几点起床。'),
-  b('friction','社保断缴提醒和房租通知在同一天到达。'),
-  b('friction','伴侣承担更多开支，家务也默认落到你身上。'),
-  b('friction','零工临时取消，已经空出的三天没人结算。'),
+  b('friction','社保断缴提醒和几笔固定开销在同一天到达。'),
+  b('friction','伴侣承担更多开支，家务也默认落到你身上。',{actors:[{slot:'partner',relation:'partner',alive:true,personIdPath:'relationships.activePartnerId',optional:false}]}),
+  b('friction','原定的三天活动临时取消，空出来的时间反而不知道怎么放。'),
   b('friction','预算里没有大额消费，小钱仍把存款慢慢磨薄。'),
   b('friction','简历投出去后，对方先问能不能接受降薪。'),
   b('friction','休息久了，重新坐满八小时比想象中更难。'),
@@ -31,7 +31,7 @@ export const LEISURE_COPY=track('停下来不工作',[
   b('pressure','昼夜彻底颠倒，你连续一周没在白天出门。'),
   b('pressure','一场急病花掉大半备用金，社保刚好断着。'),
   b('major','你交回工牌那天，没有给自己定下一份工作的日期。'),
-  b('major','重新入职的早晨，闹钟响起时像隔了很多年。')
+  b('major','一次必须早起办事的早晨，闹钟响起时像隔了很多年。')
 ],[
   e({id:'career_break',lane:'lifestyle',phase:1,role:'start',delayYears:1,deadlineYears:3},
     '你准备主动停下全职工作。预算表上有房租、日常开销、社保和备用金——最后还空着一行：这段时间靠什么过，到哪天再做决定。',

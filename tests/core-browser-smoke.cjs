@@ -5,7 +5,7 @@ const path = require('node:path');
 const { launchChromium } = require('./playwright-runtime.cjs');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = process.env.BROWSER_SMOKE_OUT || path.join(os.tmpdir(), 'life-unloaded-v0.6.8-browser');
+const OUT = process.env.BROWSER_SMOKE_OUT || path.join(os.tmpdir(), 'life-unloaded-core-browser');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY = 'life-unloaded-2026-v1';
 const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'data.json'), 'utf8'));
@@ -74,7 +74,7 @@ let browser;
     meta: {
       histories: [{ title: '保留的人生记录', age: 72, seed: 'finished-life' }],
       codex: ['codex_01'], settings: { haptic: false }, stats: { runs: 2 },
-      seen: { events: { beat_001: 1 }, cards: {}, families: {}, endings: {} },
+      seen: { events: { beat_001: 1, swan_001: 1, 'archive-note': 1 }, cards: {}, families: {}, endings: {} },
       recentSeeds: ['finished-life']
     },
     run: {
@@ -97,8 +97,8 @@ let browser;
     legacyKeys: Object.keys(localStorage).filter(item => item.startsWith('life-unloaded-2026-') && item !== key),
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
-  assert.equal(migrated.state.schemaVersion, 12);
-  assert.equal(migrated.state.gameVersion, '0.6.8');
+  assert.equal(migrated.state.schemaVersion, 13);
+  assert.equal(migrated.state.gameVersion, '0.6.9');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
@@ -106,6 +106,8 @@ let browser;
   assert.equal(migrated.state.meta.settings.haptic, false);
   assert.equal(migrated.state.meta.stats.runs, 2);
   assert.equal(migrated.state.meta.seen.events.beat_001, undefined, 'legacy generated event IDs should be removed during migration');
+  assert.equal(migrated.state.meta.seen.events.swan_001, undefined, 'legacy black-swan IDs should be removed during migration');
+  assert.equal(migrated.state.meta.seen.events['archive-note'], 1, 'non-generated cross-run records should survive migration');
   assert.deepEqual(migrated.state.meta.recentSeeds, ['finished-life']);
   assert.equal(await page.locator('[data-act="new"]').count(), 1);
   assert.match(await page.locator('.migration-note').innerText(), /旧版本的活动人生已结束/);
@@ -159,20 +161,52 @@ let browser;
   run = await forceChoice(page, decisionId({ track: 'identity', index: 0 }), 0);
   assert.ok(Object.values(run.desires).some(value => value && typeof value === 'object' && value.claimed));
   const employmentDecisionId = decisionId({ track: 'employment', noEpisode: true, index: 0 });
+  const employmentDecision = DECISIONS.find(event => event.id === employmentDecisionId);
+  const employmentChoice = employmentDecision.choices[1];
   run = await forceChoice(page, employmentDecisionId, 1);
   assert.equal(run.employment.status, 'employed');
+  assert.equal(run.employment.profileId, 'sales_representative');
+  assert.equal(run.employment.career, '销售代表');
+  assert.equal(run.employment.employerType, 'private');
+  assert.equal(run.employment.sector, 'sales');
+  assert.equal(run.employment.jobTier, 'T1');
+  assert.equal(run.employment.rank, 1);
+  assert.equal(run.employment.contractType, 'fixedTerm');
+  assert.equal(run.employment.contract, 'fixedTerm');
+  assert.equal(run.employment.incomeStability, 'fixedPlusBonus');
+  assert.ok(run.employment.salary > 0);
+  assert.ok(run.employment.incomeAnnualGross > 0);
+  assert.equal(run.timeline.at(-1).text, `${employmentChoice.text}。${employmentChoice.resultText}`);
   assert.ok(run.scheduledConsequences.some(item => item.sourceDecisionId === employmentDecisionId));
 
+  await page.locator('[data-act="open-drawer"]').click();
+  const employmentDrawer = await page.locator('.drawer').innerText();
+  for (const label of ['现在在干嘛', '手里净资产', '成瘾与戒断', '还有几件事没完']) {
+    assert.match(employmentDrawer, new RegExp(label));
+  }
+  assert.match(employmentDrawer, /销售代表/);
+  assert.match(employmentDrawer, /固定期限合同/);
+  assert.match(employmentDrawer, /固定收入加奖金/);
+  assert.doesNotMatch(employmentDrawer, /尚未进入社会/);
+  await page.locator('.drawer [data-act="close-drawer"]').click();
+
   const due = run.scheduledConsequences.find(item => item.sourceDecisionId === employmentDecisionId);
+  const employmentEcho = DATA.events.find(event => event.kind === 'consequence' && event.sourceDecisionId === employmentDecisionId);
   await page.evaluate(schedule => window.__LIFE_DEBUG__.patchRun({ cardAges: [0, 18, 35, 55], scheduledConsequences: [schedule] }), due);
   await page.evaluate(age => window.__LIFE_DEBUG__.forceAge(age), due.dueAge);
   await page.evaluate(() => window.__LIFE_DEBUG__.advance());
   await page.evaluate(() => window.__LIFE_DEBUG__.advance());
   run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
   assert.ok(run.usedConsequences.includes(due.id), `scheduled consequence did not return: ${JSON.stringify({ age: run.age, phase: run.phase, yearStarted: run.yearStarted, queue: run.yearQueue.map(item => item.id), schedule: run.scheduledConsequences, timeline: run.timeline.slice(-3) })}`);
+  assert.equal(run.timeline.at(-1).text, employmentEcho.choiceOutcomes[employmentChoice.memoryKey].text);
+  assert.equal(run.timeline.at(-1).kind, 'consequence');
 
   run = await forceChoice(page, decisionId({ episodeId: 'relationship_start', episodePhase: 1 }), 0);
   assert.equal(run.relationships.partnerStatus, 'dating');
+  const createdPartner = run.people.find(person => person.id === run.relationships.activePartnerId);
+  assert.ok(createdPartner && createdPartner.gender !== run.gender, 'new partner did not receive the opposite simplified gender');
+  assert.ok(Math.abs((run.age - createdPartner.bornAt) - run.age) <= 4, 'new partner age was not close to the player');
+  assert.ok(createdPartner.health >= 1 && createdPartner.health <= 100, 'new partner health was not recorded');
   run = await forceChoice(page, decisionId({ episodeId: 'becoming_parent', episodePhase: 1 }), 0);
   assert.equal(run.relationships.parenthoodIntent, 'planned');
   assert.equal(run.relationships.childCount, 0);
@@ -201,10 +235,22 @@ let browser;
   run = await forceChoice(page, decisionId({ episodeId: 'shop_opening', episodePhase: 1 }), 0);
   assert.ok(['testing', 'operating'].includes(run.business.status));
 
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({
+    phase: 'playing', sceneQueue: [], currentDecision: null, cardOptions: []
+  }));
   await page.locator('[data-act="open-drawer"]').click();
   await page.waitForTimeout(320);
+  assert.equal(await page.locator('.drawer[role="dialog"][aria-modal="true"][aria-labelledby="drawer-title"]').count(), 1);
+  assert.equal(await page.evaluate(() => document.querySelector('.drawer')?.contains(document.activeElement)), true, 'drawer did not receive focus');
+  assert.equal(await page.locator('[data-act="close-drawer"][aria-label="关闭状态面板"]').count(), 1);
+  for (let index = 0; index < 8; index += 1) await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(() => document.querySelector('.drawer')?.contains(document.activeElement)), true, 'focus escaped the open drawer');
   await fit(page, 'drawer-360x773');
   await page.screenshot({ path: path.join(OUT, 'state-drawer-360x773.png'), fullPage: true });
+  await page.locator('.drawer [data-act="close-drawer"]').click();
+  await page.waitForTimeout(80);
+  assert.equal(await page.evaluate(() => document.activeElement?.dataset?.act), 'open-drawer', 'drawer close did not restore focus');
+  await page.locator('[data-act="open-drawer"]').click();
   await page.reload({ waitUntil: 'domcontentloaded' });
   await waitBoot(page);
   run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
@@ -255,6 +301,12 @@ let browser;
   await page.locator('[data-nav="settings"]').click();
   await page.waitForTimeout(320);
   assert.equal(await page.locator('[data-act="clear-data"]').count(), 1);
+  assert.equal(await page.locator('.iconbtn:not([aria-label])').count(), 0, 'symbol button without accessible name');
+  const hapticToggle = page.locator('[data-act="toggle-haptic"]');
+  const hapticBefore = await hapticToggle.getAttribute('aria-pressed');
+  assert.match(await hapticToggle.innerText(), /已开启|已关闭/);
+  await hapticToggle.click();
+  assert.notEqual(await page.locator('[data-act="toggle-haptic"]').getAttribute('aria-pressed'), hapticBefore, 'haptic aria-pressed did not update');
   await fit(page, 'settings-360x773');
   await page.screenshot({ path: path.join(OUT, 'settings-clear-data-360x773.png'), fullPage: true });
   await page.evaluate(() => localStorage.setItem('life-unloaded-2026-v0.4.1-backup', 'legacy-backup'));

@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.8');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.9');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.8',
-    SCHEMA_VERSION = 12,
-    CONTENT_REVISION = 26;
+  const VERSION = '0.6.9',
+    SCHEMA_VERSION = 13,
+    CONTENT_REVISION = 27;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -71,7 +71,8 @@
   let DATA,
     INDEX,
     state,
-    inputLocked = false;
+    inputLocked = false,
+    focusReturnSelector = null;
   function rng() {
     let x = state.run?.rngState || hashSeed(makeSeed());
     x ^= x << 13;
@@ -590,6 +591,7 @@
       repaymentAgreement: null,
       repaymentAgreementFulfilled: false,
       reliefPending: false,
+      mortgagePaymentStress: false,
     };
     run.housing = initialHousing(run);
     run.relationships = {
@@ -808,6 +810,10 @@
       if (!budget.allowed) return { applied: false, reason: budget.reason };
     }
     const transitionValue = { ...value };
+    if (transitionValue.residenceOnly && ['owned', 'mortgaged'].includes(previous.status)) {
+      delete transitionValue.status;
+      delete transitionValue.value;
+    }
     if (Array.isArray(transitionValue.coResidentRefs))
       transitionValue.coResidentRefs = transitionValue.coResidentRefs.flatMap((id) => {
         if (id === '$activePartner') return run.relationships.activePartnerId ? [run.relationships.activePartnerId] : [];
@@ -1002,6 +1008,20 @@
     );
     run.finance.hasEnforceableArrears = enforceableLiabilities(run).some(
       (item) => item.status === 'delinquent' || (item.arrears || 0) >= 2
+    );
+    const activeMortgage = unresolvedLiabilities(run).find((item) => item.kind === 'mortgage'),
+      currentlyWorking = ['employed', 'selfEmployed', 'gig'].includes(run.employment.status),
+      mortgageIncome = currentlyWorking
+        ? Math.max(
+            0,
+            Number(run.employment.incomeAnnualGross) ||
+              (Number(run.employment.salary) || 0) * 12 ||
+              (run.employment.status === 'selfEmployed' ? Number(run.finance.lastIncome) || 0 : 0)
+          )
+        : 0,
+      annualDebtDue = unresolvedLiabilities(run).reduce((sum, item) => sum + debtAnnualDue(item), 0);
+    run.finance.mortgagePaymentStress = Boolean(
+      activeMortgage && (mortgageIncome <= 0 || annualDebtDue / mortgageIncome > 0.3)
     );
     if (
       run.finance.hasEnforceableArrears &&
@@ -1326,7 +1346,7 @@
         oldSchema = Number(parsed.schemaVersion || parsed.run?.schemaVersion || 0),
         compatibleRelease =
           oldSchema === SCHEMA_VERSION &&
-          [VERSION, '0.6.6'].includes(parsed.gameVersion);
+          parsed.gameVersion === VERSION;
       state = base;
       base.meta = normalizeMeta(parsed.meta || {});
       if (compatibleRelease) base.run = parsed.run ? normalizeRun(parsed.run) : null;
@@ -1335,7 +1355,7 @@
         base.meta.migrationNotice = true;
         base.meta.seen.events = Object.fromEntries(
           Object.entries(base.meta.seen.events || {}).filter(
-            ([id]) => !/^(beat|decision|consequence)_\d+$/.test(id)
+            ([id]) => !/^(beat|decision|consequence|echo|swan)_\d+$/.test(id)
           )
         );
       }
@@ -1507,6 +1527,10 @@
     if (!stateFields.some((field) => Object.hasOwn(command.value || {}, field)))
       return { allowed: true, reason: null, affordability: null };
     const candidateValue = { ...command.value };
+    if (candidateValue.residenceOnly && ['owned', 'mortgaged'].includes(run.housing.status)) {
+      delete candidateValue.status;
+      delete candidateValue.value;
+    }
     if (candidateValue.region === '$homeRegion') candidateValue.region = run.location.id;
     if (candidateValue.region === '$educationRegion') {
       const system = run.education.postgraduateSystem !== 'none'
@@ -1583,7 +1607,7 @@
       .map(([id, record]) => ({ ...record, id, lane: episodeSpec(id)?.lane }));
   }
   function episodeHousingChoiceKind(id) {
-    return id === 'long_term_care' ? 'laterFit' : null;
+    return null;
   }
   function episodeEligible(event, run) {
     if (!event.episode) return true;
@@ -1644,13 +1668,12 @@
     } else if (run.usedEvents.includes(event.id)) return false;
     if (!(event.stage || []).includes(stageForAge(run.age))) return false;
     if (!requirementsMatch(event.requirements, run) || !episodeEligible(event, run)) return false;
-    if (event.kind === 'decision') {
-      const purchaseChoices = (event.choices || []).filter((choice) =>
-        housingTransitionCommand(choice)?.value?.status === 'mortgaged'
-      );
-      if (purchaseChoices.length && !purchaseChoices.some((choice) => choiceEnabled(choice, run)))
-        return false;
-    }
+    if (
+      event.kind === 'decision' &&
+      (event.choices || []).length &&
+      !(event.choices || []).some((choice) => choiceEnabled(choice, run))
+    )
+      return false;
     if (
       event.kind === 'decision' &&
       event.choices?.length &&
@@ -1694,11 +1717,13 @@
     if (run.finance.debtStage === 'resolved') run.finance.debtStage = 'current';
     return liability;
   }
-  function repayDebt(run, amount) {
-    let remaining = Math.max(0, Number(amount) || 0);
+  function repayDebt(run, amount, debtId = null) {
+    let remaining = Math.max(0, Number(amount) || 0),
+      matched = false;
     for (const debt of [...run.finance.liabilities]
-      .filter((item) => item.status !== 'settled')
+      .filter((item) => item.status !== 'settled' && (!debtId || item.id === debtId))
       .sort((a, b) => (b.rate || 0) - (a.rate || 0))) {
+      matched = true;
       const paid = Math.min(remaining, debt.principal);
       debt.principal -= paid;
       remaining -= paid;
@@ -1721,10 +1746,13 @@
     }
     if (amount > remaining) addTag(run, 'finance:repaid');
     markDebtReliefIfDue(run);
+    return matched;
   }
-  function restructureDebt(run, rate = 0.05) {
+  function restructureDebt(run, rate = 0.05, debtId = null) {
+    let matched = false;
     for (const debt of run.finance.liabilities) {
-      if (debt.status === 'settled') continue;
+      if (debt.status === 'settled' || (debtId && debt.id !== debtId)) continue;
+      matched = true;
       debt.rate = Math.min(debt.rate || rate, rate);
       debt.arrears = 0;
       debt.status = 'current';
@@ -1732,7 +1760,8 @@
     run.pressures.money = clamp(run.pressures.money - 10, 0, 100);
     if (!run.finance.hasEnforceableArrears && run.finance.debtStage === 'overdue')
       run.finance.debtStage = 'current';
-    addTag(run, 'finance:restructured');
+    if (matched) addTag(run, 'finance:restructured');
+    return matched;
   }
   function resolveDebtEnforcement(run, action, context = {}) {
     const debt = activeEnforcementDebt(run);
@@ -2109,10 +2138,7 @@
   function profileIncome(run, profile, salaryBandOverride = null) {
     const catalog = DATA.employmentCatalog,
       tier = catalog?.tiers?.[profile.tier],
-      overseasReference = ['us', 'europe'].includes(run.employment.applicationRegion),
-      locationFactor = overseasReference
-        ? catalog?.regionalCoefficients?.tier1 || 1.2
-        : catalog?.regionalCoefficients?.[run.location.id] || 1,
+      locationFactor = catalog?.regionalCoefficients?.[run.location.id] || 1,
       bandName = salaryBandOverride || profile.salaryBand || 'mid',
       band = catalog?.salaryBands?.[bandName] || 1,
       monthlyBase =
@@ -2162,6 +2188,7 @@
       const profile = employmentProfile(previous.profileId);
       return { profile: profile && profileCredentialsReady(run, profile) ? profile : null };
     }
+    if (!['bridgeJob', 'careerChange'].includes(value)) return { profile: null };
     let candidates = employmentProfiles();
     if (value === 'bridgeJob')
       candidates = candidates.filter(
@@ -2313,7 +2340,7 @@
       overseas = ['us', 'europe'].includes(run.employment.applicationRegion),
       authorizationReady = !overseas || run.mobility.workAuthorization === 'verified',
       entryPath = run.employment.firstJobEntryPath;
-    if (!authorizationReady) return [];
+    if (overseas || !authorizationReady) return [];
     return employmentProfiles().filter((profile) => {
       const tier = JOB_TIER_INDEX[profile.tier];
       return (
@@ -2369,7 +2396,7 @@
               ? currentRegion
               : 'domestic',
       overseas = ['us', 'europe'].includes(region);
-    if (route === 'overseas' && !overseas) {
+    if (route === 'overseas' || (overseas && route !== 'return')) {
       run.employment.pendingOfferId = 'none';
       run.employment.applicationStatus = 'searching';
       run.employment.firstJobOutcome = 'longSearch';
@@ -2439,6 +2466,36 @@
       candidates[stable(run.seed, `tier:${current.id}:${targetIndex}:${run.age}`, Math.max(1, candidates.length))];
     return target ? applyEmploymentProfile(run, target.id) : false;
   }
+  function scaleEmployment(run, factor) {
+    const ratio = clamp(Number(factor) || 1, 0.05, 1);
+    run.employment.incomeAnnualGross = Math.round((run.employment.incomeAnnualGross || 0) * ratio);
+    run.employment.salary = Math.round((run.employment.salary || 0) * ratio);
+    run.employment.workHours = Math.max(8, Math.round((run.employment.workHours || 40) * ratio));
+    run.employment.arrangement = 'reducedHours';
+    run.activity.mode = 'flexible';
+  }
+  function resolveInheritance(run, route) {
+    const transferable = Math.max(
+      0,
+      Math.round((run.originHousehold.assets || 0) - (run.originHousehold.debt || 0))
+    );
+    if (route === 'renounced') return 0;
+    if (route === 'disputed') {
+      run.finance.cash -= 8000;
+      return -8000;
+    }
+    const parents = run.people.filter((item) => ['father', 'mother'].includes(item.relation)),
+      deadParents = parents.filter((item) => !item.alive).length,
+      siblingCount = run.people.filter((item) => item.relation === 'sibling' && item.alive).length,
+      deceasedShare = parents.length > 0 ? Math.min(1, deadParents / parents.length) : 0,
+      heirShare = transferable * deceasedShare / Math.max(1, 1 + siblingCount),
+      cap = route === 'accepted' ? 120000 : 40000,
+      routeShare = route === 'accepted' ? 1 : 0.35,
+      amount = Math.min(cap, Math.max(0, Math.round(heirShare * routeShare / 100) * 100));
+    run.finance.cash += amount;
+    run.originHousehold.assets = Math.max(0, run.originHousehold.assets - amount);
+    return amount;
+  }
   function resolveLayoff(run, route) {
     const monthly = Math.round((run.employment.incomeAnnualGross || run.employment.salary * 12) / 12),
       months = ['fixedTerm', 'openEnded', 'service'].includes(run.employment.contractType)
@@ -2455,32 +2512,54 @@
     if (!['medical_practice', 'legal_practice', 'university_teaching'].includes(credential)) return;
     if (!run.education.credentials.includes(credential)) run.education.credentials.push(credential);
   }
+  function conceptionCarrier(run) {
+    if (run.gender === 'female')
+      return { age: run.age, health: run.health.physical, source: 'player' };
+    const partner = run.people.find(
+      (item) =>
+        item.id === run.relationships.activePartnerId &&
+        item.alive &&
+        item.relation === 'partner' &&
+        item.gender === 'female'
+    );
+    return partner
+      ? { age: personAge(partner, run), health: Number(partner.health) || 65, source: 'partner' }
+      : null;
+  }
   function conceptionChance(run) {
-    const ageAdjustment = run.age <= 29 ? 5 : run.age <= 34 ? 0 : run.age <= 37 ? -10 : -20,
-      healthAdjustment = run.health.physical >= 75 ? 5 : run.health.physical < 50 ? -10 : 0;
+    const carrier = conceptionCarrier(run);
+    if (!carrier) return 0;
+    const ageAdjustment = carrier.age <= 29 ? 5 : carrier.age <= 34 ? 0 : carrier.age <= 37 ? -10 : -20,
+      healthAdjustment = carrier.health >= 75 ? 5 : carrier.health < 50 ? -10 : 0;
     return clamp(80 + ageAdjustment + healthAdjustment, 50, 90);
   }
   function resolveConception(run, key = 'planned') {
     if (run.relationships.plannedConceptionResolved) return run.relationships.pregnancyStatus;
     run.relationships.plannedConceptionResolved = true;
-    const conceived = stable(run.seed, `conception:${key}:${run.age}`, 100) < conceptionChance(run);
+    const chanceValue = conceptionChance(run),
+      conceived = chanceValue > 0 && stable(run.seed, `conception:${key}:${run.age}`, 100) < chanceValue;
     run.relationships.pregnancyStatus = conceived ? 'confirmed' : 'notPregnant';
     return run.relationships.pregnancyStatus;
   }
   function firstJobApplicationResult(run) {
     return run.employment.applicationStatus === 'offered'
       ? ' 一份能核合同、岗位和报到条件的录用留下了。'
-      : ' 没有形成可用录用；申请记录转入持续求职。';
+      : ' 录用通知没有来。招聘网页还得继续打开。';
   }
   function createRelatedPerson(run, command) {
     const relation = command.relation || 'child',
       index = run.people.filter((item) => item.id.startsWith(`${relation}_`)).length + 1,
-      item = person(`${relation}_${index}`, relation, run.age, {
+      partnerAge = relation === 'partner'
+        ? clamp(run.age + stable(run.seed, `partner-age:${index}`, 9) - 4, 16, 100)
+        : null,
+      item = person(`${relation}_${index}`, relation, relation === 'partner' ? run.age - partnerAge : run.age, {
         bond: 60,
         legalStatus: relation === 'adoptedChild' ? 'adopted' : 'biological',
+        ...(relation === 'partner' ? { gender: run.gender === 'female' ? 'male' : 'female' } : {}),
       });
     run.people.push(item);
     if (relation === 'partner') {
+      initializePartnerIdentity(run, item);
       initializePartnerHousingProfile(run, item);
       run.relationships.activePartnerId = item.id;
       run.relationships.partnerStatus = 'dating';
@@ -2510,6 +2589,17 @@
     item.housingIncomeAnnualGross = Math.max(24000, gross);
     return item;
   }
+  function initializePartnerIdentity(run, item) {
+    if (!item || item.relation !== 'partner') return item;
+    item.gender = run.gender === 'female' ? 'male' : 'female';
+    if (personAge(item, run) < 16) {
+      const offset = stable(run.seed, `partner-age:${item.id}`, 9) - 4,
+        age = clamp(run.age + offset, 16, 100);
+      item.bornAt = run.age - age;
+    }
+    item.health = clamp(Number(item.health) || 65, 1, 100);
+    return item;
+  }
   function cleanupHousingCoResidents(run, reason, sourceEventId) {
     const refs = (run.housing.coResidentRefs || []).filter((id) => {
         const personItem = run.people.find((item) => item.id === id);
@@ -2536,7 +2626,7 @@
     const restoring = command.value === 'partner',
       id = restoring ? run.relationships.lastPartnerId : run.relationships.activePartnerId,
       item = run.people.find((personItem) => personItem.id === id);
-    if (!item) return;
+    if (!item) return false;
     if (restoring) {
       for (const other of run.people)
         if (other.id !== item.id && other.relation === 'partner') other.relation = 'exPartner';
@@ -2548,19 +2638,23 @@
       run.relationships.activePartnerId = null;
       cleanupHousingCoResidents(run, 'partnerNoLongerCoResident', `partner:${run.age}`);
     }
+    return true;
+  }
+  function rollbackCommands(before, context, error) {
+    return { ok: false, before, after: copy(state.run), context, error: String(error || '结算失败') };
   }
   function applyCommands(commands = [], context = {}) {
-    const run = state.run,
-      before = copy(run);
+    const target = state.run,
+      before = copy(target),
+      run = copy(target);
     for (const command of commands) {
       if (!CONTRACT.isCommandType(command?.type) || !CONTRACT.isWritePath(command?.target)) {
         const location = context.eventId || context.choiceId || context.source || 'unknown';
-        const error = new Error(
+        return rollbackCommands(
+          before,
+          context,
           `非法 command @ ${location}：${String(command?.type)} → ${String(command?.target)}`
         );
-        if (DEBUG) throw error;
-        console.error(`[内容合同] ${error.message}`);
-        continue;
       }
       if (command.type === 'add') {
         if (command.target === 'finance.cash' && Number(command.value) < 0 && run.age < 18) {
@@ -2581,11 +2675,33 @@
         const values = getPath(run, command.target);
         if (Array.isArray(values) && !values.includes(command.value)) values.push(command.value);
       } else if (command.type === 'tag') addTag(run, command.value);
-      else if (command.type === 'addLiability') addLiability(run, command);
-      else if (command.type === 'repayDebt') repayDebt(run, command.value);
-      else if (command.type === 'restructureDebt') restructureDebt(run, command.rate);
-      else if (command.type === 'resolveDebtEnforcement')
-        resolveDebtEnforcement(run, command.value, context);
+      else if (command.type === 'addLiability') {
+        const liability = addLiability(run, command);
+        if (command.bindEpisode && liability && run.episodes[command.bindEpisode])
+          run.episodes[command.bindEpisode].boundDebtId = liability.id;
+      }
+      else if (command.type === 'repayDebt') {
+        const debtId = command.scope === 'episodeBound'
+          ? run.episodes[context.episode?.id]?.boundDebtId || null
+          : null;
+        if (command.scope === 'episodeBound' && !debtId)
+          return rollbackCommands(before, context, '当前事件没有绑定债务');
+        if (!repayDebt(run, command.value, debtId) && command.scope === 'episodeBound')
+          return rollbackCommands(before, context, '当前事件绑定的债务已经结清或失效');
+      }
+      else if (command.type === 'restructureDebt') {
+        const debtId = command.scope === 'episodeBound'
+          ? run.episodes[context.episode?.id]?.boundDebtId || null
+          : null;
+        if (command.scope === 'episodeBound' && !debtId)
+          return rollbackCommands(before, context, '当前事件没有绑定债务');
+        if (!restructureDebt(run, command.rate, debtId) && command.scope === 'episodeBound')
+          return rollbackCommands(before, context, '当前事件绑定的债务已经结清或失效');
+      }
+      else if (command.type === 'resolveDebtEnforcement') {
+        if (!resolveDebtEnforcement(run, command.value, context))
+          return rollbackCommands(before, context, '债务处置条件已经失效');
+      }
       else if (command.type === 'healthIncident') healthIncident(run, command);
       else if (command.type === 'healthRecovery') healthRecovery(run, command);
       else if (command.type === 'resolveApplication')
@@ -2599,18 +2715,27 @@
           command.scenarioId,
           command.scenarioChoiceIndex
         );
-      else if (command.type === 'acceptFirstJobOffer')
-        acceptFirstJobOffer(run, command.value);
-      else if (command.type === 'applyEmploymentProfile')
-        applyEmploymentProfile(run, command.value);
+      else if (command.type === 'acceptFirstJobOffer') {
+        if (!acceptFirstJobOffer(run, command.value))
+          return rollbackCommands(before, context, '录用条件已经失效');
+      }
+      else if (command.type === 'applyEmploymentProfile') {
+        if (!applyEmploymentProfile(run, command.value))
+          return rollbackCommands(before, context, '职业条件已经失效');
+      }
+      else if (command.type === 'scaleEmployment') scaleEmployment(run, command.value);
       else if (command.type === 'leaveEmployment')
         leaveEmployment(run, command.value);
       else if (command.type === 'takeCareLeave')
         takeCareLeave(run);
-      else if (command.type === 'completeEmploymentHandover')
-        completeEmploymentHandover(run);
-      else if (command.type === 'adjustJobTier')
-        adjustJobTier(run, command.value);
+      else if (command.type === 'completeEmploymentHandover') {
+        if (!completeEmploymentHandover(run))
+          return rollbackCommands(before, context, '就业交接条件已经失效');
+      }
+      else if (command.type === 'adjustJobTier') {
+        if (!adjustJobTier(run, command.value))
+          return rollbackCommands(before, context, '岗位调整条件已经失效');
+      }
       else if (command.type === 'resolveLayoff')
         resolveLayoff(run, command.value);
       else if (command.type === 'grantCredential')
@@ -2618,12 +2743,17 @@
       else if (command.type === 'resolveConception')
         resolveConception(run, command.value);
       else if (command.type === 'createPerson') createRelatedPerson(run, command);
-      else if (command.type === 'transitionPartner') transitionPartner(run, command);
+      else if (command.type === 'transitionPartner') {
+        if (!transitionPartner(run, command))
+          return rollbackCommands(before, context, '关系人物已经失效');
+      }
       else if (command.type === 'transitionHousing') {
         const transition = transitionHousing(run, command.value, context);
-        if (!transition.applied && !['duplicate', 'unchanged'].includes(transition.reason))
-          console.error(`[住房转换] ${transition.reason}`);
+        if (!transition.applied && !['duplicate', 'unchanged'].includes(transition.reason)) {
+          return rollbackCommands(before, context, transition.reason);
+        }
       }
+      else if (command.type === 'resolveInheritance') resolveInheritance(run, command.value);
       else if (command.type === 'transition' && command.target === 'education')
         transitionEducation(run, command);
       else if (command.type === 'claimDesire') {
@@ -2650,7 +2780,10 @@
     run.finance.cash = Math.max(-1e13, run.finance.cash);
     run.business.equity = Math.max(0, run.business.equity);
     syncDerived(run);
-    return { before, after: copy(run), context };
+    for (const key of Object.keys(target)) delete target[key];
+    Object.assign(target, run);
+    state.run = target;
+    return { ok: true, before, after: copy(target), context };
   }
 
   function scheduleConsequence(event, choice) {
@@ -2831,7 +2964,10 @@
   }
   function recruitmentScenarioFor(run) {
     const scenarios = DATA.employmentCatalog?.recruitmentScenarios || [],
-      candidates = scenarios.filter((scenario) => recruitmentScenarioEligible(run, scenario));
+      overseas = ['us', 'europe'].includes(run.employment.applicationRegion),
+      candidates = scenarios.filter((scenario) =>
+        recruitmentScenarioEligible(run, scenario) && (!overseas || scenario.id === 'E08')
+      );
     if (!candidates.length) return null;
     return candidates[
       stable(
@@ -2851,13 +2987,14 @@
       prompt: scenario.prompt,
       recruitmentScenarioId: scenario.id,
       choices: scenario.choices.map((scenarioChoice, index) => {
-        const base = event.choices[Math.min(index, event.choices.length - 1)],
-          route = scenarioChoice.route || 'domestic',
+        const route = scenarioChoice.route || 'domestic',
           effects = [
             { type: 'tag', target: 'history', value: `research:${scenario.id}` },
             { type: 'add', target: 'agency', value: scenarioChoice.offerIntent ? 2 : 1 },
           ];
-        if (scenarioChoice.offerIntent)
+        if (scenarioChoice.offerIntent) {
+          if (route === 'return')
+            effects.push({ type: 'set', target: 'employment.applicationRegion', value: 'domestic' });
           effects.push({
             type: 'resolveFirstJobApplication',
             target: 'employment',
@@ -2865,19 +3002,28 @@
             scenarioId: scenario.id,
             scenarioChoiceIndex: index,
           });
-        else
+        } else {
+          const withdrawn = scenario.id === 'E08' && index === 1;
           effects.push(
             { type: 'set', target: 'employment.pendingOfferId', value: 'none' },
-            { type: 'set', target: 'employment.applicationStatus', value: 'searching' },
-            { type: 'set', target: 'employment.firstJobOutcome', value: 'longSearch' },
-            { type: 'set', target: 'activity.mode', value: 'seeking' }
+            { type: 'set', target: 'employment.applicationStatus', value: withdrawn ? 'withdrawn' : 'searching' },
+            { type: 'set', target: 'employment.firstJobOutcome', value: withdrawn ? 'withdrawn' : 'longSearch' },
+            { type: 'set', target: 'activity.mode', value: withdrawn ? 'leisure' : 'seeking' }
           );
+        }
         return {
-          ...base,
+          id: `${event.id}_${scenario.id}_${index + 1}`,
           text: scenarioChoice.text,
           resultText: scenarioChoice.resultText,
           effects,
-          route: `${scenario.id}_${index + 1}`,
+          route: scenarioChoice.offerIntent ? `${scenario.id}_${index + 1}` : scenario.id === 'E08' && index === 1 ? 'withdrawn' : 'long_search',
+          memoryKey: `${event.id}:${scenario.id}:${index + 1}`,
+          requirements: { all: [], any: [], none: [] },
+          showWhen: { all: [], any: [], none: [] },
+          consequences: [],
+          commitments: [],
+          mechanicTags: [],
+          cardInteraction: null,
           outcomeTags: ['employment', `recruitment:${scenario.id}`, 'episode:first_job_application'],
         };
       }),
@@ -2906,10 +3052,20 @@
       syncDerived(run);
     }
     event = prepareRecruitmentDecision(event, run);
+    const situationText = event.episode?.id === 'parental_inheritance' && event.episode.phase === 1
+      ? (() => {
+          const parents = run.people.filter((item) => ['father', 'mother'].includes(item.relation));
+          if (parents.length === 1)
+            return '唯一登记的父母已去世。钥匙、死亡证明、账户资料和欠款通知放到了一起；遗产有多少、债有多少，都要按现有文件查清。';
+          return parents.length >= 2 && parents.every((item) => !item.alive)
+            ? '父母都已去世。两边留下的钥匙、死亡证明、账户资料和欠款通知放到了一起；遗产有多少、债有多少、还涉及谁，都要按现有文件查清。'
+            : '一位父母去世后，另一位仍在世。旧钥匙、死亡证明、账户资料和欠款通知一起到了；哪些属于遗产、哪些仍属于在世父母，必须分别查清。';
+        })()
+      : event.situation;
     run.currentDecision = event;
     run.phase = 'episode';
     run.sceneQueue = [
-      { kind: 'situation', eventId: event.id, text: event.situation },
+      { kind: 'situation', eventId: event.id, text: situationText },
       { kind: 'choice', eventId: event.id },
     ];
     save();
@@ -2937,6 +3093,13 @@
         choiceId: choice.id,
         housingChoiceKind: choice.housingChoiceKind || null,
       });
+    if (!result.ok) {
+      showToast(`这项选择没有结算：${result.error}`);
+      inputLocked = false;
+      save();
+      render();
+      return;
+    }
     for (const tag of choice.outcomeTags || []) addTag(run, tag);
     const resolvedApplication =
         event.episode.id === 'undergraduate_application' &&
@@ -3075,7 +3238,9 @@
       return true;
     if (
       id === 'adoption_process' &&
-      (run.relationships.activePartnerId ||
+      (run.health.physical < 45 ||
+        run.health.careNeed >= 2 ||
+        run.relationships.activePartnerId ||
         !['none', 'divorced', 'widowed'].includes(run.relationships.partnerStatus))
     )
       return true;
@@ -3194,14 +3359,14 @@
       ? `${label}——类型或治疗状态变了。记录、账单和复诊日期你留着。这次处理，停在了真实状态处。`
       : `${label}开始两年了。最近的使用记录、现实功能和支持安排——你复核了一遍。按当前的治疗或恢复状态，收在这。`;
   }
-  function queueEpisodeClosure(id, record, reason) {
-    const run = state.run,
-      text =
-        episodeCatalog(id)[reason] ||
-        EPISODE_CLOSURES[id]?.[reason] ||
-        (id.startsWith('habit_')
-          ? habitEpisodeClosure(id, reason)
-          : `${episodeLabel(id) || '当前事件'}已到结束条件。`);
+  function episodeClosureText(id, reason) {
+    return episodeCatalog(id)[reason] ||
+      EPISODE_CLOSURES[id]?.[reason] ||
+      (id.startsWith('habit_')
+        ? habitEpisodeClosure(id, reason)
+        : `${episodeLabel(id) || '当前事件'}已经走到不能再继续的地方。`);
+  }
+  function prepareEpisodeClosure(run, id, record, reason) {
     if (
       id === 'relationship_start' &&
       reason === 'invalidated' &&
@@ -3217,12 +3382,22 @@
     record.closureReason = reason;
     record.phase = Math.max(1, record.phase);
     record.nextPhaseAge = run.age;
-    run.sceneQueue = [{ kind: 'result', forced: true, episodeId: id, reason, text }];
+    return { kind: 'result', forced: true, episodeId: id, reason, text: episodeClosureText(id, reason) };
+  }
+  function queueEpisodeClosures(closures) {
+    const run = state.run;
+    run.sceneQueue = closures.map(({ id, record, reason }) =>
+      prepareEpisodeClosure(run, id, record, reason)
+    );
+    if (!run.sceneQueue.length) return false;
     run.currentDecision = null;
     run.phase = 'episode';
     save();
     render();
     return true;
+  }
+  function queueEpisodeClosure(id, record, reason) {
+    return queueEpisodeClosures([{ id, record, reason }]);
   }
   function queueDebtRelief(run, advanceAge) {
     if (!run.finance.reliefPending) return false;
@@ -3277,13 +3452,33 @@
     render();
   }
   function dueEpisodeClosure(run) {
+    const closures = [];
     for (const [id, record] of Object.entries(run.episodes)) {
       if (record.status !== 'active') continue;
       if (episodeBindingInvalid(id, record, run))
-        return queueEpisodeClosure(id, record, 'invalidated');
-      if (run.age >= record.deadlineAge) return queueEpisodeClosure(id, record, 'deadline');
+        closures.push({ id, record, reason: 'invalidated' });
+      else if (run.age >= record.deadlineAge)
+        closures.push({ id, record, reason: 'deadline' });
+      else if (run.age >= record.nextPhaseAge) {
+        const candidate = INDEX.kinds.decision.find(
+          (event) =>
+            event.episode?.id === id &&
+            event.episode.phase === record.phase &&
+            !run.usedEvents.includes(event.id)
+        );
+        const phaseReady = candidate &&
+          run.age >= candidate.ageMin && run.age <= candidate.ageMax &&
+          (candidate.stage || []).includes(stageForAge(run.age)) &&
+          requirementsMatch(candidate.requirements, run);
+        if (
+          phaseReady &&
+          (candidate.choices || []).length &&
+          !(candidate.choices || []).some((choice) => choiceEnabled(choice, run))
+        )
+          closures.push({ id, record, reason: 'invalidated' });
+      }
     }
-    return false;
+    return closures.length ? queueEpisodeClosures(closures) : false;
   }
   function finishForcedEpisode(scene) {
     const run = state.run,
@@ -3298,8 +3493,13 @@
       scene.text,
       'chosen'
     );
-    run.sceneQueue = [];
+    run.sceneQueue.shift();
     run.currentDecision = null;
+    if (run.sceneQueue.length) {
+      save();
+      render();
+      return;
+    }
     run.phase = 'playing';
     run.yearStarted = false;
     settleYear(run);
@@ -3356,6 +3556,13 @@
         choiceId: choice.id,
         housingChoiceKind: choice.housingChoiceKind || null,
       });
+    if (!result.ok) {
+      showToast(`这项选择没有结算：${result.error}`);
+      inputLocked = false;
+      save();
+      render();
+      return;
+    }
     for (const tag of choice.outcomeTags || []) addTag(run, tag);
     scheduleConsequence(event, choice);
     run.decisionHistory.push({
@@ -3615,6 +3822,7 @@
         stable(run.seed, `business-${run.age}`, 100) * 0.15;
     let flow = Math.round((readiness - 48) * 3500 - lock * 1200);
     if (run.business.mode === 'franchise') flow -= 16000;
+    if (run.later.retirement === 'semiRetired') flow = Math.round(flow * 0.55);
     if (flow < 0) {
       run.pressures.money = clamp(run.pressures.money + 6, 0, 100);
       run.pressures.family = clamp(run.pressures.family + 3, 0, 100);
@@ -3843,8 +4051,14 @@
     };
   }
   function validPlanningPartner(run) {
+    const partner = run.people.find(
+      (item) => item.id === run.relationships.activePartnerId
+    );
     return Boolean(
-      run.relationships.activePartnerId &&
+      partner?.alive &&
+        partner.relation === 'partner' &&
+        ['female', 'male'].includes(partner.gender) &&
+        partner.gender !== run.gender &&
         ['dating', 'partnered', 'married'].includes(run.relationships.partnerStatus)
     );
   }
@@ -3866,7 +4080,9 @@
       run.age >= 30 &&
       !relationships.activePartnerId &&
       ['none', 'divorced', 'widowed'].includes(relationships.partnerStatus) &&
-      relationships.childCount <= 1
+      relationships.childCount <= 1 &&
+      run.health.physical >= 45 &&
+      Number(run.health.careNeed || 0) < 2
     ) {
       relationships.adoptionOffered = true;
       relationships.adoptionStatus =
@@ -4180,7 +4396,13 @@
   }
   function revealEvent(event) {
     const run = state.run;
-    applyCommands(event.runtimeEffects || event.effects || [], event);
+    const result = applyCommands(event.runtimeEffects || event.effects || [], event);
+    if (!result.ok) {
+      showToast(`这一年没有结算：${result.error}`);
+      save();
+      render();
+      return;
+    }
     for (const tag of event.runtimeTags || []) addTag(run, tag);
     addTimeline(event, event.runtimeText || event.text);
     if (!event.recurrence) run.usedEvents.push(event.id);
@@ -4311,9 +4533,13 @@
     const run = state.run,
       card = INDEX.cards.get(id);
     if (!card || run.phase !== 'card') return;
+    const result = applyCommands(card.effects, card);
+    if (!result.ok) {
+      showToast(`卡牌没有结算：${result.error}`);
+      return;
+    }
     run.cards.push(card.id);
     run.cardAges.push(run.cardAge);
-    applyCommands(card.effects, card);
     addTimeline(
       { id: card.id, kind: 'card', track: 'identity', icon: '◇' },
       `你有了“${card.displayName}”：${card.text}`,
@@ -4965,7 +5191,7 @@
       origin = run.originHousehold,
       parents = origin.people.filter((item) => ['father', 'mother'].includes(item.relation)),
       siblings = origin.people.filter((item) => item.relation === 'sibling' && item.bornAt <= 0);
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">${esc(UI_COPY.birthTitle)}</div><span></span></div><section class="card hero"><div class="muted">${run.gender === 'female' ? '女性' : '男性'} · ${run.location.name}</div><div class="birth-place">${esc(origin.familyName)}</div><p>${esc(UI_COPY.birthHouseholdNote)}</p><p class="tiny origin-hint">起点优势：${esc(DATA.familyArchetypes.find((item) => item.id === origin.familyId)?.advantages.join(' · '))} · 潜在压力：${esc(DATA.familyArchetypes.find((item) => item.id === origin.familyId)?.risks.join(' · '))}</p></section><dl class="spec-list"><div class="spec"><dt>家庭环境</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>父母</dt><dd>${parents.map((item) => `${item.relation === 'father' ? '父亲' : '母亲'}：${item.occupation} · ${item.timeAvailability >= 60 ? '时间较稳定' : '常常抽不开身'}`).join('；') || '由其他照护者抚养'}</dd></div><div class="spec"><dt>兄弟姐妹</dt><dd>${siblings.length ? `${siblings.length}人` : '目前没有'}</dd></div><div class="spec"><dt>家庭住房</dt><dd>${esc(origin.housing)} · ${origin.context.housingStability >= 60 ? '居住较稳定' : '住处可能变化'}</dd></div><div class="spec"><dt>家庭账面</dt><dd>资产约 ${money(origin.assets)} · 债务约 ${money(origin.debt)}</dd></div><div class="spec"><dt>教育起点</dt><dd>${origin.context.educationCapital >= 65 ? '较早接触升学信息' : origin.context.educationCapital >= 42 ? '信息主要来自学校' : '需要额外寻找路线信息'} · ${origin.context.educationBudget >= 68 ? '可承担较多准备成本' : '费用会限制部分选择'}</dd></div></dl><div class="bottom-actions"><button class="btn primary" data-act="birth-next">${esc(UI_COPY.birthNext)}</button></div></main>`;
+    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">${esc(UI_COPY.birthTitle)}</div><span></span></div><section class="card hero"><div class="muted">${run.gender === 'female' ? '女性' : '男性'} · ${run.location.name}</div><div class="birth-place">${esc(origin.familyName)}</div><p>${esc(UI_COPY.birthHouseholdNote)}</p><p class="tiny origin-hint">起点优势：${esc(DATA.familyArchetypes.find((item) => item.id === origin.familyId)?.advantages.join(' · '))} · 潜在压力：${esc(DATA.familyArchetypes.find((item) => item.id === origin.familyId)?.risks.join(' · '))}</p></section><dl class="spec-list"><div class="spec"><dt>家庭环境</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>父母</dt><dd>${parents.map((item) => `${item.relation === 'father' ? '父亲' : '母亲'}：${item.occupation} · ${item.timeAvailability >= 60 ? '时间较稳定' : '常常抽不开身'}`).join('；') || '由其他照护者抚养'}</dd></div><div class="spec"><dt>兄弟姐妹</dt><dd>${siblings.length ? `${siblings.length}人` : '目前没有'}</dd></div><div class="spec"><dt>家庭住房</dt><dd>${esc(origin.housing)} · ${origin.context.housingStability >= 60 ? '居住较稳定' : '住处可能变化'}</dd></div><div class="spec"><dt>家庭账面</dt><dd>资产约 ${money(origin.assets)} · 债务约 ${money(origin.debt)}</dd></div><div class="spec"><dt>教育起点</dt><dd>${origin.context.educationCapital >= 65 ? '较早接触升学信息' : origin.context.educationCapital >= 42 ? '信息主要来自学校' : '需要额外寻找路线信息'} · ${origin.context.educationBudget >= 68 ? '可承担较多准备成本' : '费用会限制部分选择'}</dd></div></dl><div class="bottom-actions"><button class="btn primary" data-act="birth-next">${esc(UI_COPY.birthNext)}</button></div></main>`;
   }
   const attrMeta = {
     intellect: ['理解', '学习、证据与复杂判断'],
@@ -4977,12 +5203,12 @@
   };
   function attributesView() {
     const run = state.run;
-    return `<main class="screen attributes-screen"><div class="topbar"><button class="iconbtn" data-act="attributes-back">‹</button><div class="title">${esc(UI_COPY.attributesTitle)}</div><span></span></div><div class="remain"><div class="row"><span class="muted">剩余点数</span><b class="big-number">${run.points}</b></div><p class="tiny">${esc(UI_COPY.attributesLead)}</p></div><section class="card">${Object.entries(
+    return `<main class="screen attributes-screen"><div class="topbar"><button class="iconbtn" data-act="attributes-back" aria-label="返回出生信息">‹</button><div class="title">${esc(UI_COPY.attributesTitle)}</div><span></span></div><div class="remain"><div class="row"><span class="muted">剩余点数</span><b class="big-number">${run.points}</b></div><p class="tiny">${esc(UI_COPY.attributesLead)}</p></div><section class="card">${Object.entries(
       attrMeta
     )
       .map(
         ([key, [name, desc]]) =>
-          `<div class="attr-row"><div><div class="attr-name">${name}</div><div class="attr-desc">${desc}</div></div><div class="stepper"><button data-attr="${key}" data-delta="-1">−</button><b>${run.attrs[key]}</b><button data-attr="${key}" data-delta="1">＋</button></div></div>`
+          `<div class="attr-row"><div><div class="attr-name">${name}</div><div class="attr-desc">${desc}</div></div><div class="stepper"><button data-attr="${key}" data-delta="-1" aria-label="减少${name}">−</button><b>${run.attrs[key]}</b><button data-attr="${key}" data-delta="1" aria-label="增加${name}">＋</button></div></div>`
       )
       .join(
         ''
@@ -5007,7 +5233,7 @@
         .map((choice, index) => ({ choice, index }))
         .filter(({ choice }) => choiceVisible(choice)),
       cards = heldCards(state.run);
-    return `<div class="modal-wrap locked-modal"><section class="choice-sheet"><div class="handle"></div><div class="decision-emoji">${event.icon || '◎'}</div><h2>${esc(event.prompt)}</h2>${cards.length ? `<div class="card-hand"><span>${esc(UI_COPY.heldCardsLabel)}</span><div>${cards.map((card) => `<i>${esc(card.displayName)}</i>`).join('')}</div></div>` : ''}${
+    return `<div class="modal-wrap locked-modal"><section class="choice-sheet" role="dialog" aria-modal="true" aria-labelledby="choice-dialog-title" tabindex="-1"><div class="handle"></div><div class="decision-emoji">${event.icon || '◎'}</div><h2 id="choice-dialog-title">${esc(event.prompt)}</h2>${cards.length ? `<div class="card-hand"><span>${esc(UI_COPY.heldCardsLabel)}</span><div>${cards.map((card) => `<i>${esc(card.displayName)}</i>`).join('')}</div></div>` : ''}${
       Object.keys(actors).length
         ? `<p>${esc(UI_COPY.involvedLabel)}：${Object.values(actors)
             .map((item) =>
@@ -5041,11 +5267,11 @@
     if (!scene) return '';
     if (scene.kind === 'choice') return choiceSheet(run.currentDecision);
     const result = scene.kind === 'result';
-    return `<div class="modal-wrap locked-modal"><section class="choice-sheet episode-sheet"><div class="handle"></div><div class="eyebrow">${result ? '阶段结果' : '当前情况'} · ${run.age}岁</div><div class="decision-emoji">${result ? '✓' : '◇'}</div><h2>${result ? '这一步已经落定' : '先看清发生了什么'}</h2><p class="episode-copy">${esc(scene.text)}</p><button class="btn primary mt" data-act="episode-next">${result ? '记到账上' : '做出选择'}</button></section></div>`;
+    return `<div class="modal-wrap locked-modal"><section class="choice-sheet episode-sheet" role="dialog" aria-modal="true" aria-labelledby="episode-dialog-title" tabindex="-1"><div class="handle"></div><div class="eyebrow">${result ? '阶段结果' : '当前情况'} · ${run.age}岁</div><div class="decision-emoji">${result ? '✓' : '◇'}</div><h2 id="episode-dialog-title">${result ? '这一步已经落定' : '先看清发生了什么'}</h2><p class="episode-copy">${esc(scene.text)}</p><button class="btn primary mt" data-act="episode-next">${result ? '记到账上' : '做出选择'}</button></section></div>`;
   }
   function cardSheet(run) {
     const prompt = UI_COPY.cardPrompts?.[run.cardAge] || '这些年，你留下了什么？';
-    return `<div class="modal-wrap locked-modal"><section class="choice-sheet card-sheet card-draw-pulse"><div class="handle"></div><h2>${esc(prompt)}</h2><div class="choices">${run.cardOptions.map((card) => `<button class="choice clear-card" data-card="${card.id}"><span class="omen-icon">◇</span><span><span class="fate-title">${esc(card.displayName)}</span><span class="fate-text">${esc(card.text)}</span></span><span>›</span></button>`).join('')}</div></section></div>`;
+    return `<div class="modal-wrap locked-modal"><section class="choice-sheet card-sheet card-draw-pulse" role="dialog" aria-modal="true" aria-labelledby="card-dialog-title" tabindex="-1"><div class="handle"></div><h2 id="card-dialog-title">${esc(prompt)}</h2><div class="choices">${run.cardOptions.map((card) => `<button class="choice clear-card" data-card="${card.id}"><span class="omen-icon">◇</span><span><span class="fate-title">${esc(card.displayName)}</span><span class="fate-text">${esc(card.text)}</span></span><span aria-hidden="true">›</span></button>`).join('')}</div></section></div>`;
   }
   function statusDrawer(run) {
     const partner = {
@@ -5059,7 +5285,7 @@
       }[run.relationships.partnerStatus],
       liabilities = run.finance.liabilities.filter((item) => item.status !== 'settled'),
       episodes = activeEpisodes(run);
-    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>成长证据</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner} · 关系 ${Math.round(run.relationships.partnerBond)}</dd></div><div class="spec"><dt>子女</dt><dd>${
+    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>成长证据</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner} · 关系 ${Math.round(run.relationships.partnerBond)}</dd></div><div class="spec"><dt>子女</dt><dd>${
       run.relationships.childCount
         ? childPeople(run)
             .map((child) => `${personAge(child, run)}岁`)
@@ -5078,7 +5304,7 @@
   }
   function gameView() {
     const run = state.run;
-    return `<main class="screen stream-screen"><header class="game-header"><div class="row"><div><div class="age">${run.age}岁</div><div class="role">${esc(roleLine(run))}</div></div><button class="iconbtn" data-act="open-drawer">☰</button></div><div class="resource-strip"><div class="res"><span>现金</span><b>${money(run.finance.cash)}</b></div><div class="res"><span>净值</span><b>${money(run.finance.netWorth)}</b></div><div class="res"><span>身体</span><b>${Math.round(run.health.physical)}</b></div><div class="res"><span>精神</span><b>${Math.round(run.health.mental)}</b></div></div></header><div class="conflict-line">${esc(UI_COPY.coreConflictLabel)} · ${esc(DATA.conflicts.find((item) => item.id === run.mainConflict)?.name || '还不清楚')}</div><div class="life-stream" tabindex="0" data-act="advance">${streamRows(run)}<div class="stream-cursor"><i></i>${esc(UI_COPY.advancePrompt)}</div></div>${DEBUG ? `<div class="debug-panel">debug · seed ${esc(run.seed)} · choices ${run.decisionCount}/${run.targetDecisions}</div>` : ''}</main>${run.phase === 'decision' ? choiceSheet(run.currentDecision) : ''}${run.phase === 'episode' ? episodeSheet(run) : ''}${run.phase === 'card' ? cardSheet(run) : ''}${state.drawer ? statusDrawer(run) : ''}`;
+    return `<main class="screen stream-screen"><header class="game-header"><div class="row"><div><div class="age">${run.age}岁</div><div class="role">${esc(roleLine(run))}</div></div><button class="iconbtn" data-act="open-drawer" aria-label="打开状态面板">☰</button></div><div class="resource-strip"><div class="res"><span>现金</span><b>${money(run.finance.cash)}</b></div><div class="res"><span>净值</span><b>${money(run.finance.netWorth)}</b></div><div class="res"><span>身体</span><b>${Math.round(run.health.physical)}</b></div><div class="res"><span>精神</span><b>${Math.round(run.health.mental)}</b></div></div></header><div class="conflict-line">${esc(UI_COPY.coreConflictLabel)} · ${esc(DATA.conflicts.find((item) => item.id === run.mainConflict)?.name || '还不清楚')}</div><div class="life-stream" tabindex="0" data-act="advance">${streamRows(run)}<div class="stream-cursor"><i></i>${esc(UI_COPY.advancePrompt)}</div></div>${DEBUG ? `<div class="debug-panel">debug · seed ${esc(run.seed)} · choices ${run.decisionCount}/${run.targetDecisions}</div>` : ''}</main>${run.phase === 'decision' ? choiceSheet(run.currentDecision) : ''}${run.phase === 'episode' ? episodeSheet(run) : ''}${run.phase === 'card' ? cardSheet(run) : ''}${state.drawer ? statusDrawer(run) : ''}`;
   }
 
   function endingView() {
@@ -5097,10 +5323,10 @@
   }
   function archiveView() {
     const all = [...state.meta.histories, ...state.meta.legacyHistories];
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">人生档案</div><span></span></div><section class="card">${all.length ? all.map((item) => `<div class="archive-item"><div class="archive-title">《${esc(item.title || '旧人生')}》</div><div class="archive-meta">${item.age ?? '?'}岁 · ${esc(item.rarity || '旧版本')} · ${esc(item.familyName || '历史档案')}${item.seed ? ` · ${esc(item.seed)}` : ''}</div></div>`).join('') : '<p>还没有走完过一整局。</p>'}</section></main>`;
+    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">人生档案</div><span></span></div><section class="card">${all.length ? all.map((item) => `<div class="archive-item"><div class="archive-title">《${esc(item.title || '旧人生')}》</div><div class="archive-meta">${item.age ?? '?'}岁 · ${esc(item.rarity || '旧版本')} · ${esc(item.familyName || '历史档案')}${item.seed ? ` · ${esc(item.seed)}` : ''}</div></div>`).join('') : '<p>还没有走完过一整局。</p>'}</section></main>`;
   }
   function codexView() {
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">${esc(UI_COPY.codexTitle)} ${state.meta.codex.length}/${DATA.codex.length}</div><span></span></div><section class="card">${DATA.codex
+    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">${esc(UI_COPY.codexTitle)} ${state.meta.codex.length}/${DATA.codex.length}</div><span></span></div><section class="card">${DATA.codex
       .map((item) => {
         const unlocked = state.meta.codex.includes(item.id);
         return `<div class="codex-item ${unlocked ? '' : 'locked'}"><span class="codex-category">${esc(item.category)}</span><h3>${unlocked ? esc(item.name) : esc(UI_COPY.codexLocked)}</h3><p>${unlocked ? esc(UI_COPY.codexUnlocked) : esc(item.lockedHint)}</p></div>`;
@@ -5108,11 +5334,18 @@
       .join('')}</section></main>`;
   }
   function settingsView() {
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home">‹</button><div class="title">设置</div><span></span></div><section class="card"><button class="menu-item" data-act="toggle-haptic"><strong>轻触反馈</strong><span class="switch ${state.meta.settings.haptic ? 'on' : ''}"><i></i></span></button><button class="menu-item" data-act="export"><strong>导出存档</strong><span>›</span></button><button class="menu-item" data-act="clear-data"><strong class="danger-text">清除全部数据</strong><span>›</span></button></section><p class="tiny mt">版本更新只保留人生档案、图鉴、设置和跨局记录，不延续旧版本的活动人生。</p></main>`;
+    return `<main class="screen" aria-labelledby="settings-title"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title" id="settings-title">设置</div><span></span></div><section class="card"><button class="menu-item" data-act="toggle-haptic" aria-pressed="${state.meta.settings.haptic}"><strong>轻触反馈</strong><span>${state.meta.settings.haptic ? '已开启' : '已关闭'}</span><span class="switch ${state.meta.settings.haptic ? 'on' : ''}" aria-hidden="true"><i></i></span></button><button class="menu-item" data-act="export"><strong>导出存档</strong><span aria-hidden="true">›</span></button><button class="menu-item" data-act="clear-data"><strong class="danger-text">清除全部数据</strong><span aria-hidden="true">›</span></button></section><p class="tiny mt">版本更新只保留人生档案、图鉴、设置和跨局记录，不延续旧版本的活动人生。</p></main>`;
   }
 
   function render() {
     if (!state) return;
+    const previousDialog = app.querySelector('[role="dialog"]'),
+      active = document.activeElement;
+    if (!previousDialog && active instanceof HTMLElement && app.contains(active)) {
+      if (active.dataset.act) focusReturnSelector = `[data-act="${active.dataset.act}"]`;
+      else if (active.dataset.nav) focusReturnSelector = `[data-nav="${active.dataset.nav}"]`;
+      else focusReturnSelector = null;
+    }
     const views = {
       home: homeView,
       birth: birthView,
@@ -5130,6 +5363,14 @@
     requestAnimationFrame(() => {
       const stream = app.querySelector('.life-stream');
       if (stream) stream.scrollTop = stream.scrollHeight;
+      const dialog = app.querySelector('[role="dialog"]');
+      if (dialog) {
+        const first = dialog.querySelector('button:not([disabled]), [href], [tabindex="0"]');
+        (first || dialog).focus();
+      } else if (previousDialog && focusReturnSelector) {
+        app.querySelector(focusReturnSelector)?.focus();
+        focusReturnSelector = null;
+      }
     });
   }
   function showToast(message) {
@@ -5162,7 +5403,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.8-存档.json';
+    link.download = '人生尚未加载-v0.6.9-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }
@@ -5307,6 +5548,30 @@
     }
   });
   app.addEventListener('keydown', (event) => {
+    const dialog = app.querySelector('[role="dialog"]');
+    if (dialog && event.key === 'Tab') {
+      const focusable = [...dialog.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')];
+      if (!focusable.length) {
+        event.preventDefault();
+        dialog.focus();
+      } else {
+        const first = focusable[0], last = focusable.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+      return;
+    }
+    if (dialog && event.key === 'Escape' && state.drawer) {
+      event.preventDefault();
+      state.drawer = false;
+      render();
+      return;
+    }
     if (
       (event.key === 'Enter' || event.key === ' ') &&
       event.target.matches('[data-act="advance"]')
@@ -5364,6 +5629,7 @@
       );
       run.people.push(found);
       if (actor.personIdPath === 'relationships.activePartnerId') {
+        initializePartnerIdentity(run, found);
         initializePartnerHousingProfile(run, found);
         run.relationships.activePartnerId = found.id;
         run.relationships.partnerStatus =
@@ -5523,6 +5789,13 @@
             const record = state.run.episodes[id];
             return record?.status === 'active' ? queueEpisodeClosure(id, record, reason) : false;
           },
+          forceEpisodeClosures: (ids = [], reason = 'deadline') =>
+            queueEpisodeClosures(
+              ids.flatMap((id) => {
+                const record = state.run.episodes[id];
+                return record?.status === 'active' ? [{ id, record, reason }] : [];
+              })
+            ),
           healthIncident: (value = 20) => {
             healthIncident(state.run, { value, condition: 'debug' });
             syncDerived(state.run);
@@ -5549,6 +5822,16 @@
             render();
             return { result, housing: copy(state.run.housing) };
           },
+          applyCommands: (commands, context = { sourceEventId: 'debug', choiceId: 'debug' }) => {
+            const result = applyCommands(commands, context);
+            syncDerived(state.run);
+            render();
+            return { result, run: copy(state.run) };
+          },
+          conceptionProfile: () => ({
+            carrier: copy(conceptionCarrier(state.run)),
+            chance: conceptionChance(state.run),
+          }),
           eventWeight: (eventId, mainConflict = state.run.mainConflict) => {
             const event = INDEX.event.get(eventId);
             if (!event) throw new Error(`未知事件：${eventId}`);

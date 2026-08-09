@@ -1,9 +1,9 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { launchChromium } = require('./playwright-runtime.cjs');
+const { launchChromium } = require('../playwright-runtime.cjs');
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '../..');
 const FIXTURE = path.join(__dirname, 'fixtures', 'v0.6.0-runtime-equivalence.json');
 const URL = process.env.LIFE_URL || 'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY = 'life-unloaded-2026-v1';

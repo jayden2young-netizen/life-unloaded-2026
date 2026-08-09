@@ -5,7 +5,7 @@ const req=(all=[],any=[],none=[])=>({all,any,none});
 const move=(value)=>({type:'transitionHousing',target:'housing',value});
 const hc=(kind,text,resultText,consequenceText,value,extra={})=>c(
   text,resultText,consequenceText,
-  {...extra,housingChoiceKind:kind,effects:[...(extra.effects||[]),move({...value,kind:'choice',housingChoiceKind:kind})]}
+  {...extra,housingChoiceKind:kind,effects:[...(extra.effects||[]),move({residenceOnly:true,...value,kind:'choice',housingChoiceKind:kind})]}
 );
 const hd=(age,requirements,prompt,echoText,...choices)=>({age,requirements,prompt,echoText,choices});
 
@@ -39,7 +39,7 @@ const beats=[
   b('ordinary','备用钥匙交出去以后，谁先到家不再需要临时发消息。',{age:[20,75],requirements:req([p('housing.arrangement','eq','partner')])}),
   b('friction','共同租约续不续，不能只拿一句“再看看”拖过去。',{age:[22,70],requirements:req([p('housing.arrangement','eq','partner'),p('housing.status','eq','renting')])}),
   b('ordinary','家里谈到以后怎么照应，同住、住近一点和定期上门被分成了三行。',{age:[30,90],requirements:req([p('housing.arrangement','neq','multigenerational'),p('relationships.childCount','gte',1)])}),
-  b('friction','多代同住以后，早饭、洗澡和孩子写作业都在争同一段时间。',{age:[25,85],requirements:req([p('housing.arrangement','eq','multigenerational')])}),
+  b('friction','多代同住以后，早饭、洗澡和孩子写作业都在争同一段时间。',{age:[25,85],requirements:req([p('housing.arrangement','eq','multigenerational'),p('relationships.childCount','gte',1)]),actors:[{slot:'child',relationAny:['child','adoptedChild','stepChild'],alive:true,ageMin:5,ageMax:22,optional:false}]}),
   b('pressure','备用钥匙还在抽屉里，搬离日期和交接单却还没有定。',{age:[22,80],requirements:req([p('relationships.partnerStatus','eq','separated'),p('housing.arrangement','eq','partner')])}),
 
   b('ordinary','单位宿舍的钥匙和工牌一起领，离职时也要一起交。',{age:[18,65],requirements:req([p('housing.arrangement','eq','dormitory'),p('employment.employerType','eq','public')])}),
@@ -61,7 +61,7 @@ const decisions=[
 
   hd([18,38],req([], [p('employment.status','in',['employed','gig','selfEmployed'])]),
     '工作和回家的路线已经固定了一阵。押金、通勤和家里的门，都有各自的价钱。',
-    '第一次把住处写在自己名下以后，回家成了一个可以选择的方向。',
+    '那次是否搬出去，后来改变了通勤、存款和家里的边界。',
     hc('firstIndependent','离工作近一点，先合租','你核过合同和押金，把自己的东西收进一间能关门的房。','公共区域一直需要商量，通勤却短了。',{status:'renting',value:0,arrangement:'shared',stability:'conditional',costShare:'self',coResidentRefs:[],reason:'firstSharedHome'}),
     hc('firstIndependent','住远一点，保住独处','你接受更长的路，把合同只签在自己名下。','每天多坐几站，关门以后不用再解释作息。',{status:'renting',value:0,arrangement:'solo',stability:'conditional',costShare:'self',coResidentRefs:[],reason:'firstSoloHome'}),
     hc('firstIndependent','先留在家里住','你没有签新合同，通勤和家里的作息继续一起算。','存款没有先交给押金，房门后的边界仍要慢慢谈。',{status:'family',value:0,arrangement:'originFamily',region:'$homeRegion',stability:'stable',costShare:'supported',coResidentRefs:[],reason:'stayWithOriginFamily'})),
@@ -83,10 +83,10 @@ const decisions=[
 
   hd([24,68],req([p('housing.region','in',['tier1','tier2','county','town']),p('housing.status','notIn',['owned','mortgaged']),p('finance.available','gte',59800)], [p('employment.status','in',['employed','gig','selfEmployed'])]),
     '首付、交易费用、现有债务和接下来的收入都摊在桌上。房子能不能买，不只看银行愿不愿放款。',
-    '那次没有替未来房价下结论，只留下了一份真实合同。',
+    '那次决定没有替未来房价下结论，只把签约或暂缓如实留下。',
     hc('homePurchase','自己承担，签下这套房','首付和搬入缓冲从现金里扣掉，按揭本金与房屋价值分别记账。','钥匙属于你，月供也没有因为签约变轻。',{status:'mortgaged',arrangement:'solo',stability:'stable',accessibility:'standard',costShare:'self',coResidentRefs:[],reason:'homePurchase'}, {debtGate:'homePurchase'}),
     hc('homePurchase','两个人共同住，由我背按揭','伴侣住房收入只抵共同住处的一部分，按揭仍完整留在你名下。','关系没有替债务担保；共同分担停下时，余额还在。',{status:'mortgaged',arrangement:'partner',stability:'stable',accessibility:'standard',costShare:'joint',coResidentRefs:['$activePartner'],reason:'jointHomePurchase'}, {requirements:req([p('relationships.activePartnerId','truthy',true),p('relationships.partnerStatus','in',['dating','partnered','married'])]),debtGate:'homePurchase'}),
-    hc('homePurchase','继续租，把现金留在手里','你没有签购房合同，租约和可用现金继续留在当下。','后来搬走时，行李比房产交易简单；租住也仍有自己的账。',{status:'renting',value:0,arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[],reason:'rentInsteadOfBuy'}),
+    hc('homePurchase','继续租，把现金留在手里','你没有签购房合同，租约和可用现金继续留在当下。','后来搬走时，行李比房产交易简单；租住也仍有自己的账。',{status:'renting',value:0,arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[],reason:'rentInsteadOfBuy'},{requirements:req([p('housing.status','eq','renting')])}),
     hc('homePurchase','这次先不动住处','估价和贷款方案收进文件夹，你没有为了期限制造一笔交易。','错过的可能性留在那一页，现住处没有被改写。',{reason:'deferPurchase'})),
 
   hd([55,105],req([p('health.careNeed','gte',1),p('housing.accessibility','eq','standard'),p('housing.arrangement','neq','service')]),

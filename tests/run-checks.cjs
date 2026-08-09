@@ -9,41 +9,34 @@ const { spawn, spawnSync } = require('node:child_process');
 const ROOT = path.resolve(__dirname, '..');
 
 const CHECKS = Object.freeze({
-  correctness: 'tests/v6-correctness-guardrails.cjs',
-  browser: 'tests/v5-browser-smoke.cjs',
-  employment: 'tests/v5-employment-language-smoke.cjs',
-  'family-education': 'tests/v5-family-education-smoke.cjs',
-  'full-track': 'tests/v5-full-track-smoke.cjs',
-  'university-career': 'tests/v5-university-career-smoke.cjs',
-  cards: 'tests/v6-card-interaction-smoke.cjs',
-  debt: 'tests/v6-debt-enforcement-smoke.cjs',
-  'runtime-equivalence': 'tests/v6-runtime-equivalence-smoke.cjs',
+  correctness: 'tests/correctness-guardrails.cjs',
+  'core-browser': 'tests/core-browser-smoke.cjs',
+  'family-education': 'tests/family-education-regression.cjs',
+  episode: 'tests/episode-regression.cjs',
+  'university-career': 'tests/university-career-regression.cjs',
+  'card-interaction': 'tests/card-interaction-regression.cjs',
+  'debt-enforcement': 'tests/debt-enforcement-regression.cjs',
 });
 
 const CHECK_ORDER = Object.freeze(Object.keys(CHECKS));
 
 const PROFILES = Object.freeze({
   syntax: [],
-  fast: ['correctness'],
-  core: ['correctness', 'browser'],
-  cards: ['correctness', 'cards'],
-  debt: ['correctness', 'debt'],
+  fast: [],
+  contracts: ['correctness'],
+  core: ['correctness', 'core-browser'],
+  cards: ['correctness', 'card-interaction'],
+  debt: ['correctness', 'debt-enforcement'],
   family: ['correctness', 'family-education'],
   education: ['correctness', 'family-education', 'university-career'],
-  career: ['correctness', 'employment', 'university-career'],
-  episodes: ['correctness', 'browser', 'full-track'],
-  'runtime-refactor': ['correctness', 'browser', 'runtime-equivalence'],
+  career: ['correctness', 'core-browser', 'university-career'],
+  episodes: ['correctness', 'core-browser', 'episode'],
   full: CHECK_ORDER,
 });
 
 const TEST_PATH_TO_CHECK = new Map(
   Object.entries(CHECKS).map(([name, file]) => [file, name])
 );
-TEST_PATH_TO_CHECK.set(
-  'tests/fixtures/v0.6.0-runtime-equivalence.json',
-  'runtime-equivalence'
-);
-
 function usage() {
   return `Usage:
   node tests/run-checks.cjs --profile <name[,name...]>
@@ -178,8 +171,12 @@ function inferChangedPlan(paths) {
       directChecks.add(TEST_PATH_TO_CHECK.get(pathname));
       continue;
     }
-    if (pathname === 'tests/run-checks.cjs') {
+    if (pathname === 'smoke.js') {
       profiles.add('fast');
+      continue;
+    }
+    if (pathname === 'tests/run-checks.cjs') {
+      profiles.add('core');
       continue;
     }
     if (pathname.startsWith('tests/')) {
@@ -193,7 +190,7 @@ function inferChangedPlan(paths) {
       pathname.startsWith('content/zh-CN/tracks/habits') ||
       pathname.startsWith('content/zh-CN/tracks/leisure')
     ) {
-      profiles.add('fast');
+      profiles.add('contracts');
       continue;
     }
 
@@ -268,9 +265,7 @@ function inferChangedPlan(paths) {
     }
   }
 
-  if (generatedDataChanged && profiles.size === 0 && directChecks.size === 0) {
-    ambiguous.add('data.json');
-  }
+  if (generatedDataChanged) profiles.add('contracts');
 
   return {
     profiles: Array.from(profiles),
@@ -301,14 +296,24 @@ function walkScripts(directory, output) {
 }
 
 function syntaxFiles() {
-  const files = [
+  const requiredFiles = [
+    path.join(ROOT, 'smoke.js'),
     path.join(ROOT, 'game.js'),
     path.join(ROOT, 'runtime-content-contract.mjs'),
   ];
+  const missing = requiredFiles.filter(file => !fs.existsSync(file));
+  if (missing.length) {
+    throw new Error(
+      `[syntax] missing required entry: ${missing
+        .map(file => path.relative(ROOT, file))
+        .join(', ')}`
+    );
+  }
+  const files = [...requiredFiles];
   walkScripts(path.join(ROOT, 'content'), files);
   walkScripts(path.join(ROOT, 'tools'), files);
   walkScripts(path.join(ROOT, 'tests'), files);
-  return Array.from(new Set(files.filter(fs.existsSync))).sort();
+  return Array.from(new Set(files)).sort();
 }
 
 function runNode(args, options = {}) {
@@ -462,6 +467,11 @@ async function main(argv = process.argv.slice(2)) {
     }
     profiles = Array.from(new Set([...inferred.profiles, ...args.scopes]));
     checks = resolveChecks(profiles, inferred.directChecks);
+    if (ambiguous.length && checks.length === 0) {
+      throw new Error(
+        `ambiguous changed files require a scope with current checks: ${ambiguous.join(', ')}`
+      );
+    }
   } else {
     checks = resolveChecks(profiles);
   }

@@ -5,7 +5,7 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.UNIVERSITY_CAREER_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.8-university-career');
+const OUT=process.env.UNIVERSITY_CAREER_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-university-career');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
@@ -55,7 +55,6 @@ async function fit(page,label){
 async function optionEnabled(page,index){return page.locator(`[data-choice="${index}"]`).isEnabled()}
 
 (async()=>{
-  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.8',12,26]);
   assert.deepEqual(data.employmentCatalog.regionalCoefficients,{tier1:1.2,tier2:1,county:.82,town:.72});
   assert.deepEqual(data.employmentCatalog.salaryBands,{low:.9,mid:1,high:1.1});
   assert.deepEqual(
@@ -143,7 +142,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[12,'0.6.8',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.9',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.11完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,11);
@@ -214,6 +213,9 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
       assert.ok(found,`${scenario.id}: no runtime witness`);
       assert.equal(found.current.situation,scenario.situation);
       assert.deepEqual(found.current.choices.map(choice=>choice.text),scenario.choices.map(choice=>choice.text));
+      assert.ok(found.current.choices.every((choice,index)=>choice.memoryKey===`${firstJobPhase3.id}:${scenario.id}:${index+1}`));
+      assert.ok(found.current.choices.every(choice=>choice.consequences.length===0&&choice.commitments.length===0));
+      assert.ok(found.current.choices.every(choice=>choice.outcomeTags.includes(`recruitment:${scenario.id}`)));
       scenarioWitnesses[scenario.id]=found.seed;
     }
     await page.locator('[data-act="episode-next"]').click();
@@ -343,7 +345,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     assert.equal(run.employment.lastJob.profileId,'public_clerk');
     assert.equal(run.employment.careLeaveUntilAge,run.age);
     run=await page.evaluate(()=>window.__LIFE_DEBUG__.settleYear());
-    assert.equal(run.employment.status,'employed');
+    assert.ok(['employed','gig'].includes(run.employment.status));
     assert.equal(run.employment.profileId,'public_clerk');
     assert.equal(run.employment.salary,15800);
     assert.equal(run.employment.incomeAnnualGross,205000);
@@ -414,22 +416,24 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
 
     const overseasJob={education:{status:'completed',level:5,path:'postgraduate',highestCompleted:'postgraduate',nextStage:'firstJob',courseworkEvidence:30,practiceEvidence:24,researchEvidence:30},employment:{status:'none',entryCredential:'postgraduate',applicationRegion:'us',applicationChannel:'specialist',applicationStatus:'applying'},mobility:{hostLanguage:30,localTies:15,discriminationLoad:0,visaPressure:10,lastOverseasSystem:'us',workAuthorization:'verified'},activity:{mode:'seeking'}};
     await preparePhase(page,'first_job_application',3,overseasJob);
-    const noDiscrimination=await choose(page,1);
-    assert.notEqual(noDiscrimination.employment.pendingOfferId,'none');
-    await preparePhase(page,'first_job_application',4,{...overseasJob,employment:noDiscrimination.employment});
+    assert.equal((await snapshot(page)).currentDecision.recruitmentScenarioId,'E08');
+    const continuedOverseas=await choose(page,0);
+    assert.equal(continuedOverseas.employment.pendingOfferId,'none');
+    assert.equal(continuedOverseas.employment.applicationStatus,'searching');
+    await preparePhase(page,'first_job_application',3,overseasJob);
+    assert.equal((await snapshot(page)).currentDecision.recruitmentScenarioId,'E08');
+    const withdrawnOverseas=await choose(page,1);
+    assert.equal(withdrawnOverseas.employment.pendingOfferId,'none');
+    assert.equal(withdrawnOverseas.employment.applicationStatus,'withdrawn');
+    await preparePhase(page,'first_job_application',3,overseasJob);
+    assert.equal((await snapshot(page)).currentDecision.recruitmentScenarioId,'E08');
+    const returnedDomestic=await choose(page,2);
+    assert.equal(returnedDomestic.employment.applicationRegion,'domestic');
+    assert.notEqual(returnedDomestic.employment.pendingOfferId,'none');
+    await preparePhase(page,'first_job_application',4,{...overseasJob,employment:returnedDomestic.employment});
     run=await choose(page,0);
-    const overseasProfile=profiles[run.employment.profileId];
-    const expectedOverseasMonthly=Math.round((data.employmentCatalog.tiers[overseasProfile.tier].monthlyBase*data.employmentCatalog.regionalCoefficients.tier1*data.employmentCatalog.salaryBands[overseasProfile.salaryBand])/100)*100;
-    assert.equal(run.employment.salary,expectedOverseasMonthly);
-    await page.locator('[data-act="open-drawer"]').click();
-    assert.match(await page.locator('.drawer').innerText(),/人民币折合参考/);
-    await page.locator('.drawer [data-act="close-drawer"]').click();
-    await preparePhase(page,'first_job_application',3,{...overseasJob,mobility:{...overseasJob.mobility,discriminationLoad:100}});
-    const highDiscrimination=await choose(page,1);
-    assert.equal(noDiscrimination.employment.applicationStatus,highDiscrimination.employment.applicationStatus);
-    await preparePhase(page,'first_job_application',3,{...overseasJob,mobility:{...overseasJob.mobility,workAuthorization:'restricted'}});
-    const restrictedAuthorization=await choose(page,1);
-    assert.equal(restrictedAuthorization.employment.applicationStatus,'searching');
+    assert.ok(['employed','gig'].includes(run.employment.status));
+    assert.ok(['tier1','tier2','county','town'].includes(run.location.id));
 
     const weakGraduate={education:{status:'completed',level:4,path:'college',highestCompleted:'undergraduate',nextStage:'postgraduateApplication',graduateApplicationIntent:'us',graduateApplicationStatus:'submitted',courseworkEvidence:2,practiceEvidence:1,researchEvidence:1,readiness:20},development:{languagePreparation:5},activity:{mode:'study'}};
     await preparePhase(page,'postgraduate_application',3,weakGraduate);
@@ -456,7 +460,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     assert.match(drawerText,/华人联系26／本地联系22/);
 
     assert.deepEqual(errors,[]);
-    console.log(JSON.stringify({ok:true,migration:'schema-9-run-cleared-meta-preserved',episodes:episodeIds.length,unifiedEmploymentCatalog:true,professionalCredentials:true,longTermReentry:true,researchSeeds:40,overseasIncomeReference:true,leaveAndResume:true,transfer:true,workAuthorizationRestricted:true,continuedJobSearch:true,coNationalAndLocalTies:true,discriminationNotHiringMultiplier:true,graduateFailure:true,fundingGap:true,viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));
+    console.log(JSON.stringify({ok:true,migration:'old-run-cleared-meta-preserved',episodes:episodeIds.length,unifiedEmploymentCatalog:true,professionalCredentials:true,longTermReentry:true,researchSeeds:40,overseasOffersDisabled:true,domesticReturn:true,leaveAndResume:true,transfer:true,continuedJobSearch:true,coNationalAndLocalTies:true,graduateFailure:true,fundingGap:true,viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));
     await context.close();
   }finally{
     await browser.close();

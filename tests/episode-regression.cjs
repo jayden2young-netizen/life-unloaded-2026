@@ -5,7 +5,7 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.8-full-track');
+const OUT=process.env.FULL_TRACK_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-episode-regression');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
@@ -117,9 +117,6 @@ async function prepareFinal(page,id,event){
 }
 
 (async()=>{
-  assert.equal(data.version,'0.6.8');
-  assert.equal(data.schemaVersion,12);
-  assert.equal(data.contentRevision,26);
   assert.deepEqual(
     Object.fromEntries(['beat','decision','consequence','blackSwan'].map(kind=>[
       kind,
@@ -192,7 +189,7 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.6.8');
+    assert.equal(migrated.gameVersion,'0.6.9');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
@@ -209,11 +206,11 @@ async function prepareFinal(page,id,event){
     await openPlayable(page);
 
     const previousReleaseSave=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    previousReleaseSave.schemaVersion=11;
-    previousReleaseSave.meta.schemaVersion=11;
-    previousReleaseSave.gameVersion='0.6.7';
-    previousReleaseSave.run.schemaVersion=11;
-    previousReleaseSave.run.gameVersion='0.6.7';
+    previousReleaseSave.schemaVersion=12;
+    previousReleaseSave.meta.schemaVersion=12;
+    previousReleaseSave.gameVersion='0.6.8';
+    previousReleaseSave.run.schemaVersion=12;
+    previousReleaseSave.run.gameVersion='0.6.8';
     previousReleaseSave.run.age=42;
     const preservedAge=previousReleaseSave.run.age;
     await page.addInitScript(({key,value})=>{
@@ -223,10 +220,25 @@ async function prepareFinal(page,id,event){
     },{key:SAVE_KEY,value:previousReleaseSave});
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
-    const schema11Migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(schema11Migrated.run,null,'v0.6.7 Schema 11 active run was not cleared');
+    const schema12Migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
+    assert.equal(schema12Migrated.run,null,'v0.6.8 Schema 12 active run was not cleared');
     assert.notEqual(preservedAge,undefined);
     await openPlayable(page);
+
+    const inheritanceStart=eventFor('parental_inheritance',1);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:60,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,people:[
+      {id:'father_inheritance',relation:'father',alive:false,bornAt:-28,status:'deceased',bond:55},
+      {id:'mother_inheritance',relation:'mother',alive:true,bornAt:-26,status:'family',bond:55}
+    ]}));
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),inheritanceStart.id),inheritanceStart.id);
+    assert.match((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).sceneQueue[0].text,/另一位仍在世/);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({phase:'playing',sceneQueue:[],currentDecision:null,episodes:{parental_inheritance:{status:'inactive',phase:0,startedAt:null,nextPhaseAge:null,deadlineAge:null,route:null,boundActors:{},commitments:[],closureReason:null}},people:[
+      {id:'father_inheritance',relation:'father',alive:false,bornAt:-28,status:'deceased',bond:55},
+      {id:'mother_inheritance',relation:'mother',alive:false,bornAt:-26,status:'deceased',bond:55}
+    ]}));
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),inheritanceStart.id),inheritanceStart.id);
+    assert.match((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).sceneQueue[0].text,/父母都已去世/);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({phase:'playing',sceneQueue:[],currentDecision:null,episodes:{parental_inheritance:{status:'inactive',phase:0,startedAt:null,nextPhaseAge:null,deadlineAge:null,route:null,boundActors:{},commitments:[],closureReason:null}}}));
 
     const diversion=eventFor('secondary_diversion',1);
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({attrs:{intellect:10},education:{status:'completed',level:2,path:'middleSchool'},development:{learningHabit:90,attendance:96,teacherSupport:82,peerSupport:70,selfAdvocacy:75,careLoad:2,traumaLoad:2,routeKnowledge:75,languagePreparation:20}}));
@@ -267,6 +279,7 @@ async function prepareFinal(page,id,event){
       for(let index=startIndex;index<finalEvent.choices.length;index++){
         if(id==='secondary_diversion'&&index===3)await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({development:{routeExposure:['alternativeSchool']}}));
         if(finalEvent.episode.role!=='start')await prepareFinal(page,id,finalEvent);
+        if(id==='long_term_care'&&index===3)await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({later:{care:'familyOnly'}}));
         run=await chooseAndFinish(page,finalEvent,index);
         assert.equal(run.episodes[id].closureReason,finalEvent.choices[index].route,`${id}/${index}: closure route`);
         assert.ok(['resolved','abandoned'].includes(run.episodes[id].status),`${id}/${index}: terminal status`);
@@ -418,7 +431,149 @@ async function prepareFinal(page,id,event){
         housing:{...run.housing,history:[...(run.housing.history||[]),{age:69,year:2095,kind:'choice',reason:'usedLaterFit',sourceEventId:'used-later-fit',choiceId:'used-later-fit',housingChoiceKind:'laterFit',debtException:false,state}]}
       });
     });
-    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(longTermCareStartId),false,'long-term-care episode started after laterFit was already consumed');
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(longTermCareStartId),true,'care assessment was incorrectly blocked by an earlier housing choice');
+    const careStart=eventFor('long_term_care',1);
+    assert.ok(careStart.choices.every(choice=>!choice.effects.some(command=>command.type==='transitionHousing')),'care assessment consumed or rewrote housing');
+
+    const residenceOnly=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({
+        age:35,
+        finance:{cash:500000,liabilities:[{id:'school_mortgage',kind:'mortgage',principal:200000,rate:.04,status:'current',arrears:0,enforcementEligible:true,housingSecured:true}]},
+        employment:{status:'employed',incomeAnnualGross:120000,incomeStability:'fixed'},
+        housing:{status:'mortgaged',value:500000,arrangement:'solo',region:'tier2',stability:'stable',accessibility:'standard',costShare:'self',coResidentRefs:[],history:[]}
+      });
+      const transition=debug.transitionHousing({status:'supported',value:0,arrangement:'dormitory',region:'tier2',stability:'temporary',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'background',reason:'testSchoolResidence',residenceOnly:true},{sourceEventId:'test-school',choiceId:'test-school'});
+      const before=debug.snapshot().finance.liabilities.find(item=>item.id==='school_mortgage').principal;
+      debug.settleYear();
+      const after=debug.snapshot();
+      return{transition,before,after};
+    });
+    assert.equal(residenceOnly.transition.result.applied,true);
+    assert.equal(residenceOnly.transition.housing.status,'mortgaged','school residence erased property tenure');
+    assert.equal(residenceOnly.transition.housing.value,500000,'school residence erased property value');
+    assert.equal(residenceOnly.transition.housing.arrangement,'dormitory');
+    assert.ok(residenceOnly.after.finance.liabilities.find(item=>item.id==='school_mortgage').principal<residenceOnly.before,'mortgage stopped while the owner lived in a dormitory');
+
+    const transaction=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({
+        age:40,
+        education:{status:'completed'},
+        finance:{cash:42000,liabilities:[]},
+        housing:{status:'owned',value:600000,arrangement:'solo',region:'tier2',stability:'stable',accessibility:'standard',costShare:'self',coResidentRefs:[],history:[]}
+      });
+      const before=debug.snapshot();
+      const outcome=debug.applyCommands([
+        {type:'set',target:'education.status',value:'enrolled'},
+        {type:'add',target:'finance.cash',value:-8000},
+        {type:'transitionHousing',target:'housing',value:{status:'renting',value:0,arrangement:'solo',region:'tier2',stability:'conditional',accessibility:'standard',costShare:'self',coResidentRefs:[],kind:'choice',reason:'invalidPropertyDrop',housingChoiceKind:'laterFit'}}
+      ],{sourceEventId:'transaction-test',choiceId:'transaction-test'});
+      return{before,outcome,after:debug.snapshot()};
+    });
+    assert.equal(transaction.outcome.result.ok,false,'invalid housing command unexpectedly committed');
+    assert.equal(transaction.after.education.status,transaction.before.education.status,'failed command group left an enrollment write');
+    assert.equal(transaction.after.finance.cash,transaction.before.finance.cash,'failed command group left a cash write');
+    assert.deepEqual(transaction.after.housing,transaction.before.housing,'failed command group left housing history or state');
+    assert.deepEqual(transaction.after.finance.liabilities,transaction.before.finance.liabilities,'failed command group left debt writes');
+    const contractTransaction=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__,before=debug.snapshot(),outcome=debug.applyCommands([
+        {type:'add',target:'finance.cash',value:9999},
+        {type:'unknownCommand',target:'finance.cash',value:1}
+      ],{sourceEventId:'contract-transaction-test',choiceId:'contract-transaction-test'}),after=debug.snapshot();
+      return{before,outcome,after};
+    });
+    assert.equal(contractTransaction.outcome.result.ok,false,'invalid contract command unexpectedly committed');
+    assert.equal(contractTransaction.after.finance.cash,contractTransaction.before.finance.cash,'contract failure left an earlier cash write');
+    const businessCommandTransaction=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__,before=debug.snapshot(),outcome=debug.applyCommands([
+        {type:'add',target:'finance.cash',value:4321},
+        {type:'applyEmploymentProfile',target:'employment',value:'profile-that-does-not-exist'}
+      ],{sourceEventId:'business-command-transaction',choiceId:'business-command-transaction'}),after=debug.snapshot();
+      return{before,outcome,after};
+    });
+    assert.equal(businessCommandTransaction.outcome.result.ok,false,'failed business helper unexpectedly committed');
+    assert.equal(businessCommandTransaction.after.finance.cash,businessCommandTransaction.before.finance.cash,'failed business helper left an earlier cash write');
+    const handoverTransaction=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({employment:{status:'unemployed',incomeAnnualGross:0,salary:0}});
+      const before=debug.snapshot(),outcome=debug.applyCommands([
+        {type:'add',target:'finance.cash',value:4321},
+        {type:'completeEmploymentHandover',target:'employment',value:'threeMonths'}
+      ],{sourceEventId:'handover-transaction',choiceId:'handover-transaction'});
+      return{before,outcome,after:debug.snapshot()};
+    });
+    assert.equal(handoverTransaction.outcome.result.ok,false,'invalid employment handover unexpectedly committed');
+    assert.equal(handoverTransaction.after.finance.cash,handoverTransaction.before.finance.cash,'failed handover left an earlier cash write');
+
+    const zeroIncomeMortgage=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({
+        employment:{status:'unemployed',incomeAnnualGross:0,salary:0},
+        finance:{lastIncome:180000,liabilities:[{id:'zero_income_mortgage',kind:'mortgage',principal:300000,rate:.04,status:'current',arrears:0,enforcementEligible:true,housingSecured:true}]}
+      });
+      return debug.snapshot().finance.mortgagePaymentStress;
+    });
+    assert.equal(zeroIncomeMortgage,true,'zero-income mortgage holder did not enter payment stress');
+
+    const gigIncomeMortgage=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({
+        employment:{status:'gig',incomeAnnualGross:180000,salary:0},
+        finance:{lastIncome:180000,liabilities:[{id:'gig_income_mortgage',kind:'mortgage',principal:300000,rate:.04,status:'current',arrears:0,enforcementEligible:true,housingSecured:true}]}
+      });
+      return debug.snapshot().finance.mortgagePaymentStress;
+    });
+    assert.equal(gigIncomeMortgage,false,'stable gig income was ignored by mortgage stress derivation');
+
+    const careerIdentity=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({employment:{status:'employed',profileId:'doctor',career:'医生',incomeAnnualGross:240000,salary:20000,workHours:48,arrangement:'onsite'},activity:{mode:'work'}});
+      return debug.applyCommands([{type:'scaleEmployment',target:'employment',value:.55}],{sourceEventId:'semi-retirement',choiceId:'semi-retirement'}).run;
+    });
+    assert.equal(careerIdentity.employment.profileId,'doctor','semi-retirement replaced the player career');
+    assert.equal(careerIdentity.employment.career,'医生');
+    assert.equal(careerIdentity.employment.arrangement,'reducedHours');
+    assert.equal(careerIdentity.activity.mode,'flexible');
+
+    const inheritanceShares=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__,base=debug.snapshot(),parent=(id,relation,alive)=>({id,relation,alive,bornAt:-30,gender:relation==='father'?'male':'female',health:0,bond:50});
+      const evaluate=(people)=>{
+        debug.patchRun({people,originHousehold:{...base.originHousehold,assets:200000,debt:0},finance:{cash:0,liabilities:[]}});
+        return debug.applyCommands([{type:'resolveInheritance',target:'originHousehold.assets',value:'accepted'}],{sourceEventId:'inheritance-test',choiceId:`inheritance-${people.length}`}).run.finance.cash;
+      };
+      return{
+        one:evaluate([parent('father','father',false),parent('mother','mother',true)]),
+        sole:evaluate([parent('mother','mother',false)]),
+        both:evaluate([parent('father','father',false),parent('mother','mother',false)]),
+        sibling:evaluate([parent('father','father',false),parent('mother','mother',false),{id:'sibling',relation:'sibling',alive:true,bornAt:2,gender:'female',health:70,bond:50}])
+      };
+    });
+    assert.ok(inheritanceShares.both>inheritanceShares.one,'two deceased parents did not change the transferable estate share');
+    assert.equal(inheritanceShares.sole,inheritanceShares.both,'sole registered parent did not transfer the full deceased-parent share');
+    assert.ok(inheritanceShares.sibling<inheritanceShares.both,'living sibling did not reduce the player inheritance share');
+
+    const lateSeparation=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__,run=debug.snapshot(),partner={id:'late_partner',relation:'partner',alive:true,bornAt:4,gender:run.gender==='female'?'male':'female',health:70,bond:65,housingIncomeAnnualGross:80000,housingIncomeStability:'fixed'};
+      debug.patchRun({people:[...run.people.filter(item=>item.id!==partner.id),partner],relationships:{partnerStatus:'partnered',activePartnerId:partner.id,lastPartnerId:null}});
+      return debug.applyCommands([{type:'transitionPartner',target:'people',value:'exPartner'}],{sourceEventId:'late-separation',choiceId:'late-separation'}).run;
+    });
+    assert.equal(lateSeparation.relationships.activePartnerId,null,'late separation left an active partner reference');
+    assert.equal(lateSeparation.people.find(item=>item.id==='late_partner').relation,'exPartner');
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:45,naturalDeathAge:105,yearStarted:true,sceneQueue:[],phase:'playing',currentDecision:null,
+      episodes:{
+        shop_opening:{status:'active',phase:2,startedAt:43,nextPhaseAge:44,deadlineAge:45,route:'testing',boundActors:{},commitments:[],closureReason:null},
+        career_break:{status:'active',phase:2,startedAt:43,nextPhaseAge:44,deadlineAge:45,route:'self',boundActors:{},commitments:[],closureReason:null}
+      }
+    }));
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceEpisodeClosures(['shop_opening','career_break'],'deadline')),true);
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).sceneQueue.length,2,'same-age closures were not collected together');
+    await page.locator('[data-act="episode-next"]').click();
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age,45,'the first of two same-age closures advanced the year');
+    await page.locator('[data-act="episode-next"]').click();
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age,46,'two same-age closures did not advance exactly once');
 
     const affordabilityCashGate=await page.evaluate(()=>{
       const debug=window.__LIFE_DEBUG__;
@@ -461,6 +616,7 @@ async function prepareFinal(page,id,event){
       const debug=window.__LIFE_DEBUG__,run=debug.snapshot();
       debug.patchRun({
       age:35,
+      location:{id:'tier2',name:'二线城市',weight:24,mods:{cost:112,education:108,medical:108,network:106,mobility:108}},
       finance:{cash:500000,liabilities:[]},
       employment:{status:'employed',incomeAnnualGross:150000,incomeStability:'fixed'},
       relationships:{activePartnerId:'housing_partner',partnerStatus:'partnered'},

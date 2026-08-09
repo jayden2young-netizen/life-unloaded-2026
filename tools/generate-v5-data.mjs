@@ -36,7 +36,7 @@ const registrationGroups=[
 for(const [domain,registrations] of registrationGroups)
   for(const registration of registrations)
     registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
-const VERSION='0.6.8',SCHEMA_VERSION=12,CONTENT_REVISION=26;
+const VERSION='0.6.9',SCHEMA_VERSION=13,CONTENT_REVISION=27;
 const debtSourceCatalog=Object.freeze({
   mortgage:Object.freeze({label:'住房按揭',enforcementEligible:true,housingSecured:true}),
   consumer:Object.freeze({label:'消费借款',enforcementEligible:true,housingSecured:false}),
@@ -50,6 +50,7 @@ const stageNames=Object.keys(stages);
 const stageFor=(min,max)=>stageNames.filter(name=>Math.max(min,stages[name][0])<=Math.min(max,stages[name][1]));
 const p=(path,op,value)=>({path,op,value});
 const c=(type,target,value,extra={})=>({type,target,value,...extra});
+const secretReq=(all=[],any=[],none=[])=>({all,any,none});
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 
 const locations=[
@@ -106,8 +107,70 @@ const familyArchetypes=familyNames.map((name,index)=>{
   return{id:`family_${String(index+1).padStart(2,'0')}`,name,familyClass,weight:10+index%4,locationAffinity:rural?['county','town']:index%3===0?['tier1','tier2']:['tier2','county'],parentCount:single?1:2,siblingRange:multi?[2,3]:index%4===0?[1,2]:[0,1],housingOptions:rural?['自建房','老宅']:index%3===0?['租住房','按揭商品房']:['单位住房','老城区住房','按揭商品房'],assetRange:rural?[30000,260000]:[20000+(index%5)*20000,180000+(index%4)*120000],debtRange:debt?[80000,480000]:[0,90000],cashflow,control,expression,careBurden,riskTolerance:clamp(24+(index*17)%68,15,90),digitalLiteracy,parentJobs:familyJobsFor(name,familyClass),contextDefaults,advantages:[contextDefaults.resources>=68?'教育和试错预算较充足':contextDefaults.emotionalSafety>=58?'关系中有人愿意回应':'家里仍保留可用的生活经验',contextDefaults.educationCapital>=65?'较早接触升学信息':contextDefaults.housingStability>=62?'住处相对稳定':'能适应环境变化'],risks:[contextDefaults.resources<40?'额外费用会压缩选择':contextDefaults.parentPresence<45?'照顾者经常缺席':'家庭期待会进入选择',contextDefaults.emotionalSafety<45?'表达与控制形成压力':careBurden>65?'照护责任较重':'现金流仍需核对'],lateEcho:index%2?'晚年时，小时候谁做什么、谁不出声——又回到饭桌上了。':'父母留下的一样东西，让你重新想了一遍什么是家。',contentRevision:CONTENT_REVISION};
 });
 
-const secretSubjects=['一笔未结清的经营贷款','父亲替亲戚做过的担保','母亲中断过的升学计划','一套没有完成过户的房子','一段长期隐瞒的失业期','祖辈留下的慢性病史','父母分开保管的账本','一笔被当作存款的保险','从未告诉你的同父异母手足','家里替别人垫付的医药费','小店真实的月度流水','父母婚姻中的长期分居','被借走多年没有归还的钱','一次失败加盟留下的设备','家里一直代管的压岁钱','一份缴费年限不足的社保记录','父母曾拒绝的一次迁城机会','旧房实际存在的产权争议','母亲长期服药的原因','父亲戒酒前的那几年','亲戚名下却由家里偿还的车','一份被藏起的录取通知书','祖父母真正承担的育儿费用','家里给弟妹预留的教育金','父母没有说出口的离婚协议','一次工伤后的补偿款','家里坚持保留的小额现金','被注销前仍欠费的公司','父母替你准备的首付款来源','一笔无法继承的集体资产','家里真正依赖的兼职收入','一张写错受益人的保单','亲戚口中的稳赚项目','父母共同隐瞒的信用卡账单','一处长期空置的县城门面','家庭成员真实的照护诊断','父亲交出的银行卡密码','母亲保存的租房收据','一次没有报警的网络诈骗','家里不愿提起的借名买房','一项被夸大的职业资格','祖辈口头承诺的遗产','小生意欠下的供应商货款','父母彼此都以为对方知道的秘密'];
-const familySecrets=secretSubjects.map((subject,index)=>({id:`secret_${String(index+1).padStart(2,'0')}`,name:subject,text:`你看到了${subject}的原始凭据——家里说过的话，第一次和数字对上了。`,age:15+(index*7)%51,familyClasses:[familyClasses[index%5],familyClasses[(index+2)%5]],requirements:{all:[],any:[],none:[]},effects:[index%4===0?c('add','originHousehold.debt',25000):c('add','finance.cash',(index%3-1)*6000),c('add','pressures.family',index%2?6:-2),c('add','relationships.originBond',index%3?-3:2),c('tag','history',`secret:${index+1}`)],contentRevision:CONTENT_REVISION}));
+const secretBlueprints=[
+  ['未结清的经营贷款','催款单上的本金比家里一直说的多，借款人确实是父母一方。','debt',35],
+  ['替亲戚做过的担保','合同里写着连带责任，但眼下还没有发生追偿。','guarantee',28],
+  ['一位家长中断过的升学计划','旧录取通知和退学材料夹在一起，当年不是主动放弃。','education',18],
+  ['没有完成过户的房子','付款收据存在，登记姓名却不是家里任何一个人。','property',32],
+  ['长期隐瞒的失业期','那几年所谓的出差，其实是零工和一次次面试。','income',22],
+  ['祖辈留下的慢性病史','病历能提醒你复查，却不能替任何人下诊断。','health',30],
+  ['父母分开保管的账本','两本账记的是同一段日子，缺口来自谁承担了哪些开销。','relationship',24],
+  ['被当作存款的保险','保单有退保损失和受益人，不是随取随用的存款。','asset',25],
+  ['一封未确认的寻亲来信','来信只说有人曾登记询问，现有材料还不能确认新的亲属关系。','relationship',20],
+  ['替别人垫付的医药费','转账和票据都在，但对方从未承诺何时归还。','asset',27],
+  ['小店真实的月度流水','收款额看着不少，扣去进货和房租后只剩很薄一层。','company',21],
+  ['父母婚姻中的长期分居','两地租房和交通记录把那段沉默的时间标了出来。','relationship',26],
+  ['多年未归还的借款','借条还在，约定日期已经过去，欠款人也没有继续确认。','asset',29],
+  ['失败加盟留下的设备','仓库里的机器仍属家里，转卖价值远低于原合同价格。','company',31],
+  ['家里代管的压岁钱','存取记录能算清一部分去向，剩下的不能再含糊成保管。','asset',18],
+  ['缴费年限不足的社保记录','断缴月份一目了然，未来待遇需要按真实记录重算。','income',40],
+  ['父母拒绝过的迁城机会','调动函是真的，放弃原因却同时写着照护和住房。','relationship',23],
+  ['旧房的产权争议','登记、付款和实际居住不是同一个人，房子不能当成可随时出售的资产。','property',36],
+  ['一位家长长期服药的原因','处方记录解释了用药用途，也提醒家里别再代为停药。','health',19],
+  ['一位家长戒酒前的几年','复诊记录和请假单留下的是一次反复恢复的过程。','health',20],
+  ['亲戚名下却由家里偿还的车','还款从家里账户扣，车辆登记却不在父母名下。','debt',30],
+  ['被藏起的录取通知书','学校盖章和报到期限都是真的，家里当年没有把选择交给她。','education',17],
+  ['祖父母承担的育儿费用','零散转账累积成一笔不小的支出，照护从来不是免费的。','care',25],
+  ['给弟妹预留的教育金','账户用途写得明确，这笔钱不属于你的个人缓冲。','asset',18],
+  ['没有说出口的离婚协议','未签字的草稿列着住处和抚养安排，但婚姻当时并未因此自动结束。','relationship',21],
+  ['工伤后的补偿款','结算单写清用途，其中一部分已经用于后续治疗。','asset',33],
+  ['家里坚持保留的小额现金','信封上的数目不大，是为停工或看病留下的应急钱。','asset',16],
+  ['被注销前仍欠费的公司','注销材料没有抹掉供应商和服务费的尾款。','companyDebt',37],
+  ['父母准备的首付款来源','其中一部分来自借款，不是无条件赠与你的现金。','debt',26],
+  ['无法继承的集体资产','资格跟成员身份绑定，口头承诺不能把它变成个人遗产。','property',45],
+  ['家里依赖的兼职收入','几笔稳定小额转账填上了日常账本里长期存在的缺口。','income',19],
+  ['写错受益人的保单','受益人姓名与家里理解的不一致，需要由投保人依法更正。','asset',34],
+  ['亲戚口中的稳赚项目','收款账户属于个人，材料里没有受监管产品应有的信息。','fraud',23],
+  ['共同隐瞒的信用卡账单','最低还款持续了很久，余额并没有随着每月付款真正消失。','debt',24],
+  ['长期空置的县城门面','产权存在，但欠费、空置和维修让它不能等同于现金。','property',42],
+  ['家庭成员的照护诊断','评估写清了哪些日常需要帮助，也写清了仍能自己做的事。','care',38],
+  ['一位家长交出的银行卡密码','密码交给家人并不等于账户所有权转移。','relationship',36],
+  ['一位家长保存的租房收据','一叠收据证明那几年家里反复搬家，并非一直住在原来的房子。','property',20],
+  ['没有报警的网络诈骗','转账路径还在，追回可能性却不能靠一句保证。','fraud',27],
+  ['借名买房','付款人、登记人和实际还款人各不相同，任何人都不能凭口头说法直接处置。','property',41],
+  ['被夸大的职业资格','证书只覆盖短期培训，不能支持家里一直使用的职业称谓。','education',18],
+  ['祖辈口头承诺的遗产','没有遗嘱或登记支持，承诺不能先计入家里的资产。','relationship',44],
+  ['小生意欠下的供应商货款','对账单能逐笔确认，停业没有让这些货款自动消失。','companyDebt',32],
+  ['彼此都以为对方知道的事','两个人各自沉默多年，真相没有指向新的财产或亲属。','relationship',35],
+];
+const secretSpec={
+  debt:{classes:['smallBusiness','working','newUrban'],requirements:secretReq(),effects:[c('add','originHousehold.debt',25000),c('add','pressures.family',6),c('add','relationships.originBond',-2)]},
+  guarantee:{classes:['smallBusiness','working','newUrban'],requirements:secretReq(),effects:[c('add','pressures.family',4),c('add','relationships.originBond',-1)]},
+  companyDebt:{classes:['smallBusiness'],requirements:secretReq(),effects:[c('add','originHousehold.debt',32000),c('add','pressures.family',7)]},
+  asset:{classes:['working','professional','smallBusiness'],requirements:secretReq([p('originHousehold.assets','gte',1)]),effects:[c('add','pressures.family',2),c('add','relationships.originBond',1)]},
+  property:{classes:['working','professional','smallBusiness','rural'],requirements:secretReq(),effects:[c('add','pressures.family',5),c('add','relationships.originBond',-2)]},
+  company:{classes:['smallBusiness'],requirements:secretReq(),effects:[c('add','pressures.family',4),c('add','relationships.originBond',-1)]},
+  income:{classes:['working','newUrban','professional'],requirements:secretReq(),effects:[c('add','pressures.family',3),c('add','relationships.originBond',1)]},
+  education:{classes:['working','professional','rural'],requirements:secretReq(),effects:[c('add','development.routeKnowledge',4),c('add','relationships.originBond',-1)]},
+  health:{classes:['working','professional','rural','newUrban'],requirements:secretReq(),effects:[c('add','pressures.body',2),c('add','relationships.originBond',1)]},
+  care:{classes:['working','professional','rural','newUrban'],requirements:secretReq(),effects:[c('add','pressures.family',4),c('add','relationships.originBond',2)]},
+  fraud:{classes:['working','smallBusiness','newUrban'],requirements:secretReq(),effects:[c('add','originHousehold.debt',12000),c('add','pressures.family',6)]},
+  relationship:{classes:[...familyClasses],requirements:secretReq(),effects:[c('add','pressures.family',3),c('add','relationships.originBond',-1)]},
+};
+const familySecrets=secretBlueprints.map(([name,text,kind,age],index)=>{
+  const spec=secretSpec[kind];
+  return{id:`secret_${String(index+1).padStart(2,'0')}`,name,text,age,familyClasses:spec.classes,requirements:spec.requirements,effects:[...spec.effects,c('tag','history',`secret:${index+1}`)],contentRevision:CONTENT_REVISION};
+});
 
 const track=(label,lane,age,gate,objects,actions,prompts,verbs)=>({label,lane,age,gate,objects,actions,prompts,verbs});
 const TRACKS={};
@@ -146,7 +209,7 @@ const requirementsFor=id=>({all:[...TRACKS[id].gate],any:[],none:[]});
 const actorsFor=(id,index,kind='beat')=>{
   const role=index%8;
   if(id==='partnership'&&role>0){const statuses=[null,['dating','partnered','married'],['dating','partnered'],['partnered','married'],['dating','partnered','married'],['partnered','married','separated'],['divorced','separated'],['dating','partnered','married']][role];return[{slot:'partner',relation:'partner',alive:true,statusAny:statuses,optional:false}]}
-  if(id==='children'&&(kind==='beat'?role>0:role>1)){const ranges=kind==='beat'?[null,[3,7],[5,15],[6,18],[12,19],[16,25],[18,30],[25,60]]:[null,null,[0,5],[5,13],[12,19],[16,26],[18,26],[25,60]],range=ranges[role];return[{slot:'child',relationAny:['child','adoptedChild','stepChild'],alive:true,ageMin:range[0],ageMax:range[1],optional:false}]}
+  if(id==='children'&&kind==='decision'&&role>1){const ranges=[null,null,[0,5],[5,13],[12,19],[16,26],[18,26],[25,60]],range=ranges[role];return[{slot:'child',relationAny:['child','adoptedChild','stepChild'],alive:true,ageMin:range[0],ageMax:range[1],optional:false}]}
   return[];
 };
 const episodeActorsFor=authored=>{
@@ -293,10 +356,6 @@ for(const id of trackOrder){
       continue;
     }
     const requirements=mergeRequirements(requirementsFor(id),authoredBeat.requirements),actors=(Object.hasOwn(authoredBeat,'actors')?authoredBeat.actors:actorsFor(id,stableIndex,'beat')).map(actor=>({...actor})),role=stableIndex%8,ageRange=authoredBeat.age||TRACK_NODE_AGES[id][role];
-    if(id==='children'&&role===0&&stableIndex>0){
-      const range=stableIndex===16?[16,25]:[18,60];
-      actors.push({slot:'child',relationAny:['child','adoptedChild','stepChild'],alive:true,ageMin:range[0],ageMax:range[1],optional:false});
-    }
     if(id==='employment')requirements.all.push(p('employment.status','eq','employed'));
     if(id==='public')requirements.all.push(p('employment.employerType','eq','public'));
     if(id==='remote')requirements.any.push(p('employment.arrangement','in',['remote','hybrid']),p('mobility.mode','in',['domesticNomad','overseasNomad']));
@@ -310,7 +369,11 @@ for(const id of trackOrder){
       if(stableIndex===0)requirements.all.push(p('relationships.pregnancyStatus','in',['confirmed','continued']));
       else requirements.all.push(p('relationships.childCount','gte',1));
     }
-    if(id==='partnership'&&stableIndex%8===0)requirements.all.push(p('relationships.partnerStatus','in',['none','divorced','widowed']));
+    if(id==='partnership'){
+      const separatedBeat=[17,24,31].includes(stableIndex);
+      requirements.all.push(p('relationships.partnerStatus','in',separatedBeat?['divorced','separated']:['dating','partnered','married']));
+      if(!separatedBeat&&!actors.length)actors.push({slot:'partner',relation:'partner',alive:true,personIdPath:'relationships.activePartnerId',optional:false});
+    }
     if(id==='finance'&&[1,3,7].includes(role))requirements.all.push(p('finance.totalDebt','gte',1));
     if(id==='finance'&&[5,6].includes(role))requirements.all.push(p('finance.hasArrears','eq',true));
     const effects=Object.hasOwn(authoredBeat,'effects')?[...authoredBeat.effects]:beatEffects(id,stableIndex),intensity=authoredBeat.intensity??(authoredBeat.recurrence?'low':stableIndex<8?'low':stableIndex<24?'medium':'high');
@@ -496,8 +559,8 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     if(episode.phase===4){
       if(option===0||option===1){if(option===1)set('education.entryPermitReady',true);effects.push(c('transition','education','college',{status:'enrolled'}));set('education.enrollmentRegion',option===0?'domestic':'overseas');set('education.applicationStatus','enrolled');set('education.nextStage','undergraduate');set('activity.mode','study')}
       else{set('education.applicationStatus',option===2?'vocationalExit':'withdrawn');set('education.applicationResult','none');set('education.domesticOffer',false);set('education.overseasOffer',false);set('education.domesticOfferType','none');set('education.overseasOfferType','none');set('education.fundingStatus','none');set('education.entryPermitReady',false);set('education.scholarshipAwarded',false);set('education.enrollmentRegion','none');set('education.nextStage','workOrVocational');set('activity.mode','seeking')}
-      if(option===0)housing({status:'supported',arrangement:'dormitory',region:'tier2',stability:'temporary',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'background',reason:'domesticUndergraduateEnrollment'});
-      if(option===1)housing({status:'supported',arrangement:'dormitory',region:'$educationRegion',stability:'temporary',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'background',reason:'overseasUndergraduateEnrollment'});
+      if(option===0)housing({status:'supported',arrangement:'dormitory',region:'tier2',stability:'temporary',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'background',reason:'domesticUndergraduateEnrollment',residenceOnly:true});
+      if(option===1)housing({status:'supported',arrangement:'dormitory',region:'$educationRegion',stability:'temporary',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'background',reason:'overseasUndergraduateEnrollment',residenceOnly:true});
     }
   }
   if(episode?.id==='undergraduate_domestic'){
@@ -532,7 +595,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     if(episode.phase===1){set('education.graduateApplicationIntent',['domestic','us','europe','none'][option]);set('education.graduateApplicationStatus',option===3?'withdrawn':'planning');set('education.nextStage',option===3?'firstJob':'postgraduateApplication');set('employment.entryCredential','bachelor');set('activity.mode',option===3?'seeking':'study')}
     if(episode.phase===2){add('education.researchEvidence',[7,2,3,0][option]);add('education.practiceEvidence',[1,7,2,0][option]);add('education.courseworkEvidence',[2,2,5,0][option]);add('development.languagePreparation',[0,0,6,0][option]);if(option===3){set('education.graduateApplicationStatus','withdrawn');set('education.nextStage','firstJob');set('activity.mode','seeking')}else set('education.graduateApplicationStatus','submitted')}
     if(episode.phase===3){if(option===0)effects.push(c('resolveGraduateApplication','education','domestic'));if(option===1)effects.push(c('resolveGraduateApplication','education','overseas'));if(option===2){set('education.graduateApplicationStatus','waitlisted');set('education.graduateApplicationResult','waitlisted')}if(option===3){set('education.graduateApplicationStatus','notAdmitted');set('education.graduateApplicationResult','none');set('education.graduateOfferRegion','none');set('education.graduateFundingStatus','none');set('education.nextStage','firstJob');set('activity.mode','seeking')}}
-    if(episode.phase===4){if(option<3){const system=['domestic','us','europe'][option];effects.push(c('transition','education','postgraduate',{status:'enrolled'}));set('education.postgraduateSystem',system);set('education.graduateApplicationStatus','enrolled');set('education.graduateApplicationResult','enrolled');set('education.nextStage','postgraduate');if(system!=='domestic'){set('mobility.lastOverseasSystem',system);set('mobility.mode','studyAbroad')}set('activity.mode','study');housing({status:'supported',arrangement:'dormitory',region:['tier2','us','europe'][option],stability:'temporary',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'background',reason:['domestic','us','europe'][option]+'PostgraduateEnrollment'})}else{set('education.graduateApplicationStatus','withdrawn');set('education.nextStage','firstJob');set('employment.entryCredential','bachelor');set('activity.mode','seeking')}}
+    if(episode.phase===4){if(option<3){const system=['domestic','us','europe'][option];effects.push(c('transition','education','postgraduate',{status:'enrolled'}));set('education.postgraduateSystem',system);set('education.graduateApplicationStatus','enrolled');set('education.graduateApplicationResult','enrolled');set('education.nextStage','postgraduate');if(system!=='domestic'){set('mobility.lastOverseasSystem',system);set('mobility.mode','studyAbroad')}set('activity.mode','study');housing({status:'supported',arrangement:'dormitory',region:['tier2','us','europe'][option],stability:'temporary',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'background',reason:['domestic','us','europe'][option]+'PostgraduateEnrollment',residenceOnly:true})}else{set('education.graduateApplicationStatus','withdrawn');set('education.nextStage','firstJob');set('employment.entryCredential','bachelor');set('activity.mode','seeking')}}
   }
   if(['postgraduate_domestic','postgraduate_us','postgraduate_europe'].includes(episode?.id)){
     if(episode.phase===1){add('education.courseworkEvidence',[3,6,2][option]);add('education.researchEvidence',[6,3,2][option]);add('education.practiceEvidence',[0,0,6][option]);if(episode.id!=='postgraduate_domestic')add('mobility.hostLanguage',[1,3,2][option])}
@@ -545,8 +608,8 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
   }
   if(episode?.id==='first_job_application'){
     if(episode.phase===1){set('employment.applicationStatus','applying');set('employment.applicationChannel',['openRecruitment','conversion','specialist','bridge'][option]);set('employment.firstJobEntryPath',['openRecruitment','conversion','specialist','bridge'][option]);add('education.practiceEvidence',[1,5,1,3][option]);add('pressures.career',[1,1,2,-1][option])}
-    if(episode.phase===2){add('education.practiceEvidence',[6,2,5,0][option]);add('education.researchEvidence',[0,6,2,0][option]);add('capabilities.employability',[5,5,6,0][option]);if(option===3)set('employment.applicationStatus','applying')}
-    if(episode.phase===3){if(option<3)effects.push(c('resolveFirstJobApplication','employment',['domestic','overseas','return'][option]));else{set('employment.applicationStatus','searching');set('employment.firstJobOutcome','longSearch');set('activity.mode','seeking')}}
+    if(episode.phase===2){add('education.practiceEvidence',[6,2,5,0][option]);add('education.researchEvidence',[0,6,2,0][option]);add('capabilities.employability',[5,5,6,0][option]);if(option===3){set('employment.applicationStatus','searching');set('employment.firstJobOutcome','longSearch')}}
+    if(episode.phase===3){if(option<3){if(option===2)set('employment.applicationRegion','domestic');effects.push(c('resolveFirstJobApplication','employment',['domestic','overseas','return'][option]))}else{set('employment.applicationStatus','searching');set('employment.firstJobOutcome','longSearch');set('activity.mode','seeking')}}
     if(episode.phase===4){set('education.nextStage','career');if(option===0)effects.push(c('acceptFirstJobOffer','employment','pending'));if(option===1)effects.push(c('leaveEmployment','employment','declined'));if(option===2)effects.push(c('leaveEmployment','employment','longSearch'))}
   }
   if(episode?.id==='professional_entry_qualification'){
@@ -572,7 +635,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
       add('finance.cash',[-3500,1200,-2500][option]);
       add('pressures.money',[-2,-1,4][option]);
       if(option===1)set('employment.applicationStatus','applying');
-      if(option===0)housing({status:'renting',arrangement:'solo',stability:'conditional',costShare:'self',coResidentRefs:[],kind:'choice',reason:'longSearchDownsize',housingChoiceKind:'firstIndependent'});
+      if(option===0)housing({status:'renting',arrangement:'solo',stability:'conditional',costShare:'self',coResidentRefs:[],kind:'choice',reason:'longSearchDownsize',housingChoiceKind:'firstIndependent',residenceOnly:true});
       effects.push(c('tag','history','research:E65'),c('tag','history','research:E66'));
     }
     if(episode.phase===3){
@@ -589,7 +652,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
   }
   if(episode?.id==='adult_reeducation'){
     if(episode.phase===1){set('education.status',option===2?'completed':'enrolled');set('activity.mode',option===2?'work':'study')}
-    if(episode.phase===2){set('education.status',['completed','enrolled','completed','interrupted'][option]);set('activity.mode',['seeking','study','work','work'][option])}
+    if(episode.phase===2){set('education.status',['completed','completed','completed','interrupted'][option]);set('activity.mode',['seeking','work','work','work'][option])}
     add('capabilities.skill',episode.phase===1?[3,2,0][option]:[5,3,3,1][option]);add('finance.cash',episode.phase===1?[-6000,-3000,0][option]:[-4000,-2500,-1200,1000][option]);add('pressures.career',episode.phase===1?[1,0,-1][option]:[-2,0,-1,2][option]);
   }
   if(id==='employment'&&!episode&&index<8){
@@ -616,7 +679,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     if(index===5&&option===2)effects.push(c('leaveEmployment','employment','publicResigned'));
     if(index===6&&option===1)effects.push(c('takeCareLeave','employment','oneYear'));
     if(index===6&&option===2)effects.push(c('applyEmploymentProfile','employment','admin_assistant'));
-    if(index===2&&option===0)housing({status:'supported',arrangement:'dormitory',region:'tier2',stability:'conditional',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'choice',reason:'publicServiceDormitory',housingChoiceKind:'workMigration'});
+    if(index===2&&option===0)housing({status:'supported',arrangement:'dormitory',region:'tier2',stability:'conditional',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'choice',reason:'publicServiceDormitory',housingChoiceKind:'workMigration',residenceOnly:true});
   }
   if(episode?.id==='public_exam'){
     if(episode.phase===1){
@@ -643,7 +706,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
   }
   if(id==='remote'&&!episode){if(index===0&&option<2)effects.push(c('applyEmploymentProfile','employment',option===0?'remote_contractor':'software_engineer'));if(index===1)set('mobility.mode',['domesticNomad','overseasNomad','home'][option]);add('mobility.platformDependence',[-3,8,-5][option]);add('mobility.rootlessness',[2,7,-4][option]);add('capabilities.portableSkill',option===0?2:1)}
   if(episode?.id==='first_remote_contract'){
-    if(option<2)effects.push(c('applyEmploymentProfile','employment',option===0?'remote_contractor':'software_engineer'));
+    if(option<2)effects.push(c('applyEmploymentProfile','employment','remote_contractor'));
     add('capabilities.portableSkill',[3,2,0,0][option]);add('pressures.career',[-2,1,-1,2][option]);
   }
   if(episode?.id==='platform_dependence'){
@@ -659,7 +722,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     if(episode.phase===1){set('mobility.mode',['home','domesticNomad','overseasNomad'][option]);add('mobility.rootlessness',[-10,-4,8][option]);add('finance.cash',[-8000,-5000,-3000][option]);housing(option===0?{status:'renting',arrangement:'solo',region:'$homeRegion',stability:'conditional',costShare:'self',coResidentRefs:[],kind:'choice',reason:'baseTrialLease',housingChoiceKind:'workMigration'}:option===1?{status:'renting',arrangement:'shared',region:'$homeRegion',stability:'conditional',costShare:'self',coResidentRefs:[],kind:'choice',reason:'baseTrialMainAddress',housingChoiceKind:'workMigration'}:{status:'unstable',arrangement:'solo',region:'$educationRegion',stability:'temporary',costShare:'self',coResidentRefs:[],kind:'choice',reason:'baseTrialContinuedDrift',housingChoiceKind:'workMigration'})}
     else{set('mobility.mode',['home','domesticNomad','home','home'][option]);add('mobility.rootlessness',[-14,-6,-10,8][option]);add('relationships.network',[5,2,3,-3][option]);add('finance.cash',[-6000,-4000,-5000,-9000][option]);housing(option===0?{status:'renting',arrangement:'solo',region:'$homeRegion',stability:'stable',costShare:'self',coResidentRefs:[],kind:'background',reason:'establishedStableBase'}:option===1?{status:'renting',arrangement:'shared',region:'$homeRegion',stability:'conditional',costShare:'self',coResidentRefs:[],kind:'background',reason:'establishedDualBase'}:option===2?{status:'family',arrangement:'originFamily',region:'$homeRegion',stability:'conditional',costShare:'supported',coResidentRefs:[],kind:'background',reason:'returnedFromBase'}:{status:'unstable',arrangement:'solo',region:'$homeRegion',stability:'temporary',costShare:'self',coResidentRefs:[],kind:'background',reason:'baseClosedWithoutReplacement'})}
   }
-  if(id==='business'&&authoredDecision?.episode){
+  if(id==='business'&&authoredDecision?.episode?.id==='shop_opening'){
     const phase=authoredDecision.episode.phase;
     if(phase===1){
       set('business.status','testing');set('business.mode',option===1?'independent':'franchise');add('business.operatingSkill',[5,4,0][option]);add('finance.cash',[-2000,-5000,-60000][option]);
@@ -696,14 +759,14 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
       if(option===0)effects.push(c('applyEmploymentProfile','employment','mature_owner'));if(option===2){set('business.status','sold');effects.push(c('leaveEmployment','employment','businessSold'))}if(option<3)effects.push(c('tag','history','wealthApex'));effects.push(c('tag','history','research:E72'));
     }
   }
-  if(id==='leisure'&&!episode){const modes=[['sabbatical','leisure','flexible'],['sabbatical','leisure','leisure'],['care','leisure','seeking'],['leisure','leisure','seeking'],['sabbatical','leisure','leisure'],['flexible','leisure','work'],['study','work','leisure'],['flexible','work','leisure']][index],funding=[['self','self','mixed'],['family','family','self'],['partner','partner','self'],['self','debt','self'],['self','self','self'],['mixed','self','self'],['self','self','family'],['mixed','self','family']][index];set('activity.mode',modes[option]);set('activity.funding',funding[option]);if(index===3&&option===0)housing({status:'renting',arrangement:'solo',stability:'conditional',costShare:'self',coResidentRefs:[],kind:'choice',reason:'leisureBudgetDownsize',housingChoiceKind:'firstIndependent'});if(index===4&&option===2)housing({status:'supported',arrangement:'shared',stability:'temporary',costShare:'supported',coResidentRefs:[],kind:'background',reason:'temporaryFriendCityStay'});if(index===5&&option===0)effects.push(c('applyEmploymentProfile','employment','remote_contractor'));if(index===5&&option===2)effects.push(c('applyEmploymentProfile','employment','small_shop_owner'));if(index===6&&option===1)effects.push(c('applyEmploymentProfile','employment','store_clerk'));if(index===7&&option===1)effects.push(c('applyEmploymentProfile','employment','admin_assistant'));add('desires.freedom.fulfillment',[4,6,-1][option]);add('capabilities.employability',[-1,-4,2][option]);add('finance.cash',[-5000,-9000,2000][option])}
+  if(id==='leisure'&&!episode){const modes=[['sabbatical','leisure','flexible'],['sabbatical','leisure','leisure'],['care','leisure','seeking'],['leisure','leisure','seeking'],['sabbatical','leisure','leisure'],['flexible','leisure','work'],['study','work','leisure'],['flexible','work','leisure']][index],funding=[['self','self','mixed'],['family','family','self'],['partner','partner','self'],['self','debt','self'],['self','self','self'],['mixed','self','self'],['self','self','family'],['mixed','self','family']][index];set('activity.mode',modes[option]);set('activity.funding',funding[option]);if(index===3&&option===0)housing({status:'renting',arrangement:'solo',stability:'conditional',costShare:'self',coResidentRefs:[],kind:'choice',reason:'leisureBudgetDownsize',housingChoiceKind:'firstIndependent',residenceOnly:true});if(index===4&&option===2)housing({status:'supported',arrangement:'shared',stability:'temporary',costShare:'supported',coResidentRefs:[],kind:'background',reason:'temporaryFriendCityStay',residenceOnly:true});if(index===5&&option===0)effects.push(c('applyEmploymentProfile','employment','remote_contractor'));if(index===5&&option===2)effects.push(c('applyEmploymentProfile','employment','small_shop_owner'));if(index===6&&option===1)effects.push(c('applyEmploymentProfile','employment','store_clerk'));if(index===7&&option===1)effects.push(c('applyEmploymentProfile','employment','admin_assistant'));add('desires.freedom.fulfillment',[4,6,-1][option]);add('capabilities.employability',[-1,-4,2][option]);add('finance.cash',[-5000,-9000,2000][option])}
   if(episode?.id==='career_break'){
     if(episode.phase===1){
       if(option<2)effects.push(c('leaveEmployment','employment','careerBreak'));else effects.push(c('applyEmploymentProfile','employment','remote_contractor'));set('activity.mode',['sabbatical','sabbatical','flexible'][option]);set('activity.funding',['self','family','mixed'][option]);add('finance.cash',[-5000,-2500,1000][option]);add('capabilities.employability',[-1,-1,1][option]);
     }
     if(episode.phase===2){
       set('activity.mode',['leisure','leisure','seeking'][option]);set('activity.funding',['self','self','mixed'][option]);add('finance.cash',[-4500,-2500,-7000][option]);add('capabilities.employability',[-1,-2,2][option]);add('pressures.money',[0,-1,5][option]);
-      if(option===1)housing({status:'renting',arrangement:'solo',stability:'conditional',costShare:'self',coResidentRefs:[],kind:'choice',reason:'careerBreakDownsize',housingChoiceKind:'firstIndependent'});
+      if(option===1)housing({status:'renting',arrangement:'solo',stability:'conditional',costShare:'self',coResidentRefs:[],kind:'choice',reason:'careerBreakDownsize',housingChoiceKind:'firstIndependent',residenceOnly:true});
     }
     if(episode.phase===3){
       if(option===0)effects.push(c('leaveEmployment','employment','leisure'));
@@ -717,16 +780,16 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
   if(id==='partnership'&&!episode){add('relationships.partnerBond',[5,2,-6][option]);add('pressures.family',option===2?4:-1)}
   if(episode?.id==='relationship_start'){
     if(episode.phase===1&&option<2){effects.push(c('createPerson','people',1,{relation:'partner'}));set('relationships.partnerStatus','dating')}
-    if(episode.phase===2){set('relationships.partnerStatus',['married','partnered','dating','none'][option]);if(option===1)housing({status:'renting',arrangement:'partner',stability:'conditional',costShare:'joint',coResidentRefs:['$activePartner'],kind:'choice',reason:'relationshipTrialCohabitation',housingChoiceKind:'partnerReconfiguration'});if(option===3)effects.push(c('transitionPartner','people','exPartner'))}
+    if(episode.phase===2){set('relationships.partnerStatus',['married','partnered','dating','none'][option]);if(option===1)housing({status:'renting',arrangement:'partner',stability:'conditional',costShare:'joint',coResidentRefs:['$activePartner'],kind:'choice',reason:'relationshipTrialCohabitation',housingChoiceKind:'partnerReconfiguration',residenceOnly:true});if(option===3)effects.push(c('transitionPartner','people','exPartner'))}
     add('relationships.partnerBond',episode.phase===1?[5,2,0][option]:[8,5,2,-10][option]);add('pressures.family',episode.phase===1?[-1,0,-2][option]:[-2,1,0,3][option]);
   }
   if(episode?.id==='marriage_crisis'){
-    if(episode.phase===1&&option===1){set('relationships.partnerStatus','separated');housing({status:'renting',arrangement:'solo',stability:'temporary',costShare:'self',coResidentRefs:[],kind:'choice',reason:'marriageCrisisSeparation',housingChoiceKind:'partnerReconfiguration'})}
+    if(episode.phase===1&&option===1){set('relationships.partnerStatus','separated');housing({status:'renting',arrangement:'solo',stability:'temporary',costShare:'self',coResidentRefs:[],kind:'choice',reason:'marriageCrisisSeparation',housingChoiceKind:'partnerReconfiguration',residenceOnly:true})}
     if(episode.phase===2){set('relationships.partnerStatus',['married','separated','separated','divorced'][option]);if(option===0)housing({arrangement:'partner',stability:'conditional',costShare:'joint',coResidentRefs:['$activePartner'],kind:'background',reason:'marriageCrisisReturn'});if(option>0)housing({arrangement:'solo',stability:'conditional',costShare:'self',coResidentRefs:[],kind:'background',reason:'marriageCrisisSeparateHomes'});if(option===3)effects.push(c('transitionPartner','people','exPartner'))}
     add('relationships.partnerBond',episode.phase===1?[2,-2,-8][option]:[8,-1,-5,-14][option]);add('pressures.family',episode.phase===1?[-3,1,7][option]:[-5,1,4,10][option]);
   }
   if(episode?.id==='divorce'){
-    if(episode.phase===1){set('relationships.partnerStatus','separated');if(option===1)housing({status:'renting',arrangement:'solo',stability:'temporary',costShare:'self',coResidentRefs:[],kind:'choice',reason:'divorceMoveOut',housingChoiceKind:'partnerReconfiguration'})}
+    if(episode.phase===1){set('relationships.partnerStatus','separated');if(option===1)housing({status:'renting',arrangement:'solo',stability:'temporary',costShare:'self',coResidentRefs:[],kind:'choice',reason:'divorceMoveOut',housingChoiceKind:'partnerReconfiguration',residenceOnly:true})}
     if(episode.phase===2){set('relationships.partnerStatus',['divorced','divorced','separated','divorced'][option]);housing({arrangement:'solo',stability:option===1?'temporary':'conditional',costShare:'self',coResidentRefs:[],kind:'background',reason:'divorceHousingSeparation'});if(option!==2)effects.push(c('transitionPartner','people','exPartner'))}
     add('relationships.partnerBond',episode.phase===1?[-2,-4,-10][option]:[-6,-8,-3,-14][option]);add('pressures.family',episode.phase===1?[2,4,9][option]:[-3,2,1,10][option]);add('finance.cash',episode.phase===1?[-2000,-3500,-6000][option]:[-5000,-8000,-2500,-12000][option]);
   }
@@ -738,7 +801,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
   if(episode?.id==='late_companionship'){
     if(episode.phase===1&&option===0)housing({arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[],kind:'choice',reason:'lateCompanionshipNearbyHomes',housingChoiceKind:'partnerReconfiguration'});
     if(episode.phase===1&&option===1)housing({arrangement:'partner',stability:'stable',costShare:'joint',coResidentRefs:['$activePartner'],kind:'choice',reason:'lateCompanionshipCohabitation',housingChoiceKind:'partnerReconfiguration'});
-    if(episode.phase===2){set('relationships.partnerStatus',['partnered','partnered','none','none'][option]);housing(option===0?{arrangement:'partner',stability:'stable',costShare:'joint',coResidentRefs:['$activePartner'],kind:'background',reason:'lateCompanionshipSettledTogether'}:{arrangement:'solo',stability:option===3?'temporary':'stable',costShare:'self',coResidentRefs:[],kind:'background',reason:'lateCompanionshipSeparateHomes'})}
+    if(episode.phase===2){set('relationships.partnerStatus',['partnered','partnered','none','none'][option]);housing(option===0?{arrangement:'partner',stability:'stable',costShare:'joint',coResidentRefs:['$activePartner'],kind:'background',reason:'lateCompanionshipSettledTogether'}:{arrangement:'solo',stability:option===3?'temporary':'stable',costShare:'self',coResidentRefs:[],kind:'background',reason:'lateCompanionshipSeparateHomes'});if(option>=2)effects.push(c('transitionPartner','people','exPartner'))}
     add('relationships.partnerBond',episode.phase===1?[4,5,-1][option]:[7,4,-4,-6][option]);add('relationships.network',episode.phase===1?[3,2,1][option]:[5,3,1,-2][option]);add('pressures.family',episode.phase===1?[-1,1,-1][option]:[-2,-1,0,4][option]);
   }
   if(id==='children'&&!episode){add('relationships.childBond',[4,1,-3][option]);add('pressures.family',[-1,4,2][option])}
@@ -781,13 +844,13 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
       add('relationships.originBond',[0,-1,-3][option]);add('pressures.money',[-2,1,3][option]);
     }
     if(episode.phase===2){
-      effects.push(c('addLiability','finance.liabilities',[60000,80000,120000][option],{kind:'guarantee',rate:[.06,.065,.12][option],guaranteed:true}));
+      effects.push(c('addLiability','finance.liabilities',[60000,80000,120000][option],{kind:'guarantee',rate:[.06,.065,.12][option],guaranteed:true,bindEpisode:'guarantee_recourse'}));
       add('finance.cash',[-8000,-12000,-25000][option]);add('pressures.money',[4,5,10][option]);add('relationships.originBond',[-2,-1,-5][option]);
     }
     if(episode.phase===3){
-      if(option===0)effects.push(c('repayDebt','finance.liabilities',50000));
-      if(option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045}));
-      if(option===2)effects.push(c('repayDebt','finance.liabilities',30000));
+      if(option===0)effects.push(c('repayDebt','finance.liabilities',50000,{scope:'episodeBound'}));
+      if(option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045,scope:'episodeBound'}));
+      if(option===2)effects.push(c('repayDebt','finance.liabilities',30000,{scope:'episodeBound'}));
       if(option===3)effects.push(c('addLiability','finance.liabilities',50000,{kind:'consumer',rate:.12}));
       add('finance.cash',[-12000,-4000,-18000,-30000][option]);add('pressures.money',[-5,-7,-2,12][option]);add('relationships.originBond',[0,-2,-12,-8][option]);
     }
@@ -796,7 +859,12 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     const actions={1:['overdue_agreement','overdue_consult','overdue_refuse'],2:['enforcement_income','enforcement_report','enforcement_refuse'],3:['consequence_housing','consequence_installment','consequence_minimum','consequence_refuse']};
     effects.push(c('resolveDebtEnforcement','finance.debtStage',actions[episode.phase][option]));
   }
-  if(id==='finance'&&!episode){add('finance.cash',[-6000,-15000,8000][option]);add('pressures.money',[-3,1,6][option]);if((index===1&&option>0)||(index===2&&option>0))effects.push(c('addLiability','finance.liabilities',option===2?120000:40000,{kind:'consumer',rate:option===2?.12:.06,guaranteed:index===1}));if(index===3&&option===0)effects.push(c('repayDebt','finance.liabilities',30000));if(index===3&&option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045}));if(index===4&&option<2)effects.push(c('restructureDebt','finance.liabilities',1,{rate:option===0?.055:.04}));if(index===4&&option===2)effects.push(c('addLiability','finance.liabilities',20000,{kind:'consumer',rate:.12}));if(index===5&&option===0)effects.push(c('repayDebt','finance.liabilities',80000));if(index===5&&option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045}));if(index===5&&option===2)effects.push(c('addLiability','finance.liabilities',60000,{kind:'consumer',rate:.12}))}
+  if(id==='finance'&&!episode){
+    const cashByOption=index===5?[-6000,-15000,0]:index===6?[0,0,0]:[-6000,-15000,8000];
+    const pressureByOption=index===5?[-3,1,0]:index===6?[-2,2,-1]:[-3,1,6];
+    add('finance.cash',cashByOption[option]);add('pressures.money',pressureByOption[option]);
+    if((index===1&&option>0)||(index===2&&option>0))effects.push(c('addLiability','finance.liabilities',option===2?120000:40000,{kind:'consumer',rate:option===2?.12:.06,guaranteed:index===1}));if(index===3&&option===0)effects.push(c('repayDebt','finance.liabilities',30000));if(index===3&&option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045}));if(index===4&&option<2)effects.push(c('restructureDebt','finance.liabilities',1,{rate:option===0?.055:.04}));if(index===4&&option===2)effects.push(c('addLiability','finance.liabilities',20000,{kind:'consumer',rate:.12}));if(index===5&&option===0)effects.push(c('repayDebt','finance.liabilities',80000));if(index===5&&option===1)effects.push(c('restructureDebt','finance.liabilities',1,{rate:.045}));if(index===5&&option===2)effects.push(c('addLiability','finance.liabilities',60000,{kind:'consumer',rate:.12}));
+  }
   if(episode?.id==='acute_illness'){
     const recoveryByPhase={1:[7,5,-9],2:[16,11,-14],3:[18,12,-12],4:[30,16,8,-5]},recovery=recoveryByPhase[episode.phase][option];
     if(recovery>0)effects.push(c('healthRecovery','health',recovery,{resolve:episode.phase===4&&option===0}));
@@ -849,20 +917,20 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     if(episode.phase===1)set('later.retirement',['reviewing','phased','delayed'][option]);
     else{
       set('later.retirement',['retired','semiRetired','working','forced'][option]);
-      if(option===1)effects.push(c('applyEmploymentProfile','employment','remote_contractor'));
+      if(option===1)effects.push(c('scaleEmployment','employment',.55));
       if(option===0||option===3)effects.push(c('leaveEmployment','employment','retired'));
     }
     add('desires.peace.fulfillment',episode.phase===1?[1,2,-1][option]:[5,3,0,-2][option]);add('pressures.career',episode.phase===1?[-1,-2,2][option]:[-4,-2,1,4][option]);
   }
   if(episode?.id==='parental_inheritance'){
     if(episode.phase===1)set('later.inheritance',['inventory','delegated','renouncing'][option]);
-    else{set('later.inheritance',['accepted','limited','renounced','disputed'][option]);add('finance.cash',[50000,12000,0,-8000][option])}
+    else{const route=['accepted','limited','renounced','disputed'][option];set('later.inheritance',route);effects.push(c('resolveInheritance','originHousehold.assets',route))}
     add('pressures.family',episode.phase===1?[2,1,0][option]:[-2,1,-1,8][option]);
   }
   if(episode?.id==='long_term_care'){
     if(episode.phase===1){set('later.care',['assessed','adapted','refused'][option]);if(option<2)set('health.careNeed',Math.max(1,option+1))}
-    if(episode.phase===2){set('later.care',['homeCombined','institutional','familyOnly'][option]);housing(option===0?{accessibility:'adapted',stability:'stable',kind:'choice',reason:'careAtHomeCombined',housingChoiceKind:'laterFit'}:option===1?{status:'supported',arrangement:'service',stability:'stable',accessibility:'supported',costShare:'supported',coResidentRefs:[],kind:'choice',reason:'careServiceResidence',housingChoiceKind:'laterFit'}:{status:'supported',arrangement:'multigenerational',stability:'conditional',accessibility:'supported',costShare:'supported',coResidentRefs:['$firstChild'],kind:'choice',reason:'careFamilyResidence',housingChoiceKind:'laterFit'})}
-    if(episode.phase===3){set('later.care',['stable','changed','minimum','familyBreak'][option]);if(option===1)housing({stability:'conditional',kind:'background',reason:'careHousingChanged'});if(option===2)housing({stability:'temporary',kind:'background',reason:'careHousingMinimum'});if(option===3)housing({status:'supported',arrangement:'service',stability:'temporary',accessibility:'supported',costShare:'supported',coResidentRefs:[],kind:'background',reason:'careFamilyHousingEnded'})}
+    if(episode.phase===2){set('later.care',['homeCombined','institutional','familyOnly'][option]);if(option===0)housing({accessibility:'adapted',stability:'stable',kind:'background',reason:'careAtHomeCombined'});if(option===1)housing({arrangement:'service',stability:'temporary',accessibility:'supported',costShare:'supported',coResidentRefs:[],kind:'background',reason:'careServiceTemporary',residenceOnly:true})}
+    if(episode.phase===3){set('later.care',['stable','changed','minimum','familyBreak'][option]);if(option===1)housing({stability:'conditional',kind:'background',reason:'careHousingChanged'});if(option===2)housing({stability:'temporary',kind:'background',reason:'careHousingMinimum'})}
     add('finance.cash',({1:[-1500,-500,0],2:[-9000,-18000,-2000],3:[-7000,-12000,-3000,-6000]}[episode.phase])[option]);add('pressures.family',({1:[-1,0,4],2:[-4,-3,5],3:[-4,-2,1,8]}[episode.phase])[option]);add('pressures.body',({1:[-2,-1,6],2:[-4,-3,2],3:[-4,-2,0,3]}[episode.phase])[option]);
   }
   if(episode?.id==='will_planning'){
@@ -871,7 +939,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     add('desires.peace.fulfillment',episode.phase===1?[2,1,0][option]:[5,2,-1,-1][option]);add('pressures.family',episode.phase===1?[-1,0,1][option]:[-3,-1,2,3][option]);
   }
   const authoredChoice=authoredDecision?.choices?.[option];
-  if(authoredDecision?.seedId==='E41')housing({status:'supported',arrangement:'dormitory',region:'tier2',stability:'conditional',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'background',reason:'factoryDormitoryAssignment'});
+  if(authoredDecision?.seedId==='E41')housing({status:'supported',arrangement:'dormitory',region:'tier2',stability:'conditional',accessibility:'standard',costShare:'supported',coResidentRefs:[],kind:'background',reason:'factoryDormitoryAssignment',residenceOnly:true});
   if(Array.isArray(authoredChoice?.effects))effects.push(...authoredChoice.effects);
   if(authoredDecision?.seedId)effects.push(c('tag','history',`research:${authoredDecision.seedId}`));
   const habitStage=id==='habits'?effects.find(effect=>effect.type==='set'&&effect.target==='habits.stage')?.value:null,outcomeTags=id==='habits'?['habits',`habits:${authoredDecision.type}`,`habits:${authoredDecision.habitKind}`,`habits:${route}`,habitStage?`habits:${habitStage}`:'habits:turn',`episode:${episode.id}`,...(habitStage==='recovery'?['recovery']:[])]:episode?[id,`${id}:${route}`,`episode:${episode.id}`]:[id,`${id}:${route}`,index===7?`${id}:legacy`:`${id}:turn`];
@@ -928,7 +996,7 @@ for(const id of trackOrder){
         requirements.all.push(p('relationships.pregnancyStatus','eq','confirmed'));
         if(phase===2)requirements.all.push(p('relationships.pregnancyDecisionDeferred','eq',true));
       }else if(familyEpisode==='adoption_process'){
-        requirements.all.push(p('relationships.activePartnerId','eq',null),p('relationships.partnerStatus','in',['none','divorced','widowed']),p('relationships.childCount','lte',1),p('relationships.adoptionOffered','eq',true));
+        requirements.all.push(p('relationships.activePartnerId','eq',null),p('relationships.partnerStatus','in',['none','divorced','widowed']),p('relationships.childCount','lte',1),p('relationships.adoptionOffered','eq',true),p('health.physical','gte',45),p('health.careNeed','lte',1));
         if(phase===1)requirements.all.push(p('relationships.adoptionStatus','eq','offered'));
         else requirements.all.push(p('relationships.adoptionStatus','in',['assessing','matching']));
       }else requirements.all.push(p('relationships.childCount','gte',1));
@@ -985,13 +1053,16 @@ for(const id of trackOrder){
     if(id==='finance'&&index===4&&!authoredDecision.episode)requirements.all.push(p('finance.totalDebt','gte',10000));
     const authoredChoices=authoredDecision.choices;
     const choices=authoredChoices.map((copyItem,option)=>{
-      const text=typeof copyItem==='string'?copyItem:copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`,cardInteraction=cardInteractionFor(id,index,option,authoredDecision);
+      if(!copyItem||typeof copyItem==='string'||!copyItem.text||!copyItem.resultText||!copyItem.consequenceText)throw new Error(`${eventId}_choice_${option+1}: player copy must be fully event-authored`);
+      const text=copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`,cardInteraction=cardInteractionFor(id,index,option,authoredDecision);
       if(id==='partnership'&&!authoredDecision.episode&&index===0&&option<2)result.effects.push(c('createPerson','people',1,{relation:'partner'}));
-      const choiceRules=typeof copyItem==='string'?req():copyItem.requirements||req();
+      const choiceRules=copyItem.requirements||req();
       if(authoredDecision.episode?.id==='retirement_transition'&&authoredDecision.episode.phase===2&&option<3)
         choiceRules.all.push(p('employment.status','in',['employed','gig','selfEmployed']));
       if(authoredDecision.episode?.id==='long_term_care'&&authoredDecision.episode.phase===2&&option===2)
         choiceRules.all.push(p('relationships.childCount','gte',1));
+      if(authoredDecision.episode?.id==='long_term_care'&&authoredDecision.episode.phase===3&&option===3)
+        choiceRules.all.push(p('later.care','eq','familyOnly'));
       if(authoredDecision.episode?.id==='postgraduate_application'&&authoredDecision.episode.phase===4&&option<3)choiceRules.all.push(p('education.graduateOfferRegion','eq',['domestic','us','europe'][option]),p('education.graduateFundingStatus','eq','ready'));
       if(authoredDecision.episode?.id==='undergraduate_application'&&authoredDecision.episode.phase===3&&option===3)choiceRules.all.push(p('education.extraApplicationYearUsed','eq',false));
       if(authoredDecision.episode?.id==='postgraduate_application'&&authoredDecision.episode.phase===3&&option===0)choiceRules.all.push(p('education.graduateApplicationIntent','eq','domestic'));
@@ -1002,7 +1073,7 @@ for(const id of trackOrder){
         choiceRules.all.push(p('employment.profileId','in',Object.keys(EMPLOYMENT_CATALOG_SOURCE.promotionMap)));
       const consequenceDelay=copyItem?.consequenceDelay,consequences=copyItem?.noConsequence?[]:[{eventId:echoId,delayMin:consequenceDelay??1+option,delayMax:consequenceDelay??3+option,priority:copyItem?.consequencePriority||0}];
       const generatedHousingKind=result.effects.find(effect=>effect.type==='transitionHousing'&&effect.value?.kind==='choice')?.value?.housingChoiceKind,housingChoiceKind=copyItem.housingChoiceKind||generatedHousingKind;
-      return{id:`${eventId}_choice_${option+1}`,text,resultText:typeof copyItem==='string'?`你选择了“${text}”，这项安排开始改变之后的机会。`:copyItem.resultText,hints:typeof copyItem==='string'?[option===0?'投入较多，保留长期可能':option===1?'代价和余地同时存在':'短期更容易，长期风险更高']:[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),...(copyItem.debtGate?{debtGate:copyItem.debtGate}:{}),...(housingChoiceKind?{housingChoiceKind}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences,outcomeTags:result.outcomeTags,memoryKey,route:result.route};
+      return{id:`${eventId}_choice_${option+1}`,text,resultText:copyItem.resultText,hints:copyItem.hints||[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),...(copyItem.debtGate?{debtGate:copyItem.debtGate}:{}),...(housingChoiceKind?{housingChoiceKind}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences,outcomeTags:result.outcomeTags,memoryKey,route:result.route};
     });
     decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{situation:authoredDecision.situation,episode:authoredDecision.episode}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:authoredDecision.weight??16+index%3,contentRevision:CONTENT_REVISION});
     authoredDecisionById.set(eventId,authoredDecision);
@@ -1015,7 +1086,7 @@ const globalRows=[
 ];
 for(const [sourceIndex,row] of globalRows.entries()){
   const slot=resolveAuthorSlot(authorSlots,'decisions',decisionAuthorKey(row.track,row.prompt,row.verbs),`globalRows[${sourceIndex}]`),globalIndex=slot.localIndex,id=slot.id,echoId=id.replace('decision_','echo_');
-  const choices=row.verbs.map((text,index)=>{const educationStatus=row.age[0]===18?(index===0?'enrolled':'completed'):(index===2?'completed':'enrolled'),effects=[row.education?c('transition','education',row.education[index],{status:educationStatus}):c('claimDesire','desires',row.desire[index],{replace:Boolean(row.reclaim)})],cardInteraction=cardInteractionFor(row.track,globalIndex,index);if(row.age[0]===18&&index===1)effects.push(c('applyEmploymentProfile','employment','store_clerk'));if(row.age[0]===18&&index===2)effects.push(c('applyEmploymentProfile','employment','crowd_rider'));return{id:`${id}_choice_${index+1}`,text,resultText:row.results[index],hints:[],requirements:[],mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects,commitments:[],consequences:[{eventId:echoId,delayMin:2,delayMax:5}],outcomeTags:[row.track,index===0?'chosenA':index===1?'chosenB':'chosenC'],memoryKey:`${id}_c${index+1}`,route:['deliberate','stable','open'][index]}});
+  const choices=row.verbs.map((text,index)=>{const educationStatus=row.age[0]===18?(index===0?'enrolled':'completed'):(index===2?'completed':'enrolled'),effects=[row.education?c('transition','education',row.education[index],{status:educationStatus}):c('claimDesire','desires',row.desire[index],{replace:Boolean(row.reclaim)})],cardInteraction=cardInteractionFor(row.track,sourceIndex,index,{prompt:row.prompt,choices:row.verbs.map((choiceText)=>({text:choiceText}))});if(row.age[0]===18&&index===1)effects.push(c('applyEmploymentProfile','employment','store_clerk'));if(row.age[0]===18&&index===2)effects.push(c('applyEmploymentProfile','employment','crowd_rider'));return{id:`${id}_choice_${index+1}`,text,resultText:row.results[index],hints:[],requirements:[],mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects,commitments:[],consequences:[{eventId:echoId,delayMin:2,delayMax:5}],outcomeTags:[row.track,index===0?'chosenA':index===1?'chosenB':'chosenC'],memoryKey:`${id}_c${index+1}`,route:['deliberate','stable','open'][index]}});
   decisions.push({id,kind:'decision',track:row.track,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'◎',prompt:row.prompt,requirements:{all:[row.reclaim?p('desires.reclaimed','eq',false):p('age','gte',row.age[0])],any:[],none:[]},actors:[],choices,assertions:[],priority:30,weight:30,contentRevision:CONTENT_REVISION});
   authoredDecisionById.set(id,{echoText:row.echoText,choices:row.consequences.map(consequenceText=>({consequenceText}))});
 }
@@ -1034,7 +1105,7 @@ function validateCardInteractions(){
     if(choice.cardInteraction){
       const spec=choice.cardInteraction;
       if(!['unlock','requirementShift','costShift','riskShift','resultVariant'].includes(spec.mode))throw new Error(`${choice.id}: invalid card mode`);
-      if(!spec.primaryMechanic||!Array.isArray(spec.patch)||!spec.explanation)throw new Error(`${choice.id}: incomplete card interaction`);
+      if(!spec.primaryMechanic||!Array.isArray(spec.patch)||!spec.explanation||spec.source!=='eventAuthored')throw new Error(`${choice.id}: incomplete or non-authored card interaction`);
       if(!choice.mechanicTags.includes(spec.primaryMechanic))throw new Error(`${choice.id}: mechanic tag does not name its primary card`);
       if(!cards.some(card=>card.mechanic===spec.primaryMechanic&&card.drawAge<=decision.ageMax))throw new Error(`${choice.id}: card interaction happens before its card can be drawn`);
       for(const rule of [...(spec.activeRequirements?.all||[]),...(spec.activeRequirements?.any||[]),...(spec.activeRequirements?.none||[])])if(['age','education.level','education.highestCompleted','employment.entryCredential'].includes(rule.path))throw new Error(`${choice.id}: card interaction tries to relax a hard gate`);
@@ -1060,13 +1131,33 @@ function validateCardInteractions(){
 const echoPressure={education:'career',employment:'career',public:'career',remote:'loneliness',business:'money',leisure:'money',partnership:'family',children:'family',finance:'money',health:'body',habits:'money',later:'loneliness',housing:'money'};
 const echoes=decisions.map(decision=>{
   const authoredDecision=authoredDecisionById.get(decision.id),habitPressure={gambling:'money',alcohol:'body',gaming:'career',shopping:'money',medication:'body'}[authoredDecision?.type],pressure=decision.track==='habits'?habitPressure:echoPressure[decision.track];
-  return{id:decision.id.replace('decision_','echo_'),kind:'consequence',track:decision.track,stage:stageNames,ageMin:Math.min(105,decision.ageMin+1),ageMax:105,icon:'↩',text:authoredDecision?.echoText||'当年那个选择留下的东西，又出现了。',sourceDecisionId:decision.id,requirements:{all:[],any:[],none:[]},actors:[],choiceOutcomes:Object.fromEntries(decision.choices.map((choice,choiceIndex)=>[choice.memoryKey,{text:authoredDecision?.choices[choiceIndex].consequenceText||`${choice.resultText.replace(/。$/,'')}。${choiceIndex===0?'早先投入的东西开始显出回报。':choiceIndex===1?'当初保留的余地如今派上用场。':'当时推迟的代价没有消失。'}`,effects:authoredDecision?.choices[choiceIndex]?.consequenceEffects||[choiceIndex===0?c('add','agency',1):choiceIndex===1?c('add','capabilities.resilience',1):c('add',`pressures.${pressure||'money'}`,4),c('tag','history',`echo:${decision.track}`)],outcomeTags:[...choice.outcomeTags,'echo']}])) ,assertions:[],weight:22,contentRevision:CONTENT_REVISION};
+  if(!authoredDecision?.echoText||authoredDecision.choices?.some(choice=>!choice.consequenceText))throw new Error(`${decision.id}: consequence copy must be fully event-authored`);
+  return{id:decision.id.replace('decision_','echo_'),kind:'consequence',track:decision.track,stage:stageNames,ageMin:Math.min(105,decision.ageMin+1),ageMax:105,icon:'↩',text:authoredDecision.echoText,sourceDecisionId:decision.id,requirements:{all:[],any:[],none:[]},actors:[],choiceOutcomes:Object.fromEntries(decision.choices.map((choice,choiceIndex)=>[choice.memoryKey,{text:authoredDecision.choices[choiceIndex].consequenceText,effects:authoredDecision.choices[choiceIndex].consequenceEffects||[choiceIndex===0?c('add','agency',1):choiceIndex===1?c('add','capabilities.resilience',1):c('add',`pressures.${pressure||'money'}`,4),c('tag','history',`echo:${decision.track}`)],outcomeTags:[...choice.outcomeTags,'echo']}])) ,assertions:[],weight:22,contentRevision:CONTENT_REVISION};
 });
 
 const swanRows=[
-  [0,5,'一次罕见感染让全家在病房外轮流守夜。','health','mixed'],[3,12,'一次交通事故改变了你熟悉的上学路线。','health','loss'],[16,25,'一项全国竞赛把你送到从未去过的城市。','education','gain'],[18,30,'行业突然扩张，你的冷门技能变得抢手。','employment','gain'],[18,35,'父母攒了几年的钱，被一个"稳赚"的群聊搬空了。','finance','loss'],[20,38,'旧作品被陌生人翻出来转发——认识你的人突然多了几十个。','remote','gain'],[22,40,'一场公共事件让整个行业停了。第二天没人去上班。','employment','mixed'],[25,50,'你拿了一点股份的小公司，被新市场重新估了价。','business','gain'],[25,55,'合作方电话打不通了。担保合同上，只剩你的名字。','finance','loss'],[30,58,'一个合作了十年的客户，把整条线交到了你手里。','business','gain'],[30,60,'新规下来了。最赚钱那块业务，突然不合法了。','business','loss'],[35,62,'体检报告上那个跳过了好几年的箭头——这次不是虚惊。','health','loss'],[35,65,'当年一起熬夜加班的同事找你：这次项目账目全公开。','business','gain'],[40,68,'家里有人病倒了。原本各管各的，突然全得重新分工。','health','mixed'],[45,72,'一笔放了很多年没动的钱，刚好在要用的时候涨回来了。','finance','gain'],[55,80,'房子被水泡了。保险赔付和维修之间，日子先缩了水。','finance','loss'],[60,88,'旧档案里翻出一张纸——证明那套房子确实是家里的。','finance','gain'],[65,95,'摔了一跤。不严重。但从那天起，有些事不敢一个人做了。','health','loss'],[70,100,'好多年没消息的人来信了：要不要一起过剩下的日子。','partnership','mixed'],[75,105,'你公开写过的一些东西，后来帮一个陌生家庭少走了一段弯路。','later','gain']
+  {age:[0,5],text:'一次罕见感染让家里临时改了排班，复查日期贴在奶粉罐旁。',track:'health',valence:'mixed',requirements:req(),actors:[],effects:[c('add','health.mental',-3),c('add','relationships.originBond',2)]},
+  {age:[3,12],text:'一次交通事故让你暂停原来的上学路线，康复和接送从今天重新安排。',track:'health',valence:'loss',requirements:req(),actors:[],effects:[c('healthIncident','health',18,{condition:'trafficAccident'}),c('add','pressures.body',6)]},
+  {age:[16,25],text:'学校递来一项全国竞赛的入围通知，异地行程和费用都写得清楚。',track:'education',valence:'gain',requirements:req([p('education.status','eq','enrolled')]),actors:[],effects:[c('add','education.practiceEvidence',8),c('add','development.routeKnowledge',5)]},
+  {age:[18,30],text:'你所在行业突然扩张，原本冷门的技能出现在正式招聘要求里。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','capabilities.employability',8),c('add','pressures.career',-4)]},
+  {age:[18,35],text:'父母留作应急的钱被一个“稳赚”群聊转走，报警回执只确认了损失，没有承诺追回。',track:'finance',valence:'loss',requirements:req([p('originHousehold.assets','gte',50000)]),actors:[{slot:'parent',relationAny:['father','mother'],alive:true,optional:false}],effects:[c('add','originHousehold.assets',-50000),c('add','pressures.family',8)]},
+  {age:[20,38],text:'一件旧作品被陌生人重新转发，几封具体的合作询问随后进了邮箱。',track:'remote',valence:'gain',requirements:req([p('desires.creation.fulfillment','gte',1)]),actors:[],effects:[c('add','relationships.network',8),c('add','capabilities.evidence',4)]},
+  {age:[22,40],text:'一场公共事件让你所在的单位突然停摆，复工日期和工资安排都没有立刻确定。',track:'employment',valence:'mixed',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','finance.cash',-12000),c('add','pressures.career',9)]},
+  {age:[25,50],text:'你持有股份的公司打开了新市场，书面估值上调，现金却没有同步到账。',track:'business',valence:'gain',requirements:req([p('business.equity','gte',1)]),actors:[],effects:[c('add','business.equity',200000),c('add','pressures.money',2)]},
+  {age:[25,55],text:'单位复核工资时发现一笔少发款，补发日期和明细一起进了账户。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','finance.cash',6000),c('add','pressures.money',-2)]},
+  {age:[30,58],text:'一个合作多年的客户把整条业务线交给你的企业，合同也写清了付款节点。',track:'business',valence:'gain',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',160000),c('add','business.operatingSkill',5)]},
+  {age:[30,60],text:'新规落地，你的企业必须停掉一块原本赚钱的业务，旧合同也要逐份处理。',track:'business',valence:'loss',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',-120000),c('add','pressures.money',10)]},
+  {age:[35,62],text:'一次体检和复查确认了需要治疗的异常，后续不再只是“再看看”。',track:'health',valence:'loss',requirements:req(),actors:[],effects:[c('healthIncident','health',28,{condition:'blackSwanDiagnosis'}),c('add','pressures.body',8)]},
+  {age:[35,65],text:'旧同事带着公开账目来谈合作，项目是否加入仍由你按自己的企业状况判断。',track:'business',valence:'gain',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',90000),c('add','capabilities.evidence',4)]},
+  {age:[40,68],text:'一位仍在世的家人突然需要持续照护，原来的分工当天就不够用了。',track:'health',valence:'mixed',requirements:req(),actors:[{slot:'family',relationAny:['father','mother','partner','child','adoptedChild','stepChild'],alive:true,optional:false}],effects:[c('add','development.careLoad',12),c('add','pressures.family',8)]},
+  {age:[45,72],text:'单位核对历年薪资时发现一笔未补齐的差额，核算明细和补发款一起到了。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','finance.cash',12000),c('add','pressures.money',-2)]},
+  {age:[55,80],text:'你名下的房子被水泡了，保险勘察和维修之间，日常先搬到能住的房间。',track:'finance',valence:'loss',requirements:req([p('housing.status','in',['owned','mortgaged'])]),actors:[],effects:[c('add','finance.cash',-30000),c('add','pressures.money',8)]},
+  {age:[60,88],text:'旧档案里找到的登记材料补齐了原生家庭住房的权属链，但没有凭空增加你的个人房产。',track:'finance',valence:'gain',requirements:req(),actors:[{slot:'parent',relationAny:['father','mother'],optional:false}],effects:[c('add','originHousehold.assets',30000),c('add','pressures.family',-2)]},
+  {age:[65,95],text:'一次摔倒没有造成重伤，却让独自洗澡和上下楼变成需要重新评估的事。',track:'health',valence:'loss',requirements:req(),actors:[],effects:[c('healthIncident','health',12,{condition:'fallRisk'}),c('add','health.careNeed',1)]},
+  {age:[70,100],text:'仍在交往的伴侣问起余下的日子要不要住得更近，答案不会自动变成同居。',track:'partnership',valence:'mixed',requirements:req([p('relationships.partnerStatus','in',['dating','partnered','married'])]),actors:[{slot:'partner',relation:'partner',alive:true,personIdPath:'relationships.activePartnerId',optional:false}],effects:[c('add','relationships.partnerBond',4),c('add','pressures.family',1)]},
+  {age:[75,105],text:'你公开留下的一段经验，后来让一个陌生家庭少走了一次弯路。',track:'later',valence:'gain',requirements:req([p('desires.creation.fulfillment','gte',1)]),actors:[],effects:[c('add','desires.creation.fulfillment',5),c('add','health.mental',3)]},
 ];
-const blackSwans=swanRows.map((row,index)=>{const[min,max,text,track,valence]=row,effects=valence==='gain'?[c('add',track==='finance'?'finance.cash':track==='business'?'business.equity':'health.mental',track==='finance'?60000:track==='business'?200000:8)]:valence==='loss'?(track==='health'?[c('healthIncident','health',28,{condition:'blackSwan'}),c('add','pressures.body',8)]:[c('add','finance.cash',-60000),c('add','pressures.body',8)]):[c('add','health.mental',-3),c('add','relationships.network',3)];effects.push(c('tag','history',`swan:${valence}`));return{id:`swan_${String(index+1).padStart(2,'0')}`,kind:'blackSwan',track,stage:stageFor(min,max),ageMin:min,ageMax:max,icon:'✦',text,intensity:'high',requirements:{all:[],any:[],none:[]},actors:[],effects,assertions:[],valence,weight:1,contentRevision:CONTENT_REVISION}});
+const blackSwans=swanRows.map((row,index)=>({id:`swan_${String(index+1).padStart(2,'0')}`,kind:'blackSwan',track:row.track,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'✦',text:row.text,intensity:'high',requirements:row.requirements,actors:row.actors,effects:[...row.effects,c('tag','history',`swan:${index+1}`)],assertions:row.actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),valence:row.valence,weight:1,contentRevision:CONTENT_REVISION}));
 
 function cardEffects(mechanic,drawAge){
   const effects=[c('add',`capabilities.${mechanic}`,drawAge===0?2:1)];

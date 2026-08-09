@@ -1,440 +1,101 @@
-# 《人生尚未加载 · 2026》开发交接
+# 《人生尚未加载 · 2026》当前交接
 
-更新时间：2026-08-08
+更新时间：2026-08-09。本文只记录当前可执行事实；历史过程见 `progress.md` 与 Git。
 
-这份文件用于下一次 Codex 窗口接手项目。开始工作前仍要重新检查本地文件和 GitHub；下面记录的是交接时已经核对过的状态，不代替现场核验。
+## 当前快照
 
-公开的 `README.md` 只面向玩家和其他访问项目的人。生成器、测试、分支、部署、接手步骤和 AI 工作边界都写在本文件中，不要再放回 README。
+| 项目 | 当前事实 |
+|---|---|
+| 分支／基线 | `main` 发布 v0.6.9；`legacy/0.6.8@b925657` 固定发布前基线 |
+| 线上版本 | v0.6.9／Schema 13／Content Revision 27 |
+| 本地版本 | v0.6.9／Schema 13／Content Revision 27 |
+| 发布状态 | 开发、逐事件验收、全量回归、提交、推送与 Pages 部署均已完成 |
+| 生成数据 | 870 个事件：456 beat、197 decision、197 consequence、20 black swan |
+| 其他内容 | 72 张卡牌、44 个家庭秘密、32 项图鉴、64 个结局标题 |
+| `data.json` SHA-256 | `4dd9521f59e7d8e08aa48fb0447e525a5ecacc4a885a8f6cc5aa2c1d93d41d7d` |
 
-## 新窗口必读
+后续版本的提交、legacy 分支、push、PR、合并和部署仍是独立操作，需按当轮授权执行。
 
-任何 agent 开始玩家可见中文的写作、改写或审阅前，必须完整阅读：
+## v0.6.9 已完成
 
-1. `CopyWriting_Guideline.md`
-2. `docs/project-context.md`
+- 选项命令改为事务式执行；任何住房、人物、债务或合同硬条件失败时整组不落账。
+- 修正子女年龄、伴侣与生育载体、单身收养、父母遗产、海外求职、求职退出和半退休职业身份。
+- 临时住校、单位宿舍及短期照护不再清除房产与按揭；永久处置仍走统一住房入口。
+- 同龄多个 episode 只结算一年；担保追偿只处理绑定债务；失效面板有明确收束。
+- 44 条家庭秘密、20 条黑天鹅、五类成瘾文案和 206 个卡牌互动改为逐事件事实门槛与玩家口吻。
+- 页面允许缩放；主要按钮、dialog、焦点管理和触觉开关补齐无障碍语义。
+- 事件 ID、图鉴 ID 和 870 个事件总数保持不变；没有提前实现 v0.6.10 社交人物系统。
 
-`CopyWriting_Guideline.md` 是本项目中文文案的强制规范，不是可选风格建议。它同时约束字段事实
-权限、地区和制度辨识、人物声音、海外华人生活、黑色幽默、工程边界与验证流程。
+逐事件证据在：
 
-## 仓库与版本
+- `docs/research/v0.6.9-全量文案与机制验收.md`
+- `docs/research/v0.6.9-玩家文案验收表.tsv`
 
-- 正确的本地仓库：以 `git rev-parse --show-toplevel` 的现场输出为准，不依赖某台机器的绝对路径
-- GitHub：<https://github.com/jayden2young-netizen/life-unloaded-2026>
-- 在线版本：<https://jayden2young-netizen.github.io/life-unloaded-2026/>
-- 当前发布版本：v0.6.8
-- 当前本地版本：v0.6.8
-- 当前 `main` 基线版本：v0.6.8
-- 下一规划版本：v0.6.9 社会交往
-- 当前剩余规划范围：v0.6.9—v0.6.10
-- `schemaVersion`：12
-- `contentRevision`：26
-- localStorage 键：`life-unloaded-2026-v1`
-- v0.6.0 功能提交：`82beb1432e3bad1df2c222735cce493e3c34495f`
-- 功能提交说明：`feat: ship v0.6.0 card participation`
-- v0.6.6 功能提交：`182009a195620ba24ba7bcb78f74d424b500bba7`
-- v0.6.6 Pages 运行：`31023146164`
-- v0.6.8 功能提交：`4e5d6d65d94b4c93903646a6deae30fb7a6837ee`
-- v0.6.8 Pages 运行：`31260886809`
-- v0.6.8 教育调度热修提交：`b78ea2662647d8e4b048221695bc138be443e5a9`
-- v0.6.8 教育调度热修 Pages 运行：`31263523633`
-- 当前检出分支：`main`
-- 当前基线分支：`main`
-- 本轮起点版本：`v0.5.12`
+## 文档职责
 
-当前工作边界：v0.6.0—v0.6.8 已发布；下一步是 v0.6.9 社会交往的开发前规划，不自动开始实现。v0.6.10 仍依赖 v0.6.9 完成。
+- `README.md`：玩家说明、本地试玩和最短验证入口。
+- `AGENT_HANDOVER.md`：当前接手事实、命令与边界。
+- `docs/project-context.md`：跨版本工程约束。
+- `progress.md`：精简版本账本，不授权新工作。
+- `roadmap/00-总体策略.md` 与当前版本 roadmap：已批准的版本边界。
+- `CopyWriting_Guideline.md`：玩家文案的正式验收标准。
 
-v0.6.4 于 2026-07-31 从 `codex/v0.6.4-first-job-bridge` 快进发布到 `main`；功能提交为 `92e4123ee7c62bf13f3659416835f65ad0e70d45`，`legacy/0.6.3` 固定在发布前的 `main@3ba0490cb089d5a7cd31618e660b51cc1f12ee6e`。最终提交、ahead/behind、当前分支和线上状态仍必须以新窗口现场执行的 Git 与 Pages 检查为准。
+现场 Git、版本常量、生成数据和测试结果优先于任何文档摘要。
 
-## Git 状态
+任何玩家可见中文的写作、改写或审阅开始前，必须完整阅读 `CopyWriting_Guideline.md` 和 `docs/project-context.md`。
 
-v0.5.2 的开发分支是 `agent/v0.5.2-native-copy`，分支提交为 `1068ebf`。内容已经通过合并提交进入 `main`，但当时没有先创建 PR。
+## 最短工作流
 
-已实际尝试事后补建 PR，GitHub 返回：
+先只读确认现场：
 
-```text
-No commits between main and agent/v0.5.2-native-copy
-```
-
-不要为了补 PR 回滚 `main`、制造空提交或重写历史。下一版本应从最新 `main` 创建独立分支，完成验证后先推送并创建 PR，确认后再合并。
-
-GitHub CLI 应直接从 PATH 调用，并在使用前现场确认登录状态：
-
-```shell
-command -v gh
-gh auth status
-```
-
-交接时登录账号为 `jayden2young-netizen`。
-
-2026-07-28 额外核对：
-
-- v0.6.0 在 `codex/v0.6.0-card-participation` 完成，功能提交为 `82beb14`；发布时直接将 `main` 快进到包含该提交的最新文档提交。
-- `legacy/v0.5.12` 固定指向发布前基线 `9fc7da5`。
-- 根目录 `roadmap/` 默认按 Git ignore 管理，共有一份总体策略和 v0.6.0—v0.6.10 十一份逐版本文件。用户明确要求提交的未来 roadmap 可以单独强制跟踪；不得因此把整个目录无差别加入版本控制。
-- v0.6.x 路线采用两个工程版本打底，再按教育、首职、家庭、债务、晚年生活、住房、社会交往和整体验收推进。
-- v0.6.x 开发不再指定模型；仍需保留各版本的产品、工程、文案质量和验收责任。
-- 独立 worktree 中仍有实验分支 `investigate_card_game_mechanics@9efa6dc`。它包含不同架构和额外机制，不是 v0.6.0 发布来源，不要整体合并回 `main`。
-
-## 项目结构
-
-游戏仍是直接部署到 GitHub Pages 的静态项目，没有框架、npm 构建、外部字体、CDN 或运行时接口。
-
-```text
-index.html                         页面入口
-style.css                         黑色移动端界面
-game.js                           状态账本、因果引擎、存档与流程
-data.json                         生成后的内容数据
-content/zh-CN/ui.mjs              核心界面中文
-content/zh-CN/card-interactions.mjs 卡牌—选项显式交互
-content/zh-CN/tracks/*.mjs        十三条人生轨道中文
-tools/generate-v5-data.mjs        当前数据生成器
-tests/                            当前核心浏览器检查
-start-local-play.command          macOS 一键启动本地服务器与浏览器
-```
-
-`data.json` 只能由生成器产生。数据或文案改动必须先改生成器或 `content/zh-CN/` 的源文件，再重新生成；不要只手工编辑 `data.json`。
-
-必须保留的产品边界：
-
-- 黑色极简移动端界面
-- 每次轻触只推进一条可见事件
-- 卡牌和选择使用不可跳过的底部弹层
-- 每年最多两条可见事件
-- 种子随机、localStorage、跨局记录与损坏存档恢复
-- 不引入框架、npm 构建、CDN、接口、图片或外部字体
-- 不用大规模人生模拟代替定向状态检查和人工试玩
-
-当前内容规模：
-
-- 456 个年度事件
-- 197 个选择事件
-- 197 个选择特定长期后果
-- 20 个黑天鹅
-- 72 张卡牌
-- 30 种家庭画像
-- 44 个家庭秘密
-- 13 条人生轨道
-- 16 条结局画像、64 个结局标题
-- 32 个社会图鉴条目
-
-## v0.6.4 首份工作分层与职业系统融合
-
-- 本地分支 `codex/v0.6.4-first-job-bridge` 从 `main@3ba0490` 开始实施；功能提交为 `92e4123`，随后通过 fast-forward 发布到 `main`。
-- 版本为 v0.6.4、Schema 11、content revision 22。研究档案位于 `docs/research/v0.6.4-首份工作与当代中国职业生活.md`。
-- `content/zh-CN/employment-catalog.mjs` 是统一职业目录源；`data.json.employmentCatalog` 由生成器产生。T0—T3 月薪基准为 4200／6000／12000／20000 元，地区系数为 1.20／1.00／0.82／0.72。
-- 就业状态通过 `applyEmploymentProfile`、`acceptFirstJobOffer`、`leaveEmployment`、`adjustJobTier`、`resolveLayoff` 和 `grantCredential` 原子写入。旧 `contract` 与 `salary` 保持兼容，年收入优先读取 `incomeAnnualGross`。
-- 首份工作四阶段年龄为 16—28、17—29、18—30、19—31；第三阶段写入 `pendingOfferId`，第四阶段只接受、拒绝或继续寻找。T4 不可作为首份工作。
-- 医生、律师、大学讲师使用简化资格凭证；32 岁后长期未就业进入三阶段再入场。40 个研究种子均有生成数据中的场景或 `research:E##` 标记。
-- career、cards、core、episodes 与 runtime-refactor profile 已通过；E01—E14 均有固定运行时 witness，专业资格正反路径、停薪留职恢复、限期交接和关副业保留主职均有断言；覆盖 360×773、360×640、320×568，控制台错误为 0。正式生成器双跑 SHA-256 为 `EC7AA0B8D7BBB16FFC2CD1B16E6A189871EE63395D49DE94870C5D97C6B4B663`。
-
-## v0.6.5 生育计划、怀孕决定与单身收养
-
-- 开发分支 `codex/v0.6.5-family-planning` 从已发布的 `main@a30e317` 开始实施；功能提交 `e1fe3da` 已通过 fast-forward 发布到 `main`，没有创建合并提交或 PR。`legacy/0.6.4` 固定在发布前的 `a30e317`。
-- 版本为 v0.6.5、Schema 11、content revision 23。A/B/C 研究档案位于 `docs/research/v0.6.5-生育计划与单身收养.md`。
-- `relationships` 新增一次性生育计划、计划受孕、意外怀孕、怀孕决定和收养状态。刷新不会重抽机会或重复应用结果，作者键不会进入存档。
-- 有有效伴侣且 23—39 岁时只抽取一次 85% 生育计划入口；开始备孕后在下一年龄按 80% 基础、50%—90% 封顶的年龄和健康梯度结算。暂缓只检查一次 10% 意外怀孕。
-- `pregnancy_decision` 两阶段支持继续、终止和一次同岁复议。只有继续妊娠安排的下一年龄高优先级后果创建孩子；终止和复议不安排通用后果。
-- 单身、30 岁以上、0—1 名既有子女时只抽取一次 50% 收养入口。三阶段覆盖准备、家访评估、匹配、登记、等待和撤回；中途形成伴侣时本轮单身收养失效，不转共同收养。
-- 实际试玩反馈后，v0.6.5 新增家庭文案按 `CopyWriting_Guideline.md` 全量复核，收养入口第一屏明确写出“单身收养申请”，并清除“抽取、结算、年龄节点、生成事实”等状态机口吻。无有效伴侣时 `relationship_start` 获得 3 倍候选权重；全局决定频率和后续结婚选项不变。
-- 数据为 408 beats、185 decisions、185 consequences、20 black swans，共 798 个事件和 72 张卡牌。正式生成器双跑 SHA-256 均为 `991B95BC33740533F0658C338E45F148CAAD97D82F9EDEB46C56D63665FA30D4`。family 与 core profile 已通过，覆盖机会命中／未命中、意外怀孕、同岁复议、出生只执行一次、终止无孩子、收养四类结尾、恋爱起始权重、刷新恢复、三种窄屏和控制台零错误；单身收养入口 360×773 截图已人工目检。
-- GitHub Pages 运行 `30750913588` 已成功部署功能提交 `e1fe3da`；线上 `index.html`、`game.js` 和 `data.json` 均返回 200，并显示 v0.6.5／Schema 11／Content Revision 23、798 个事件、72 张卡牌和“单身收养申请”文案。
-- 本版没有实现不孕治疗、辅助生殖、代孕、共同／海外收养、犯罪记录系统或单身异性收养 40 周岁年龄差；后者在研究档案中明确标为产品抽象。
-
-## v0.6.6 债务执行与生活后果
-
-- v0.6.6 已从 `codex/v0.6.6-debt-enforcement` 以功能提交 `182009a` 快进发布到 `main`，没有创建合并提交或 PR；`legacy/0.6.5` 固定在发布前的 `main@33de22f`，开发分支、legacy 和 `main` 均已推送。
-- 版本为 v0.6.6、Schema 11、Content Revision 24。新增 `debt_enforcement` 三阶段事件簇，以显式债务来源、逾期、执行通知前提和绑定 liability 推进；生活缺口与未配置来源不会进入执行。
-- 执行未清按既定产品规则显示“游戏内失信”与限制消费；购房、新信贷、主要经营融资、高成本教育、主动备孕和部分 T3 晋升／首职会收缩，但基础工作、租住、法律咨询、分期履约与继续拒绝仍保留。
-- 自有或按揭住房才能处置；处置款先清住房担保债和本案执行债，余款回到现金。原房处置历史不回滚。本案债务清偿或履约后，经过一个同龄行政收尾节点解除标记，不受无关生活缺口阻断。
-- A/B/C 研究归档为 `docs/research/v0.6.6-债务执行与生活后果.md`；玩家文案以账单、通知书、工资记录、财产报告、评估与搬离动作承载压力，明确区分现实法律与游戏压缩。
-- 数据为 408 beats、188 decisions、188 consequences、20 black swans，共 804 个事件和 72 张卡牌。生成器双跑 SHA-256 均为 `33003C5F416F01F63EE002C0085B54A8E6254864A9A2A1B4E4FBDAD27688382C`。
-- `debt`、`cards`、`core`、`episodes`、`runtime-refactor`、`career`、`education` 和 `family` 相关检查已通过；覆盖 360×773、360×640、320×568，控制台错误为 0。
-- GitHub Pages 运行 `31023146164` 成功；线上 `index.html`、`game.js` 和 `data.json` 均为 v0.6.6／Schema 11／Content Revision 24，并包含 804 个事件、72 张卡牌、债务来源目录和三阶段债务执行事件。首次推送未自动入队，使用 Pages build 接口补触发后成功构建 `182009a`。
-
-## v0.6.7 晚年生活
-
-- v0.6.7 已以功能提交 `665431e` 发布到 `main`；版本为 v0.6.7、Schema 11、Content Revision 25，v0.6.6 的同 Schema 活动人生可继续读取。
-- 晚年轨道统一显示为“晚年生活”，数据由 32 条 beat、9 组 decision/consequence 扩到 48／13／13；保留 `retirement_transition`、`parental_inheritance`、`long_term_care` 和 `will_planning` 四个事件簇及原有 9 个阶段，没有新增多阶段簇。
-- `later.retirement` 现在只表示工作转段记录，不代表年龄、养老金资格或全部晚年身份。工作转段只对 55—80 岁且当前正式就业、零工或自营者开放；继续工作、半退、退出、长期求职、从未正式就业和主动离开劳动力市场均有独立事实边界。
-- 新增课程候补、固定帮忙边界、情感诱导付款和私域健康营销四个一次性选择。孤独、独处、直播／私信回应、涉老营销和受骗后止损均不默认生成子女、伴侣、朋友、自有住房、养老金或诊断，也不把小额知情娱乐消费自动定性为错误。
-- 16 条低权重日常 beat 分为办事、数字学习、日常乐趣、独处与有限参与四组。它们使用既有 `timeline` 实现同句 8 年、同组 3 年冷却，同年队列不出现同组；复发 beat 不写入 `usedEvents`，其他唯一事件仍永久一次性。没有新增存档字段或通用事件实例系统。
-- 内容合同新增 `later.inheritance`、`housing.status`、`relationships.network`、`pressures.loneliness` 和 `mobility.localTies` 五个只读路径；住房只读取当前事实，社会交往只读取聚合值或绑定既有人物，写入型住房和通用关系系统仍分别属于 v0.6.8、v0.6.9。
-- 生成数据为 424 beats、192 decisions、192 consequences、20 black swans，共 828 个事件和 72 张卡牌。生成器连续两次 SHA-256 均为 `A56FD7F169308972D05C320FB96549B2E1E91A327C0E9FFBFC030C69106DB54D`。
-- `cards,episodes` 合并 profile 覆盖语法、正确性、浏览器、full-track 和 cards：职业史与事实门槛、旧 `usedEvents` 兼容、8／3 年冷却、同年队列、刷新不重复结算、4 个晚年事件簇与 9 阶段、全部 36 条事件簇路线、192 个选择面板、201 条交互路线、状态抽屉、360×773／360×640／320×568 和控制台零错误。三路独立代码审查提出的 11 项可执行问题已全部修复，9 项其余发现经复核无需修改；没有运行批量人生模拟，主观节奏和文案自然度仍需用户试玩。
-
-## v0.6.8 住房与居住选择
-
-- v0.6.8 已发布到 `main`；版本为 v0.6.8／Schema 12／Content Revision 26。Schema 11 活动人生清除，档案、图鉴、设置、统计与跨局记录保留；研究归档位于 `docs/research/v0.6.8-住房与居住选择.md`。
-- `housing` 现在保存状态、居住安排、地区、稳定性、适配、费用分担、真实共住人物引用、起始年龄、关键选择数和稀疏历史。内容只能通过 `transitionHousing` 写入；出生、入学宿舍、单位宿舍、远程基地、关系变化、按揭结清、债务处置和晚年照护使用同一运行时入口。
-- 普通住房选择最多三次且类型不重复；只有债务把当前住房从可维持推到不成立时，允许一次 `debtRelief` 第四次。共同住房只读取真实在世伴侣的一次性住房收入参考，不建立伴侣完整账本，按揭仍归玩家。
-- 新增独立 housing 轨 32 beats 与 6 decisions；删除旧 `decision_106` 全国通用租／买／回家题。价格只在签约时按地区锚点生成并固化，不模拟年度房价、第二套房或经营性住房。
-- 生成数据为 456 beats、197 decisions、197 consequences、20 black swans，共 870 个事件；图鉴使用新 ID `codex_31/32`，不覆盖既有跨局图鉴语义。教育调度热修后生成器双跑 SHA-256 均为 `FA589969878103C167D6D69987AE3F77E0386E5A839B912D7E9566BF34B10936`。`core,debt,episodes` 覆盖语法、合同、Schema 12 迁移、浏览器核心路径、住房代表纵切片、三种窄屏、按揭与债务处置；`cards` 另行覆盖住房吃紧提示与卡牌说明并存。
-- `legacy/0.6.7` 固定在发布前的 `main@665431e`；功能提交 `4e5d6d6` 与保留分支均已推送。GitHub Pages 运行 `31260886809` 成功，线上 `index.html`、`game.js`、`runtime-content-contract.mjs`、`data.json` 与一键试玩脚本均可访问；线上数据 SHA-256 与本地一致。
-- 教育调度热修 `b78ea26` 修正了初中／高中自动毕业过早进入首职的问题：中考分流和本科申请先于首职，明确选择就业后才恢复首职资格；同版本旧活动人生会保守修复错误的 `nextStage`，已作出的就业选择不回滚。`correctness`、`family-education`、`university-career`、`employment` 与 36 文件 syntax 均通过，三组真实浏览器检查控制台错误为 0。Pages 运行 `31263523633` 成功，线上 `game.js` 与本地逐字节一致，线上 `data.json` SHA-256 为 `FA589969878103C167D6D69987AE3F77E0386E5A839B912D7E9566BF34B10936`。
-
-## v0.5.2 已完成
-
-本轮中文标准是约 70% 生活白话、20% 真实行业与家庭用语、7% 互联网幽默、3% 文学判词。
-
-十二条人生轨道的 384 个年度事件、96 个轨道选择、288 个即时结果和 288 个长期回响已经改为显式中文内容。四个全局选择也取消了通用结果句和机制提示。首页、出生、属性、状态抽屉、时间线、图鉴和结局的核心界面用语集中在 `content/zh-CN/ui.mjs`。
-
-这次只重写文案，没有调整事件数量、状态条件、效果、数值平衡或界面布局。
-
-## v0.5.3 卡牌修复
-
-72张卡牌已移动到 `content/zh-CN/cards.mjs`，按0、18、35、55岁分成12／20／20／20四个池。每张卡都有独立名称、生活化说明、`drawAge` 和至少一项实际状态效果。
-
-运行时只从当前年龄对应的池中抽三张牌。旧的“起步／转折／中段／回稳／余生”后缀和不可达的 `adversity` 池已删除。四次抽卡仍发生在0、18、35、55岁，72张总量和底部弹层交互不变。
-
-## v0.5.4 成瘾清晰化
-
-内部存档键继续使用 `habits`，界面名称统一为“成瘾与戒断”。`habits.type` 现在明确区分赌博、酒精、游戏、消费和药物；每类各有接触、功能受损、治疗／恢复三步选择，普通饮酒、游戏、购物和遵医嘱用药都可以不进入持续问题。
-
-五类内容共有32个年度事件、15个选择和15个选择特定回响。依赖或失控只能在反复行为、控制受损和现实功能损害之后出现；药物链要求已有真实健康治疗状态，并区分必要处方、身体依赖、误用与成瘾。状态抽屉显示“赌博·追损失控”“酒精·治疗中”“游戏·恢复2年”等具体状态。
-
-研究档案位于 `docs/research/v0.5.4-addiction-clarity.md`。数据仍由生成器产生，schema 保持7，内容修订升至11。
-
-## v0.5.5 事件簇引擎与开店样板
-
-运行时新增 `run.episodes` 和 `run.sceneQueue`。带 `episode` 接口的选择不再走普通年度选择流程：每阶段依次显示情况卡、选择卡和结果卡，三张卡保持同一年龄；结果确认后只写一条时间线，再完成年度结算。队列和当前选择会写入 localStorage，刷新后恢复到正确卡片且不重复应用效果。
-
-`shop_opening` 使用 `decision_033`—`decision_035` 三个阶段：考察与资金、开业与真实流水、明确收尾。最终路线为 `survived`、`independent`、`stop_loss` 和 `debt_failure`。簇开始时绑定具体经营单位，最多五年；单位提前失效或超过截止年龄时播放包含退租、设备、库存或品牌支持变化的具体结尾。
-
-活动事件簇同时最多两个且不能占用同一领域；旧 `arcs` 仍保留给尚未迁移的轨道，事件簇与旧链不能同时占用同一 lane。融资扩张和财富顶点继续留在旧经营链，未并入本轮开店簇。
-
-Schema 8 会清除 v0.5.4 及更早版本的未完成人生，保留人生档案、图鉴、设置、统计、已见内容和最近种子。研究档案位于 `docs/research/v0.5.5-shop-episodes.md`。
-
-## v0.5.6 事业转换事件簇
-
-`public_exam` 使用 `decision_017`—`decision_018` 表达报名资格、笔试面试及录用／再考／退出，截止期为两年。`layoff_reemployment` 使用 `decision_011`—`decision_012` 表达解除材料与重新落脚，覆盖内部转岗、同领域再就业、过渡工作、培训转岗和长期求职，截止期为两年。`career_break` 使用 `decision_040`—`decision_042` 表达资金来源、一年后生活与继续／低强度收入／返工，截止期为三年。
-
-三个轨道上其余尚未迁移的选择文案仍保留，但不再组成旧四节点长链；长期公共职业、一般受雇工作和不工作状态继续由普通事件表达。公务员招录与裁员再就业共用 `career` lane，不能并行；主动不工作使用 `lifestyle` lane，仍受同时最多两个事件簇的总限制。
-
-运行时增加三类事件簇名称、招聘单位／原用人单位绑定、明确的超期与状态失效结尾，并让强制结尾时间线回到真实内容轨道。版本仍为 Schema 8，内容修订升至 13；根据现行发布策略，v0.5.5 的未完成人生会在版本变化时清除，跨局记录继续保留。研究档案位于 `docs/research/v0.5.6-事业转换.md`。
-
-## v0.5.7 危机与恢复事件簇
-
-本版新增 `guarantee_recourse` 与 `acute_illness`，并把五类成瘾分别拆成形成、治疗、复发三个短事件簇。担保按签署、违约、追偿推进，三年内以追回、书面重组、关系破裂或债务失败收口；急性疾病按检查、治疗、康复、结果推进，四年内落到治愈、管理、功能受限或退出治疗。
-
-成瘾事件共15簇、30个选择：首次接触不直接诊断，治疗入口要求已有控制受损或功能损害，复发入口要求已有至少一年恢复记录。状态抽屉使用具体中文名称，超期与状态失效都有物件和动作明确的替代结尾。版本仍为 Schema 8，内容修订升至14；v0.5.6 未完成人生会按版本策略清除，跨局记录保留。研究档案位于 `docs/research/v0.5.7-危机与恢复.md`。
-
-验证结果：生成器连续两次 SHA-256 均为 `BF31FE903107BAAD50D37892211C3FA7F228F4FF1599C019958383FCCEB80397`；662节点数据契约、状态门槛、语言检查和一条系统 Chrome 核心路径通过。浏览器路径覆盖三种窄屏、同龄三卡、刷新恢复、lane 互斥、担保与疾病全部结尾、五类成瘾三簇代表结尾及三类强制结尾，控制台错误为0；没有运行批量人生模拟。
-
-## v0.5.8 家庭与迁移事件簇
-
-远程、伴侣和子女轨道的六条旧四节点链已删除，改为14条独立短簇：关系建立、婚姻危机、离婚、复合、晚年相伴；成为父母、收养、入学、青春期边界、成年子女边界；第一份远程合同、平台依赖、海外许可和建立基地。
-
-`relationship` 与 `parenting` 使用不同 lane；当前伴侣由 `relationships.activePartnerId` 绑定，分开后保留 `lastPartnerId`，不会把前任误当作当前伴侣。入学、青春期和成年边界绑定具体孩子并按实际年龄开启。新簇的中文名称、放弃路线、年龄优先级和超期／失效文案保存在 `data.json` 的 `episodeCatalog`；普通远程工作、一次关系摩擦或一次生育延迟不会自动升级为危机。
-
-版本仍为 Schema 8，内容修订升至15；v0.5.7 未完成人生按现行策略清除，跨局记录保留。研究档案位于 `docs/research/v0.5.8-家庭与迁移.md`。当前生成数据为400个年度事件、124个选择、124个选择特定回响和20个黑天鹅，共668个节点。
-
-验证结果：生成器连续两次 SHA-256 均为 `86200307E21CC7E526AC64DE0037E1829FB33A11B1A794DF872B9DEED31B1B0D`；668节点数据契约、状态门槛、语言检查和一条系统 Chrome 核心路径通过。浏览器路径覆盖三种窄屏、刷新恢复、同龄连续卡、当前伴侣绑定、到龄入学、单阶段收口、两簇上限和平台具体失效结尾，控制台错误为0；没有运行批量人生模拟。
-
-## v0.5.9 全轨收口
-
-教育轨道新增 `secondary_diversion`、`university_interruption`、`professional_certification` 和 `adult_reeducation`；经营轨道保留 `shop_opening`，新增 `business_expansion` 与 `wealth_peak`；晚年轨道新增 `retirement_transition`、`parental_inheritance`、`long_term_care` 和 `will_planning`。这些事件簇分别在1—4年内收口，长期教育、经营、退休、继承、照护与遗嘱结果继续保存在运行状态中，不再靠几十年活动链维持。
-
-教育、经营和晚年剩余五条旧四节点链已经删除，运行时的 `run.arcs`、`arcSlots`、`arc` 与 `arcExit` 接口也已清除。15岁重复教育转场删除，18岁首次方向选择保留；一般受雇、公共职业和财务轨道中会绕过新簇直接退休或立遗嘱的旧选择已改写为合同交接、调动档案和债务盘点。父母遗产绑定真实已故父母；企业扩张要求已有可运行业务、经营能力和权益，财富顶点要求企业已达到全国或全球规模。状态抽屉新增退休、继承、照护和遗嘱长期状态。
-
-版本仍为 Schema 8，内容修订升至16；v0.5.8 未完成人生按现行版本策略清除，人生档案、图鉴、设置、统计和跨局记录保留。研究档案位于 `docs/research/v0.5.9-全轨收口.md`。当前生成数据为400个年度事件、124个选择、124个选择特定回响和20个黑天鹅，共668个节点。
-
-验证结果：生成器连续两次 SHA-256 均为 `1E52CFA76540EAB22D2EB77D3C941E7449D07A90B749A6AD60818E26B2A50CA0`；JS语法、数据契约、57项状态门槛和语言检查通过。一条系统 Chrome 核心路径覆盖10条新簇的40个结尾、同龄三卡、选择与结果刷新恢复、两簇与同 lane 限制、v0.5.8 存档迁移，以及360×773、360×640、320×568的连续卡和状态抽屉；六张截图在动画完成后人工目检通过，控制台错误为0，没有运行批量人生模拟。
-
-## v0.5.10 原生家庭与国内外本科入学
-
-家庭原型在原有职业与账面基础上增加资源、教育资本、照顾者可用时间、父母在场、住房稳定、情感安全和教育预算。父母职业不再只是出生页标签：教师、医护、平台劳动、技术岗位、经营等会以有限幅度改变教育信息、可用时间、工作稳定和教育预算，再与家庭关系共同形成成长证据。2、7、11、14岁的固定家庭节点按资源与关系组合选择具体生活事件，新增资源充足但关系不安全的独立路线；贫困不自动等于伤害，富裕也不自动等于陪伴或安全。
-
-成长状态保存学习习惯、出勤、教师与同伴支持、自我求助、照料负担、创伤负荷、语言准备和路线信息。校园内容覆盖支持、霸凌、教师伤害、转班／转学、继续受损和恢复；`school_harm` 是独立两阶段短簇，忍耐不会得到正向奖励。中考 `secondary_diversion` 会读取真实准备度；普高等核心路线保持可见但门槛不足时禁用并解释，额外学校路线只有在此前接触后出现。
-
-旧的统一18岁方向选择和碎片化 `university_interruption` 已删除。`undergraduate_application` 使用 education lane，四阶段分别处理国内／海外／双轨准备、考试与申请结果、录取后的资金、一般性入境与启程及最终报到。提交不再保证录取，海外结果区分直接录取、条件录取和落选；国内首年费用或资助必须落实，海外资金不会提前写成入境资格完成。国内和海外可以并行申请，但最终只写入一个 `enrollmentRegion`。`education.nextStage='undergraduate'`、成长证据和申请记录供下一版继续处理大学课程、社团、研究生和就业，本版不自动模拟本科毕业。
-
-版本升至 Schema 9、内容修订17；Schema 8活动人生会清除，人生档案、图鉴、设置、统计和稳定ID的跨局记录保留；会随生成顺序漂移的旧 `beat_NNN`／`decision_NNN`／`consequence_NNN` 已见计数会清除，避免套到新事件。研究档案位于 `docs/research/v0.5.10-原生家庭与国内外升学.md`。生成数据为408个年度事件、127个选择、127个选择特定回响和20个黑天鹅，共682个节点。
-
-验证结果：生成器连续两次 SHA-256 均为 `D35D8359235C3C4D1265FC35889C7D0B3ECA9EC9F1757D64A75486F93DA13381`；JS语法、682节点数据契约、78项状态语义门槛和语言检查通过。一条系统 Chrome 核心路径覆盖Schema 8活动局清除且稳定跨局记录保留、资源紧张且不安全／资源充足且父母在场／资源充足但关系不安全的童年节点、核心路线锁定与特殊路线隐藏、国内资金不足、国内本科报到、海外本科报到、落选与延期、开始阶段后的自然调度、同龄选择与结果刷新恢复、每阶段一条时间线，以及360×773、360×640、320×568；两张有效截图人工目检通过，控制台错误为0，没有运行批量人生模拟。
-
-## v0.5.11 全量生活化文案
-
-十二条人生轨道、事件簇情况卡、选择、即时结果、长期回响、家庭节点、家庭秘密、黑天鹅、强制结尾、图鉴提示和部分运行时提示已按同一套生活化标准重写。迁移以 v0.5.10 `main` 为工程基线，没有引入来源分支的运行时调试接口或浏览器测试重构。
-
-事件、卡牌、选项和路线的ID、顺序、年龄、条件、效果、数值、概率及数据结构保持不变。五处方向错误的中文引号已修正；`content/zh-CN/cards.mjs` 与来源分支完全相同，因此本轮没有不存在的卡牌差异可迁移。
-
-版本升至 v0.5.11、内容修订18，Schema 保持9。v0.5.10未完成人生按现有版本规则清除，人生档案、图鉴、设置、统计、稳定跨局记录和最近种子继续保留。
-
-文案覆盖递归核对了来源分支的1590个字符串差异，其中1586项逐字一致；其余4项是生成数据中的客观引号纠错，另有1项运行时引号纠错。除字符串、版本和内容修订外，ID、顺序、年龄、阶段、角色、条件、效果、路线、数值、概率和数组长度没有差异。生成器连续两次 SHA-256 均为 `9CB70541B90778BCF59E244C65987FCC3D4F31B2EAB63CD04350019BEFF08677`。
-
-验证结果：JS语法、682节点数据契约、78项状态语义门槛和语言检查通过。系统 Chrome 核心、家庭教育、就业语言和全轨道 smoke 均通过，覆盖 v0.5.10 未完成人生清除、稳定跨局记录保留、漂移 `beat_NNN` 清理、选择与长期回响、事件簇三卡、强制结尾、清除数据、结局和三种窄屏；控制台错误为0。测试首次失败均先核对验收器，确认是旧文案、旧ID或旧fixture后只修正测试，未为通过 smoke 修改游戏机制。出生、时间线、情况／选择／结果卡、强制结尾、状态抽屉和结局截图已人工目检，没有运行批量人生模拟。
-
-合并前 hot fix 修复了三个实际试玩问题：首次入职现在写入“企业项目岗位”及对应雇主、行业，不再以“尚未进入社会”领取工资；产检单只会在有现实伴侣且已进入备孕计划时出现，原来错误绑定学龄子女的异常产检改为孩子体检；关系建立后的伴侣绑定补齐存活字段，不再每次恋爱后误触发分手，真实失效时会把伴侣转为前任并将状态收口为单身。hot fix 后生成器连续两次 SHA-256 均为 `A7E2CEF74EA53D5BFCB4EAD6D3B07B58D6CD6B98641A0281EED18B21210D01ED`；数据、状态、语言及就业和家庭关系浏览器回归通过，截图人工目检通过，控制台错误为0。
-
-## v0.5.12 本科—研究生—首份工作
-
-- 2026-07-26: 从 `main@2076ea3` 新建 `codex/v0.5.12-university-to-first-job`。版本升至 v0.5.12、Schema 10、content revision 19；Schema 9 活动人生清除，跨局档案、设置、统计、稳定已见记录和最近种子保留。
-- 2026-07-26: 新增国内本科、美国本科、欧洲本科、休学／转学、研究生申请、国内／美国／欧洲研究生和首份工作共12条短期事件簇。教育主线使用 `education` lane，海外生活使用 `community` lane；没有重写国内外本科申请，也没有改 UI/CSS。
-- 2026-07-26: 本科直接就业与研究生就业分别消费课程、校园、实践和研究证据。研究生学历不会自动兑换高薪；方向过窄、经验不足、资金缺口、工作资格受限和持续求职都有独立结果。持续求职完成后仍可遇到普通岗位机会，不会永久卡在求职状态。
-- 2026-07-26: 海外生活区分美国与欧洲教育制度、授课语言与社会语言、日常行政和合租习惯。同胞、本地与国际网络可以并存；歧视记录为环境压力，不进入录取或就业失败乘数。研究依据归档在 `docs/research/v0.5.12-本科研究生与首份工作.md`。
-- 2026-07-26: 按 `CopyWriting_Guideline.md` 重新审阅并改写12条事件簇及强制收尾，清除流程报告腔、地区串线和提前生成实践、面试或录用的问题。最终生成器连续两次 SHA-256 均为 `702AA4C25DE0B4650C1024D9FAFB81FCC9A27AA129BF2928126880C48142B8A0`。
-- 2026-07-26: 数据为408个年度事件、162个选择、162个选择特定长期后果和20个黑天鹅，共752个节点。定向 smoke 覆盖本科直就业、读研、休学复学、转学、申请失败、资助缺口、工作资格受限、持续求职、海外关系网和三种窄屏；现有四项核心 smoke 继续通过，控制台错误为0。没有运行批量概率模拟。
-- 2026-07-26: PR #22 已合并，`main` 为 `8ed52605cde28fcf30ce15c91484873b5767381a`；GitHub Pages 已返回 v0.5.12、Schema 10、content revision 19，并命中最终改写文本。
-
-## 尚未完成
-
-数值平衡、危机强度、结局辨识度、时间线连贯感和重开欲望仍需人工试玩判断。当前自动测试只证明数据契约、定向结局和核心路径连通，不代表主观体验已经完成。后续若调整内容，应根据真实试玩反馈建立独立小版本，不要把反馈修正和架构升级混在一起。
-
-## v0.6.0 卡牌参与选择
-
-- 版本升至 v0.6.0、Schema 11、content revision 20。Schema 10 活动人生会清除；人生档案、图鉴、设置、统计、稳定已见记录和最近种子保留。
-- 72张既有卡仍在0、18、35、55岁各抽三选一，抽取时的一次性效果继续存在。卡牌进入 `run.cards` 后永久有效；同机制多卡按获得顺序取最早一张作为唯一主卡，不消耗、不叠加。
-- 每个选择均有显式 `mechanicTags` 与 `cardInteraction`。卡牌可解锁信息入口、放宽软性资金门槛、补一段成本、压低一次风险或切换作者预写结果；事件年龄、学历、执业和现实资格门槛不得被卡牌绕过。
-- 生成器验证12种机制均有至少8个选项、3个阶段和35／55岁后续用途；当前162个决策面板全部存在可能生效的交互。`CARD_INTERACTION_WITNESSES` 保留卡牌专属入口的声明式见证，验证失败会中止生成。
-- 新增 `tests/v6-card-interaction-smoke.cjs`，覆盖五种交互模式、无卡兼容、同机制主卡、刷新不重复结算、Schema 10迁移和系统减少动态效果。四次抽卡弹层边框仅呼吸两次；`prefers-reduced-motion` 时保持静态。
-- 选择弹层以“待生效”弱提示列出持有卡；实际生效时才在对应选项上显示卡名、具体改变和细边框，不改变无卡选择的层级。
-- 游戏内全局“主菜单”只返回首页并保留当前人生；首页“重启人生”经过确认后重新进入出生流程，只清除当前人生，跨局档案、图鉴、统计和设置继续保留。
-- 发布前已确认生成器连续两次无 diff、语法检查、v0.6 定向 smoke 与五个既有 smoke 均通过；360×773 和 320×568 移动端核心路径无控制台错误。
-
-## v0.6.1 可审查源码基线
-
-- 从本地 `main@4b23df7` 创建 `codex/v0.6.1-readable-runtime`。使用固定版本 Prettier 3.6.2 原地展开 `game.js`，从347行整理为3643行；仍由 `index.html` 直接加载，没有增加 `src/`、modules、bundler、`package.json` 或第二部署入口。
-- 格式化前后 Prettier AST `--debug-check` 均通过；具名函数仍为155个，`rng`／`chance`／`weighted` 调用仍为17处，localStorage 键和全部既有调试接口保持不变。
-- 新增 `tests/v6-runtime-equivalence-smoke.cjs` 与 v0.6.0 golden fixture。固定 seed `v061-readable-runtime-equivalence` 覆盖出生、随机属性、0岁抽卡、8次实际推进和 `decision_043_choice_1 + card_01` 卡牌互动；14个检查点完全一致，最终 `rngState` 为 `783991599`。
-- 版本升至 v0.6.1，Schema 保持11，content revision 保持20。生成器连续两次 SHA-256 均为 `8CF2E0C8491CF43F20083FBF0CCCCA3C80CF6FC6FB76FE236F6D30683D2B8DF8`；删除 `version` 与 `gameVersion` 后，生成数据与 v0.6.0 的语义哈希完全相同。
-- 26个 JS／MJS／CJS 文件语法检查通过；固定轨迹与六项既有 Chrome smoke 全部通过，覆盖360×773、360×640、320×568，控制台错误为0。就业 smoke 中一条首页旧文案断言已按当前正式源文案校正；这是验收器修正，没有修改游戏文案。
-- 本轮没有修复主冲突加权、年度健康边界或其他 v0.6.2 问题，没有修改玩家内容、数值、状态契约、UI/CSS 或实验 worktree。功能提交 `2a3910c` 已推送到 `codex/v0.6.1-readable-runtime`；`main` 以 fast-forward 发布，未创建 PR 或合并提交。GitHub Pages 最新构建指向该提交，线上 `index.html`、`game.js` 和 `data.json` 均已核对为 v0.6.1／Schema 11／Content Revision 20。
-
-## v0.6.2 正确性与内容完整性护栏
-
-- 从 `main@32fb143` 创建 `codex/v0.6.2-correctness-guardrails`。新增共享内容合同，统一运行时与生成器的 operator、command、读写路径和比较语义；`game.js` 在请求 `data.json` 和恢复状态前加载合同，合同缺失时进入明确启动失败页。页面仍直接加载同一经典 `game.js`，没有 bundler 或第二入口。
-- 主冲突权重只登记有正式内容证据的开放关系：`leisure→freedom`、`later→peace`、`health→body`；未登记关系保持中性。配置不要求覆盖所有冲突或轨道，也不是封闭合同，后续主干事件按证据增量补充。
-- 年度结算在全部健康增减完成后、`syncDerived` 前将 physical 和 mental 限制到0—100；其他路径、扣减值和结算顺序未调整。
-- 生成器写出前严格验证 command、读写 path、operator、有限数值、ID、引用、作者键泄漏和映射证据。validator 暴露了3条缺少数值、运行时原本按加0处理的无操作 `add`；经用户确认，只从生成器源定义删除这3条，没有补值或改动同一 choice 的其他效果。
-- beat、decision、card、echo、卡牌互动和 witness 改用生成期作者定位与固定槽位。移动既有定义或插入已登记定义不会改变无关槽位，未登记定义会中止生成。作者键没有进入 `data.json`、存档、运行状态或公共接口。家庭债务范围由模糊正则改为显式三项名单，生成结果不变。
-- v0.6.2 仍为 Schema 11、content revision 20。相对 v0.6.1，`data.json` 只有两个版本字段和上述3条无操作 command 删除；事件、卡牌、家庭、文案、ID、顺序和其他效果不变。最终 SHA-256 为 `1A2182D4B3CFC257EB6AEC3270468F9F00874DEF3BF363B78812D4B82A20F09F`。
-- 本地验证通过：31个脚本语法检查；生成器连续两次稳定；护栏负例、operator子集、12检查点中性选择/RNG等价、合同加载前置与失败页、映射命中／中性、健康上下界；v0.6.1固定轨迹14检查点继续匹配。六项既有Chrome smoke全部通过且控制台错误为0。家庭教育smoke的无卡资金门槛原来受随机持有 `cashBuffer` 卡影响，已仅在该fixture显式清空卡牌，未改游戏。
-- 功能提交 `cec0246` 已推送到 `codex/v0.6.2-correctness-guardrails`；`legacy/0.6.1` 固定在原 `main@32fb143`，`main` 以 fast-forward 发布，未创建 PR 或合并提交。GitHub Pages 运行 `30368740260` 成功，线上 `index.html`、`game.js`、`data.json` 和 `runtime-content-contract.mjs` 均返回200并一致显示 v0.6.2／Schema 11／Content Revision 20；线上数据 SHA-256 与提交中的生成数据一致。
-
-## v0.6.3 教育年龄与重试
-
-- `codex/v0.6.3-education-retry` 从 `3e70d885` 开始实施，功能提交 `3ba0490` 已进入 `main` 并发布；`legacy/0.6.2` 保留发布前基线。
-- 普通本科申请新增路线、次数、稳定结果、一次共享补申年、时间偏移和 30 岁关闭状态。国内复读与海外重申不能各消费一次；刷新不会重掷已形成结果。
-- 教育事件同一年龄最多处理两条，第一条存在合法教育后续时不结算，第二条只结算一次；无合法后续时正常结束当年。非教育年度流程未改。
-- 本科末年可以同龄接研究生申请，是 education lane 的唯一重叠例外。学历只在本科或研究生最终阶段写入；录取、资金、入境和注册继续分离。
-- 版本为 v0.6.3、Schema 11、content revision 21。研究档案位于 `docs/research/v0.6.3-教育年龄与重试.md`。
-- 最终本地验证：生成器连续两次 SHA-256 均为 `2EE5A8708994FC57F154B9E5BB1A5BCAF2CF457004315AA6108F1E17E94DF5FE`；education、core、cards profile 通过。浏览器覆盖 360×773、360×640、320×568，控制台错误为 0；没有运行批量人生模拟。
-
-## v0.6.x 路线状态
-
-后续版本顺序已经完成审计并固定为：
-
-1. v0.6.1：可审查源码基线，已发布。
-2. v0.6.2：正确性与内容完整性护栏，已发布。
-3. v0.6.3：教育年龄、复读与海外重申，已发布。
-4. v0.6.4：首份工作与职业状态桥接，已发布。
-5. v0.6.5：生育计划、怀孕决定与单身收养，已发布。
-6. v0.6.6：债务执行与生活后果，已发布。
-7. v0.6.7：晚年生活，已发布。
-8. v0.6.8：住房与居住选择，已发布。
-9. v0.6.9：社会交往，roadmap 已完成；下一步是基于 v0.6.8 重新核对事实并做开发前规划。
-10. v0.6.10：跨系统验收、有限内容收口和一次 v0.6.x 整体文案核对；已有详细方案，但依赖 v0.6.0—v0.6.9 全部完成。
-
-v0.6.2 允许的作者键只用于生成器内部稳定定位和作者配置。它不得输出到 `data.json`，不得进入运行时状态、localStorage、存档、历史、图鉴、统计、延迟后果、玩家可见数据或跨版本接口，也不得形成第二套通用身份系统。需要跨版本稳定身份时必须停止并另行研究。
-
-v0.6.x 不实现完整稳定语义 ID 迁移、统一 provenance bus、Reactive Rules、复杂因果图、参数化后果引擎、Headless 大样本模拟或完整模块化构建链。这些方向只能在内容成熟并出现跨至少三个领域的重复因果证据后，作为 v0.7.x 研究问题重新评估。
-
-v0.6.3—v0.6.9 必须在每版交付可发布玩家文案，不能把模板化初稿全部留给最终版本。v0.6.10 的整体核对负责跨版本一致性、人物声音、敏感表达和残余模板债，保留已有好文案，不做无差别全量重写。
-
-## 存档与发布规则
-
-- 存档键继续使用 `life-unloaded-2026-v1`。
-- 同版本刷新应恢复当前人生及所在开局阶段。
-- v0.6.8 升至 Schema 12：v0.6.7／Schema 11 的活动人生会清除，人生记录、图鉴、设置、统计、跨局新鲜度和种子记录保留。
-- “清除全部数据”只清理本游戏使用的 `life-unloaded-2026-*` 存储。
-- GitHub Pages 直接发布 `main` 中的静态文件，没有构建产物。
-- 版本号必须同时核对 `index.html`、`game.js`、生成器、`data.json`、README、测试断言和导出文件名。
-- 推送新版本后应直接读取线上 `index.html`、`game.js` 和 `data.json`，确认页面、运行时和数据版本一致。
-
-## 下一窗口先做什么
-
-先执行只读核验：
-
-```shell
-pwd
-git rev-parse --show-toplevel
+```bash
 git status --short --branch
 git branch --show-current
-git remote -v
 git log -5 --oneline --decorate
-git rev-parse main
-git rev-parse origin/main
 ```
 
-然后完整阅读：
+内容发生变化时，只编辑 `content/zh-CN/` 与生成器源，然后连续生成两次：
 
-```text
-README.md
-AGENT_HANDOVER.md
-CopyWriting_Guideline.md
-docs/project-context.md
-progress.md 的最新章节
-index.html
-game.js
-tools/generate-v5-data.mjs
-content/zh-CN/
-tests/run-checks.cjs
-本次改动实际命中的 profile 及其引用测试
+```bash
+node tools/generate-v5-data.mjs
+node tools/generate-v5-data.mjs
 ```
 
-保留用户已有改动。v0.6.8 已发布；后续文案任务必须先完整阅读 `CopyWriting_Guideline.md`，并按当次授权分别判断提交、推送、PR、合并和部署。
+两次生成后的 `data.json` 必须逐字节一致；需要记录哈希时，macOS／Linux 使用 `shasum -a 256 data.json`，Windows 使用 `certutil -hashfile data.json SHA256`。
 
-下一窗口启动 v0.6.9 开发前规划时，先读：
+统一验证入口：
 
-```text
-roadmap/00-总体策略.md
-roadmap/v0.6.8-住房.md
-roadmap/v0.6.9-社会交往.md
-docs/research/v0.6.8-住房与居住选择.md
+```bash
+node smoke.js          # 日常核心：合同 + 核心浏览器回归
+node smoke.js --fast   # 秒级：全部脚本语法检查
+node smoke.js --full   # 发布前全部当前版本回归
+node smoke.js --list
+node smoke.js --changed main --dry-run
+node smoke.js --changed main --scope <profile>
 ```
 
-先现场核对 `main`、远端与线上版本；如需复核 v0.6.8，运行 `node tests/run-checks.cjs --profile core,debt,episodes`。不要未经新授权直接实现 v0.6.9；当前下一步是只读基线核对、案头研究与开发前规划。
+`tests/run-checks.cjs` 是内部 profile runner；正常操作不需要直接调用。冻结的 v0.6.7 runtime-equivalence 保存在 `tests/legacy/` 作为审计副本；实际复核须在独立 worktree 检出 `legacy/0.6.7`，运行该版本自带的 `node tests/v6-runtime-equivalence-smoke.cjs`，不进入当前版本 profile。
 
-实验分支 `investigate_card_game_mechanics` 不是下一版本基线，不整体合并。后续版本发布前仍以当前分支实际 diff 为准；未经明确授权不得提交、推送、合并或部署。
+本地试玩：macOS 双击 `start-local-play.command`，或运行 `python3 -m http.server 8765` 后打开 `http://127.0.0.1:8765/`。
 
-## 本地开发依赖
+## 验证基线
 
-项目仍是无需构建的静态站点；Node.js 和 Playwright 只用于生成内容和运行自动化测试，不进入玩家运行时。本仓库暂不维护 `package.json`，因此首次配置或清理 `node_modules/` 后，需要在仓库根目录重新安装本地测试依赖。
+- v0.6.9 生成器连续两次结果一致。
+- 全量档覆盖 syntax、correctness、core-browser、family-education、episode、university-career、card-interaction 与 debt-enforcement。v0.6.7 等价性脚本及 fixture 只作为 `tests/legacy/` 历史证据保留，不属于当前可运行 profile。
+- 三种窄屏路径纳入浏览器回归，控制台错误为 0。
+- `full` 不代表主观体验已完成；重要文案和人生连贯性仍需真实试玩判断。
 
-macOS 推荐使用 Homebrew 的 Node.js 24 LTS：
+## 发布边界
 
-```shell
-brew install node@24
-export PATH="/opt/homebrew/opt/node@24/bin:$PATH"
-npm install --no-save --no-package-lock playwright@1.62.0
-npx playwright install chromium
-```
+- GitHub Pages 直接发布 `main` 的静态文件，没有构建产物。
+- 发布前必须重新核对版本常量、生成数据、工作树和 `node smoke.js --full`。
+- 推送后必须核对远端分支、Pages 构建提交／状态，以及线上 `index.html`、`game.js`、合同与 `data.json` 的版本和哈希。
+- `roadmap/` 是本地规划资料；保持现有忽略策略，不因发布自动纳入 Git。
+- 实验分支 `investigate_card_game_mechanics` 不是发布基线，不整体合并。
 
-长期使用时，应将上述 `export PATH=...` 放进 `~/.zprofile`，不要每次手工输入。Windows 安装 Node.js 24 LTS 后，只需运行相同的两条 `npm`／`npx` 命令。测试默认启动 Playwright 管理的 Chromium；只有显式设置 `CHROME_PATH` 时才使用自定义浏览器。
+## 下一版本
 
-## 常用验证
+- v0.6.10：社会交往。开发前须基于 v0.6.9 现场事实重新规划；可读取住房接口，但不要反向重建住房系统。
+- v0.6.11：跨系统验收与有限收口；依赖 v0.6.10 完成。
 
-统一入口：
-
-```shell
-node tests/run-checks.cjs --list
-node tests/run-checks.cjs --changed main --dry-run
-node tests/run-checks.cjs --changed main --scope <profile>
-```
-
-常用显式 profile：
-
-```shell
-node tests/run-checks.cjs --profile syntax
-node tests/run-checks.cjs --profile fast
-node tests/run-checks.cjs --profile core
-node tests/run-checks.cjs --profile cards
-node tests/run-checks.cjs --profile family
-node tests/run-checks.cjs --profile education
-node tests/run-checks.cjs --profile career
-node tests/run-checks.cjs --profile cards,episodes
-node tests/run-checks.cjs --profile runtime-refactor
-node tests/run-checks.cjs --profile full
-```
-
-runner 会执行全部 JS／MJS／CJS 语法检查，并为浏览器 profile 启动和回收一次临时静态服务器。无参数不会运行测试；`full` 只用于明确的整体验收。`--changed` 遇到 `game.js`、生成器或未知测试文件会要求 `--scope`，不得猜测或退回全量。涉及数据时，生成器仍应连续运行两次并确认第二次输出稳定；涉及运行时或移动端交互时，再执行一次相关浏览器核心路径，不要用大规模人生模拟代替人工试玩。
+除非用户明确授权，下一窗口只核对或实施当前请求，不自动提交、推送、合并、部署、删历史文件或运行批量人生模拟。

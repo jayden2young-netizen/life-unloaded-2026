@@ -5,7 +5,7 @@ const path=require('node:path');
 const {launchChromium}=require('./playwright-runtime.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
-const OUT=process.env.DEBT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-v0.6.8-debt');
+const OUT=process.env.DEBT_SMOKE_OUT||path.join(os.tmpdir(),'life-unloaded-debt-enforcement');
 const URL=process.env.LIFE_URL||'http://127.0.0.1:8765/?debug=1';
 const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
@@ -67,7 +67,6 @@ async function fit(page,label){
 }
 
 (async()=>{
-  assert.deepEqual([data.version,data.schemaVersion,data.contentRevision],['0.6.8',12,26]);
   assert.deepEqual(decisions.filter(event=>event.episode?.id==='debt_enforcement').map(event=>event.id),['decision_186','decision_187','decision_188']);
   assert.deepEqual(Object.fromEntries(Object.entries(data.debtSourceCatalog).map(([id,spec])=>[id,spec.enforcementEligible])),{
     mortgage:true,consumer:true,business:true,guarantee:true,habit:true,living:false,
@@ -92,11 +91,11 @@ async function fit(page,label){
     await page.locator('[data-card]').first().click();
 
     const currentSave=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    currentSave.schemaVersion=11;
-    currentSave.meta.schemaVersion=11;
-    currentSave.gameVersion='0.6.7';
-    currentSave.run.schemaVersion=11;
-    currentSave.run.gameVersion='0.6.7';
+    currentSave.schemaVersion=12;
+    currentSave.meta.schemaVersion=12;
+    currentSave.gameVersion='0.6.8';
+    currentSave.run.schemaVersion=12;
+    currentSave.run.gameVersion='0.6.8';
     for(const key of Object.keys(resetFinance))delete currentSave.run.finance[key];
     await page.addInitScript(({key,value})=>{
       if(sessionStorage.getItem('v068-debt-previous-release-loaded'))return;
@@ -106,14 +105,14 @@ async function fit(page,label){
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     let stored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(stored.run,null,'v0.6.7 Schema 11 active run is cleared');
+    assert.equal(stored.run,null,'v0.6.8 Schema 12 active run is cleared');
     await page.locator('[data-act="new"]').click();
     await page.locator('[data-act="birth-next"]').click();
     await page.locator('[data-act="random-attributes"]').click();
     await page.locator('[data-act="attributes-done"]').click();
     await page.locator('[data-card]').first().click();
     let run=await snapshot(page);
-    assert.equal(run.gameVersion,'0.6.8');
+    assert.equal(run.gameVersion,'0.6.9');
     assert.equal(run.finance.debtStage,'current');
     assert.equal(run.finance.restrictedConsumption,false);
 
@@ -209,7 +208,7 @@ async function fit(page,label){
 
     await page.setViewportSize({width:360,height:773});
     await openEpisodeChoice(page,phase('debt_enforcement',3),{
-      ...restricted,employment:{status:'employed',incomeAnnualGross:100000,incomeStability:'fixed'},housing:{status:'owned',value:150000},finance:{...restricted.finance,liabilities:[liability('consumer',{principal:40000}),liability('consumer',{id:'other_debt',principal:50000,rate:.2,status:'current',arrears:0})]},
+      ...restricted,cards:[],location:data.locations.find(item=>item.id==='tier2'),employment:{status:'employed',incomeAnnualGross:100000,incomeStability:'fixed'},housing:{status:'owned',value:150000,arrangement:'solo',region:'tier2',stability:'stable',accessibility:'standard',costShare:'self',coResidentRefs:[],history:[]},finance:{...restricted.finance,liabilities:[liability('consumer',{principal:40000}),liability('consumer',{id:'other_debt',principal:50000,rate:.2,status:'current',arrears:0})]},
     });
     const ownedBefore=await snapshot(page);
     run=await choose(page,0);
@@ -220,7 +219,7 @@ async function fit(page,label){
     assert.equal(run.finance.liabilities.find(item=>item.id==='consumer_debt').status,'settled','sale pays the bound execution debt');
     assert.equal(run.finance.liabilities.find(item=>item.id==='other_debt').principal,50000,'unrelated higher-rate debt does not steal execution proceeds');
     const rentalEntryCash=ownedBefore.finance.netWorth-run.finance.netWorth;
-    assert.ok(rentalEntryCash>=720&&rentalEntryCash<=3600,'sale did not preserve proceeds apart from the location-adjusted two-month shared-rental entry cash');
+    assert.equal(rentalEntryCash,2400,'sale did not preserve proceeds apart from the fixed tier2 two-month shared-rental entry cash');
 
     await openEpisodeChoice(page,phase('debt_enforcement',3),{
       ...restricted,
@@ -262,6 +261,40 @@ async function fit(page,label){
     });
     run=await snapshot(page);
     assert.equal(run.housing.status,'owned','housing did not become owned after the final secured debt settled');
+
+    const boundSettlement=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({
+        episodes:{guarantee_recourse:{status:'active',phase:3,startedAt:40,nextPhaseAge:42,deadlineAge:43,route:'notified',boundActors:{},commitments:[],closureReason:null,boundDebtId:'guarantee_bound'}},
+        finance:{cash:100000,enforcementDebtId:null,liabilities:[
+          {id:'guarantee_bound',kind:'guarantee',principal:60000,rate:.08,status:'current',arrears:0,enforcementEligible:true,housingSecured:false},
+          {id:'unrelated_high_rate',kind:'consumer',principal:70000,rate:.25,status:'current',arrears:0,enforcementEligible:true,housingSecured:false}
+        ]}
+      });
+      return debug.applyCommands([
+        {type:'repayDebt',target:'finance.liabilities',value:20000,scope:'episodeBound'},
+        {type:'restructureDebt',target:'finance.liabilities',value:1,rate:.045,scope:'episodeBound'}
+      ],{sourceEventId:'bound-debt-test',choiceId:'bound-debt-test',episode:{id:'guarantee_recourse'}}).run;
+    });
+    assert.equal(boundSettlement.finance.liabilities.find(item=>item.id==='guarantee_bound').principal,40000,'episode-bound repayment missed its guarantee debt');
+    assert.equal(boundSettlement.finance.liabilities.find(item=>item.id==='guarantee_bound').rate,.045,'episode-bound restructure missed its guarantee debt');
+    assert.equal(boundSettlement.finance.liabilities.find(item=>item.id==='unrelated_high_rate').principal,70000,'episode-bound repayment touched an unrelated higher-rate debt');
+    assert.equal(boundSettlement.finance.liabilities.find(item=>item.id==='unrelated_high_rate').rate,.25,'episode-bound restructure touched an unrelated higher-rate debt');
+
+    const staleBoundDebt=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__,before=debug.snapshot();
+      debug.patchRun({
+        episodes:{guarantee_recourse:{status:'active',phase:3,startedAt:40,nextPhaseAge:42,deadlineAge:43,route:'notified',boundActors:{},commitments:[],closureReason:null,boundDebtId:'already_settled'}},
+        finance:{cash:before.finance.cash,liabilities:[{id:'already_settled',kind:'guarantee',principal:0,rate:.08,status:'settled',arrears:0,enforcementEligible:true,housingSecured:false}]}
+      });
+      const prepared=debug.snapshot(),outcome=debug.applyCommands([
+        {type:'add',target:'finance.cash',value:4321},
+        {type:'repayDebt',target:'finance.liabilities',value:20000,scope:'episodeBound'}
+      ],{sourceEventId:'stale-bound-debt',choiceId:'stale-bound-debt',episode:{id:'guarantee_recourse'}});
+      return{prepared,outcome,after:debug.snapshot()};
+    });
+    assert.equal(staleBoundDebt.outcome.result.ok,false,'settled episode-bound debt reported a successful settlement');
+    assert.equal(staleBoundDebt.after.finance.cash,staleBoundDebt.prepared.finance.cash,'stale bound debt left a partial cash write');
 
     await patchPlaying(page,{
       yearStarted:false,
