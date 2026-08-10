@@ -112,7 +112,7 @@ async function fit(page,label){
     await page.locator('[data-act="attributes-done"]').click();
     await page.locator('[data-card]').first().click();
     let run=await snapshot(page);
-    assert.equal(run.gameVersion,'0.6.9');
+    assert.equal(run.gameVersion,'0.6.10');
     assert.equal(run.finance.debtStage,'current');
     assert.equal(run.finance.restrictedConsumption,false);
 

@@ -1,4 +1,4 @@
-// v0.6.9：每条互动按轨道、事件问题和选项文本显式登记。
+// v0.6.10：每条互动按轨道、事件问题和选项文本显式登记。
 // 这里没有数组位置轮换或通用文案 fallback；找不到精确键就不生成互动。
 const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
   "business::第一轮真实数字出来了。先改什么？::缩菜单和排班。先活下来": {
@@ -2937,6 +2937,118 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
       }
     ],
     "resultSuffix": "结果落定时，该留下的凭据没有缺席。 你这次走的是“一项项查清楚。用真实材料”。",
+    "source": "eventAuthored"
+  },
+  "social::这条旧消息，发不发？::发一句具体的近况": {
+    "primaryMechanic": "network",
+    "mode": "resultVariant",
+    "explanation": "准备发消息时，你先找回双方都记得的一件小事，没把“最近好吗”丢进空白里。",
+    "patch": [
+      {
+        "type": "add",
+        "target": "relationships.network",
+        "value": 2
+      }
+    ],
+    "resultSuffix": "消息仍要等另一个人回答；共同记忆只让开场不那么突然。",
+    "source": "eventAuthored"
+  },
+  "social::这段校园关系怎么谈？::把作息和边界说开": {
+    "primaryMechanic": "boundary",
+    "mode": "resultVariant",
+    "explanation": "开口以前，你把借东西、代报名和自己的时间分开说，没有把不高兴全塞进一句随便。",
+    "patch": [
+      {
+        "type": "add",
+        "target": "agency",
+        "value": 1
+      }
+    ],
+    "resultSuffix": "对方怎么接仍不确定；你的边界没有留给下一次猜。",
+    "source": "eventAuthored"
+  },
+  "social::今晚去不去？::说明有安排，不去": {
+    "primaryMechanic": "boundary",
+    "mode": "resultVariant",
+    "explanation": "你把今晚不去和明天照常交接放在一句话里，不拿长篇理由换下班许可。",
+    "patch": [
+      {
+        "type": "add",
+        "target": "agency",
+        "value": 1
+      }
+    ],
+    "resultSuffix": "聚餐照常进行，你的下班时间也没有因为拒绝被写成欠账。",
+    "source": "eventAuthored"
+  },
+  "social::这份人情，帮到哪里？::只帮能核实的部分": {
+    "primaryMechanic": "evidence",
+    "mode": "resultVariant",
+    "explanation": "你先圈出自己亲眼见过的内容；不能确认的那一项，不靠关系补签。",
+    "patch": [
+      {
+        "type": "add",
+        "target": "capabilities.evidence",
+        "value": 1
+      }
+    ],
+    "resultSuffix": "能帮的部分有了依据，岗位截图仍只是一次入口。",
+    "source": "eventAuthored"
+  },
+  "social::住处要不要和朋友绑在一起？::一起核合同再合租": {
+    "primaryMechanic": "cashBuffer",
+    "mode": "costShift",
+    "explanation": "签字以前，你把押金、搬家费和第一个月的公共开支留出了一点缓冲。",
+    "patch": [
+      {
+        "type": "add",
+        "target": "finance.cash",
+        "value": 1200
+      }
+    ],
+    "resultSuffix": "缓冲只垫住眼前，租约、住房资格和以后搬走的成本仍照实计算。",
+    "source": "eventAuthored"
+  },
+  "social::第一次，要不要见？::按约去公共场所": {
+    "primaryMechanic": "riskSense",
+    "mode": "riskShift",
+    "explanation": "赴约前，你把地点、回程和临时退出的办法发给了可信的人。",
+    "patch": [
+      {
+        "type": "add",
+        "target": "capabilities.riskSense",
+        "value": 1
+      }
+    ],
+    "resultSuffix": "见面是否投缘仍不确定；回家的路没有跟着交给陌生人。",
+    "source": "eventAuthored"
+  },
+  "social::这次，要不要开口？::把一个具体缺口说出来": {
+    "primaryMechanic": "network",
+    "mode": "resultVariant",
+    "explanation": "你先把最急的一件事说具体，也允许对方只回答能不能做这一件。",
+    "patch": [
+      {
+        "type": "add",
+        "target": "pressures.loneliness",
+        "value": -2
+      }
+    ],
+    "resultSuffix": "朋友能做多少仍要看现实；这次开口没有把整个人生塞给对方。",
+    "source": "eventAuthored"
+  },
+  "social::这次把时间留给谁？::发一条具体消息": {
+    "primaryMechanic": "resilience",
+    "mode": "resultVariant",
+    "explanation": "你先接受这条消息可能没有回音，再决定把真实近况写进去。",
+    "patch": [
+      {
+        "type": "add",
+        "target": "capabilities.resilience",
+        "value": 1
+      }
+    ],
+    "resultSuffix": "回应仍由对方决定；你没有因为怕落空，就把想联系改写成无所谓。",
     "source": "eventAuthored"
   }
 });

@@ -36,8 +36,13 @@ export const COMMAND_TYPES = Object.freeze([
   'grantCredential',
   'resolveConception',
   'createPerson',
+  'createSocialPerson',
+  'updateSocialPerson',
+  'transitionSocialToDating',
+  'createEmploymentReferral',
   'transitionPartner',
   'transitionHousing',
+  'socialCoResidence',
   'resolveInheritance',
   'transition',
   'claimDesire',
@@ -62,7 +67,30 @@ export const HOUSING_CHOICE_KINDS = Object.freeze([
   'partnerReconfiguration',
   'homePurchase',
   'laterFit',
+  'socialCoResidence',
   'debtRelief',
+]);
+
+export const SOCIAL_SLOTS = Object.freeze(['primary', 'secondary']);
+export const SOCIAL_SOURCES = Object.freeze([
+  'childhood', 'campus', 'work', 'roommate', 'neighbor', 'interest', 'online',
+]);
+export const SOCIAL_TIES = Object.freeze([
+  'acquaintance', 'friend', 'close', 'distant', 'ended',
+]);
+export const SOCIAL_PROXIMITIES = Object.freeze(['local', 'remote', 'unknown']);
+export const SOCIAL_TURNS = Object.freeze([
+  'met', 'deepened', 'drifted', 'conflicted', 'reconnected',
+]);
+export const SOCIAL_SUPPORT = Object.freeze([
+  'unseen', 'showedUp', 'limited', 'refused', 'unable',
+]);
+export const EMPLOYMENT_REFERRAL_STATUS = Object.freeze([
+  'none', 'available', 'used', 'expired',
+]);
+export const SOCIAL_OUTCOME_MAX_VARIANTS = 3;
+export const SOCIAL_ACTOR_FIELDS = Object.freeze([
+  'socialSource', 'socialTieAny', 'socialProximity', 'socialTurnAny', 'socialSupportAny',
 ]);
 
 export const READ_PATHS = Object.freeze([
@@ -74,6 +102,7 @@ export const READ_PATHS = Object.freeze([
   'business.scale',
   'business.status',
   'capabilities.cashBuffer',
+  'capabilities.network',
   'capabilities.portableSkill',
   'desires.reclaimed',
   'desires.creation.fulfillment',
@@ -125,6 +154,8 @@ export const READ_PATHS = Object.freeze([
   'employment.jobTier',
   'employment.pendingOfferId',
   'employment.profileId',
+  'employment.referralPersonId',
+  'employment.referralStatus',
   'employment.sector',
   'employment.status',
   'location.id',
@@ -161,6 +192,8 @@ export const READ_PATHS = Object.freeze([
   'legacy.medicalDirective',
   'legacy.plan',
   'mobility.mode',
+  'mobility.belonging',
+  'mobility.chineseCommunityTies',
   'mobility.localTies',
   'mobility.lastOverseasSystem',
   'mobility.platformDependence',
@@ -189,6 +222,9 @@ export const READ_PATHS = Object.freeze([
   'relationships.adoptionStatus',
   'relationships.partnerStatus',
   'relationships.network',
+  'social.primaryPersonId',
+  'social.secondaryPersonId',
+  'social.latestIntent',
   'outcomeTags.finance:limited_guarantee',
   'outcomeTags.finance:joint_guarantee',
   'housing.status',
@@ -308,6 +344,8 @@ export const WRITE_PATHS = Object.freeze([
   'employment.careLeaveUntilAge',
   'employment.pendingOfferId',
   'employment.profileId',
+  'employment.referralPersonId',
+  'employment.referralStatus',
   'employment.publicExperience',
   'employment.rank',
   'employment.salary',
@@ -378,6 +416,9 @@ export const WRITE_PATHS = Object.freeze([
   'relationships.adoptionStatus',
   'relationships.partnerBond',
   'relationships.partnerStatus',
+  'social',
+  'social.primaryPersonId',
+  'social.secondaryPersonId',
 ]);
 
 // Open evidence registry. It is intentionally incomplete and may only grow when

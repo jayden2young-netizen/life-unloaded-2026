@@ -241,6 +241,12 @@ function inferChangedPlan(paths) {
       continue;
     }
 
+    if (pathname === 'content/zh-CN/tracks/social.mjs') {
+      profiles.add('career');
+      profiles.add('episodes');
+      continue;
+    }
+
     if (
       pathname === 'index.html' ||
       pathname === 'style.css' ||

@@ -11,6 +11,7 @@ const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const decisions=data.events.filter(event=>event.kind==='decision');
 const laterBeats=data.events.filter(event=>event.kind==='beat'&&event.track==='later');
+const socialDecisions=decisions.filter(event=>event.track==='social');
 const eventFor=(id,phase)=>decisions.find(event=>event.episode?.id===id&&(phase===undefined||event.episode.phase===phase));
 const beatFor=id=>laterBeats.find(event=>event.id===id);
 const episodeIds=['secondary_diversion','professional_certification','adult_reeducation','business_expansion','wealth_peak','retirement_transition','parental_inheritance','long_term_care','will_planning'];
@@ -122,9 +123,15 @@ async function prepareFinal(page,id,event){
       kind,
       data.events.filter(event=>event.kind===kind).length
     ])),
-    {beat:456,decision:197,consequence:197,blackSwan:20}
+    {beat:480,decision:205,consequence:205,blackSwan:20}
   );
   assert.ok(decisions.every(event=>!('arc' in event)));
+  assert.equal(socialDecisions.length,8);
+  assert.ok(socialDecisions.every(event=>event.situation&&event.choices.some(choice=>
+    choice.outcomeTags?.includes('social:intent:solitude')||
+    ['leftAlone','changedCircle','leftOnTime','refusedFavor','declinedHousing','usedFormalRoute'].includes(choice.route)
+  )),'social decisions lost their shared facts or reasonable refusal route');
+  assert.equal(socialDecisions.find(event=>event.id==='decision_206').actors[0].optional,true,'later social choice still required an old friend');
   assert.ok(laterBeats.every(event=>event.ageMin>=55),'later beat appeared before midlife');
   assert.equal(laterBeats.length,48);
   const recurringBeats=laterBeats.filter(event=>event.recurrence);
@@ -189,7 +196,7 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.6.9');
+    assert.equal(migrated.gameVersion,'0.6.10');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
@@ -454,6 +461,151 @@ async function prepareFinal(page,id,event){
     assert.equal(residenceOnly.transition.housing.value,500000,'school residence erased property value');
     assert.equal(residenceOnly.transition.housing.arrangement,'dormitory');
     assert.ok(residenceOnly.after.finance.liabilities.find(item=>item.id==='school_mortgage').principal<residenceOnly.before,'mortgage stopped while the owner lived in a dormitory');
+
+    const socialCommands=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({
+        age:35,people:[],social:{primaryPersonId:null,secondaryPersonId:null},decisionHistory:[],
+        relationships:{activePartnerId:null,lastPartnerId:null,partnerStatus:'none',network:12},
+        employment:{status:'employed',applicationStatus:'none',pendingOfferId:'none',referralPersonId:null,referralStatus:'none'},
+        finance:{cash:500000,liabilities:[]},
+        housing:{status:'owned',value:600000,arrangement:'solo',region:'tier2',stability:'stable',accessibility:'standard',costShare:'self',coResidentRefs:[],history:[]}
+      });
+      const primary=debug.applyCommands([
+        {type:'createSocialPerson',target:'people',value:{slot:'primary',displayName:'阿宁',source:'campus',tie:'close',proximity:'local',turn:'deepened',support:'unseen'}}
+      ],{sourceEventId:'social-primary',choiceId:'social-primary'});
+      const referral=debug.applyCommands([
+        {type:'createSocialPerson',target:'people',value:{slot:'secondary',displayName:'小周',source:'work',tie:'friend',proximity:'local',turn:'deepened',support:'unseen'}},
+        {type:'createEmploymentReferral',target:'employment',value:{slot:'secondary',status:'available'}}
+      ],{sourceEventId:'social-referral',choiceId:'social-referral'});
+      debug.patchRun({employment:{applicationChannel:'openRecruitment'}});
+      const openJob=debug.applyCommands([
+        {type:'applyEmploymentProfile',target:'employment',value:'store_clerk'}
+      ],{sourceEventId:'open-job',choiceId:'open-job'});
+      const beforeThird=debug.snapshot();
+      const third=debug.applyCommands([
+        {type:'add',target:'finance.cash',value:4321},
+        {type:'createSocialPerson',target:'people',value:{slot:'primary',displayName:'第三人',source:'interest'}}
+      ],{sourceEventId:'social-third',choiceId:'social-third'});
+      const afterThird=debug.snapshot();
+      const residence=debug.applyCommands([
+        {type:'socialCoResidence',target:'housing',value:{slot:'primary',status:'supported',value:0,stability:'temporary',accessibility:'standard',residenceOnly:true,kind:'choice',housingChoiceKind:'socialCoResidence',reason:'socialTemporaryStay'}}
+      ],{sourceEventId:'social-home',choiceId:'social-home'});
+      const afterResidence=debug.snapshot();
+      const movedRemote=debug.applyCommands([
+        {type:'updateSocialPerson',target:'people',value:{slot:'primary',proximity:'remote',turn:'drifted'}}
+      ],{sourceEventId:'social-remote',choiceId:'social-remote'});
+      const afterRemote=debug.snapshot();
+      debug.applyCommands([
+        {type:'updateSocialPerson',target:'people',value:{slot:'primary',proximity:'local',turn:'reconnected'}}
+      ],{sourceEventId:'social-local',choiceId:'social-local'});
+      const dating=debug.applyCommands([
+        {type:'transitionSocialToDating',target:'relationships.partnerStatus',value:{slot:'primary'}}
+      ],{sourceEventId:'social-date',choiceId:'social-date'});
+      return{primary,referral,openJob,beforeThird,third,afterThird,residence,afterResidence,movedRemote,afterRemote,dating,afterDating:debug.snapshot()};
+    });
+    assert.equal(socialCommands.primary.result.ok,true);
+    assert.equal(socialCommands.referral.result.ok,true,'same-transaction social referral failed');
+    assert.equal(socialCommands.referral.run.employment.referralPersonId,'social_secondary');
+    assert.equal(socialCommands.referral.run.employment.referralStatus,'available');
+    assert.equal(socialCommands.referral.run.employment.status,'employed','referral granted or replaced a job');
+    assert.equal(socialCommands.openJob.result.ok,true);
+    assert.equal(socialCommands.openJob.run.employment.referralStatus,'available','unrelated open recruitment consumed the friend referral');
+    assert.equal(socialCommands.third.result.ok,false,'third lifetime social person was created');
+    assert.equal(socialCommands.afterThird.finance.cash,socialCommands.beforeThird.finance.cash,'failed third-person transaction left an earlier write');
+    assert.deepEqual(socialCommands.afterThird.social,socialCommands.beforeThird.social);
+    assert.equal(socialCommands.residence.result.ok,true);
+    assert.equal(socialCommands.afterResidence.housing.status,'owned','temporary friend stay erased property tenure');
+    assert.equal(socialCommands.afterResidence.housing.value,600000,'temporary friend stay erased property value');
+    assert.equal(socialCommands.afterResidence.housing.arrangement,'shared');
+    assert.deepEqual(socialCommands.afterResidence.housing.coResidentRefs,['social_primary']);
+    assert.equal(socialCommands.afterResidence.housing.costShare,'self');
+    assert.equal(socialCommands.afterResidence.housing.history.at(-1).housingChoiceKind,'socialCoResidence');
+    assert.deepEqual(socialCommands.afterRemote.housing.coResidentRefs,[],'remote friend remained a concrete co-resident');
+    assert.equal(socialCommands.afterRemote.housing.status,'owned','co-resident cleanup evicted the player or erased property');
+    assert.equal(socialCommands.dating.result.ok,true);
+    const datingPerson=socialCommands.afterDating.people.find(item=>item.id==='social_primary');
+    assert.equal(socialCommands.afterDating.relationships.activePartnerId,'social_primary');
+    assert.equal(socialCommands.afterDating.relationships.partnerStatus,'dating');
+    assert.equal(datingPerson.relation,'partner');
+    assert.equal(datingPerson.social.displayName,'阿宁');
+    assert.equal(datingPerson.social.source,'campus');
+    assert.equal(socialCommands.afterDating.social.primaryPersonId,'social_primary','dating released the lifetime social slot');
+
+    const socialEndings=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({people:[],social:{primaryPersonId:null,secondaryPersonId:null},relationships:{network:8},pressures:{loneliness:12},decisionHistory:[{outcomeTags:['social:intent:solitude']}]});
+      const solitude={intent:debug.latestSocialIntent(),signal:debug.socialEndingSignal(),run:debug.snapshot()};
+      debug.patchRun({relationships:{network:75},pressures:{loneliness:12},decisionHistory:[]});
+      const broad=debug.socialEndingSignal();
+      debug.patchRun({relationships:{network:8},pressures:{loneliness:65},decisionHistory:[{outcomeTags:['social:intent:connect']}]});
+      const lonely=debug.socialEndingSignal();
+      return{solitude,broad,lonely};
+    });
+    assert.equal(socialEndings.solitude.intent,'solitude');
+    assert.equal(socialEndings.solitude.signal.kind,'activeSolitude');
+    assert.equal(socialEndings.solitude.signal.floor,55);
+    assert.equal(socialEndings.solitude.run.pressures.loneliness,12,'active solitude changed loneliness by itself');
+    assert.equal(socialEndings.broad.kind,'broadNetwork');
+    assert.equal(socialEndings.lonely.kind,'passiveLoneliness');
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:60,people:[],social:{primaryPersonId:null,secondaryPersonId:null},usedEvents:[],decisionHistory:[],sceneQueue:[],currentDecision:null,yearStarted:true}));
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes('decision_206'),true,'late solitude/new-circle decision was unreachable without an old friend');
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceDecision('decision_206')),'decision_206');
+    const laterSocialView=JSON.parse(await page.evaluate(()=>window.render_game_to_text())).run.decision;
+    assert.deepEqual(laterSocialView.choices.map(choice=>choice.enabled),[false,false,true,true]);
+    assert.match(await page.locator('.choice-sheet').innerText(),/通讯录、附近活动和一整天空闲/,'social situation was not rendered before the choices');
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:25,phase:'playing',people:[],social:{primaryPersonId:null,secondaryPersonId:null},usedEvents:[],decisionHistory:[],scheduledConsequences:[],sceneQueue:[],currentDecision:null,yearStarted:true}));
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceDecision('decision_204')),'decision_204');
+    await page.locator('[data-choice="0"]').click();
+    await page.waitForTimeout(250);
+    const stableSocialBeforeReload=await page.evaluate(()=>{const run=window.__LIFE_DEBUG__.snapshot(),history=run.decisionHistory.at(-1),scheduled=run.scheduledConsequences.find(item=>item.sourceDecisionId==='decision_204');return{history,scheduled,count:run.decisionHistory.filter(item=>item.eventId==='decision_204').length}});
+    assert.ok(stableSocialBeforeReload.history.socialOutcomeVariantId);
+    assert.match(stableSocialBeforeReload.history.memoryKey,new RegExp(`${stableSocialBeforeReload.history.socialOutcomeVariantId}$`));
+    assert.equal(stableSocialBeforeReload.scheduled.socialOutcomeVariantId,stableSocialBeforeReload.history.socialOutcomeVariantId);
+    assert.equal(stableSocialBeforeReload.scheduled.memoryKey,stableSocialBeforeReload.history.memoryKey);
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    const stableSocialAfterReload=await page.evaluate(()=>{const run=window.__LIFE_DEBUG__.snapshot(),history=run.decisionHistory.at(-1),scheduled=run.scheduledConsequences.find(item=>item.sourceDecisionId==='decision_204');return{history,scheduled,count:run.decisionHistory.filter(item=>item.eventId==='decision_204').length}});
+    assert.equal(stableSocialAfterReload.count,1,'refresh duplicated social decision settlement');
+    assert.equal(stableSocialAfterReload.history.socialOutcomeVariantId,stableSocialBeforeReload.history.socialOutcomeVariantId,'refresh rerolled social outcome');
+    assert.equal(stableSocialAfterReload.scheduled.memoryKey,stableSocialBeforeReload.scheduled.memoryKey,'refresh changed social echo memory');
+
+    const invalidatedSocialEcho=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({age:40,people:[],social:{primaryPersonId:null,secondaryPersonId:null},usedEvents:[],decisionHistory:[],scheduledConsequences:[],sceneQueue:[],currentDecision:null,yearStarted:true,finance:{liabilities:[{id:'social-crisis-debt',kind:'consumer',principal:120000,rate:.08,status:'current',arrears:0,enforcementEligible:true,housingSecured:false}]}});
+      debug.applyCommands([{type:'createSocialPerson',target:'people',value:{slot:'primary',displayName:'小禾',source:'interest',tie:'friend',proximity:'local',turn:'met',support:'unseen'}}],{sourceEventId:'social-echo-person',choiceId:'social-echo-person'});
+      debug.forceDecision('decision_205');
+      document.querySelector('[data-choice="0"]').click();
+      return new Promise(resolve=>setTimeout(()=>{
+        const settled=debug.snapshot(),schedule=settled.scheduledConsequences.find(item=>item.sourceDecisionId==='decision_205');
+        debug.patchRun({people:settled.people.map(item=>item.id==='social_primary'?{...item,alive:false}:item),age:schedule.dueAge});
+        const due=debug.dueConsequence(),after=debug.snapshot();
+        resolve({schedule,due,status:after.scheduledConsequences.find(item=>item.id===schedule.id)?.status});
+      },250));
+    });
+    assert.ok(invalidatedSocialEcho.schedule.actorIds.socialPerson==='social_primary');
+    assert.equal(invalidatedSocialEcho.due,null,'dead social actor still spoke through a delayed echo');
+    assert.equal(invalidatedSocialEcho.status,'invalidated');
+
+    const invalidatedCreatedActorEcho=await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({seed:'review2',age:25,people:[],social:{primaryPersonId:null,secondaryPersonId:null},usedEvents:[],decisionHistory:[],scheduledConsequences:[],sceneQueue:[],currentDecision:null,yearStarted:true});
+      debug.forceDecision('decision_204');
+      document.querySelector('[data-choice="0"]').click();
+      return new Promise(resolve=>setTimeout(()=>{
+        const settled=debug.snapshot(),history=settled.decisionHistory.at(-1),schedule=settled.scheduledConsequences.find(item=>item.sourceDecisionId==='decision_204'),person=settled.people.find(item=>item.id==='social_primary');
+        debug.patchRun({people:settled.people.map(item=>item.id==='social_primary'?{...item,alive:false}:item),age:schedule.dueAge});
+        const due=debug.dueConsequence(),after=debug.snapshot();
+        resolve({history,schedule,person,due,status:after.scheduledConsequences.find(item=>item.id===schedule.id)?.status});
+      },250));
+    });
+    assert.equal(invalidatedCreatedActorEcho.history.socialOutcomeVariantId,'offline_persistent','created-actor echo fixture no longer reaches the persistent branch');
+    assert.equal(invalidatedCreatedActorEcho.person.id,'social_primary');
+    assert.equal(invalidatedCreatedActorEcho.schedule.actorIds.primary,'social_primary','newly created social actor was not bound to the delayed echo');
+    assert.equal(invalidatedCreatedActorEcho.due,null,'newly created dead actor still spoke through a delayed echo');
+    assert.equal(invalidatedCreatedActorEcho.status,'invalidated');
 
     const transaction=await page.evaluate(()=>{
       const debug=window.__LIFE_DEBUG__;

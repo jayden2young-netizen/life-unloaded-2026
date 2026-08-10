@@ -118,13 +118,13 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.9', 13, 27]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.10', 13, 28]);
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
-    {beat:456,decision:197,consequence:197,blackSwan:20},
+    {beat:480,decision:205,consequence:205,blackSwan:20},
   );
   assert.equal(summary.evidenceRecords, 11);
-  for (const type of ['resolveConception','resolveDebtEnforcement','transitionHousing','scaleEmployment','resolveInheritance'])
+  for (const type of ['resolveConception','resolveDebtEnforcement','transitionHousing','scaleEmployment','resolveInheritance','createSocialPerson','updateSocialPerson','transitionSocialToDating','createEmploymentReferral','socialCoResidence'])
     assert.ok(contract.COMMAND_TYPES.includes(type));
   for (const pathName of [
     'relationships.familyPlanningOffered','relationships.familyPlanningDeferred','relationships.familyPlanningClosed',
@@ -137,6 +137,7 @@ function neutralTrace(multiplier) {
     'housing.status','housing.arrangement','housing.region','housing.stability','housing.accessibility',
     'housing.costShare','housing.coResidentRefs','housing.sinceAge','housing.keyChoiceCount','housing.history',
     'relationships.network','pressures.loneliness','mobility.localTies',
+    'social.primaryPersonId','social.secondaryPersonId','employment.referralPersonId','employment.referralStatus',
   ]) {
     assert.ok(contract.READ_PATHS.includes(pathName), `missing family read path ${pathName}`);
   }
@@ -158,6 +159,31 @@ function neutralTrace(multiplier) {
     new Set(DATA.events.filter(event=>event.kind==='decision'&&event.track==='housing').flatMap(event=>event.choices.map(choice=>choice.housingChoiceKind))),
     new Set(['educationHousing','firstIndependent','workMigration','partnerReconfiguration','homePurchase','laterFit']),
   );
+  const socialBeats=DATA.events.filter(event=>event.kind==='beat'&&event.track==='social');
+  const socialDecisions=DATA.events.filter(event=>event.kind==='decision'&&event.track==='social');
+  const socialConsequences=DATA.events.filter(event=>event.kind==='consequence'&&event.track==='social');
+  assert.deepEqual([socialBeats.length,socialDecisions.length,socialConsequences.length],[24,8,8]);
+  assert.ok([...socialBeats,...socialDecisions].every(event=>!event.episode&&!event.recurrence));
+  assert.deepEqual(socialDecisions.map(event=>event.choices.length).sort(),[2,2,2,3,3,3,4,4]);
+  assert.equal(socialDecisions.filter(event=>event.choices.some(choice=>choice.socialOutcome)).length,4);
+  assert.ok(socialDecisions.every(event=>event.choices.filter(choice=>choice.cardInteraction).length===1));
+  const socialRefusalRoutes=new Set(['leftAlone','keptSpace','changedCircle','declinedClearly','leftOnTime','refusedFavor','declinedHousing','choseSolitude','usedFormalRoute','activeSolitude']);
+  assert.ok(socialDecisions.every(event=>event.choices.some(choice=>socialRefusalRoutes.has(choice.route))));
+  assert.ok(socialDecisions.flatMap(event=>event.choices).filter(choice=>choice.socialOutcome).every(choice=>
+    choice.socialOutcome.variants.length<=3&&
+    choice.socialOutcome.variants.every(variant=>variant.memoryKey&&variant.resultText&&variant.consequenceText)
+  ));
+  assert.equal(DATA.codex.length,34);
+  assert.ok(DATA.codex.some(entry=>entry.id==='codex_33')&&DATA.codex.some(entry=>entry.id==='codex_34'));
+  const socialOutcomeTags=new Set(socialDecisions.flatMap(event=>event.choices.flatMap(choice=>[
+    ...(choice.outcomeTags||[]),
+    ...(choice.socialOutcome?.variants||[]).flatMap(variant=>variant.outcomeTags||[])
+  ])));
+  for(const codexId of['codex_33','codex_34']){
+    const entry=DATA.codex.find(item=>item.id===codexId);
+    assert.ok(entry.unlockRules.outcomeTagsAny.some(tag=>socialOutcomeTags.has(tag)),`${codexId}: no authored social outcome can unlock this entry`);
+  }
+  assert.equal(collect(DATA.events.filter(event=>event.track==='social'),value=>value?.path==='bond'||String(value?.path||'').endsWith('.bond')).length,0);
   const childBeats = DATA.events.filter(event=>event.kind==='beat'&&event.track==='children');
   assert.equal(childBeats.length,32);
   assert.ok(childBeats.slice(1).every(event=>event.actors.length===1&&event.actors[0].optional===false));
@@ -175,7 +201,7 @@ function neutralTrace(multiplier) {
   assert.ok(mortgagePressure.requirements.all.some(rule=>rule.path==='housing.status'&&rule.op==='eq'&&rule.value==='mortgaged'));
   assert.ok(mortgagePressure.requirements.all.some(rule=>rule.path==='finance.mortgagePaymentStress'&&rule.op==='eq'&&rule.value===true));
   const allChoices=DATA.events.filter(event=>event.kind==='decision').flatMap(event=>event.choices);
-  assert.equal(allChoices.filter(choice=>choice.cardInteraction).length,206);
+  assert.equal(allChoices.filter(choice=>choice.cardInteraction).length,214);
   const cardSource=fs.readFileSync(path.join(ROOT,'content/zh-CN/card-interactions.mjs'),'utf8');
   assert.doesNotMatch(cardSource,/universalRotation|genericInteraction|genericPatch|authoredMechanics|eventAuthoredInteraction|\(index\s*\+/);
   assert.match(cardSource,/EXPLICIT_CARD_INTERACTIONS/);
@@ -463,15 +489,15 @@ function neutralTrace(multiplier) {
       TRACK_COPY.leisure.beats.splice(1, 0, { ...TRACK_COPY.leisure.beats[0], text });
       BEAT_SLOT_REGISTRATIONS.push({
         key: beatAuthorKey('leisure', text),
-        slot: { id: 'beat_457', track: 'leisure', localIndex: 32 },
+        slot: { id: 'beat_481', track: 'leisure', localIndex: 32 },
       });
       await import(${JSON.stringify(generatorUrl)});
     `,
     'author-insert',
   );
-  const insertedBeat = insertedData.events.find(event => event.id === 'beat_457');
+  const insertedBeat = insertedData.events.find(event => event.id === 'beat_481');
   assert.equal(insertedBeat.track, 'leisure');
-  insertedData.events = insertedData.events.filter(event => event.id !== 'beat_457');
+  insertedData.events = insertedData.events.filter(event => event.id !== 'beat_481');
   insertedData.trackCoverage.leisure.beats -= 1;
   assert.deepEqual(
     insertedData,
@@ -494,7 +520,7 @@ function neutralTrace(multiplier) {
   assert.match(unregisteredFailure, /未登记定义/);
 
   assert.ok(
-    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.9')") <
+    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.10')") <
       gameSource.indexOf('fetch(`./data.json?v=${VERSION}`'),
     'shared contract import must precede data fetch',
   );

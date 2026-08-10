@@ -32,14 +32,22 @@
 
 - `later.retirement` 只记录工作转段，不代表年龄、待遇资格或全部晚年身份；项目当前没有可信的养老金资格状态。
 - 只有声明 `recurrence` 的普通 beat 可以复发：同句至少间隔 8 年、同组至少间隔 3 年，并读取 `timeline` 而不是清空 `usedEvents`。选择、后果、事件簇和不可逆事实继续严格一次性。
-- 晚年内容可读取既有住房、人物、网络、孤独和本地联系；住房搬迁与适配由 v0.6.8 的统一住房入口写入，关系建立／衰减顺延属于 v0.6.10。
+- 晚年内容可读取既有住房、人物、网络、孤独和本地联系；住房搬迁与适配由统一住房入口写入，具体 social 人物只由 v0.6.10 的显式事件建立或更新。
 
 ## 住房与居住选择
 
 - `housing` 是当前主要住处及其稀疏历史的唯一事实源；内容只能通过 `transitionHousing` 写入，财务、教育、就业、迁移、伴侣、债务和晚年不得直接改 `housing.*`。
 - 普通住房选择最多三次且类型不重复；只有真实债务使当前住房从可维持跌到不成立时，允许一次 `debtRelief` 第四次。自动宿舍、按揭结清和事实清理不消费选择预算。
 - 地区锚点只在签约时确定租住或购房口径，`housing.value` 成交后固定；本项目不做年度房价、第二套房、装修或房地产经营模拟。
-- 匿名室友和邻里不进入 `coResidentRefs`。`housing.region`、`arrangement`、`coResidentRefs`、`stability`、`accessibility` 与 `history` 是 v0.6.10 可读取的事实接口；v0.6.9 全量修复也不创建朋友、邻居或孤独变化。
+- 匿名室友和邻里不进入 `coResidentRefs`。只有通过 `socialCoResidence` 的在世、当地、关系未结束 social 人物可以成为一位具体同住人；强制 `arrangement:'shared'`、`costShare:'self'`，并继续消耗三次普通住房选择预算。临时落脚用 `residenceOnly:true` 保留产权与按揭；人物失效后引用清理，合法住处可退化为匿名 shared，不自动驱逐玩家。
+
+## 社会交往与持续关系
+
+- `social.primaryPersonId` 与 `social.secondaryPersonId` 是两个终身槽位；人物保存在 `people`，关系结束、搬远或转为伴侣都不释放名额。social 人物只保存称呼、来源、认识年龄、关系性质、远近、关键转折和已经发生的支持表现，不模拟职业、收入、房产、性格、日程或家庭。
+- `relationships.network` 只表示认识面；`capabilities.network` 仍是办事与职业关系能力，`mobility.localTies`／`chineseCommunityTies`／`belonging` 继续由迁移事实拥有，`pressures.loneliness` 只表示未得到需要的连接或持续排斥压力。
+- 主动独处从最近一次 `social:intent:solitude`／`social:intent:connect` 选择派生，不保存人格分数，不因拒绝活动自动增加孤独。结局可以读取临时 `socialEndingSignal`，但不得用它控制资格、随机或奖励。
+- social 的不确定结果只允许最多三个显式创作的稳定变体；刷新、导入和恢复不得重抽。延迟回响必须绑定原人物；人物死亡、关系 ended 或槽位失配后该回响失效。
+- 朋友转约会只进入既有 `dating`；referral 只创建就业入口；朋友合住仍走住房事务；危机支持不得清债、治病、结束长期照护或凭空生成永久住房。任何桥接都不得绕过原系统硬条件。
 
 ## 验证边界
 

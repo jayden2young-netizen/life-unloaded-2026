@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.9');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.10');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.9',
+  const VERSION = '0.6.10',
     SCHEMA_VERSION = 13,
-    CONTENT_REVISION = 27;
+    CONTENT_REVISION = 28;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -568,6 +568,8 @@
       applicationChannel: 'none',
       applicationStatus: 'none',
       firstJobOutcome: 'none',
+      referralPersonId: null,
+      referralStatus: 'none',
       schedule: { stability: 70, splitGapHours: 0, timezoneLoad: 0 },
     };
     run.activity = { mode: 'childhood', funding: 'family', years: 0 };
@@ -615,6 +617,7 @@
       childBond: 0,
       network: clamp(35 + location.mods.network / 3, 30, 75),
     };
+    run.social = { primaryPersonId: null, secondaryPersonId: null };
     run.health = {
       physical: clamp(62 + stable(seed, 'health', 30), 50, 92),
       mental: 72,
@@ -700,6 +703,64 @@
     return run;
   }
 
+  function normalizeSocialMetadata(source = {}, fallback = {}) {
+    const value = source && typeof source === 'object' ? source : {};
+    return {
+      displayName: String(value.displayName || fallback.displayName || '旧识').slice(0, 24),
+      source: CONTRACT.SOCIAL_SOURCES.includes(value.source)
+        ? value.source
+        : CONTRACT.SOCIAL_SOURCES.includes(fallback.source) ? fallback.source : 'online',
+      metAtAge: clamp(
+        Number.isFinite(value.metAtAge) ? value.metAtAge : fallback.metAtAge,
+        0,
+        105
+      ),
+      tie: CONTRACT.SOCIAL_TIES.includes(value.tie) ? value.tie : fallback.tie || 'acquaintance',
+      proximity: CONTRACT.SOCIAL_PROXIMITIES.includes(value.proximity)
+        ? value.proximity
+        : fallback.proximity || 'unknown',
+      turn: CONTRACT.SOCIAL_TURNS.includes(value.turn) ? value.turn : fallback.turn || 'met',
+      support: CONTRACT.SOCIAL_SUPPORT.includes(value.support)
+        ? value.support
+        : fallback.support || 'unseen',
+    };
+  }
+
+  function normalizeSocialState(run, source = {}) {
+    run.people = (Array.isArray(run.people) ? run.people : []).filter(
+      (item) => item && typeof item === 'object' && typeof item.id === 'string'
+    );
+    for (const item of run.people) {
+      if (!item.social || typeof item.social !== 'object') continue;
+      item.social = normalizeSocialMetadata(item.social, { metAtAge: Math.max(0, run.age) });
+    }
+    const socialPeople = run.people.filter((item) => item.social),
+      assigned = Object.fromEntries(CONTRACT.SOCIAL_SLOTS.map((slot) => [slot, null])),
+      claimed = new Set();
+    for (const slot of CONTRACT.SOCIAL_SLOTS) {
+      const id = source?.[`${slot}PersonId`];
+      if (!id || claimed.has(id) || !socialPeople.some((item) => item.id === id)) continue;
+      assigned[slot] = id;
+      claimed.add(id);
+    }
+    for (const item of socialPeople) {
+      if (claimed.has(item.id)) continue;
+      const preferred = CONTRACT.SOCIAL_SLOTS.find((slot) => item.id === `social_${slot}` && !assigned[slot]),
+        slot = preferred || CONTRACT.SOCIAL_SLOTS.find((name) => !assigned[name]);
+      if (!slot) break;
+      assigned[slot] = item.id;
+      claimed.add(item.id);
+    }
+    const kept = new Set(Object.values(assigned).filter(Boolean));
+    run.people = run.people.filter((item) => item.relation !== 'social' || kept.has(item.id));
+    for (const item of run.people)
+      if (item.social && !kept.has(item.id)) delete item.social;
+    return {
+      primaryPersonId: assigned.primary,
+      secondaryPersonId: assigned.secondary,
+    };
+  }
+
   function normalizeHousing(run, source = {}) {
     const fresh = initialHousing(run),
       housing = { ...fresh, ...(source || {}) };
@@ -725,6 +786,12 @@
     housing.coResidentRefs = Array.from(new Set(Array.isArray(housing.coResidentRefs)
       ? housing.coResidentRefs.filter((id) => run.people.some((item) => item.id === id && item.alive))
       : []));
+    if (housing.arrangement === 'shared') {
+      housing.coResidentRefs = housing.coResidentRefs.filter((id) =>
+        isValidSocialCoResident(run, run.people.find((item) => item.id === id))
+      ).slice(0, 1);
+      housing.costShare = 'self';
+    }
     housing.history = (Array.isArray(source?.history) ? source.history : fresh.history)
       .filter((record) => record && typeof record === 'object' && record.state)
       .map((record) => ({
@@ -851,7 +918,10 @@
       ].includes(key))),
       history: previous.history,
     });
-    if (next.arrangement === 'shared') next.coResidentRefs = [];
+    if (next.arrangement === 'shared') {
+      if (!options.allowSocialCoResident) next.coResidentRefs = [];
+      next.costShare = 'self';
+    }
     if (next.costShare === 'joint' && !validHousingPartner(run, next))
       return { applied: false, reason: '共同住房需要在世且有效的同住伴侣' };
     const changed = JSON.stringify(housingSnapshot(previous)) !== JSON.stringify(housingSnapshot(next));
@@ -1219,6 +1289,18 @@
       run.employment?.lastJob && typeof run.employment.lastJob === 'object'
         ? copy(run.employment.lastJob)
         : null;
+    merged.social = normalizeSocialState(merged, run.social || fresh.social);
+    if (!CONTRACT.EMPLOYMENT_REFERRAL_STATUS.includes(merged.employment.referralStatus))
+      merged.employment.referralStatus = 'none';
+    const referral = merged.people.find(
+      (item) => item.id === merged.employment.referralPersonId && item.social
+    );
+    if (!referral) {
+      merged.employment.referralPersonId = null;
+      merged.employment.referralStatus = 'none';
+    } else if (!referral.alive || referral.social.tie === 'ended') {
+      merged.employment.referralStatus = 'expired';
+    }
     merged.housing = normalizeHousing(merged, run.housing || fresh.housing);
     merged.finance.liabilities = (Array.isArray(run.finance?.liabilities)
       ? run.finance.liabilities
@@ -1295,6 +1377,14 @@
         run.education &&
         run.development &&
         run.employment &&
+        run.social &&
+        new Set(CONTRACT.SOCIAL_SLOTS.map((slot) => run.social[`${slot}PersonId`]).filter(Boolean)).size ===
+          CONTRACT.SOCIAL_SLOTS.map((slot) => run.social[`${slot}PersonId`]).filter(Boolean).length &&
+        run.people.filter((item) => item.social).length <= 2 &&
+        CONTRACT.SOCIAL_SLOTS.every((slot) =>
+          run.social[`${slot}PersonId`] === null ||
+          run.people.some((item) => item.id === run.social[`${slot}PersonId`] && item.social)
+        ) &&
         run.finance &&
         run.housing &&
         Array.isArray(run.housing.history) &&
@@ -1403,7 +1493,11 @@
       console.error(`[内容合同] ${error.message}`);
       return false;
     }
-    const actual = rule.path === 'age' ? run.age : getPath(run, rule.path);
+    const actual = rule.path === 'age'
+      ? run.age
+      : rule.path === 'social.latestIntent'
+        ? latestSocialIntent(run)
+        : getPath(run, rule.path);
     return compare(actual, rule.op, rule.value);
   }
   function requirementsMatch(requirements = {}, run = state.run) {
@@ -1450,6 +1544,84 @@
       effective.resultText = `${effective.resultText}${/[。！？]$/.test(effective.resultText) ? '' : '。'}${spec.resultSuffix}`;
     return { choice: effective, card, spec };
   }
+  function actorCommandContext(event, run = state.run) {
+    const actors = event ? resolveActors(event, run) || {} : {},
+      actorIds = Object.fromEntries(Object.entries(actors).map(([slot, item]) => [slot, item.id]));
+    return { actorIds, actorId: Object.values(actorIds)[0] || null };
+  }
+  function socialVariantLegal(variant, event, run) {
+    if (!variant || typeof variant !== 'object') return false;
+    if (variant.requirements && !requirementsMatch(variant.requirements, run)) return false;
+    const context = actorCommandContext(event, run);
+    for (const command of variant.effects || []) {
+      const value = command.value && typeof command.value === 'object' ? command.value : {};
+      if (command.type === 'createSocialPerson' &&
+          (!socialSlotKey(run, value.slot) || run.social[`${value.slot}PersonId`]))
+        return false;
+      if (command.type === 'updateSocialPerson' && !commandSocialPerson(run, value, context))
+        return false;
+      if (command.type === 'transitionSocialToDating') {
+        const item = commandSocialPerson(run, value, context);
+        if (
+          !item?.alive ||
+          item.relation !== 'social' ||
+          item.social.tie === 'ended' ||
+          run.relationships.activePartnerId ||
+          !['none', 'divorced', 'widowed'].includes(run.relationships.partnerStatus)
+        ) return false;
+      }
+      if (command.type === 'createEmploymentReferral') {
+        const item = commandSocialPerson(run, value, context);
+        if (!item?.alive || item.social.tie === 'ended') return false;
+      }
+      if (command.type === 'socialCoResidence' &&
+          !isValidSocialCoResident(run, commandSocialPerson(run, value, context))) return false;
+    }
+    return true;
+  }
+  function resolveSocialOutcome(choice, event, run = state.run) {
+    const variants = choice?.socialOutcome?.variants;
+    if (!Array.isArray(variants)) return { choice, variant: null };
+    if (!event) return { choice: null, variant: null };
+    const legal = variants
+      .slice(0, CONTRACT.SOCIAL_OUTCOME_MAX_VARIANTS)
+      .filter((variant) => socialVariantLegal(variant, event, run));
+    if (!legal.length) return { choice: null, variant: null };
+    const context = actorCommandContext(event, run),
+      actorId = context.actorId || 'none',
+      total = legal.reduce((sum, variant) => sum + Math.max(0, Number(variant.weight) || 0), 0),
+      rollMax = Math.max(1, total),
+      rolled = stable(run.seed, `${event.id}:${choice.id}:${actorId}:${run.age}`, rollMax);
+    let cursor = rolled,
+      selected = legal.at(-1);
+    for (const variant of legal) {
+      cursor -= Math.max(0, Number(variant.weight) || 0);
+      if (cursor < 0) {
+        selected = variant;
+        break;
+      }
+    }
+    const effective = copy(choice);
+    effective.effects = [...(effective.effects || []), ...copy(selected.effects || [])];
+    effective.outcomeTags = Array.from(new Set([
+      ...(effective.outcomeTags || []),
+      ...(selected.outcomeTags || []),
+    ]));
+    effective.resultText = selected.resultText || effective.resultText;
+    effective.consequenceText = selected.consequenceText || effective.consequenceText;
+    effective.consequences = selected.consequences
+      ? copy(selected.consequences)
+      : effective.consequences || [];
+    effective.memoryKey = selected.memoryKey || `${effective.memoryKey}:${selected.id}`;
+    effective.socialOutcomeVariantId = selected.id;
+    effective.socialActorContext = actorCommandContext(event, run);
+    return { choice: effective, variant: selected };
+  }
+  function resolveDecisionChoice(choice, event, run = state.run) {
+    const card = resolveCardChoice(choice, run),
+      social = resolveSocialOutcome(card.choice, event, run);
+    return { ...card, choice: social.choice, variant: social.variant };
+  }
   function choiceVisible(choice, run = state.run) {
     const effective = resolveCardChoice(choice, run).choice;
     return !effective?.showWhen || requirementsMatch(effective.showWhen, run);
@@ -1493,19 +1665,22 @@
       return '这次中高阶岗位审查没有通过，基础工作仍可继续';
     return '当前债务执行状态不支持这项安排';
   }
-  function choiceEnabled(choice, run = state.run) {
-    const effective = resolveCardChoice(choice, run).choice;
+  function choiceEnabled(choice, run = state.run, event = run?.currentDecision) {
+    const effective = resolveDecisionChoice(choice, event, run).choice;
     return (
-      choiceVisible(effective, run) &&
+      Boolean(effective) &&
+      (!effective.showWhen || requirementsMatch(effective.showWhen, run)) &&
       requirementsMatch(choiceRequirements(effective), run) &&
       debtGateAllows(effective, run) &&
-      housingChoiceGate(effective, run).allowed
+      housingChoiceGate(effective, run, event).allowed
     );
   }
   function housingTransitionCommand(choice) {
-    return (choice?.effects || []).find((command) => command.type === 'transitionHousing') || null;
+    return (choice?.effects || []).find((command) =>
+      ['transitionHousing', 'socialCoResidence'].includes(command.type)
+    ) || null;
   }
-  function housingChoiceGate(choice, run = state.run) {
+  function housingChoiceGate(choice, run = state.run, event = run?.currentDecision) {
     const kind = choice?.housingChoiceKind;
     if (!kind) return { allowed: true, reason: null, affordability: null };
     const ordinaryCount = housingChoiceRecords(run).filter((record) => !record.debtException).length,
@@ -1524,9 +1699,23 @@
     const command = housingTransitionCommand(choice);
     if (!command) return { allowed: false, reason: '住房选择缺少住房转换', affordability: null };
     const stateFields = ['status','value','arrangement','region','stability','accessibility','costShare','coResidentRefs'];
-    if (!stateFields.some((field) => Object.hasOwn(command.value || {}, field)))
+    if (command.type !== 'socialCoResidence' && !stateFields.some((field) => Object.hasOwn(command.value || {}, field)))
       return { allowed: true, reason: null, affordability: null };
     const candidateValue = { ...command.value };
+    if (command.type === 'socialCoResidence') {
+      const item = commandSocialPerson(
+        run,
+        candidateValue,
+        choice.socialActorContext || actorCommandContext(event, run)
+      );
+      if (!isValidSocialCoResident(run, item))
+        return { allowed: false, reason: '这位朋友目前不能成为具体同住人', affordability: null };
+      delete candidateValue.personId;
+      delete candidateValue.slot;
+      candidateValue.arrangement = 'shared';
+      candidateValue.costShare = 'self';
+      candidateValue.coResidentRefs = [item.id];
+    }
     if (candidateValue.residenceOnly && ['owned', 'mortgaged'].includes(run.housing.status)) {
       delete candidateValue.status;
       delete candidateValue.value;
@@ -1577,7 +1766,22 @@
   function personAge(item, run = state.run) {
     return run.age - item.bornAt;
   }
+  function socialPersonLabel(item) {
+    if (!item?.social) return null;
+    const tie = {
+        acquaintance: '认识的人',
+        friend: '朋友',
+        close: '很亲近的朋友',
+        distant: '渐渐疏远',
+        ended: '已经断开联系',
+      }[item.social.tie] || '旧识',
+      proximity = item.social.proximity === 'remote'
+        ? ' · 在远处'
+        : item.social.proximity === 'local' ? ' · 在附近' : '';
+    return `${item.social.displayName} · ${item.alive ? tie : '已经去世'}${item.alive ? proximity : ''}`;
+  }
   function actorMatches(item, spec, run) {
+    if (item.social && (!item.alive || item.social.tie === 'ended')) return false;
     if (spec.personIdPath && item.id !== getPath(run, spec.personIdPath)) return false;
     if (spec.relation && item.relation !== spec.relation) return false;
     if (spec.relationAny && !spec.relationAny.includes(item.relation)) return false;
@@ -1590,6 +1794,11 @@
       !spec.statusAny.includes(run.relationships.partnerStatus)
     )
       return false;
+    if (spec.socialSource && item.social?.source !== spec.socialSource) return false;
+    if (spec.socialTieAny && !spec.socialTieAny.includes(item.social?.tie)) return false;
+    if (spec.socialProximity && item.social?.proximity !== spec.socialProximity) return false;
+    if (spec.socialTurnAny && !spec.socialTurnAny.includes(item.social?.turn)) return false;
+    if (spec.socialSupportAny && !spec.socialSupportAny.includes(item.social?.support)) return false;
     return true;
   }
   function resolveActors(event, run = state.run) {
@@ -2243,6 +2452,10 @@
           : 'employed';
     run.employment.applicationStatus = 'employed';
     run.employment.pendingOfferId = 'none';
+    if (
+      run.employment.referralStatus === 'available' &&
+      run.employment.applicationChannel === 'bridge'
+    ) run.employment.referralStatus = 'used';
     run.employment.careLeaveUntilAge = null;
     run.activity.mode = run.employment.status === 'gig' ? 'flexible' : 'work';
     if (firstJob || run.employment.firstJobAge === null) {
@@ -2283,6 +2496,10 @@
       ['declined', 'offerDeclined', 'retired', 'careLeave', 'leisure', 'careerBreak'].includes(outcome)
         ? 'withdrawn'
         : 'searching';
+    if (run.employment.referralStatus === 'available' && run.employment.applicationStatus === 'searching') {
+      run.employment.applicationChannel = 'bridge';
+      run.employment.firstJobEntryPath = 'referral';
+    }
     if (run.employment.firstJobAge === null) run.employment.firstJobOutcome = 'longSearch';
     run.activity.mode = retired
       ? 'retired'
@@ -2546,6 +2763,128 @@
       ? ' 一份能核合同、岗位和报到条件的录用留下了。'
       : ' 录用通知没有来。招聘网页还得继续打开。';
   }
+  function socialSlotKey(run, requested) {
+    return CONTRACT.SOCIAL_SLOTS.includes(requested) ? requested : null;
+  }
+  function commandSocialPerson(run, value = {}, context = {}) {
+    let id = value.personId;
+    if (id === '$actor') id = context.actorId || Object.values(context.actorIds || {})[0] || null;
+    if (typeof id === 'string' && id.startsWith('$actor:'))
+      id = context.actorIds?.[id.slice(7)] || null;
+    if (!id && value.slot) {
+      const slot = socialSlotKey(run, value.slot);
+      id = slot ? run.social[`${slot}PersonId`] : null;
+    }
+    return run.people.find((item) => item.id === id && item.social) || null;
+  }
+  function isValidSocialCoResident(run, item) {
+    return Boolean(
+      item?.alive &&
+      item.social &&
+      item.social.tie !== 'ended' &&
+      item.social.proximity === 'local' &&
+      Object.values(run.social || {}).includes(item.id)
+    );
+  }
+  function createSocialPerson(run, value = {}) {
+    const slot = socialSlotKey(run, value.slot);
+    if (!slot || run.social[`${slot}PersonId`]) return null;
+    const occupied = new Set(CONTRACT.SOCIAL_SLOTS.map((name) => run.social[`${name}PersonId`]).filter(Boolean));
+    if (occupied.size >= CONTRACT.SOCIAL_SLOTS.length) return null;
+    const id = `social_${slot}`;
+    if (run.people.some((item) => item.id === id)) return null;
+    const peerAge = clamp(
+        run.age + stable(run.seed, `social-age:${id}`, 9) - 4,
+        0,
+        105
+      ),
+      bornAt = Number.isFinite(value.bornAt)
+        ? clamp(value.bornAt, run.age - 105, run.age)
+        : run.age - peerAge,
+      item = person(id, 'social', bornAt, {
+        bond: 55,
+        social: normalizeSocialMetadata(value, {
+          displayName: value.displayName || (slot === 'primary' ? '一位旧识' : '另一位旧识'),
+          source: value.source,
+          metAtAge: run.age,
+          tie: 'acquaintance',
+          proximity: 'local',
+          turn: 'met',
+          support: 'unseen',
+        }),
+      });
+    run.people.push(item);
+    run.social[`${slot}PersonId`] = item.id;
+    return item;
+  }
+  function updateSocialPerson(run, value = {}, context = {}) {
+    const item = commandSocialPerson(run, value, context);
+    if (!item) return null;
+    const next = { ...item.social };
+    for (const key of ['displayName', 'source', 'tie', 'proximity', 'turn', 'support'])
+      if (Object.hasOwn(value, key)) next[key] = value[key];
+    item.social = normalizeSocialMetadata(next, item.social);
+    if (
+      item.id === run.employment.referralPersonId &&
+      item.social.tie === 'ended' &&
+      run.employment.referralStatus === 'available'
+    ) run.employment.referralStatus = 'expired';
+    if (item.social.tie === 'ended' || item.social.proximity !== 'local')
+      cleanupHousingCoResidents(run, 'socialNoLongerCoResident', `social:${item.id}:${run.age}`);
+    return item;
+  }
+  function transitionSocialToDating(run, value = {}, context = {}) {
+    const item = commandSocialPerson(run, value, context),
+      canStart =
+        item?.alive &&
+        item.relation === 'social' &&
+        item.social.tie !== 'ended' &&
+        !run.relationships.activePartnerId &&
+        ['none', 'divorced', 'widowed'].includes(run.relationships.partnerStatus);
+    if (!canStart) return false;
+    item.relation = 'partner';
+    initializePartnerIdentity(run, item);
+    initializePartnerHousingProfile(run, item);
+    run.relationships.activePartnerId = item.id;
+    run.relationships.partnerStatus = 'dating';
+    run.relationships.partnerBond = clamp(Number(item.bond) || 55, 0, 100);
+    return true;
+  }
+  function createEmploymentReferral(run, value = {}, context = {}) {
+    const item = commandSocialPerson(run, value, context),
+      status = CONTRACT.EMPLOYMENT_REFERRAL_STATUS.includes(value.status)
+        ? value.status
+        : 'available';
+    if (!item?.alive || item.social.tie === 'ended') return false;
+    run.employment.referralPersonId = item.id;
+    run.employment.referralStatus = status;
+    if (
+      status === 'available' &&
+      ['none', 'searching'].includes(run.employment.applicationStatus) &&
+      run.employment.pendingOfferId === 'none'
+    ) {
+      run.employment.applicationChannel = 'bridge';
+      run.employment.firstJobEntryPath = 'referral';
+    }
+    return true;
+  }
+  function socialCoResidence(run, value = {}, context = {}) {
+    const item = commandSocialPerson(run, value, context);
+    if (!isValidSocialCoResident(run, item))
+      return { applied: false, reason: '这位朋友目前不能成为具体同住人' };
+    const transitionValue = { ...value };
+    for (const key of ['personId', 'slot', 'arrangement', 'costShare', 'coResidentRefs'])
+      delete transitionValue[key];
+    return transitionHousing(run, {
+      ...transitionValue,
+      arrangement: 'shared',
+      costShare: 'self',
+      coResidentRefs: [item.id],
+      kind: transitionValue.kind || 'choice',
+      reason: transitionValue.reason || 'socialCoResidence',
+      housingChoiceKind: transitionValue.housingChoiceKind || 'socialCoResidence',
+    }, context, { allowSocialCoResident: true });
+  }
   function createRelatedPerson(run, command) {
     const relation = command.relation || 'child',
       index = run.people.filter((item) => item.id.startsWith(`${relation}_`)).length + 1,
@@ -2603,7 +2942,13 @@
   function cleanupHousingCoResidents(run, reason, sourceEventId) {
     const refs = (run.housing.coResidentRefs || []).filter((id) => {
         const personItem = run.people.find((item) => item.id === id);
-        return Boolean(personItem?.alive && ['partner', 'child', 'adoptedChild', 'stepChild', 'father', 'mother', 'sibling'].includes(personItem.relation));
+        return Boolean(
+          personItem?.alive &&
+          (
+            ['partner', 'child', 'adoptedChild', 'stepChild', 'father', 'mother', 'sibling'].includes(personItem.relation) ||
+            (reason !== 'partnerNoLongerCoResident' && isValidSocialCoResident(run, personItem))
+          )
+        );
       }),
       partner = run.people.find((item) => item.id === run.relationships.activePartnerId),
       jointValid = run.housing.costShare !== 'joint' || Boolean(
@@ -2743,6 +3088,22 @@
       else if (command.type === 'resolveConception')
         resolveConception(run, command.value);
       else if (command.type === 'createPerson') createRelatedPerson(run, command);
+      else if (command.type === 'createSocialPerson') {
+        if (!createSocialPerson(run, command.value))
+          return rollbackCommands(before, context, '这一生的两个持续关系位置已经用完');
+      }
+      else if (command.type === 'updateSocialPerson') {
+        if (!updateSocialPerson(run, command.value, context))
+          return rollbackCommands(before, context, '社交人物已经失效');
+      }
+      else if (command.type === 'transitionSocialToDating') {
+        if (!transitionSocialToDating(run, command.value, context))
+          return rollbackCommands(before, context, '当前不能与这位朋友进入约会');
+      }
+      else if (command.type === 'createEmploymentReferral') {
+        if (!createEmploymentReferral(run, command.value, context))
+          return rollbackCommands(before, context, '工作线索提供者已经失效');
+      }
       else if (command.type === 'transitionPartner') {
         if (!transitionPartner(run, command))
           return rollbackCommands(before, context, '关系人物已经失效');
@@ -2752,6 +3113,11 @@
         if (!transition.applied && !['duplicate', 'unchanged'].includes(transition.reason)) {
           return rollbackCommands(before, context, transition.reason);
         }
+      }
+      else if (command.type === 'socialCoResidence') {
+        const transition = socialCoResidence(run, command.value, context);
+        if (!transition.applied && !['duplicate', 'unchanged'].includes(transition.reason))
+          return rollbackCommands(before, context, transition.reason);
       }
       else if (command.type === 'resolveInheritance') resolveInheritance(run, command.value);
       else if (command.type === 'transition' && command.target === 'education')
@@ -2787,6 +3153,17 @@
   }
 
   function scheduleConsequence(event, choice) {
+    const socialActorIds = event.track === 'social'
+      ? { ...(choice.socialActorContext?.actorIds || actorCommandContext(event).actorIds) }
+      : null;
+    if (socialActorIds) {
+      for (const command of choice.effects || []) {
+        if (command.type !== 'createSocialPerson') continue;
+        const slot = socialSlotKey(state.run, command.value?.slot),
+          id = slot ? state.run.social[`${slot}PersonId`] : null;
+        if (id) socialActorIds[slot] = id;
+      }
+    }
     for (const spec of choice.consequences || []) {
       const consequence = INDEX.event.get(spec.eventId);
       if (!consequence?.choiceOutcomes?.[choice.memoryKey]) continue;
@@ -2798,8 +3175,10 @@
         id,
         eventId: spec.eventId,
         memoryKey: choice.memoryKey,
+        socialOutcomeVariantId: choice.socialOutcomeVariantId || null,
         sourceDecisionId: event.id,
         sourceChoiceId: choice.id,
+        ...(socialActorIds ? { actorIds: copy(socialActorIds) } : {}),
         dueAge,
         expiresAge: Math.min(105, dueAge + 6),
         priority: Number(spec.priority) || 0,
@@ -3546,12 +3925,14 @@
       return;
     }
     const originalChoice = event?.choices?.[index],
-      choice = resolveCardChoice(originalChoice, run).choice;
+      resolvedChoice = resolveDecisionChoice(originalChoice, event, run),
+      choice = resolvedChoice.choice;
     if (!choice || inputLocked || !choiceEnabled(originalChoice, run)) return;
     inputLocked = true;
     const snapshot = copy(run),
       result = applyCommands(choice.effects, {
         ...event,
+        ...actorCommandContext(event, run),
         sourceEventId: event.id,
         choiceId: choice.id,
         housingChoiceKind: choice.housingChoiceKind || null,
@@ -3593,6 +3974,8 @@
       commitments: choice.commitments || [],
       housingChoiceKind: choice.housingChoiceKind || null,
       debtException: Boolean(run.housing.history.at(-1)?.choiceId === choice.id && run.housing.history.at(-1)?.debtException),
+      socialOutcomeVariantId: choice.socialOutcomeVariantId || null,
+      memoryKey: choice.memoryKey,
       impact: impactScore(result.before, result.after, choice),
     });
     run.usedEvents.push(event.id);
@@ -3626,6 +4009,7 @@
     habits: '成瘾与戒断',
     later: '晚年生活',
     housing: '住房',
+    social: '社交',
     origin: '出身',
     identity: '欲望',
   };
@@ -3980,6 +4364,8 @@
           run.relationships.partnerStatus = 'widowed';
           addTag(run, 'widowed');
         }
+        if (item.id === run.employment.referralPersonId && run.employment.referralStatus === 'available')
+          run.employment.referralStatus = 'expired';
         cleanupHousingCoResidents(run, 'coResidentDied', `personLoss:${item.id}:${run.age}`);
         addTimeline(
           {
@@ -3988,7 +4374,7 @@
             kind: 'consequence',
             track: 'later',
           },
-          `${item.relation === 'father' ? '父亲' : item.relation === 'mother' ? '母亲' : item.relation === 'partner' ? '伴侣' : '一位家人'}走了。`
+          `${item.social?.displayName || (item.relation === 'father' ? '父亲' : item.relation === 'mother' ? '母亲' : item.relation === 'partner' ? '伴侣' : '一位家人')}走了。`
         );
       }
     }
@@ -4039,6 +4425,23 @@
     const event = INDEX.event.get(schedule.eventId),
       outcome = event?.choiceOutcomes?.[schedule.memoryKey];
     if (!event || !outcome) {
+      schedule.status = 'invalidated';
+      return null;
+    }
+    const sourceEvent = INDEX.event.get(schedule.sourceDecisionId);
+    const scheduledSocialActorInvalid = sourceEvent?.track === 'social' && (
+      Object.entries(schedule.actorIds || {}).some(([slot, id]) => {
+        const item = run.people.find((personItem) => personItem.id === id);
+        return !item?.alive || !item.social || item.social.tie === 'ended' ||
+          (CONTRACT.SOCIAL_SLOTS.includes(slot) && run.social[`${slot}PersonId`] !== id);
+      }) ||
+      (sourceEvent.actors || []).some((spec) => {
+        const id = schedule.actorIds?.[spec.slot];
+        if (!id) return !spec.optional;
+        return Boolean(spec.personIdPath && getPath(run, spec.personIdPath) !== id);
+      })
+    );
+    if (scheduledSocialActorInvalid) {
       schedule.status = 'invalidated';
       return null;
     }
@@ -4396,7 +4799,10 @@
   }
   function revealEvent(event) {
     const run = state.run;
-    const result = applyCommands(event.runtimeEffects || event.effects || [], event);
+    const result = applyCommands(event.runtimeEffects || event.effects || [], {
+      ...event,
+      ...actorCommandContext(event, run),
+    });
     if (!result.ok) {
       showToast(`这一年没有结算：${result.error}`);
       save();
@@ -4624,6 +5030,33 @@
             profile.id === 'earlyExit' && profile.signals.every((signal) => signals.has(signal))
         ) || fallback;
   }
+  function latestSocialIntent(run) {
+    for (let index = (run.decisionHistory || []).length - 1; index >= 0; index--) {
+      const tags = run.decisionHistory[index]?.outcomeTags || [];
+      if (tags.includes('social:intent:solitude')) return 'solitude';
+      if (tags.includes('social:intent:connect')) return 'connect';
+    }
+    return null;
+  }
+  function socialEndingSignal(run) {
+    const people = CONTRACT.SOCIAL_SLOTS
+        .map((slot) => run.people.find((item) => item.id === run.social?.[`${slot}PersonId`]))
+        .filter(Boolean),
+      close = people.some((item) => item.social?.tie === 'close'),
+      available = people.some(
+        (item) => item.alive && ['friend', 'close'].includes(item.social?.tie)
+      ),
+      intent = latestSocialIntent(run),
+      loneliness = Number(run.pressures.loneliness) || 0;
+    if (close) return { kind: 'closeFriend', adjustment: 12, floor: 0 };
+    if (intent === 'connect' && !available && loneliness >= 50)
+      return { kind: 'passiveLoneliness', adjustment: -12, ceiling: 38 };
+    if (intent === 'solitude' && loneliness < 40)
+      return { kind: 'activeSolitude', adjustment: 0, floor: 55 };
+    if (run.relationships.network >= 65)
+      return { kind: 'broadNetwork', adjustment: 6, floor: 0 };
+    return { kind: 'neutral', adjustment: 0, floor: 0 };
+  }
   function endingAxes(run) {
     const claimed = Object.values(run.desires).filter(
         (value) => value && typeof value === 'object' && value.claimed
@@ -4636,12 +5069,16 @@
               .sort((a, b) => b.drive - a.drive)
               .slice(0, 3)
         ).reduce((sum, item) => sum + item.fulfillment, 0) / (claimed.length || 3);
-    const support =
+    let support =
         (run.relationships.network +
           run.relationships.originBond +
           Math.max(0, run.relationships.partnerBond) +
-          Math.max(0, run.relationships.childBond)) /
-        4,
+          Math.max(0, run.relationships.childBond)) / 4;
+    const socialSignal = socialEndingSignal(run);
+    support += socialSignal.adjustment;
+    if (socialSignal.floor) support = Math.max(socialSignal.floor, support);
+    if (socialSignal.ceiling) support = Math.min(socialSignal.ceiling, support);
+    const
       netWorth = run.finance.netWorth,
       wealthEffect =
         netWorth >= 0
@@ -4758,6 +5195,11 @@
     else if (run.health.status === 'managed' && run.health.conditionSeverity > 0)
       items.push({ label: '与健康问题共处', count: 55 });
     else if (run.outcomeTags['health:recovered']) items.push({ label: '康复者', count: 60 });
+    const socialSignal = socialEndingSignal(run);
+    if (socialSignal.kind === 'closeFriend') items.push({ label: '有过真朋友', count: 70 });
+    else if (socialSignal.kind === 'broadNetwork') items.push({ label: '人脉很广', count: 55 });
+    else if (socialSignal.kind === 'activeSolitude') items.push({ label: '主动独处', count: 55 });
+    else if (socialSignal.kind === 'passiveLoneliness') items.push({ label: '无人可找', count: 70 });
     return items
       .sort((a, b) => b.count - a.count)
       .filter(
@@ -5023,16 +5465,20 @@
     );
   }
   function housingLabel(run) {
-    const status = {
+    const socialCoResident = (run.housing.coResidentRefs || []).some((id) =>
+        run.people.some((item) => item.id === id && item.social)
+      ),
+      status = {
         family: '与原生家庭同住',
         renting: '租住',
         owned: '自有住房',
         mortgaged: '按揭住房',
-        supported: '由家人或伴侣提供',
+        supported: socialCoResident ? '由朋友临时提供' : '由家人或伴侣提供',
         unstable: '临时住所',
       }[run.housing.status] || run.housing.status,
       arrangement = {
-        originFamily: '原生家庭', dormitory: '宿舍', solo: '独住', shared: '匿名合租',
+        originFamily: '原生家庭', dormitory: '宿舍', solo: '独住',
+        shared: socialCoResident ? '与朋友合住' : '匿名合租',
         partner: '伴侣同住', multigenerational: '多代同住', service: '服务型居住',
       }[run.housing.arrangement] || run.housing.arrangement,
       region = { tier1: '一线', tier2: '二线', county: '县城', town: '乡镇', us: '美国', europe: '欧洲' }[run.housing.region],
@@ -5237,7 +5683,9 @@
       Object.keys(actors).length
         ? `<p>${esc(UI_COPY.involvedLabel)}：${Object.values(actors)
             .map((item) =>
-              item.relation === 'partner'
+              item.social
+                ? item.social.displayName
+                : item.relation === 'partner'
                 ? '伴侣'
                 : item.relation.includes('child')
                   ? '子女'
@@ -5245,20 +5693,21 @@
             )
             .join('、')}</p>`
         : ''
-    }<div class="choices">${choices
+    }${event.situation ? `<p class="episode-copy">${esc(event.situation)}</p>` : ''}<div class="choices">${choices
       .map(({ choice, index }) => {
-        const resolved = resolveCardChoice(choice),
+        const resolved = resolveDecisionChoice(choice, event),
           effective = resolved.choice,
+          display = effective || choice,
           enabled = choiceEnabled(choice);
-        const housingHint = housingChoiceHint(effective),
+        const housingHint = effective ? housingChoiceHint(effective) : null,
           enabledDetail = resolved.card
             ? `<small class="card-effect"><b>◇ “${esc(resolved.card.displayName)}”</b><span> · ${esc(resolved.spec.explanation)}</span>${housingHint ? `<span> · ${esc(housingHint)}</span>` : ''}</small>`
             : housingHint
               ? `<small>${esc(housingHint)}</small>`
-              : effective.hints?.length
-                ? `<small>${esc(effective.hints.join(' · '))}</small>`
+              : display.hints?.length
+                ? `<small>${esc(display.hints.join(' · '))}</small>`
                 : '';
-        return `<button class="choice ${enabled ? '' : 'locked'} ${resolved.card ? 'card-active' : ''}" data-choice="${index}" ${enabled ? '' : 'disabled'}>${esc(effective.text)}${!enabled ? `<small>暂不可选：${esc(housingChoiceReason(effective) || debtGateReason(effective) || effective.reason || '当前条件不足')}</small>` : enabledDetail}</button>`;
+        return `<button class="choice ${enabled ? '' : 'locked'} ${resolved.card ? 'card-active' : ''}" data-choice="${index}" ${enabled ? '' : 'disabled'}>${esc(display.text)}${!enabled ? `<small>暂不可选：${esc(housingChoiceReason(display) || debtGateReason(display) || display.reason || '当前条件不足')}</small>` : enabledDetail}</button>`;
       })
       .join('')}</div></section></div>`;
   }
@@ -5284,8 +5733,11 @@
         widowed: '丧偶',
       }[run.relationships.partnerStatus],
       liabilities = run.finance.liabilities.filter((item) => item.status !== 'settled'),
-      episodes = activeEpisodes(run);
-    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>成长证据</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner} · 关系 ${Math.round(run.relationships.partnerBond)}</dd></div><div class="spec"><dt>子女</dt><dd>${
+      episodes = activeEpisodes(run),
+      socialPeople = CONTRACT.SOCIAL_SLOTS
+        .map((slot) => run.people.find((item) => item.id === run.social?.[`${slot}PersonId`]))
+        .filter(Boolean);
+    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>成长证据</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner} · 关系 ${Math.round(run.relationships.partnerBond)}</dd></div><div class="spec"><dt>朋友</dt><dd>${socialPeople.length ? socialPeople.map((item) => esc(socialPersonLabel(item))).join('<br>') : '没有留下持续记录的人'}</dd></div><div class="spec"><dt>子女</dt><dd>${
       run.relationships.childCount
         ? childPeople(run)
             .map((child) => `${personAge(child, run)}岁`)
@@ -5403,7 +5855,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.9-存档.json';
+    link.download = '人生尚未加载-v0.6.10-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }
@@ -5615,6 +6067,7 @@
       let actorId = actor.personIdPath ? getPath(run, actor.personIdPath) : null,
         found = run.people.find((item) => item.id === actorId && actorMatches(item, actor, run));
       if (found) continue;
+      if (actor.optional) continue;
       const relation = actor.relation || actor.relationAny?.[0] || 'child',
         age = Number.isFinite(actor.ageMin) ? actor.ageMin : 30;
       found = person(
@@ -5701,6 +6154,7 @@
               reliefPending: run.finance.reliefPending,
             },
             housing: run.housing,
+            social: run.social,
             relationships: {
               partnerStatus: run.relationships.partnerStatus,
               activePartnerId: run.relationships.activePartnerId,
@@ -5712,6 +6166,8 @@
                   id: item.id,
                   relation: item.relation,
                   age: personAge(item, run),
+                  displayName: item.social?.displayName || null,
+                  social: item.social || null,
                 })),
             },
             health: run.health,
@@ -5809,6 +6265,9 @@
             return copy(state.run.health);
           },
           endingAxes: () => endingAxes(state.run),
+          latestSocialIntent: () => latestSocialIntent(state.run),
+          socialEndingSignal: () => copy(socialEndingSignal(state.run)),
+          dueConsequence: () => copy(dueConsequence(state.run)),
           routeTags: () => routeTags(state.run),
           decisionAllowance: () => decisionAllowance(state.run),
           housingContext: () => copy(currentHousingContext(state.run)),

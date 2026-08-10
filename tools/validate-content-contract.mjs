@@ -1,5 +1,6 @@
 import {
   COMMAND_TYPES,
+  EMPLOYMENT_REFERRAL_STATUS,
   HOUSING_ACCESSIBILITY,
   HOUSING_ARRANGEMENTS,
   HOUSING_CHOICE_KINDS,
@@ -9,6 +10,12 @@ import {
   HOUSING_STATUS,
   READ_PATHS,
   RUNTIME_OPERATORS,
+  SOCIAL_PROXIMITIES,
+  SOCIAL_SLOTS,
+  SOCIAL_SOURCES,
+  SOCIAL_SUPPORT,
+  SOCIAL_TIES,
+  SOCIAL_TURNS,
   TRACK_DESIRE_EVIDENCE,
   WRITE_PATHS,
   isCommandType,
@@ -43,8 +50,13 @@ const COMMAND_TARGETS = Object.freeze({
   resolveLayoff: 'employment',
   grantCredential: 'education',
   createPerson: 'people',
+  createSocialPerson: 'people',
+  updateSocialPerson: 'people',
+  transitionSocialToDating: 'relationships.partnerStatus',
+  createEmploymentReferral: 'employment',
   transitionPartner: 'people',
   transitionHousing: 'housing',
+  socialCoResidence: 'housing',
   resolveInheritance: 'originHousehold.assets',
   transition: 'education',
   claimDesire: 'desires',
@@ -118,6 +130,87 @@ function validateHousingTransition(value, location) {
     fail(`${location}.housingChoiceKind`, '住房选择必须声明类型');
 }
 
+const socialEnumFields = Object.freeze([
+  ['source', SOCIAL_SOURCES],
+  ['tie', SOCIAL_TIES],
+  ['proximity', SOCIAL_PROXIMITIES],
+  ['turn', SOCIAL_TURNS],
+  ['support', SOCIAL_SUPPORT],
+]);
+
+function validateSocialSelector(value, location) {
+  const selectors = ['personId', 'slot'].filter((key) => Object.hasOwn(value, key));
+  if (selectors.length !== 1) fail(location, '必须且只能声明 personId 或 slot');
+  if (Object.hasOwn(value, 'personId') &&
+      (typeof value.personId !== 'string' || !value.personId.trim()))
+    fail(`${location}.personId`, '必须是非空字符串');
+  if (Object.hasOwn(value, 'slot') && !SOCIAL_SLOTS.includes(value.slot))
+    fail(`${location}.slot`, '非法 social 槽位');
+}
+
+function validateSocialMetadata(value, location, { create = false } = {}) {
+  if (!isObject(value)) fail(location, 'social command.value 必须是对象');
+  if (create) {
+    if (!SOCIAL_SLOTS.includes(value.slot)) fail(`${location}.slot`, '非法 social 槽位');
+    if (typeof value.displayName !== 'string' || !value.displayName.trim())
+      fail(`${location}.displayName`, '必须是非空字符串');
+    if (!SOCIAL_SOURCES.includes(value.source)) fail(`${location}.source`, '非法关系来源');
+  } else validateSocialSelector(value, location);
+  for (const [key, values] of socialEnumFields)
+    if (Object.hasOwn(value, key) && !values.includes(value[key]))
+      fail(`${location}.${key}`, `非法枚举：${String(value[key])}`);
+  if (Object.hasOwn(value, 'displayName') &&
+      (typeof value.displayName !== 'string' || !value.displayName.trim()))
+    fail(`${location}.displayName`, '必须是非空字符串');
+  if (Object.hasOwn(value, 'bornAt') && !finite(value.bornAt))
+    fail(`${location}.bornAt`, '必须是有限数值');
+}
+
+function validateSocialCommand(command, location) {
+  const value = command.value;
+  if (!isObject(value)) fail(`${location}.value`, `${command.type}.value 必须是对象`);
+  if (command.type === 'createSocialPerson') {
+    const allowed = new Set(['slot', 'displayName', 'source', 'tie', 'proximity', 'turn', 'support', 'bornAt']);
+    for (const key of Object.keys(value)) if (!allowed.has(key)) fail(`${location}.value.${key}`, '未知 social 人物字段');
+    validateSocialMetadata(value, `${location}.value`, { create: true });
+    return;
+  }
+  if (command.type === 'updateSocialPerson') {
+    const allowed = new Set(['personId', 'slot', 'displayName', 'source', 'tie', 'proximity', 'turn', 'support']);
+    for (const key of Object.keys(value)) if (!allowed.has(key)) fail(`${location}.value.${key}`, '未知 social 更新字段');
+    validateSocialMetadata(value, `${location}.value`);
+    if (!Object.keys(value).some((key) => !['personId', 'slot'].includes(key)))
+      fail(`${location}.value`, 'social 更新必须至少包含一个事实字段');
+    return;
+  }
+  if (command.type === 'transitionSocialToDating') {
+    for (const key of Object.keys(value)) if (!['personId', 'slot'].includes(key)) fail(`${location}.value.${key}`, '未知约会入口字段');
+    validateSocialSelector(value, `${location}.value`);
+    return;
+  }
+  if (command.type === 'createEmploymentReferral') {
+    for (const key of Object.keys(value)) if (!['personId', 'slot', 'status'].includes(key)) fail(`${location}.value.${key}`, '未知内推入口字段');
+    validateSocialSelector(value, `${location}.value`);
+    if (!EMPLOYMENT_REFERRAL_STATUS.includes(value.status) || value.status === 'none')
+      fail(`${location}.value.status`, '非法内推状态');
+    return;
+  }
+  if (command.type === 'socialCoResidence') {
+    const allowed = new Set(['personId', 'slot', 'status', 'value', 'region', 'stability', 'accessibility', 'residenceOnly', 'kind', 'reason', 'housingChoiceKind']);
+    for (const key of Object.keys(value)) if (!allowed.has(key)) fail(`${location}.value.${key}`, '未知朋友合住字段');
+    validateSocialSelector(value, `${location}.value`);
+    const { personId, slot, ...housing } = value;
+    validateHousingTransition({
+      arrangement: 'shared',
+      costShare: 'self',
+      coResidentRefs: ['$socialPerson'],
+      ...housing,
+    }, `${location}.value`);
+    if (housing.kind === 'choice' && housing.housingChoiceKind !== 'socialCoResidence')
+      fail(`${location}.value.housingChoiceKind`, '朋友合住选择必须使用 socialCoResidence');
+  }
+}
+
 export function validatePredicate(rule, location = 'predicate') {
   if (!isObject(rule)) fail(location, 'predicate 必须是对象');
   for (const key of Object.keys(rule))
@@ -177,6 +270,8 @@ export function validateCommand(command, location = 'command') {
     if (!allowedFields.has(key)) fail(`${location}.${key}`, `${command.type} 不允许该字段`);
 
   if (command.type === 'transitionHousing') validateHousingTransition(command.value, `${location}.value`);
+  if (['createSocialPerson','updateSocialPerson','transitionSocialToDating','createEmploymentReferral','socialCoResidence'].includes(command.type))
+    validateSocialCommand(command, location);
   if (command.type === 'scaleEmployment' && (!finite(command.value) || command.value <= 0 || command.value > 1))
     fail(location, 'scaleEmployment.value 必须是 0 到 1 之间的有限数值');
   if (command.type === 'resolveInheritance' && !['accepted', 'limited', 'renounced', 'disputed'].includes(command.value))
@@ -266,6 +361,40 @@ export function validateCommand(command, location = 'command') {
     fail(location, 'command 含非有限数值');
 }
 
+function validateSocialOutcome(choice, location) {
+  if (choice.socialOutcome === undefined) return;
+  if (!isObject(choice.socialOutcome)) fail(`${location}.socialOutcome`, '必须是对象');
+  for (const key of Object.keys(choice.socialOutcome))
+    if (key !== 'variants') fail(`${location}.socialOutcome.${key}`, '未知 socialOutcome 字段');
+  const variants = choice.socialOutcome.variants;
+  if (!Array.isArray(variants) || !variants.length || variants.length > 3)
+    fail(`${location}.socialOutcome.variants`, '必须包含 1 到 3 个变体');
+  const ids = new Set();
+  for (const [index, variant] of variants.entries()) {
+    const variantLocation = `${location}.socialOutcome.variants[${index}]`;
+    if (!isObject(variant)) fail(variantLocation, '变体必须是对象');
+    const allowed = new Set(['id','weight','requirements','resultText','effects','outcomeTags','memoryKey','consequences','consequenceText','consequenceEffects']);
+    for (const key of Object.keys(variant)) if (!allowed.has(key)) fail(`${variantLocation}.${key}`, '未知变体字段');
+    if (typeof variant.id !== 'string' || !variant.id.trim() || ids.has(variant.id))
+      fail(`${variantLocation}.id`, '必须是非空且不重复的 ID');
+    ids.add(variant.id);
+    if (!finite(variant.weight) || variant.weight <= 0) fail(`${variantLocation}.weight`, '权重必须为正数');
+    if (typeof variant.resultText !== 'string' || !variant.resultText.trim()) fail(`${variantLocation}.resultText`, '缺少玩家结果文案');
+    if (!Array.isArray(variant.effects)) fail(`${variantLocation}.effects`, '必须显式声明 effects');
+    if (typeof variant.consequenceText !== 'string' || !variant.consequenceText.trim())
+      fail(`${variantLocation}.consequenceText`, '必须显式声明长期回响文案');
+    if (variant.consequenceEffects !== undefined && !Array.isArray(variant.consequenceEffects))
+      fail(`${variantLocation}.consequenceEffects`, '必须是 command 数组');
+    if (variant.requirements !== undefined) validateRequirements(variant.requirements, `${variantLocation}.requirements`);
+    if (variant.outcomeTags !== undefined && (!Array.isArray(variant.outcomeTags) || variant.outcomeTags.some((tag) => typeof tag !== 'string')))
+      fail(`${variantLocation}.outcomeTags`, '必须是字符串数组');
+    if (variant.memoryKey !== undefined && (typeof variant.memoryKey !== 'string' || !variant.memoryKey.trim()))
+      fail(`${variantLocation}.memoryKey`, '必须是非空字符串');
+    if (variant.consequences !== undefined && !Array.isArray(variant.consequences))
+      fail(`${variantLocation}.consequences`, '必须是数组');
+  }
+}
+
 function walkContracts(value, location = 'data') {
   if (!value || typeof value !== 'object') return;
   if (Array.isArray(value)) {
@@ -342,28 +471,32 @@ function validateReferences(data) {
     if (event.requirements !== undefined)
       validateRequirements(event.requirements, `events.${event.id}.requirements`);
     for (const [choiceIndex, choice] of (event.choices || []).entries()) {
-      validateRequirements(choice.requirements ?? [], `events.${event.id}.choices[${choiceIndex}]`);
-      for (const [specIndex, spec] of (choice.consequences || []).entries()) {
+      const choiceLocation = `events.${event.id}.choices[${choiceIndex}]`;
+      validateRequirements(choice.requirements ?? [], choiceLocation);
+      validateSocialOutcome(choice, choiceLocation);
+      const consequenceOwners = [choice, ...(choice.socialOutcome?.variants || [])];
+      for (const owner of consequenceOwners) for (const [specIndex, spec] of (owner.consequences || []).entries()) {
         const consequence = events.get(spec.eventId);
         if (!consequence)
           fail(
-            `events.${event.id}.choices[${choiceIndex}].consequences[${specIndex}]`,
+            `${choiceLocation}.consequences[${specIndex}]`,
             `断裂 consequence：${spec.eventId}`
           );
         if (consequence.kind !== 'consequence')
           fail(
-            `events.${event.id}.choices[${choiceIndex}].consequences[${specIndex}]`,
+            `${choiceLocation}.consequences[${specIndex}]`,
             `目标不是 consequence：${spec.eventId}`
           );
         if (consequence.sourceDecisionId !== event.id)
           fail(
-            `events.${event.id}.choices[${choiceIndex}].consequences[${specIndex}]`,
+            `${choiceLocation}.consequences[${specIndex}]`,
             `consequence 反向引用错误：${spec.eventId}`
           );
-        if (!consequence.choiceOutcomes?.[choice.memoryKey])
+        const memoryKey = owner.memoryKey || choice.memoryKey;
+        if (!consequence.choiceOutcomes?.[memoryKey])
           fail(
-            `events.${event.id}.choices[${choiceIndex}]`,
-            `consequence ${spec.eventId} 缺少 outcome ${choice.memoryKey}`
+            choiceLocation,
+            `consequence ${spec.eventId} 缺少 outcome ${memoryKey}`
           );
       }
       for (const [commitmentIndex, commitment] of (choice.commitments || []).entries()) {
@@ -381,7 +514,10 @@ function validateReferences(data) {
       const source = events.get(event.sourceDecisionId);
       if (!source || source.kind !== 'decision')
         fail(`events.${event.id}.sourceDecisionId`, `断裂 source decision：${event.sourceDecisionId}`);
-      const expectedOutcomes = new Set((source.choices || []).map((choice) => choice.memoryKey));
+      const expectedOutcomes = new Set((source.choices || []).flatMap((choice) => [
+        choice.memoryKey,
+        ...(choice.socialOutcome?.variants || []).map((variant) => variant.memoryKey || choice.memoryKey),
+      ]));
       for (const memoryKey of Object.keys(event.choiceOutcomes || {}))
         if (!expectedOutcomes.has(memoryKey))
           fail(`events.${event.id}.choiceOutcomes.${memoryKey}`, '不存在对应的 source choice');
