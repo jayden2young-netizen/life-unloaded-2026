@@ -17,6 +17,7 @@
 - 正式生成器最终双跑 SHA-256 均为 `b44740be04f545eba79eb16eb826bad3652191e72fda1add95dbee6686536209`。
 - 最终 `node smoke.js --full` 的 syntax、correctness、core-browser、family-education、episode、university-career、card-interaction 与 debt-enforcement 全部通过；360×773、360×640、320×568 控制台错误为 0。
 - `legacy/0.6.10` 固定并推送到 v0.6.10 发布提交 `b84b480`；v0.6.11 随 `main` 推送并由 GitHub Pages 发布。
+- 功能发布提交为 `40605a3`；Pages 构建成功，线上 `index.html`、`game.js`、运行时合同与 `data.json` 均已和本地核对一致。
 
 ## 2026-08-10 · v0.6.10 已发布
 
