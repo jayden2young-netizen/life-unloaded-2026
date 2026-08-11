@@ -36,20 +36,12 @@ async function openEpisodeChoice(page,event,patch={}){
   await patchPlaying(page,patch);
   assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),event.id),event.id);
   let run=await snapshot(page);
-  assert.equal(run.sceneQueue[0].kind,'situation');
-  await page.locator('[data-act="episode-next"]').click();
-  await page.waitForTimeout(220);
-  run=await snapshot(page);
   assert.equal(run.sceneQueue[0].kind,'choice');
   return textState(page);
 }
 async function openDecisionChoice(page,event,patch={}){
   await patchPlaying(page,patch);
   assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),event.id),event.id);
-  if(event.episode){
-    await page.locator('[data-act="episode-next"]').click();
-    await page.waitForTimeout(220);
-  }
   return textState(page);
 }
 async function choose(page,index){
@@ -112,7 +104,7 @@ async function fit(page,label){
     await page.locator('[data-act="attributes-done"]').click();
     await page.locator('[data-card]').first().click();
     let run=await snapshot(page);
-    assert.equal(run.gameVersion,'0.6.10');
+    assert.equal(run.gameVersion,'0.6.11');
     assert.equal(run.finance.debtStage,'current');
     assert.equal(run.finance.restrictedConsumption,false);
 

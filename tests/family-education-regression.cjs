@@ -34,13 +34,12 @@ async function enterPhase(page,event,patch={},options={}){
   await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,...value}),patch);
   assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),event.id),event.id);
   const before=await snapshot(page);
-  assert.equal(before.sceneQueue[0].kind,'situation');
+  assert.equal(before.sceneQueue[0].kind,'choice');
   if(options.situationMatch)assert.match(await page.locator('body').innerText(),options.situationMatch);
   if(options.situationScreenshot){
     await page.waitForTimeout(300);
     await page.screenshot({path:path.join(OUT,options.situationScreenshot),fullPage:true});
   }
-  await page.locator('[data-act="episode-next"]').click();
   let choice=await snapshot(page);
   assert.equal(choice.age,before.age);
   assert.equal(choice.sceneQueue[0].kind,'choice');
@@ -81,11 +80,7 @@ async function advanceToPhase(page,id,number){
   for(let guard=0;guard<8;guard++){
     const run=await snapshot(page);
     if(run.phase==='episode'&&run.currentDecision?.episode?.id===id&&run.currentDecision.episode.phase===number){
-      assert.equal(run.sceneQueue[0].kind,'situation');
-      await page.locator('[data-act="episode-next"]').click();
-      const choice=await snapshot(page);
-      assert.equal(choice.age,run.age);
-      assert.equal(choice.sceneQueue[0].kind,'choice');
+      assert.equal(run.sceneQueue[0].kind,'choice');
       return run.age;
     }
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
@@ -138,7 +133,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
   assert.equal(pregnancyStart.choices[2].consequences.length,0);
   assert.deepEqual(pregnancyReview.choices.map(choice=>choice.route),['continued','terminated']);
   assert.equal(adoptionStart.actors.length,0);
-  assert.match(adoptionStart.situation,/单身收养申请/);
+  assert.match(adoptionStart.situation,/单身能不能收养/);
   assert.ok(adoptionStart.requirements.all.some(rule=>rule.path==='relationships.childCount'&&rule.op==='lte'&&rule.value===1));
   assert.ok(adoptionStart.requirements.all.some(rule=>rule.path==='relationships.activePartnerId'&&rule.op==='eq'&&rule.value===null));
   assert.ok(adoptionStart.requirements.all.some(rule=>rule.path==='health.physical'&&rule.op==='gte'&&rule.value===45));
@@ -175,7 +170,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.10',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.11',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.9完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,9);
@@ -235,7 +230,6 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     assert.equal(run.episodes.acute_illness.status,'active');
     assert.equal(run.episodes.acute_illness.nextPhaseAge,17);
     assert.equal(run.episodes.acute_illness.deadlineAge,20);
-    await page.locator('[data-act="episode-next"]').click();
     run=await chooseAndFinish(page,1);
     assert.equal(run.age,17);
     assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),phase('school_harm',2).id);
@@ -557,7 +551,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     run=await snapshot(page);
     assert.equal(run.relationships.adoptionOffered,true);
     assert.equal(run.relationships.adoptionStatus,'offered');
-    await enterPhase(page,adoptionStart,{}, {reloadChoice:true,situationMatch:/单身收养申请/,situationScreenshot:'04-adoption-entry-360x773.png'});
+    await enterPhase(page,adoptionStart,{}, {reloadChoice:true,situationMatch:/单身能不能收养/,situationScreenshot:'04-adoption-entry-360x773.png'});
     run=await chooseAndFinish(page,0,{reload:true});
     assert.equal(run.relationships.adoptionStatus,'assessing');
     const newPartner={...partner,id:'new_partner'};
@@ -566,7 +560,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     run=await snapshot(page);
     assert.equal(run.relationships.adoptionStatus,'invalidated');
     assert.equal(run.sceneQueue[0].forced,true);
-    assert.match(run.sceneQueue[0].text,/单身收养/);
+    assert.match(run.sceneQueue[0].text,/单身申请/);
 
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:32,people:[],relationships:{activePartnerId:null,partnerStatus:'none',adoptionOffered:true,adoptionStatus:'matching',childCount:0},episodes:{},yearStarted:true,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null,usedEvents:[],decisionHistory:[],timeline:[]}));
     await enterPhase(page,adoptionResolve,{}, {reloadChoice:true});
@@ -592,7 +586,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
         await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
         run=await snapshot(page);
         assert.equal(run.relationships.adoptionStatus,'invalidated');
-        assert.match(run.sceneQueue[0].text,/单身收养/);
+        assert.match(run.sceneQueue[0].text,/单身申请/);
       }
     }
 

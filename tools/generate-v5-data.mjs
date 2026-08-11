@@ -36,7 +36,7 @@ const registrationGroups=[
 for(const [domain,registrations] of registrationGroups)
   for(const registration of registrations)
     registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
-const VERSION='0.6.10',SCHEMA_VERSION=13,CONTENT_REVISION=28;
+const VERSION='0.6.11',SCHEMA_VERSION=13,CONTENT_REVISION=29;
 const debtSourceCatalog=Object.freeze({
   mortgage:Object.freeze({label:'住房按揭',enforcementEligible:true,housingSecured:true}),
   consumer:Object.freeze({label:'消费借款',enforcementEligible:true,housingSecured:false}),
@@ -91,6 +91,38 @@ const familyJobsFor=(name,familyClass)=>{
   if(/外出经商/.test(name))return['批发经营者','餐饮经营者','门店经营者','物流经营者'];
   return jobPools[familyClass];
 };
+const familyTexture={
+  '城郊双职工家庭':{advantage:'两份工资能轮着接住大账单',risk:'接送和陪伴总要跟两份排班抢时间',lateEcho:'晚年再看那张通勤卡，你才想起一家人的晚饭总在等最后一个下班的人。'},
+  '县城小生意家庭':{advantage:'家里懂进货、房租和老客怎么留',risk:'家用和店里的流水容易混在一起',lateEcho:'关店以后，柜台下那本进货账还留着几页你小时候的涂鸦。'},
+  '乡镇务农家庭':{advantage:'家里有地、老宅和跟季节过日子的经验',risk:'收入会跟天气和收成一起变',lateEcho:'你后来走得很远，家里说事情还是习惯用“今年收成”开头。'},
+  '一线城市新市民家庭':{advantage:'家里早就学会了怎么找房、转车和换工作',risk:'住址和工作一变，上学和照护也得跟着重排',lateEcho:'多年后翻到第一份租约，你还记得那间屋里每个箱子都没舍得丢。'},
+  '教师家庭':{advantage:'家里看得懂课表、报名通知和升学路线',risk:'别人家孩子的成绩很容易一起进饭桌',lateEcho:'退休后，家里还留着一盒没用完的红笔，谁也没再拿它改你的答案。'},
+  '医护家庭':{advantage:'家里知道哪些身体反应不能硬扛',risk:'夜班和临时叫班会打乱家里的时间',lateEcho:'最后那只旧听诊器收进盒子时，你才发现家里一直很会管病，不太会问累不累。'},
+  '个体运输家庭':{advantage:'家里熟路、懂车和时间成本',risk:'车一停，当天的收入也跟着停',lateEcho:'那串旧车钥匙后来不再开车，挂在门边还是会发响。'},
+  '基层公职家庭':{advantage:'家里知道办手续该找哪个窗口',risk:'程序和体面有时会被一起带回家',lateEcho:'旧文件袋里什么都按年份放好了，只有家里那几次争吵没有编号。'},
+  '工厂职工家庭':{advantage:'家里懂设备、班次和稳定发工资的重要',risk:'加班和身体损耗会一起带回家',lateEcho:'厂牌早就过期了，上面那张照片还是你记得的年轻样子。'},
+  '单亲务工家庭':{advantage:'家里做决定很快，因为没有第二份答案可等',risk:'收入、陪伴和紧急情况都压在一个照护者身上',lateEcho:'那人留下的不是什么家业，是一只永远开着铃声的旧手机。'},
+  '隔代照护家庭':{advantage:'放学后总有人在家里等',risk:'父母不常在场，规矩和问题得隔一代再说',lateEcho:'老宅厨房的矮板凳还在，你后来才知道那几年是谁把自己的日子挪给了你。'},
+  '多子女经营家庭':{advantage:'家里人手多，店里忙时总能补上一个',risk:'钱、家务和上学机会都得在兄弟姐妹之间分',lateEcho:'后来再聚到店里，每个人记得的都是自己当年少拿的那一份。'},
+  '技术工人家庭':{advantage:'家里有能真正拿来做事的手艺',risk:'技术靠身体和年头换，年轻时的力气不会一直在',lateEcho:'工具箱里每个扳手都有固定的位置，家里人的话却常常放错地方。'},
+  '自由职业家庭':{advantage:'家里懂得靠作品和客户把手艺带走',risk:'项目一断，下个月的收入就得重算',lateEcho:'旧硬盘里留着很多没被选中的版本，也留着一家人等尾款的日子。'},
+  '小城房产家庭':{advantage:'家里有一处不必立刻搬走的住处',risk:'房子看着值钱，需要现金时却不能拆一间屋来花',lateEcho:'那套房最后有了新钥匙，饭桌上还是会讲起当年买它花了多少。'},
+  '返乡创业家庭':{advantage:'家里认得本地的货、人和销路',risk:'生意钱和家里钱容易在同一次转账里混掉',lateEcho:'仓库门上的店名晒退了色，家里还会争论当年回来到底算不算选对。'},
+  '外出经商家庭':{advantage:'家里见过更多市场，也知道货从哪里来',risk:'生意在外地，家里很多事只能靠电话参与',lateEcho:'旧行李箱的轮子磨平了，你记得的却是每次回家前那通“要带什么”的电话。'},
+  '社区服务家庭':{advantage:'家里知道社区里哪个电话真能找到人',risk:'别人的急事常常会打断自家的晚饭',lateEcho:'退休以后，那本联系人还是很厚，真正能深夜打的号码却没有几个。'},
+  '文艺从业家庭':{advantage:'家里知道作品不是一次就能做成',risk:'演出、稿费和项目都不会每月按时来',lateEcho:'仓库里的旧演出箱后来没再打开，家里还是有人会把那年说成“差一点”。'},
+  '平台劳动家庭':{advantage:'家里熟悉地图、平台和怎么在城市里抢时间',risk:'派单和评分一变，收入和作息就一起变',lateEcho:'那件旧工服早就不穿了，袖口上还留着当年赶雨的印子。'},
+  '负债置业家庭':{advantage:'家里确实有了一处自己的住处',risk:'每个月的按揭会先于很多别的选择',lateEcho:'房贷短信一年年变短，家里还是会先算完下个月再谈别的。'},
+  '拆迁安置家庭':{advantage:'家里有安置文件和一处明确的住处',risk:'房、钱和名字分得越清，亲戚间越容易翻旧账',lateEcho:'旧门牌被收进柜子，新房的电梯里再没有人知道你家原来住哪里。'},
+  '稳定储蓄家庭':{advantage:'家里真有一笔钱能接住急事',risk:'太怕动存款，有些机会也会被一起错过',lateEcho:'那张定期存单后来兑了，家里还是习惯先问一句“非花不可吗”。'},
+  '高控制家庭':{advantage:'家里的钱、时间和路线都有人排得很清楚',risk:'排得越清楚，你自己的答案越容易没位置',lateEcho:'多年后那本旧日历还是写满了安排，你终于可以不按它过了。'},
+  '低表达家庭':{advantage:'家里人会用做事表示在意',risk:'问题不说出来，别人就只能猜',lateEcho:'那句一直没说的话最后也没补上，桌上倒是又多了一盘削好的水果。'},
+  '照护压力家庭':{advantage:'家里懂陪诊、取药和怎么把日子分班',risk:'时间和钱总要先给那个离不开人的缺口',lateEcho:'那张陪诊时间表后来停了，家里人还是过了很久才学会不按班次说话。'},
+  '跨城婚姻家庭':{advantage:'家里在两座城里都有人和生活经验',risk:'节日、照护和定居问题总要在两边之间选',lateEcho:'两座城的旧车票放在一起，没有一张能说清哪边才算回家。'},
+  '流动租住家庭':{advantage:'家里很会搬家，也很快能把新地方过起来',risk:'地址一变，通勤、上学和附近的人都得重新找',lateEcho:'最后一个纸箱用了很多年，上面涂掉的地址比留着的多。'},
+  '小康专业家庭':{advantage:'家里有教育、医疗和职业信息可以问',risk:'“条件都给你了”很容易成为一句压力',lateEcho:'父母留下的专业书后来卖不了多少钱，书页里的要求却比他们留得久。'},
+  '隐性债务家庭':{advantage:'家里表面上的日常还能照常运转',risk:'真正的欠款和到期日可能比你知道的更早到',lateEcho:'那只没拆的催款信封后来打开了，家里以前讲不通的几个日子突然都对上了。'}
+};
 const familyArchetypes=familyNames.map((name,index)=>{
   const familyClass=familyClassFor(name),single=/单亲/.test(name),multi=/多子女/.test(name),debt=familyDebtNames.has(name),rural=/乡镇|务农|返乡/.test(name);
   const cashflow=clamp(34+(index*7)%58,20,92),control=/高控制|基层公职/.test(name)?78:clamp(30+(index*11)%55,20,82),expression=clamp(28+(index*13)%60,20,88),careBurden=/照护|隔代/.test(name)?82:clamp(25+(index*9)%55,15,80),digitalLiteracy=clamp(20+(index*19)%70,15,92);
@@ -104,7 +136,8 @@ const familyArchetypes=familyNames.map((name,index)=>{
     emotionalSafety:clamp(45+expression*.45-control*.35-(unsafe?8:0),18,90),
     educationBudget:clamp(cashflow*.58+(professional?25:0)-(debt?12:0),12,94)
   };
-  return{id:`family_${String(index+1).padStart(2,'0')}`,name,familyClass,weight:10+index%4,locationAffinity:rural?['county','town']:index%3===0?['tier1','tier2']:['tier2','county'],parentCount:single?1:2,siblingRange:multi?[2,3]:index%4===0?[1,2]:[0,1],housingOptions:rural?['自建房','老宅']:index%3===0?['租住房','按揭商品房']:['单位住房','老城区住房','按揭商品房'],assetRange:rural?[30000,260000]:[20000+(index%5)*20000,180000+(index%4)*120000],debtRange:debt?[80000,480000]:[0,90000],cashflow,control,expression,careBurden,riskTolerance:clamp(24+(index*17)%68,15,90),digitalLiteracy,parentJobs:familyJobsFor(name,familyClass),contextDefaults,advantages:[contextDefaults.resources>=68?'教育和试错预算较充足':contextDefaults.emotionalSafety>=58?'关系中有人愿意回应':'家里仍保留可用的生活经验',contextDefaults.educationCapital>=65?'较早接触升学信息':contextDefaults.housingStability>=62?'住处相对稳定':'能适应环境变化'],risks:[contextDefaults.resources<40?'额外费用会压缩选择':contextDefaults.parentPresence<45?'照顾者经常缺席':'家庭期待会进入选择',contextDefaults.emotionalSafety<45?'表达与控制形成压力':careBurden>65?'照护责任较重':'现金流仍需核对'],lateEcho:index%2?'晚年时，小时候谁做什么、谁不出声——又回到饭桌上了。':'父母留下的一样东西，让你重新想了一遍什么是家。',contentRevision:CONTENT_REVISION};
+  const texture=familyTexture[name],generalAdvantage=contextDefaults.educationCapital>=65?'较早接触升学信息':contextDefaults.housingStability>=62?'住处相对稳定':'遇到变动时更快找到新过法',generalRisk=contextDefaults.resources<40?'额外费用会压缩选择':contextDefaults.parentPresence<45?'照顾者经常不在场':contextDefaults.emotionalSafety<45?'家里说话和做决定都有压力':careBurden>65?'照护会抢走很多时间':'现金流不是每个月都宽松';
+  return{id:`family_${String(index+1).padStart(2,'0')}`,name,familyClass,weight:10+index%4,locationAffinity:rural?['county','town']:index%3===0?['tier1','tier2']:['tier2','county'],parentCount:single?1:2,siblingRange:multi?[2,3]:index%4===0?[1,2]:[0,1],housingOptions:rural?['自建房','老宅']:index%3===0?['租住房','按揭商品房']:['单位住房','老城区住房','按揭商品房'],assetRange:rural?[30000,260000]:[20000+(index%5)*20000,180000+(index%4)*120000],debtRange:debt?[80000,480000]:[0,90000],cashflow,control,expression,careBurden,riskTolerance:clamp(24+(index*17)%68,15,90),digitalLiteracy,parentJobs:familyJobsFor(name,familyClass),contextDefaults,advantages:[texture.advantage,generalAdvantage],risks:[texture.risk,generalRisk],lateEcho:texture.lateEcho,contentRevision:CONTENT_REVISION};
 });
 
 const secretBlueprints=[
@@ -480,40 +513,40 @@ const EPISODE_ROUTES={
 };
 const EPISODE_CATALOG={
   debt_enforcement:{label:'债务执行',ageBound:true,resolvedRoutes:['agreement'],deadline:'三年了。账户、收入、名下资产和还款记录都按实际状态留在案卷里。没谈成的安排不会替欠款消失，能继续履行的路仍然保留。',invalidated:'这笔债已经结清，或不再满足执行条件。已有扣款和费用照实保留，后续只处理解除手续。'},
-  relationship_start:{label:'关系建立',bindActivePartnerAfterChoice:true,abandonedRoutes:['exited','ended'],deadline:'两年了。备用钥匙没交出去，共同账单也没形成。你们把东西还了，花过的钱结清。这段关系停在这。',invalidated:'那个人已经不再是你的伴侣。钥匙装回信封，共享日历关了。这次，到此为止。'},
-  marriage_crisis:{label:'婚姻危机',abandonedRoutes:['divorce_prepared','broken'],deadline:'两年了。账本和照护表还是空着。你们按现在的样子结束了这场危机——分着住，或只剩账单上的来往。',invalidated:'这段关系已经变了。共同账本不再更新，短租钥匙放在桌上。这场危机收在这。'},
-  divorce:{label:'离婚交接',abandonedRoutes:['paused','conflict'],deadline:'两年了。财产清单、账单和探望日历你还留着。没谈完的，转成了长期的事。这次离婚不再悬着。',invalidated:'那个人不在了，或者关系已经失效。你留着已有的清单。一条没法走完的交接，停在这。'},
+  relationship_start:{label:'关系建立',bindActivePartnerAfterChoice:true,abandonedRoutes:['exited','ended'],deadline:'两年了。备用钥匙没交出去，共同账单也没形成。你们把东西还了，花过的钱结清，后来没有再约下一次见面。',invalidated:'那个人已经不再是你的伴侣。钥匙装回信封，共享日历也关了。'},
+  marriage_crisis:{label:'婚姻危机',abandonedRoutes:['divorce_prepared','broken'],deadline:'两年了。账本和照护表还是空着。你们继续分着住，只在有账单要处理时联系。',invalidated:'这段关系已经变了。共同账本不再更新，短租钥匙留在桌上。'},
+  divorce:{label:'离婚交接',abandonedRoutes:['paused','conflict'],deadline:'两年了。财产清单、账单和探望日历你还留着。没谈完的部分，变成了以后仍要处理的事。',invalidated:'那个人不在了，或者关系已经失效。已有的清单留了下来，剩下的交接没法再继续。'},
   reconciliation:{label:'复合尝试',abandonedRoutes:['declined','exited','repeated_break'],deadline:'两年了。两把钥匙还是各在一边。你们把暂存的东西还了。伴侣那条线，没有再恢复。',invalidated:'那个人联系不上了，或者关系已经变了。旧号码从联系人里删了。这次复合，试过了。'},
-  late_companionship:{label:'晚年相伴',abandonedRoutes:['declined','exited','invalidated'],deadline:'三年了。医疗联系人、费用和门锁密码，都得有个定论。你们按现在的样子固定下来——住一起，或者住得近。',invalidated:'人、住处、或身体条件——有一样变了。授权收回，备用的照护方案启动了。这次一起过的日子，停在这。'},
-  becoming_parent:{label:'生育计划',ageBound:true,abandonedRoutes:['childfree','closed'],deadline:'复议日期过去了。共同日历上的提醒被取消，这次主动备孕不再继续往后排。',invalidated:'伴侣关系已经结束，原来的请假和照护排班不再适用。这次共同计划停在这里。',notPregnant:'复查没有确认怀孕。医生说，一次结果说明不了不孕，不能拿它当诊断。你们停下了这次计划。'},
-  adoption_process:{label:'单身收养',ageBound:true,abandonedRoutes:['withdrawn','invalidated'],deadline:'三年了。窗口通知这轮材料不能继续悬着。你按真实条件选择继续等待或正式撤回。',invalidated:'申请期间你建立了伴侣关系，单身收养的材料不能继续使用。窗口停止了这轮评估，没有转成共同收养。'},
-  pregnancy_decision:{label:'怀孕决定',ageBound:true,resolvedRoutes:['continued','terminated'],deadline:'医生给出的决定期限已经到了，不能再把复诊预约往后改。',invalidated:'检查结果或决定已经变化，原来的复议预约随之取消。'},
+  late_companionship:{label:'晚年相伴',abandonedRoutes:['declined','exited','invalidated'],deadline:'三年了。医疗联系人、费用和门锁密码都已说清。你们按现在的样子过——住一起，或者住得近。',invalidated:'人、住处或身体条件有一样变了。联系人和文件保管安排重新改过，备用照护也接上了。'},
+  becoming_parent:{label:'生育计划',ageBound:true,abandonedRoutes:['childfree','closed'],deadline:'复议日期过去了。共同日历上的提醒被取消，这次主动备孕不再继续往后排。',invalidated:'伴侣关系已经结束，原来的请假和照护排班也取消了。',notPregnant:'复查没有确认怀孕。医生说，一次结果说明不了不孕，不能拿它当诊断。你们停下了这次计划。'},
+  adoption_process:{label:'单身收养',ageBound:true,abandonedRoutes:['withdrawn','invalidated'],deadline:'三年了。窗口通知这轮材料不能继续悬着。你按真实条件选择继续等待或正式撤回。',invalidated:'申请期间，你的家庭关系变了。窗口暂停原来的单身申请，要求按现在的情况重新核材料；这轮没有自动转成共同收养。'},
+  pregnancy_decision:{label:'怀孕决定',ageBound:true,resolvedRoutes:['continued','terminated'],deadline:'医生说明的医疗时间窗口和下一次复诊日期都到了，预约不能再一直往后改。',invalidated:'检查结果或决定已经变化，原来的复议预约随之取消。'},
   school_entry:{label:'子女入学',ageBound:true,abandonedRoutes:['alternative','invalidated'],deadline:'入学那扇窗快关上了。登记表、接送人和能去的学校——得落定。',invalidated:'孩子、住址或照护人——有一样变了。原申请退回。家里按新条件另做安排。'},
-  adolescence_boundary:{label:'青春期边界',ageBound:true,abandonedRoutes:['exited','trust_failure'],deadline:'两年了。手机、房门和求助的例外——按最后一次家庭会定了。这次边界上的争执，落在这。',invalidated:'孩子已经过了那个年纪，或没法继续谈。家规不再追着旧情况改。这次，收在这。'},
+  adolescence_boundary:{label:'青春期边界',ageBound:true,abandonedRoutes:['exited','trust_failure'],deadline:'两年了。手机、房门和求助的例外，按最后一次家庭会说好的执行。',invalidated:'孩子已经过了那个年纪，或没法继续谈。家规不再追着旧情况改。'},
   adult_child_boundary:{label:'成年子女边界',ageBound:true,abandonedRoutes:['support_exit','entangled'],deadline:'两年了。房租、生活费和备用钥匙——按最后说好的办了。撑不了的部分，不再自动续。',invalidated:'孩子搬了，或关系变了。旧的账单不再续。成年之后这条边界，划在这。'},
-  first_remote_contract:{label:'第一份远程合同',organization:'本轮远程用工方',abandonedRoutes:['declined','invalidated'],deadline:'确认期过了。工作地、时段和结算——没写清的那些，不等了。这份合同，没签。',invalidated:'签约前，岗位没了、用工方撤了，或工作地条件变了。撤回邮件你留着。这份远程合同，停在这。'},
+  first_remote_contract:{label:'第一份远程合同',organization:'本轮远程用工方',abandonedRoutes:['declined','invalidated'],deadline:'确认期过了。工作地、时段和结算没写清，这份合同最终没有签。',invalidated:'签约前，岗位没了、用工方撤了，或工作地条件变了。邮箱里只剩下一封撤回通知。'},
   platform_dependence:{label:'平台依赖',organization:'本轮接单平台',abandonedRoutes:['exited','invalidated'],deadline:'两年了。收入全押在一个平台——这件事得有个结论。你留着账单和申诉记录，按现在的收入结构退了，或降了依赖。',invalidated:'平台停权了，关了这片区域，或入口没了。停权邮件你收好了。这条路，断在这。'},
-  overseas_visa:{label:'海外许可',organization:'本轮申请机构',abandonedRoutes:['withdrawn','invalidated'],deadline:'两年了。许可、税务和工作——还是对不上。计划取消了。返程票和材料你收着。',invalidated:'许可失效了。或雇主没了，或申请条件变了。退件通知放进材料夹。这次跨境，停在这。'},
-  establish_base:{label:'建立基地',abandonedRoutes:['returned','invalidated'],deadline:'三年了。住处、看病和工作——得有个固定的边界。你按现在的条件保住了主基地，或完成退租回去。',invalidated:'收入、许可、身体或住处——有一样撑不住了。退租清单和返程安排摆在那。这次基地，停在这。'},
+  overseas_visa:{label:'海外许可',organization:'本轮申请机构',abandonedRoutes:['withdrawn','invalidated'],deadline:'两年了。许可、税务和工作还是对不上。计划取消了，返程票和材料都留着。',invalidated:'许可失效了。或雇主没了，或申请条件变了。退件通知放进材料夹，原来的出发日期也划掉了。'},
+  establish_base:{label:'建立基地',abandonedRoutes:['returned','invalidated'],deadline:'三年了。你按现在的住处、看病和工作条件保住主基地，或者退租回去。',invalidated:'收入、许可、身体或住处有一样撑不住了。退租清单和返程安排都摆在眼前。'},
   school_harm:{label:'校园伤害与恢复',ageBound:true,abandonedRoutes:['ongoing','education_pause'],deadline:'两年了。你留着记录，按现在能得到的支持——转了班、转了学、暂停了，或继续读。这件事不再挂在未完里。',invalidated:'学校、班级或学籍变了。已有记录你收好了。那个环境里的伤害，到此为止。'},
   secondary_diversion:{label:'中考分流',ageBound:true,abandonedRoutes:['employment'],deadline:'志愿窗口关了。你按还能办的学校或准备就业的路登记了。这次分流不再挂着。',invalidated:'原来报的学校、名额或材料——失效了。招生简章和退件记录你留着。走了另一条能去的路。'},
-  undergraduate_application:{label:'国内外本科申请',ageBound:true,abandonedRoutes:['work_exit','vocational_exit'],deadline:'二十岁这一轮已经走到收口。录取、资金和报到少一项，都不能写成已经在读。成绩单、退件和缴费记录各自归档。',invalidated:'学籍、录取、资金或申请条件变了。能用的材料留着，旧结果不再拿去报到。'},
+  undergraduate_application:{label:'国内外本科申请',ageBound:true,abandonedRoutes:['work_exit','vocational_exit'],deadline:'报到日过了。录取、钱和手续没能同时办妥；成绩单、退件和缴费记录都还留着，你开始准备下一条路。',invalidated:'学籍、录取、资金或申请条件变了。能用的材料留着，旧结果不再拿去报到。'},
   professional_certification:{label:'职业考证',organization:'本轮发证与培训机构',abandonedRoutes:['invalid_offer','withdrawn'],deadline:'两年了。你停了续费，留着成绩和核验记录。这次考证，按现在的结果收了。',invalidated:'资格目录、报考条件或考试安排——变了。通知你留着。没去买替代的“内部证”。'},
-  adult_reeducation:{label:'成年再教育',organization:'本轮继续教育项目',abandonedRoutes:['declined','forced_exit'],deadline:'三年了。课上完了，钱不欠了。这次成年学习，按现在的进度收在这。',invalidated:'项目、排班或家里——有一样撑不住了。课程和退费材料归档。这次重新上学，停在这。'},
-  business_expansion:{label:'企业扩张',organization:'本轮扩张单元',abandonedRoutes:['not_ready','debt_failure'],deadline:'四年了。不再往里投了。该清的货清了，人结算完了，设备也交了。这轮扩张，收在这。',invalidated:'原来的企业关了，或不再有经营条件。第二地点的意向书作废。投进去的，按现状交了。'},
-  wealth_peak:{label:'财富顶点',organization:'本轮交易方',abandonedRoutes:['declined','invalidated'],deadline:'两年了。没完成的估值，不能还当自己的钱。排他安排终止了，临时权限收回。',invalidated:'企业规模、买方或交易条件——变了。尽调资料归档。这轮交易，停在这。'},
+  adult_reeducation:{label:'成年再教育',organization:'本轮继续教育项目',abandonedRoutes:['declined','forced_exit'],deadline:'三年了。上完的课和交清的费用都在记录里；剩下没读完的，不再继续占着排班。',invalidated:'项目、排班或家里有一样撑不住了。退费办到哪里、课上到哪里，最后都写在回函上。'},
+  business_expansion:{label:'企业扩张',organization:'本轮扩张单元',abandonedRoutes:['not_ready','debt_failure'],deadline:'四年了。你不再往里投。货清了，人结算完了，设备也交了。',invalidated:'原来的企业关了，或不再有经营条件。第二地点的意向书作废，已经投进去的按现状结清。'},
+  wealth_peak:{label:'财富顶点',organization:'本轮交易方',abandonedRoutes:['declined','invalidated'],deadline:'两年了。没完成的估值，不能还当自己的钱。排他安排终止了，临时权限收回。',invalidated:'企业规模、买方或交易条件变了。尽调资料还在，交易没有继续。'},
   retirement_transition:{label:'工作转段',abandonedRoutes:['forced'],deadline:'两年了。你按现在的工作量、收入和身体负担定了——停下、减量，还是继续。复核日期不再往后拖。',invalidated:'岗位或身体条件变了。原来的安排不再适用，你按当下能做的部分完成交接。'},
-  parental_inheritance:{label:'父母遗产',abandonedRoutes:['renounced','disputed'],deadline:'两年了。资产、债务和往来清单——你留着。没办完的转入正式程序。这次继承不再占着全部生活。',invalidated:'人不在了，或遗产范围、文件条件变了。旧钥匙和清点表归档。这轮处理，按现状结束。'},
+  parental_inheritance:{label:'父母遗产',abandonedRoutes:['renounced','disputed'],deadline:'两年了。资产、债务和往来清单你都留着。没办完的转入正式程序，其他日子照常往下过。',invalidated:'人员、遗产范围或文件条件变了。旧钥匙和清点表都还在，后面只按新情况办。'},
   long_term_care:{label:'长期照护',abandonedRoutes:['refused','family_break'],deadline:'四年了。你按现在的功能定了——最低限度的服务和紧急联系人。长期照护不再挂在未完的事里。',invalidated:'身体、服务或住处——变了。旧的排班表不再续。照护由新的安排接手。'},
-  will_planning:{label:'遗嘱规划',abandonedRoutes:['deferred','invalidated'],deadline:'两年了。完成的和没完成的——你都标了。没签的那些，不再当正式遗嘱。',invalidated:'身份、账户或见证条件——变了。旧稿作废，收回。这次规划重新归档。'},
-  undergraduate_domestic:{label:'国内本科生活',ageBound:true,deadline:'第五年，毕业审核里的红字还在。修完的课进了成绩单，差的那几项也没人替你补上。',invalidated:'原学校的学生证已经不能用了。成绩单开出来，能认的学分带走，剩下的停在这里。'},
+  will_planning:{label:'遗嘱规划',abandonedRoutes:['deferred','invalidated'],deadline:'两年了。签过的文件留着，没签的仍然只是草稿。',invalidated:'身份、账户或见证条件变了。旧稿收回作废，真要再办就得按新情况重写。'},
+  undergraduate_domestic:{label:'国内本科生活',ageBound:true,deadline:'第五年，毕业审核里的红字还在。修完的课进了成绩单，差的那几项也没人替你补上。',invalidated:'原学校的学生证已经不能用了。成绩单开出来，能认的学分带走，没认下来的还得重修。'},
   undergraduate_overseas_orientation:{label:'海外本科制度确认',ageBound:true,deadline:'第一张课表已经排了。哪门算学分、考试要不要另报名，学校按自己的办法来。',invalidated:'学校或学籍变了。旧培养方案收起来，下一张课表要按新学校重排。'},
   undergraduate_us:{label:'美国本科生活',ageBound:true,deadline:'毕业审核到了，degree audit 里还有红字。修过的课都在，缺的要求也没有自己消失。',invalidated:'这段美国本科学籍停了。课程和工作资格记录还在，完成到哪就写到哪。'},
   undergraduate_europe:{label:'欧洲本科生活',ageBound:true,deadline:'考试注册窗口关了，学分单也出来了。报过的、通过的和还空着的，各在各的位置。',invalidated:'这段欧洲本科学籍停了。学分单和办过的手续装在一起，完成到哪就写到哪。'},
   undergraduate_change:{label:'本科休学与转学',abandonedRoutes:['withdrawn','work_exit'],deadline:'两年了。最后一封学籍回函到了。转成、复学还是转出，学校在上面写得很清楚。',invalidated:'原来的学籍已经变了，那份旧申请也不能再用。能认的课和开出的文件还在。'},
   overseas_undergraduate_belonging:{label:'海外本科生活与归属',deadline:'三年过去，账单怎么交、遇到事先问谁，你有了自己的过法。至于算不算“融入”，没有人来盖章。',invalidated:'你离开了这段海外本科生活。最后的账结清，手机里还联系谁，由你自己留。'},
   postgraduate_application:{label:'研究生申请',ageBound:true,abandonedRoutes:['direct_job','withdrawn','not_admitted'],deadline:'四年过去，录取、钱和报到没能在同一天碰头。邮箱里有过什么，不等于你已经在读。',invalidated:'资格、录取、钱或项目条件变了。那封旧回复已经不能拿去报到。'},
-  postgraduate_domestic:{label:'国内研究生生活',ageBound:true,abandonedRoutes:['long_search'],deadline:'第四年，答辩和学位审核都到了最后期限。系统里写到哪一步，这段研究生就停在哪一步。',invalidated:'这段国内研究生学籍停了。课程、数据和学校开出的材料都留了下来。'},
+  postgraduate_domestic:{label:'国内研究生生活',ageBound:true,abandonedRoutes:['long_search'],deadline:'第四年，答辩和学位审核都到了最后期限。已经通过的课程、已经提交的材料和还缺的那一项，学校最后都开了记录。',invalidated:'这段国内研究生学籍停了。课程、数据和学校开出的材料都留了下来。'},
   postgraduate_us:{label:'美国研究生生活',ageBound:true,abandonedRoutes:['long_search'],deadline:'第四年，学位审核、资助期限和工作资格一起到期。没发下来的文件，不能拿一句“应该没问题”代替。',invalidated:'这段美国研究生学籍停了。研究、资助和工作资格记录都留了下来。'},
   postgraduate_europe:{label:'欧洲研究生生活',ageBound:true,abandonedRoutes:['long_search'],deadline:'第四年，学分、论文和学位审核都到了最后期限。学校最后发下来的记录，就是这段学业的结果。',invalidated:'这段欧洲研究生学籍停了。学分单、行政回函和项目材料都还在。'},
   overseas_postgraduate_belonging:{label:'海外研究生生活与归属',deadline:'两年了。常走的路已经不用导航。至于出了事能找谁，试过才知道。',invalidated:'你离开了这段海外研究生生活。手续停在离开那天，想继续联系的人不用一起归零。'},
@@ -1111,7 +1144,9 @@ function validateCardInteractions(){
     if(choice.cardInteraction){
       const spec=choice.cardInteraction;
       if(!['unlock','requirementShift','costShift','riskShift','resultVariant'].includes(spec.mode))throw new Error(`${choice.id}: invalid card mode`);
-      if(!spec.primaryMechanic||!Array.isArray(spec.patch)||!spec.explanation||spec.source!=='eventAuthored')throw new Error(`${choice.id}: incomplete or non-authored card interaction`);
+      if(!spec.primaryMechanic||!Array.isArray(spec.patch)||spec.source!=='eventAuthored')throw new Error(`${choice.id}: incomplete or non-authored card interaction`);
+      if(spec.explanation!==undefined&&(typeof spec.explanation!=='string'||!spec.explanation.trim()))throw new Error(`${choice.id}: invalid card explanation`);
+      if(spec.resultSuffix!==undefined&&(typeof spec.resultSuffix!=='string'||!spec.resultSuffix.trim()))throw new Error(`${choice.id}: invalid card result suffix`);
       if(!choice.mechanicTags.includes(spec.primaryMechanic))throw new Error(`${choice.id}: mechanic tag does not name its primary card`);
       if(!cards.some(card=>card.mechanic===spec.primaryMechanic&&card.drawAge<=decision.ageMax))throw new Error(`${choice.id}: card interaction happens before its card can be drawn`);
       for(const rule of [...(spec.activeRequirements?.all||[]),...(spec.activeRequirements?.any||[]),...(spec.activeRequirements?.none||[])])if(['age','education.level','education.highestCompleted','employment.entryCredential'].includes(rule.path))throw new Error(`${choice.id}: card interaction tries to relax a hard gate`);
@@ -1196,37 +1231,51 @@ const endingProfiles=[
   ['freeLife','你没有工牌，却认真支付了自由的账单。','少见',['leisure:deliberate','freedom']],
   ['driftedLife','你能在任何地方工作，也因此很少真正下班。','罕见',['remote:risk','leisure:risk']],
   ['familyCycle','你成功保住所有退路，因此从未真正离开。','罕见',['children:negotiated','familyControlCycle']],
-  ['cycleBreaker','你没有摆脱家庭，只让下一代少交了一张报表。','极罕',['children:deliberate','cycleBroken']],
+  ['cycleBreaker','你没有摆脱家庭，只是没让下一代再替同一件事买单。','极罕',['children:deliberate','cycleBroken']],
   ['publicDuty','稳定没有替你回答，哪些责任值得承担。','少见',['public:deliberate','public:legacy']],
   ['fragmentedWorker','工资按月到账，完整的一天却很少出现。','少见',['employment:risk','health']],
   ['rootedRemote','你保留了网络，也重新拥有一个可以关门的地址。','罕见',['remote:deliberate','later']],
   ['founder','老板称呼退潮以后，真实流水仍留在账上。','罕见',['business:deliberate','business:legacy']],
   ['wealthApex','你的财富有了全球排名，生活却没有统一计价单位。','传奇',['business','wealthApex']],
   ['debtLegacy','遗嘱和欠款写在同一页，谁也不能只继承前半张。','极罕',['finance:risk','debtCrisis']],
-  ['recovered','你没有把复发写成结局，也没有假装它从未发生。','极罕',['habits:deliberate','recovery']],
+  ['recovered','你复发过，也重新过回了普通日子。','极罕',['habits:deliberate','recovery']],
   ['lostControl','你一直相信还有下一次，直到下一次没有回来。','罕见',['habits:risk','debtCrisis']],
-  ['parentLegacy','孩子没有复述你的原话，这是你留下的少数证据。','罕见',['children:deliberate','children:legacy']],
+  ['parentLegacy','孩子没有复述你的原话。有些东西，到你这里真的停了。','罕见',['children:deliberate','children:legacy']],
   ['childfree','没有后代不等于没有关系，空房间也不是空人生。','少见',['children:risk','peace']],
-  ['earlyExit','人生没有活到模板年龄，但发生过的都是真的。','极罕',['earlyDeath','lifeEnded']]
+  ['earlyExit','句号来得太早。有些事才刚开头。','极罕',['earlyDeath','lifeEnded']]
 ].map(([id,summary,rarity,signals])=>({id,summary,rarity,signals,contentRevision:CONTENT_REVISION}));
-const titleSets={ordinaryContent:['够用的人生','没有登上热搜的一生','把灯按时关掉','日子终于不欠谁'],freeLife:['星期一也没有闹钟','主动退出排行榜','无工牌生活实验','时间重新属于自己'],driftedLife:['所有地址都可退订','有 Wi-Fi 的地方','任何地方都在工作','行李箱没有故乡'],familyCycle:['账本换了封面','所有退路都还在','一家人的钱','报表传到了下一代'],cycleBreaker:['最后一张家庭报表','担保止于此处','你把密码还给自己','下一代不必交账'],publicDuty:['窗口灯熄灭以后','编制里的漫长四季','号码牌背面的人','稳定也有重量'],fragmentedWorker:['被切开的白天','八小时以外','空档不算生活','排班表上的人'],rootedRemote:['有网，也有门牌','关机后的城市','远程的固定地址','把时区留在门外'],founder:['老板称呼退潮以后','真实流水','样板店之外','小店活过了品牌'],wealthApex:['数字失去单位','全球估值的孤岛','控制权稀释之前','世界首富没有下班'],debtLegacy:['遗嘱和欠款','最后一位担保人','百万负债说明书','余额不足的一生'],recovered:['复发没有成为结局','重新拿回银行卡','清醒日历','承认之后'],lostControl:['下一次没有回来','被隐藏的账单','赔率吞掉清晨','失控留下的空位'],parentLegacy:['孩子没有复述你','旅行不需要报表','代际回声停下','家不是审计'],childfree:['空房间不是空人生','没有后代的晚餐','照护另有名字','把晚年交给协议'],earlyExit:['句号来得太早','没有活到模板年龄','短人生的完整证据','时间没有保证书']};
+const titleSets={ordinaryContent:['够用的人生','没有登上热搜的一生','把灯按时关掉','日子终于不欠谁'],freeLife:['星期一也没有闹钟','主动退出排行榜','无工牌生活实验','时间重新属于自己'],driftedLife:['所有地址都可退订','有 Wi-Fi 的地方','任何地方都在工作','行李箱没有故乡'],familyCycle:['账本换了封面','所有退路都还在','一家人的钱','旧路又走了一遍'],cycleBreaker:['旧规矩到你为止','担保止于此处','你把密码还给自己','下一代不必交账'],publicDuty:['窗口灯熄灭以后','编制里的漫长四季','号码牌背面的人','稳定也有重量'],fragmentedWorker:['被切开的白天','八小时以外','空档不算生活','排班表上的人'],rootedRemote:['有网，也有门牌','关机后的城市','远程的固定地址','把时区留在门外'],founder:['老板称呼退潮以后','真实流水','样板店之外','小店活过了品牌'],wealthApex:['数字失去单位','全球估值的孤岛','控制权稀释之前','世界首富没有下班'],debtLegacy:['遗嘱和欠款','最后一位担保人','百万负债说明书','余额不足的一生'],recovered:['复发没有成为结局','重新拿回银行卡','清醒日历','承认之后'],lostControl:['下一次没有回来','被隐藏的账单','赔率吞掉清晨','失控留下的空位'],parentLegacy:['孩子没有复述你','旅行不用报备','代际回声停下','回家不用交差'],childfree:['空房间不是空人生','没有后代的晚餐','照护另有名字','把晚年交给协议'],earlyExit:['句号来得太早','日历提早停了','还没过完的日子','时间没有保证书']};
 const endingTitles=endingProfiles.flatMap(profile=>titleSets[profile.id].map((title,index)=>({id:`ending_${profile.id}_${index+1}`,profileId:profile.id,title,contentRevision:CONTENT_REVISION})));
 
+const codexCopy={
+  education:{entryHint:'亲手选一次真正要走的升学或学习路',entryUnlocked:'你在某一生里，亲手走过一次教育选择。',costHint:'让学费、时间或没走成的路留下结果',costUnlocked:'学费、时间或没走成的路，在某一生里留下过痕迹。'},
+  employment:{entryHint:'认真处理一次工作的入口',entryUnlocked:'你在某一生里，认真处理过一次工作的入口。最后有没有签下，是另一回事。',costHint:'经历一次裁员、空档或工作留下的代价',costUnlocked:'有一份工作曾经改掉你的时间、身体或下一步。'},
+  public:{entryHint:'走进一次公开招录或公共岗位',entryUnlocked:'你在某一生里真正走进过公共岗位的规矩。',costHint:'在程序、人情和责任之间作一次选择',costUnlocked:'有一次，号码牌、规程和熟人的话同时摆在你面前。'},
+  remote:{entryHint:'拿到远程合同，或亲手决定在哪里工作',entryUnlocked:'你过过一段工作地址不再固定的日子。',costHint:'让平台、时区、许可或漂泊真正留下代价',costUnlocked:'平台、时区或一张退件通知，曾经真正改过你的生活。'},
+  business:{entryHint:'让一门生意真正开起来',entryUnlocked:'你在某一生里真正当过老板，也真的付过房租。',costHint:'让现金流、担保或控制权给出结果',costUnlocked:'有一门生意曾经把流水、债和控制权一起摆到你面前。'},
+  leisure:{entryHint:'主动把一段时间从工作里拿回来',entryUnlocked:'你有过一段没有工牌、但日子仍是自己的时间。',costHint:'看清不工作的自由最后由什么来付',costUnlocked:'你知道过，没有闹钟的日子也有账单。'},
+  partnership:{entryHint:'让一段关系真正进入日常生活',entryUnlocked:'你曾经把时间、住处或将来跟另一个人放在一起想。',costHint:'面对共同生活、分开或照护留下的后果',costUnlocked:'一段关系曾经真正改过你的钥匙、账单或晚上。'},
+  children:{entryHint:'亲手决定要不要、怎么养，或什么时候放手',entryUnlocked:'你在某一生里，真正为子女或不成为父母做过决定。',costHint:'让照护、钱或代际边界留下回声',costUnlocked:'照护、钱或放手的时刻，曾经在一个家里留下过结果。'},
+  finance:{entryHint:'亲手处理一次钱、担保或债务选择',entryUnlocked:'你签过、拒绝过，或真正还过一笔改变生活的钱。',costHint:'面对一次逾期、执行或遗产里的欠款',costUnlocked:'某一生里，一笔欠款没有因为不想看就自己消失。'},
+  health:{entryHint:'为一次检查、治疗或照护作决定',entryUnlocked:'你在某一生里，没有让身体只剩下一个数字。',costHint:'让身体的变化真正改动日常',costUnlocked:'一次检查、治疗或功能变化，曾经真正改过你的一天。'},
+  habits:{entryHint:'碰到一种已经开始影响日子的习惯',entryUnlocked:'有一种习惯，曾经真的挤进你的账单、身体、睡眠或安排。',costHint:'看见这种习惯后来怎样改变日常',costUnlocked:'你见过它怎样留下后果，也见过日子还能怎样往下过。'},
+  later:{entryHint:'亲手安排工作转段、照护或身后文件',entryUnlocked:'你过过一段闹钟、照护或文件都换了用法的日子。',costHint:'看见一项晚年安排后来怎样回到日常',costUnlocked:'候补表、钥匙、费用单或联系人，曾经真正进过你的晚年。'}
+};
 const codex=trackOrder.filter(id=>!['housing','social'].includes(id)).flatMap((id,index)=>[
-  {id:`codex_${String(index*2+1).padStart(2,'0')}`,name:`${TRACKS[id].label}：进入`,category:TRACKS[id].label,lockedHint:'亲身走进这条路',unlockRules:{outcomeTagsAny:[`${id}:deliberate`,`${id}:negotiated`,`${id}:risk`]},contentRevision:CONTENT_REVISION},
-  {id:`codex_${String(index*2+2).padStart(2,'0')}`,name:`${TRACKS[id].label}：代价`,category:TRACKS[id].label,lockedHint:'看见它后来变成了什么样',unlockRules:{outcomeTagsAny:[`${id}:legacy`,`echo:${id}`]},contentRevision:CONTENT_REVISION}
+  {id:`codex_${String(index*2+1).padStart(2,'0')}`,name:`${TRACKS[id].label}：进入`,category:TRACKS[id].label,lockedHint:codexCopy[id].entryHint,unlockedText:codexCopy[id].entryUnlocked,unlockRules:{outcomeTagsAny:[`${id}:deliberate`,`${id}:negotiated`,`${id}:risk`]},contentRevision:CONTENT_REVISION},
+  {id:`codex_${String(index*2+2).padStart(2,'0')}`,name:`${TRACKS[id].label}：代价`,category:TRACKS[id].label,lockedHint:codexCopy[id].costHint,unlockedText:codexCopy[id].costUnlocked,unlockRules:{outcomeTagsAny:[`${id}:legacy`,`echo:${id}`]},contentRevision:CONTENT_REVISION}
 ]);
 codex.push(
-  {id:'codex_25',name:'全球财富顶点',category:'极端人生',lockedHint:'让企业进入全球榜单',unlockRules:{stateAny:[p('business.equity','gte',1e12)]},contentRevision:CONTENT_REVISION},
-  {id:'codex_26',name:'百万负债遗嘱',category:'极端人生',lockedHint:'背着百万债，还立了遗嘱',unlockRules:{stateAll:[p('finance.totalDebt','gte',1e6),p('legacy.plan','eq','documented')]},contentRevision:CONTENT_REVISION},
-  {id:'codex_27',name:'主动不工作',category:'生活方式',lockedHint:'不工作，但日子没散',unlockRules:{outcomeTagsAny:['leisure:deliberate']},contentRevision:CONTENT_REVISION},
-  {id:'codex_28',name:'重新建立生活',category:'恢复',lockedHint:'成瘾或大危机之后，重新站住了',unlockRules:{outcomeTagsAny:['habits:deliberate','recovery']},contentRevision:CONTENT_REVISION},
-  {id:'codex_29',name:'代际循环终止',category:'家庭',lockedHint:'没让下一代再被同一件事按住',unlockRules:{outcomeTagsAny:['children:deliberate','cycleBroken']},contentRevision:CONTENT_REVISION},
-  {id:'codex_30',name:'短人生',category:'生命',lockedHint:'模板年龄之前，也留下了真正的转折',unlockRules:{outcomeTagsAny:['earlyDeath']},contentRevision:CONTENT_REVISION},
-  {id:'codex_31',name:'住房：进入',category:'住房',lockedHint:'亲手决定一次住在哪里、和谁一起住',unlockRules:{outcomeTagsAny:['housing:deliberate','housing:negotiated','housing:risk']},contentRevision:CONTENT_REVISION},
-  {id:'codex_32',name:'住房：代价',category:'住房',lockedHint:'看见一处住处后来怎样影响日常',unlockRules:{outcomeTagsAny:['housing:legacy','echo:housing']},contentRevision:CONTENT_REVISION},
-  {id:'codex_33',name:'社会交往：遇见',category:'社会交往',lockedHint:'在一段具体关系里留下名字',unlockRules:{outcomeTagsAny:['social:turn:deepened','social:work:boundedHelp','social:firstMeeting:persistent']},contentRevision:CONTENT_REVISION},
-  {id:'codex_34',name:'社会交往：在场',category:'社会交往',lockedHint:'看见关系在现实压力里怎样回应',unlockRules:{outcomeTagsAny:['social:support:showedUp','social:support:limited','social:support:unable','social:reconnect:close','social:bridge:romance']},contentRevision:CONTENT_REVISION}
+  {id:'codex_25',name:'全球财富顶点',category:'极端人生',lockedHint:'让企业进入全球榜单',unlockedText:'你在某一生里，真的看见财富数字失去单位。',unlockRules:{stateAny:[p('business.equity','gte',1e12)]},contentRevision:CONTENT_REVISION},
+  {id:'codex_26',name:'百万负债遗嘱',category:'极端人生',lockedHint:'背着百万债，还立了遗嘱',unlockedText:'你见过遗嘱和百万欠款出现在同一页。',unlockRules:{stateAll:[p('finance.totalDebt','gte',1e6),p('legacy.plan','eq','documented')]},contentRevision:CONTENT_REVISION},
+  {id:'codex_27',name:'主动不工作',category:'生活方式',lockedHint:'不工作，但日子没散',unlockedText:'你有过一段没上班，也没把日子丢掉的时间。',unlockRules:{outcomeTagsAny:['leisure:deliberate']},contentRevision:CONTENT_REVISION},
+  {id:'codex_28',name:'重新建立生活',category:'恢复',lockedHint:'成瘾或大危机之后，重新站住了',unlockedText:'你知道一次复发或危机之后，第一个普通日子怎么过。',unlockRules:{outcomeTagsAny:['habits:deliberate','recovery']},contentRevision:CONTENT_REVISION},
+  {id:'codex_29',name:'代际边界',category:'家庭',lockedHint:'认真处理一次家里的旧规矩',unlockedText:'你认真处理过一次家庭边界。旧规矩有没有继续，要看后面的日子。',unlockRules:{outcomeTagsAny:['children:deliberate','cycleBroken']},contentRevision:CONTENT_REVISION},
+  {id:'codex_30',name:'短人生',category:'生命',lockedHint:'在很早的句号前，作过一次真正改变方向的选择',unlockedText:'那一生停得很早，但你仍然记得它在哪里拐过弯。',unlockRules:{outcomeTagsAny:['earlyDeath']},contentRevision:CONTENT_REVISION},
+  {id:'codex_31',name:'住房：进入',category:'住房',lockedHint:'亲手决定一次住在哪里、和谁一起住',unlockedText:'你在某一生里，亲手签过、搬过或拒绝过一处住处。',unlockRules:{outcomeTagsAny:['housing:deliberate','housing:negotiated','housing:risk']},contentRevision:CONTENT_REVISION},
+  {id:'codex_32',name:'住房：代价',category:'住房',lockedHint:'看见一处住处后来怎样影响日常',unlockedText:'某一处住处曾经把房租、通勤、关系或债带进你的日子。',unlockRules:{outcomeTagsAny:['housing:legacy','echo:housing']},contentRevision:CONTENT_REVISION},
+  {id:'codex_33',name:'社会交往：遇见',category:'社会交往',lockedHint:'在一段具体关系里留下名字',unlockedText:'你在某一生里，遇见过一个后来还能叫出名字的人。',unlockRules:{outcomeTagsAny:['social:turn:deepened','social:work:boundedHelp','social:firstMeeting:persistent']},contentRevision:CONTENT_REVISION},
+  {id:'codex_34',name:'社会交往：在场',category:'社会交往',lockedHint:'看见关系在现实压力里怎样回应',unlockedText:'有一次，一段关系真的在现实压力里给了回应。',unlockRules:{outcomeTagsAny:['social:support:showedUp','social:support:limited','social:support:unable','social:reconnect:close','social:bridge:romance']},contentRevision:CONTENT_REVISION}
 );
 
 const realityRules={education:'家庭资源、关系安全、习惯、出勤、学校支持和个人能力共同形成准备度；金钱不直接生成成绩。国内外本科的申请、录取、资金与报到分别记录。',employment:'裁员、晋升和排班只适用于真实受雇者；求职、退出劳动市场与主动休闲不得混用。',retirement:'退休取决于出生年代、单位类型、缴费年限和个人选择，不用固定年龄覆盖。',debt:'个人债务逐笔计息；生活缺口合并记录，担保、逾期、重组和遗产处理保留独立状态。被执行、限制消费和现实失信名单条件不同；本游戏仅按既定规则把执行未清压缩为游戏内失信。',family:'伴侣与子女是带年龄、存亡、关系和法律身份的人物实体；家庭资源、父母在场和情感安全相互独立。',housing:'住房记录当前主要住处、共同居住和实际搬迁；价格只在签约时使用地区锚点，不按年模拟房价、租金行情或房地产经营。',social:'认识面、持续关系、主动独处和孤独分别记录；朋友能提供有限入口与支持，但不能替代就业、住房、债务、健康或照护系统的硬条件。',platform:'远程与旅居需要可迁移能力或真实远程收入，平台依赖增加波动。',franchise:'加盟成本包含品牌、装修、设备、原料、投流和担保，成功需要技能、现金缓冲与低锁定。'};

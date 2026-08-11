@@ -26,7 +26,11 @@ const delayed = (choice) => (choice.consequences || []).map((item) => {
   return `${item.eventId}@${item.delayMin}—${item.delayMax}年：${echo?.text || ''}${branch ? `；${branch.text || ''}；效果 ${compact(branch.effects || [])}` : ''}`;
 }).join('；') || '无';
 const card = (choice) => choice.cardInteraction
-  ? `${choice.cardInteraction.primaryMechanic}/${choice.cardInteraction.mode}；${choice.cardInteraction.explanation}；${choice.cardInteraction.resultSuffix}`
+  ? [
+      `${choice.cardInteraction.primaryMechanic}/${choice.cardInteraction.mode}`,
+      choice.cardInteraction.explanation,
+      choice.cardInteraction.resultSuffix,
+    ].filter(Boolean).join('；')
   : '无';
 const rows = [];
 const add = (values) => rows.push(values.map(clean));

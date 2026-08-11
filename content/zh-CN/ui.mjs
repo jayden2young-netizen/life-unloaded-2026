@@ -1,5 +1,5 @@
 export const UI_COPY={
-  homeTagline:'出身决定开始，选择改变命运',
+  homeTagline:'起点由不得你，后面的日子还得自己过。',
   mainMenu:'主菜单',
   restartActive:'重启人生',
   restartActiveHint:'放弃当前进度，从出生重新开始',

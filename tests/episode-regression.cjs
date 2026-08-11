@@ -75,13 +75,9 @@ async function drawerTextFor(page,education){
 
 async function startChoice(page,event){
   assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),event.id),event.id);
-  let run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
-  assert.equal(run.sceneQueue[0].kind,'situation');
-  const age=run.age;
-  await page.locator('[data-act="episode-next"]').click();
-  run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
-  assert.equal(run.age,age);
+  const run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
   assert.equal(run.sceneQueue[0].kind,'choice');
+  const age=run.age;
   return age;
 }
 
@@ -196,7 +192,7 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.6.10');
+    assert.equal(migrated.gameVersion,'0.6.11');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
@@ -238,13 +234,13 @@ async function prepareFinal(page,id,event){
       {id:'mother_inheritance',relation:'mother',alive:true,bornAt:-26,status:'family',bond:55}
     ]}));
     assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),inheritanceStart.id),inheritanceStart.id);
-    assert.match((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).sceneQueue[0].text,/另一位仍在世/);
+    assert.match((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).currentDecision.situation,/另一位仍在世/);
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({phase:'playing',sceneQueue:[],currentDecision:null,episodes:{parental_inheritance:{status:'inactive',phase:0,startedAt:null,nextPhaseAge:null,deadlineAge:null,route:null,boundActors:{},commitments:[],closureReason:null}},people:[
       {id:'father_inheritance',relation:'father',alive:false,bornAt:-28,status:'deceased',bond:55},
       {id:'mother_inheritance',relation:'mother',alive:false,bornAt:-26,status:'deceased',bond:55}
     ]}));
     assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),inheritanceStart.id),inheritanceStart.id);
-    assert.match((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).sceneQueue[0].text,/父母都已去世/);
+    assert.match((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).currentDecision.situation,/父母都已去世/);
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({phase:'playing',sceneQueue:[],currentDecision:null,episodes:{parental_inheritance:{status:'inactive',phase:0,startedAt:null,nextPhaseAge:null,deadlineAge:null,route:null,boundActors:{},commitments:[],closureReason:null}}}));
 
     const diversion=eventFor('secondary_diversion',1);
@@ -252,15 +248,48 @@ async function prepareFinal(page,id,event){
     assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),diversion.id),diversion.id);
     let run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
     const diversionAge=run.age;
-    await fitSheet(page,'situation-360x773');
-    await page.screenshot({path:path.join(OUT,'01-situation-360x773.png'),fullPage:false});
-    await page.locator('[data-act="episode-next"]').click();
+    assert.equal(run.sceneQueue[0].kind,'choice');
+    assert.ok((await page.locator('.choice-sheet').innerText()).includes(diversion.situation));
+    await page.waitForTimeout(300);
+    const promptSituationLayout=await page.evaluate(()=>{
+      const situation=document.querySelector('.choice-sheet>.episode-copy');
+      const prompt=document.querySelector('#choice-dialog-title');
+      const following=situation?.nextElementSibling;
+      const style=situation?getComputedStyle(situation):null;
+      return situation&&prompt?{
+        promptFirst:Boolean(prompt.compareDocumentPosition(situation)&Node.DOCUMENT_POSITION_FOLLOWING),
+        promptGap:situation.getBoundingClientRect().top-prompt.getBoundingClientRect().bottom,
+        followingGap:following?following.getBoundingClientRect().top-situation.getBoundingClientRect().bottom:null,
+        fontSize:parseFloat(style.fontSize),
+        lineHeight:parseFloat(style.lineHeight),
+        marginBottom:parseFloat(style.marginBottom)
+      }:{promptFirst:false,promptGap:0,followingGap:null,fontSize:0,lineHeight:0,marginBottom:0};
+    });
+    assert.equal(promptSituationLayout.promptFirst,true,'prompt must appear before the situation copy');
+    assert.ok(promptSituationLayout.promptGap>=12,`prompt and situation gap too small: ${promptSituationLayout.promptGap}px`);
+    assert.ok(promptSituationLayout.followingGap>=14,`situation and following content gap too small: ${promptSituationLayout.followingGap}px`);
+    assert.equal(promptSituationLayout.fontSize,15,'situation copy font size regressed');
+    assert.ok(promptSituationLayout.lineHeight>=26,'situation copy line height regressed');
+    assert.equal(promptSituationLayout.marginBottom,18,'situation copy bottom margin regressed');
+    assert.equal(await page.locator('[data-act="episode-next"]').count(),0);
+    await fitSheet(page,'choice-360x773');
+    await page.screenshot({path:path.join(OUT,'01-choice-360x773.png'),fullPage:false});
+    await page.evaluate(({key,eventId})=>{
+      const stored=JSON.parse(localStorage.getItem(key));
+      stored.run.sceneQueue=[
+        {kind:'situation',eventId,text:stored.run.currentDecision.situation},
+        {kind:'choice',eventId}
+      ];
+      localStorage.setItem(key,JSON.stringify(stored));
+    },{key:SAVE_KEY,eventId:diversion.id});
     await page.setViewportSize({width:360,height:640});
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
     assert.equal(run.age,diversionAge);
     assert.equal(run.sceneQueue[0].kind,'choice');
+    assert.equal(run.sceneQueue.length,1,'legacy situation + choice queue was not collapsed');
+    assert.equal(run.currentDecision.situation,diversion.situation);
     await fitSheet(page,'choice-360x640');
     await page.screenshot({path:path.join(OUT,'02-choice-360x640.png'),fullPage:false});
     await page.locator('[data-choice="0"]').click();
@@ -270,6 +299,9 @@ async function prepareFinal(page,id,event){
     run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
     assert.equal(run.age,diversionAge);
     assert.equal(run.sceneQueue[0].kind,'result');
+    assert.equal(await page.locator('#episode-dialog-title').innerText(),run.sceneQueue[0].text);
+    assert.equal(await page.locator('[data-act="episode-next"]').innerText(),'继续');
+    assert.doesNotMatch(await page.locator('.episode-sheet').innerText(),/这一步已经落定|记到账上/);
     await fitSheet(page,'result-320x568');
     await page.screenshot({path:path.join(OUT,'03-result-320x568.png'),fullPage:false});
     await page.locator('[data-act="episode-next"]').click();
@@ -548,6 +580,41 @@ async function prepareFinal(page,id,event){
     assert.equal(socialEndings.solitude.run.pressures.loneliness,12,'active solitude changed loneliness by itself');
     assert.equal(socialEndings.broad.kind,'broadNetwork');
     assert.equal(socialEndings.lonely.kind,'passiveLoneliness');
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      phase:'playing',sceneQueue:[],currentDecision:null,people:[],
+      social:{primaryPersonId:null,secondaryPersonId:null},
+      decisionHistory:[{outcomeTags:['social:intent:solitude']}],pressures:{loneliness:12},
+      development:{learningHabit:48,teacherSupport:50,peerSupport:30},
+      education:{readiness:87},relationships:{partnerBond:91},
+      mobility:{lastOverseasSystem:'us',dailyAdaptation:48,chineseCommunityTies:68,localTies:24,belonging:77,workAuthorization:'verified'},
+      desires:{freedom:{claimed:true,fulfillment:73}},
+      episodes:{school_harm:{status:'active',phase:2,startedAt:15,nextPhaseAge:16,deadlineAge:19,route:'disclosure',boundActors:{},commitments:[],closureReason:null}}
+    }));
+    await page.locator('[data-act="open-drawer"]').click();
+    let statusText=await page.locator('.drawer').innerText();
+    assert.match(statusText,/主要独来独往/);
+    assert.match(statusText,/日常还在适应/);
+    assert.match(statusText,/华人联系稳定/);
+    assert.match(statusText,/本地联系很少/);
+    assert.match(statusText,/自由 · 现在最在意/);
+    assert.match(statusText,/校园伤害/);
+    assert.doesNotMatch(statusText,/准备度87|关系 91|生活适应48|华人联系68|本地联系24|归属77|自由 · 已认领 · 73|第2阶段/);
+    await page.locator('.drawer [data-act="close-drawer"]').click();
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({decisionHistory:[],people:[],social:{primaryPersonId:null,secondaryPersonId:null}}));
+    await page.locator('[data-act="open-drawer"]').click();
+    statusText=await page.locator('.drawer').innerText();
+    assert.match(statusText,/认识一些人，但没有常联系的朋友/);
+    await page.locator('.drawer [data-act="close-drawer"]').click();
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.applyCommands([
+      {type:'createSocialPerson',target:'people',value:{slot:'primary',displayName:'小禾',source:'interest',tie:'friend',proximity:'local',turn:'met',support:'unseen'}}
+    ],{sourceEventId:'status-person',choiceId:'status-person'}));
+    await page.locator('[data-act="open-drawer"]').click();
+    statusText=await page.locator('.drawer').innerText();
+    assert.match(statusText,/小禾 · 朋友/);
+    await page.locator('.drawer [data-act="close-drawer"]').click();
 
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:60,people:[],social:{primaryPersonId:null,secondaryPersonId:null},usedEvents:[],decisionHistory:[],sceneQueue:[],currentDecision:null,yearStarted:true}));
     assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes('decision_206'),true,'late solitude/new-circle decision was unreachable without an old friend');

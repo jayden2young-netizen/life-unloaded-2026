@@ -30,7 +30,7 @@ async function preparePhase(page,id,phase,patch={}){
   const episode=phase===1?{}:{[id]:{status:'active',phase,startedAt:Math.max(0,age-phase+1),nextPhaseAge:age,deadlineAge:age+2,route:'prepared',boundActors:{},commitments:[],closureReason:null}};
   await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({age:value.age,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,episodes:value.episodes,...value.patch}),{age,episodes:episode,patch});
   assert.equal(await page.evaluate(eventId=>window.__LIFE_DEBUG__.forceDecision(eventId),event.id),event.id,`${id}/${phase}: not eligible`);
-  await page.locator('[data-act="episode-next"]').click();
+  assert.equal((await snapshot(page)).sceneQueue[0].kind,'choice');
   return event;
 }
 async function choose(page,index){
@@ -142,7 +142,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.10',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.11',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.11完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,11);
@@ -218,7 +218,6 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
       assert.ok(found.current.choices.every(choice=>choice.outcomeTags.includes(`recruitment:${scenario.id}`)));
       scenarioWitnesses[scenario.id]=found.seed;
     }
-    await page.locator('[data-act="episode-next"]').click();
     run=await choose(page,0);
     assert.equal(run.employment.applicationStatus,'searching');
     assert.equal(run.employment.pendingOfferId,'none');
@@ -457,7 +456,9 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     await page.screenshot({path:path.join(OUT,'04-overseas-drawer-320x568.png'),fullPage:false});
     const drawerText=await page.locator('.drawer').innerText();
     assert.match(drawerText,/海外生活/);
-    assert.match(drawerText,/华人联系26／本地联系22/);
+    assert.match(drawerText,/华人联系很少/);
+    assert.match(drawerText,/本地联系很少/);
+    assert.doesNotMatch(drawerText,/归属20|生活适应35|华人联系26|本地联系22/);
 
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({ok:true,migration:'old-run-cleared-meta-preserved',episodes:episodeIds.length,unifiedEmploymentCatalog:true,professionalCredentials:true,longTermReentry:true,researchSeeds:40,overseasOffersDisabled:true,domesticReturn:true,leaveAndResume:true,transfer:true,continuedJobSearch:true,coNationalAndLocalTies:true,graduateFailure:true,fundingGap:true,viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));

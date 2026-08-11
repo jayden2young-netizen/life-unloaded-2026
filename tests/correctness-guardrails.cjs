@@ -118,7 +118,7 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.10', 13, 28]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.11', 13, 29]);
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
     {beat:480,decision:205,consequence:205,blackSwan:20},
@@ -209,8 +209,9 @@ function neutralTrace(multiplier) {
   assert.doesNotMatch(indexSource,/user-scalable\s*=\s*no/i);
   const activeCardChoices=allChoices.filter(choice=>choice.cardInteraction);
   assert.ok(activeCardChoices.every(choice=>choice.cardInteraction.source==='eventAuthored'));
-  assert.ok(new Set(activeCardChoices.map(choice=>choice.cardInteraction.explanation)).size>=175);
-  assert.ok(new Set(activeCardChoices.map(choice=>choice.cardInteraction.resultSuffix)).size>=190);
+  assert.equal(activeCardChoices.filter(choice=>choice.cardInteraction.explanation).length,8);
+  assert.equal(activeCardChoices.filter(choice=>choice.cardInteraction.resultSuffix).length,2);
+  assert.ok(activeCardChoices.every(choice=>!choice.cardInteraction.explanation?.includes('准备')&&!choice.cardInteraction.resultSuffix?.includes('你这次走的是')));
 
   const predicates = collect(
     DATA,
@@ -520,7 +521,7 @@ function neutralTrace(multiplier) {
   assert.match(unregisteredFailure, /未登记定义/);
 
   assert.ok(
-    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.10')") <
+    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.11')") <
       gameSource.indexOf('fetch(`./data.json?v=${VERSION}`'),
     'shared contract import must precede data fetch',
   );

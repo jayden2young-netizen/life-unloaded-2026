@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.10');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.11');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.10',
+  const VERSION = '0.6.11',
     SCHEMA_VERSION = 13,
-    CONTENT_REVISION = 28;
+    CONTENT_REVISION = 29;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -1361,6 +1361,17 @@
     )
       merged.education.nextStage = 'undergraduateApplication';
     merged.sceneQueue = Array.isArray(run.sceneQueue) ? run.sceneQueue : [];
+    if (
+      merged.phase === 'episode' &&
+      merged.sceneQueue[0]?.kind === 'situation' &&
+      merged.sceneQueue[1]?.kind === 'choice' &&
+      merged.sceneQueue[0].eventId === merged.sceneQueue[1].eventId
+    ) {
+      merged.currentDecision = merged.currentDecision
+        ? { ...merged.currentDecision, situation: merged.sceneQueue[0].text }
+        : merged.currentDecision;
+      merged.sceneQueue = merged.sceneQueue.slice(1);
+    }
     for (const key of Object.keys(fresh.desires))
       if (key !== 'reclaimed')
         merged.desires[key] = { ...fresh.desires[key], ...(run.desires?.[key] || {}) };
@@ -2278,7 +2289,7 @@
       );
     return results.length
       ? ` ${results.join('；')}。`
-      : ' 两边都没有形成可用录取。本轮以落选记录收口。';
+      : ' 这轮没有拿到可用录取；现有成绩和材料还留着，接下来可以补申或转向别的路。';
   }
   function resolveGraduateApplication(run, route) {
     const intent =
@@ -3210,14 +3221,20 @@
       shopping: '消费',
       medication: '药物',
     },
-    HABIT_EPISODE_LABELS = { formation: '问题形成', treatment: '治疗', relapse: '复发' };
+    HABIT_EPISODE_LABELS = {
+      gambling: { formation: '反复下注', treatment: '正在处理下注问题', relapse: '又开始下注' },
+      alcohol: { formation: '喝酒开始失控', treatment: '正在处理饮酒问题', relapse: '又开始喝' },
+      gaming: { formation: '熬夜和失约', treatment: '正在调整游戏时间', relapse: '又开始通宵' },
+      shopping: { formation: '订单和分期失控', treatment: '正在处理购物问题', relapse: '又开始连买' },
+      medication: { formation: '用量开始失控', treatment: '正在重新看用药', relapse: '又自行加量' },
+    };
   function episodeLabel(id) {
     const match =
       /^habit_(gambling|alcohol|gaming|shopping|medication)_(formation|treatment|relapse)$/.exec(
         id
       );
     return match
-      ? `${HABIT_TYPE_LABELS[match[1]]}·${HABIT_EPISODE_LABELS[match[2]]}`
+      ? `${HABIT_TYPE_LABELS[match[1]]}：${HABIT_EPISODE_LABELS[match[1]][match[2]]}`
       : episodeCatalog(id).label || EPISODE_LABELS[id] || id;
   }
   const EPISODE_ORGANIZATIONS = {
@@ -3441,12 +3458,9 @@
             : '一位父母去世后，另一位仍在世。旧钥匙、死亡证明、账户资料和欠款通知一起到了；哪些属于遗产、哪些仍属于在世父母，必须分别查清。';
         })()
       : event.situation;
-    run.currentDecision = event;
+    run.currentDecision = { ...event, situation: situationText };
     run.phase = 'episode';
-    run.sceneQueue = [
-      { kind: 'situation', eventId: event.id, text: situationText },
-      { kind: 'choice', eventId: event.id },
-    ];
+    run.sceneQueue = [{ kind: 'choice', eventId: event.id }];
     save();
     render();
   }
@@ -3553,7 +3567,11 @@
     run.lastDecisionAge = run.age;
     run.stageDecisionCounts[stageForAge(run.age)] =
       (run.stageDecisionCounts[stageForAge(run.age)] || 0) + 1;
-    addTimeline(event, `${choice.text}。${resultText}`, 'chosen');
+    addTimeline(
+      event,
+      `${choice.text}${/[。！？!?]$/.test(choice.text) ? '' : '。'}${resultText}`,
+      'chosen'
+    );
     run.currentDecision = null;
     run.sceneQueue = [];
     run.phase = 'playing';
@@ -3698,26 +3716,26 @@
   const EPISODE_CLOSURES = {
     shop_opening: {
       deadline:
-        '从第一次考察起，五年了。租约、设备和库存不能再悬着。你不再往里投了，清了货，退了租。这家店，停在这。',
+        '从第一次考察起，五年了。你不再往里投，清了货，退了租，最后一天把卷帘门拉了下来。',
       invalidated:
         '门店已经退了，品牌支持也停了。剩下的库存装箱，设备处理了，该结的结了。开店这条路，走完了。',
     },
     public_exam: {
       deadline:
-        '两轮招录过去了。报名账号里的记录归档。你不再等名单，材料袋收好，回去找工作。这次招录，退了。',
+        '两轮招录过去了。你不再等名单，材料袋收好，招聘软件重新开始推别的工作。',
       invalidated:
         '你已经通过另一项招录进了公共部门。原报考单位的邮件不再回复。这次重复报名，到此结束。',
     },
     layoff_reemployment: {
       deadline:
-        '解除通知下来两年了。补偿和备用金不能还当收入。你留着失业登记和求职记录，先用短活儿撑着。这次落脚，停在这。',
+        '解除通知下来两年了。补偿和备用金已经花掉一部分。你留着失业登记和求职记录，先用短活儿撑着。',
       invalidated:
         '你签了新合同，报到完了。原单位的离职证明装进档案。这次裁员后的重新落脚，提前结束。',
     },
     career_break: {
       deadline:
         '第三次对账了。房租和日常不能还只靠备用金。你不再拖了，开始接能马上结算的活儿。这段主动不工作，到底被钱催着收了。',
-      invalidated: '你恢复了全职。工作日闹钟又响了。原来的空窗预算表，停在这。',
+      invalidated: '你恢复了全职。工作日闹钟又响了，原来的空窗预算表也不再往下记。',
     },
     guarantee_recourse: {
       deadline:
@@ -3733,17 +3751,37 @@
     },
   };
   function habitEpisodeClosure(id, reason) {
-    const label = episodeLabel(id);
-    return reason === 'invalidated'
-      ? `${label}——类型或治疗状态变了。记录、账单和复诊日期你留着。这次处理，停在了真实状态处。`
-      : `${label}开始两年了。最近的使用记录、现实功能和支持安排——你复核了一遍。按当前的治疗或恢复状态，收在这。`;
+    const type = id.split('_')[1],
+      copyByType = {
+        gambling: {
+          deadline: '两年过去，最近有没有再下、限额改过几次，流水上都看得见。账先算到这里。',
+          invalidated: '原来的处理办法停了。下过的流水还在，后面的账按新情况算。',
+        },
+        alcohol: {
+          deadline: '两年过去，最近喝了多少、身体有什么反应，已经能说清。先照眼下的情况过。',
+          invalidated: '原来的安排停了。喝过多少、身体怎样，不能跟着一起抹掉。',
+        },
+        gaming: {
+          deadline: '这两年几点关机、第二天漏了什么，作息自己会说。先把这一周过稳。',
+          invalidated: '原来的计划不再走。熬过的夜和漏掉的事还在，后面另算。',
+        },
+        shopping: {
+          deadline: '两年了。包裹退了多少、分期还剩多少，账单上都有。这个月先这么算。',
+          invalidated: '原来的办法停了。订单和账单没有消失，后面按新的情况来。',
+        },
+        medication: {
+          deadline: '两年了。药盒、实际用量、身体反应和复诊日能不能对上，已经能看清。接下来照实走。',
+          invalidated: '原来的调法停了。药盒和复诊记录还在，原来的病也得照实际情况继续看。',
+        },
+      };
+    return copyByType[type]?.[reason] || '这段安排到这里停了。';
   }
   function episodeClosureText(id, reason) {
     return episodeCatalog(id)[reason] ||
       EPISODE_CLOSURES[id]?.[reason] ||
       (id.startsWith('habit_')
         ? habitEpisodeClosure(id, reason)
-        : `${episodeLabel(id) || '当前事件'}已经走到不能再继续的地方。`);
+        : '这件事已经没法再继续。');
   }
   function prepareEpisodeClosure(run, id, record, reason) {
     if (
@@ -3983,7 +4021,11 @@
     run.lastDecisionAge = run.age;
     run.stageDecisionCounts[stageForAge(run.age)] =
       (run.stageDecisionCounts[stageForAge(run.age)] || 0) + 1;
-    addTimeline(event, `${choice.text}。${choice.resultText}`, 'chosen');
+    addTimeline(
+      event,
+      `${choice.text}${/[。！？!?]$/.test(choice.text) ? '' : '。'}${choice.resultText}`,
+      'chosen'
+    );
     run.currentDecision = null;
     run.phase = 'playing';
     run.yearStarted = false;
@@ -4402,7 +4444,7 @@
     ) {
       run.deathCause =
         run.age < 18
-          ? '疾病，或一次事故'
+          ? '疾病或一次事故'
           : run.health.physical < 30
             ? '长期健康问题拖到了最后'
             : habitHarm
@@ -5153,7 +5195,7 @@
       {
         age: run.age,
         title: `生命因${run.deathCause || '自然衰老'}结束`,
-        result: '这次能走到多少岁，也是种子决定的。',
+        result: `这一生停在 ${run.age} 岁。日历没有再往后翻。`,
         source: 'death',
       },
     ];
@@ -5325,7 +5367,7 @@
           : Math.max(development.teacherSupport, development.peerSupport) >= 42
             ? '校内支持一般'
             : '校内支持不足';
-    return `${habit} · ${support} · 准备度${Math.round(run.education.readiness)}`;
+    return `${habit} · ${support}`;
   }
   function applicationLabel(run) {
     return (
@@ -5382,12 +5424,29 @@
   function overseasLifeLabel(run) {
     if (run.mobility.lastOverseasSystem === 'none') return '尚无海外在读生活';
     const system = { us: '美国', europe: '欧洲' }[run.mobility.lastOverseasSystem] || '海外',
-      support = `华人联系${Math.round(run.mobility.chineseCommunityTies)}／本地联系${Math.round(run.mobility.localTies)}`,
+      adaptation =
+        run.mobility.dailyAdaptation >= 65
+          ? '日常已经上手'
+          : run.mobility.dailyAdaptation >= 42
+            ? '日常还在适应'
+            : '日常处处要重新学',
+      chineseTies =
+        run.mobility.chineseCommunityTies >= 65
+          ? '华人联系稳定'
+          : run.mobility.chineseCommunityTies >= 42
+            ? '有一些华人联系'
+            : '华人联系很少',
+      localTies =
+        run.mobility.localTies >= 65
+          ? '本地联系稳定'
+          : run.mobility.localTies >= 42
+            ? '认识一些本地人'
+            : '本地联系很少',
       authorization =
         { unknown: '工作资格待核', verified: '工作资格已核', restricted: '工作资格受限' }[
           run.mobility.workAuthorization
         ] || '工作资格待核';
-    return `${system} · 生活适应${Math.round(run.mobility.dailyAdaptation)} · ${support} · 归属${Math.round(run.mobility.belonging)} · ${authorization}`;
+    return `${system} · ${adaptation} · ${chineseTies} · ${localTies} · ${authorization}`;
   }
   function activityLabel(run) {
     return (
@@ -5487,7 +5546,7 @@
   }
   function housingCostLabel(run) {
     const affordability = housingAffordability(run, run.housing, { current: true }),
-      level = { feasible: '成立', strained: '可承受但吃紧', infeasible: '不成立' }[affordability.level],
+      level = { feasible: '目前能承担', strained: '能承担，但很吃紧', infeasible: '目前承担不了' }[affordability.level],
       sharing = run.housing.costShare === 'joint'
         ? `共同分担${affordability.partnerContribution ? ` · 伴侣参考抵扣 ${money(affordability.partnerContribution)}/年` : ''}`
         : run.housing.costShare === 'supported' ? '由家庭、单位或服务支持' : '自行承担';
@@ -5679,7 +5738,7 @@
         .map((choice, index) => ({ choice, index }))
         .filter(({ choice }) => choiceVisible(choice)),
       cards = heldCards(state.run);
-    return `<div class="modal-wrap locked-modal"><section class="choice-sheet" role="dialog" aria-modal="true" aria-labelledby="choice-dialog-title" tabindex="-1"><div class="handle"></div><div class="decision-emoji">${event.icon || '◎'}</div><h2 id="choice-dialog-title">${esc(event.prompt)}</h2>${cards.length ? `<div class="card-hand"><span>${esc(UI_COPY.heldCardsLabel)}</span><div>${cards.map((card) => `<i>${esc(card.displayName)}</i>`).join('')}</div></div>` : ''}${
+    return `<div class="modal-wrap locked-modal"><section class="choice-sheet" role="dialog" aria-modal="true" aria-labelledby="choice-dialog-title" tabindex="-1"><div class="handle"></div><div class="decision-emoji">${event.icon || '◎'}</div><h2 id="choice-dialog-title">${esc(event.prompt)}</h2>${event.situation ? `<p class="episode-copy">${esc(event.situation)}</p>` : ''}${cards.length ? `<div class="card-hand"><span>${esc(UI_COPY.heldCardsLabel)}</span><div>${cards.map((card) => `<i>${esc(card.displayName)}</i>`).join('')}</div></div>` : ''}${
       Object.keys(actors).length
         ? `<p>${esc(UI_COPY.involvedLabel)}：${Object.values(actors)
             .map((item) =>
@@ -5693,7 +5752,7 @@
             )
             .join('、')}</p>`
         : ''
-    }${event.situation ? `<p class="episode-copy">${esc(event.situation)}</p>` : ''}<div class="choices">${choices
+    }<div class="choices">${choices
       .map(({ choice, index }) => {
         const resolved = resolveDecisionChoice(choice, event),
           effective = resolved.choice,
@@ -5701,7 +5760,7 @@
           enabled = choiceEnabled(choice);
         const housingHint = effective ? housingChoiceHint(effective) : null,
           enabledDetail = resolved.card
-            ? `<small class="card-effect"><b>◇ “${esc(resolved.card.displayName)}”</b><span> · ${esc(resolved.spec.explanation)}</span>${housingHint ? `<span> · ${esc(housingHint)}</span>` : ''}</small>`
+            ? `<small class="card-effect"><b>◇ “${esc(resolved.card.displayName)}”</b>${resolved.spec.explanation ? `<span> · ${esc(resolved.spec.explanation)}</span>` : ''}${housingHint ? `<span> · ${esc(housingHint)}</span>` : ''}</small>`
             : housingHint
               ? `<small>${esc(housingHint)}</small>`
               : display.hints?.length
@@ -5715,8 +5774,9 @@
     const scene = run.sceneQueue[0];
     if (!scene) return '';
     if (scene.kind === 'choice') return choiceSheet(run.currentDecision);
-    const result = scene.kind === 'result';
-    return `<div class="modal-wrap locked-modal"><section class="choice-sheet episode-sheet" role="dialog" aria-modal="true" aria-labelledby="episode-dialog-title" tabindex="-1"><div class="handle"></div><div class="eyebrow">${result ? '阶段结果' : '当前情况'} · ${run.age}岁</div><div class="decision-emoji">${result ? '✓' : '◇'}</div><h2 id="episode-dialog-title">${result ? '这一步已经落定' : '先看清发生了什么'}</h2><p class="episode-copy">${esc(scene.text)}</p><button class="btn primary mt" data-act="episode-next">${result ? '记到账上' : '做出选择'}</button></section></div>`;
+    if (scene.kind === 'result')
+      return `<div class="modal-wrap locked-modal"><section class="choice-sheet episode-sheet" role="dialog" aria-modal="true" aria-label="结果" tabindex="-1"><div class="handle"></div><p id="episode-dialog-title" class="episode-result-copy">${esc(scene.text)}</p><button class="btn primary mt" data-act="episode-next">继续</button></section></div>`;
+    return `<div class="modal-wrap locked-modal"><section class="choice-sheet episode-sheet" role="dialog" aria-modal="true" aria-labelledby="episode-dialog-title" tabindex="-1"><div class="handle"></div><h2 id="episode-dialog-title">${esc(scene.text)}</h2><button class="btn primary mt" data-act="episode-next">做出选择</button></section></div>`;
   }
   function cardSheet(run) {
     const prompt = UI_COPY.cardPrompts?.[run.cardAge] || '这些年，你留下了什么？';
@@ -5736,8 +5796,13 @@
       episodes = activeEpisodes(run),
       socialPeople = CONTRACT.SOCIAL_SLOTS
         .map((slot) => run.people.find((item) => item.id === run.social?.[`${slot}PersonId`]))
-        .filter(Boolean);
-    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>成长证据</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner} · 关系 ${Math.round(run.relationships.partnerBond)}</dd></div><div class="spec"><dt>朋友</dt><dd>${socialPeople.length ? socialPeople.map((item) => esc(socialPersonLabel(item))).join('<br>') : '没有留下持续记录的人'}</dd></div><div class="spec"><dt>子女</dt><dd>${
+        .filter((item) => item?.alive && item.social?.tie !== 'ended'),
+      friendSummary = socialPeople.length
+        ? socialPeople.map((item) => esc(socialPersonLabel(item))).join('<br>')
+        : latestSocialIntent(run) === 'solitude' && (Number(run.pressures.loneliness) || 0) < 40
+          ? '主要独来独往'
+          : '认识一些人，但没有常联系的朋友';
+    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>成长证据</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner}</dd></div><div class="spec"><dt>朋友</dt><dd>${friendSummary}</dd></div><div class="spec"><dt>子女</dt><dd>${
       run.relationships.childCount
         ? childPeople(run)
             .map((child) => `${personAge(child, run)}岁`)
@@ -5748,11 +5813,11 @@
     )
       .map(
         (item) =>
-          `<span>${esc(item.name)} ${item.claimed ? '· 已认领' : ''} · ${Math.round(item.fulfillment)}</span>`
+          `<span>${esc(item.name)}${item.claimed ? ' · 现在最在意' : ''}</span>`
       )
       .join(
         ''
-      )}</div><div class="section-title">${esc(UI_COPY.activeArcsTitle)}</div><div class="taglist left">${episodes.map((item) => `<span class="pill">${esc(episodeLabel(item.id))} · 第${item.phase}阶段</span>`).join('') || `<span class="tiny">${esc(UI_COPY.noActiveArcs)}</span>`}</div></section></div>`;
+      )}</div><div class="section-title">${esc(UI_COPY.activeArcsTitle)}</div><div class="taglist left">${episodes.map((item) => `<span class="pill">${esc(episodeLabel(item.id))}</span>`).join('') || `<span class="tiny">${esc(UI_COPY.noActiveArcs)}</span>`}</div></section></div>`;
   }
   function gameView() {
     const run = state.run;
@@ -5781,7 +5846,7 @@
     return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">${esc(UI_COPY.codexTitle)} ${state.meta.codex.length}/${DATA.codex.length}</div><span></span></div><section class="card">${DATA.codex
       .map((item) => {
         const unlocked = state.meta.codex.includes(item.id);
-        return `<div class="codex-item ${unlocked ? '' : 'locked'}"><span class="codex-category">${esc(item.category)}</span><h3>${unlocked ? esc(item.name) : esc(UI_COPY.codexLocked)}</h3><p>${unlocked ? esc(UI_COPY.codexUnlocked) : esc(item.lockedHint)}</p></div>`;
+        return `<div class="codex-item ${unlocked ? '' : 'locked'}"><span class="codex-category">${esc(item.category)}</span><h3>${unlocked ? esc(item.name) : esc(UI_COPY.codexLocked)}</h3><p>${unlocked ? esc(item.unlockedText || UI_COPY.codexUnlocked) : esc(item.lockedHint)}</p></div>`;
       })
       .join('')}</section></main>`;
   }
@@ -5855,7 +5920,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.10-存档.json';
+    link.download = '人生尚未加载-v0.6.11-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }
@@ -6207,7 +6272,7 @@
   window.advanceTime = () => renderGameToText();
 
   app.innerHTML =
-    '<main class="loading-screen"><div><div class="loading-mark">◌</div><h2>正在加载人生账本</h2><p>每一步，都会留下凭据。</p></div></main>';
+    '<main class="loading-screen"><div><div class="loading-mark">◌</div><h2>正在准备这一生</h2><p>出身、年份和要遇见的人正在就位。</p></div></main>';
   fetch(`./data.json?v=${VERSION}`, { cache: 'no-store' })
     .then((response) => {
       if (!response.ok) throw new Error(`人生数据库加载失败（HTTP ${response.status}）`);
