@@ -1121,5 +1121,14 @@ export const DECISION_SLOT_REGISTRATIONS = [
   {key:'@author/decision/b91ed48fcc9eb3dd3564aa03',slot:{id:'decision_145',track:'habits',localIndex:23},replaces:'@author/decision/3e967552c4cf926286df0009'},
   {key:'@author/decision/fca427eb15ded9560c48ff3b',slot:{id:'decision_147',track:'habits',localIndex:25},replaces:'@author/decision/c6a70faf12f564af9a0165fa'},
   {key:'@author/decision/ae9faed15f06614abde623fc',slot:{id:'decision_151',track:'habits',localIndex:29},replaces:'@author/decision/c1692f2fff6323576dddafb7'},
+  {key:'@author/decision/5741ad369310828d8e34d52f',slot:{id:'decision_006',track:'education',localIndex:5},replaces:'@author/decision/1469fdaa36dfd996caee71c9'},
+  {key:'@author/decision/061f0cee514051e352e21717',slot:{id:'decision_011',track:'education',localIndex:10},replaces:'@author/decision/555c6a55b356f1b86aca30d7'},
+  {key:'@author/decision/90d1200372a51872668a5e67',slot:{id:'decision_065',track:'remote',localIndex:2},replaces:'@author/decision/c9436256a64ec06abe0e04a9'},
+  {key:'@author/decision/9dfed4a48acaccbb1c0df77f',slot:{id:'decision_093',track:'partnership',localIndex:7},replaces:'@author/decision/33171d26eb6cb5535b5b2ba7'},
+  {key:'@author/decision/ea6003691a17ab7a6c0a1609',slot:{id:'decision_103',track:'children',localIndex:7},replaces:'@author/decision/6e79788d93058d5c75ad13b0'},
+  {key:'@author/decision/905d4042d0404aba13b1a46f',slot:{id:'decision_105',track:'children',localIndex:9},replaces:'@author/decision/d6424bf289041fa8484f19d6'},
+  {key:'@author/decision/e0fd447513873cc3f1c706af',slot:{id:'decision_107',track:'finance',localIndex:1},replaces:'@author/decision/d5b540ed1aa8d566691c9255'},
+  {key:'@author/decision/5f08940322a72a5e66535c6e',slot:{id:'decision_153',track:'later',localIndex:1},replaces:'@author/decision/00f71da6de56a29e4f5c0e62'},
+  {key:'@author/decision/cb54c3322e2cfa51a5ac0dec',slot:{id:'decision_160',track:'later',localIndex:8},replaces:'@author/decision/b7ed10e29ce7137d7e240aee'},
 ];
 export const CARD_SLOT_REGISTRATIONS = [];

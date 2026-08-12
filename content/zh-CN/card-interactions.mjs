@@ -97,7 +97,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "children::孩子和你，最后怎么定？::搬出去。平时各过各的，家里照常来往": {
+  "children::钱、钥匙和家务，哪些还要由你接着兜？::搬出去。平时各过各的，家里照常来往": {
     "primaryMechanic": "negotiation",
     "mode": "resultVariant",
     "patch": [
@@ -265,7 +265,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "children::这件事，最后怎么定？::定下来了。有事能说": {
+  "children::手机和房门，最后按什么规矩来？::定下来了。有事能说": {
     "primaryMechanic": "boundary",
     "mode": "resultVariant",
     "patch": [
@@ -694,7 +694,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "education::这次学习，最后怎么收？::读完了。记录留着": {
+  "education::这些课还要读到哪儿？::读完了。记录留着": {
     "primaryMechanic": "evidence",
     "mode": "resultVariant",
     "patch": [
@@ -802,7 +802,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "education::这一轮接下来怎么收？::确认国内录取和第一年费用或资助": {
+  "education::录取摆在这儿，你接得住哪一份？::确认国内录取和第一年费用或资助": {
     "primaryMechanic": "cashBuffer",
     "mode": "requirementShift",
     "patch": [
@@ -836,7 +836,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     },
     "source": "eventAuthored"
   },
-  "education::这一轮接下来怎么收？::用掉唯一的补申年": {
+  "education::录取摆在这儿，你接得住哪一份？::用掉唯一的补申年": {
     "primaryMechanic": "evidence",
     "mode": "resultVariant",
     "patch": [
@@ -1327,7 +1327,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "finance::落笔之前，这事怎么处理？::不签。帮他把材料整理清楚": {
+  "finance::这份担保，你签不签？::不签。帮他把材料整理清楚": {
     "primaryMechanic": "riskSense",
     "mode": "riskShift",
     "patch": [
@@ -2083,7 +2083,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "later::这次工作转段，最后怎么定？::停下来，重新排日子": {
+  "later::以后每周还给工作几天？::停下来，重新排日子": {
     "primaryMechanic": "boundary",
     "mode": "resultVariant",
     "patch": [
@@ -2095,7 +2095,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "later::这次怎么落定？::按要求签好并留位置": {
+  "later::哪些文件今天真要签下来？::按要求签好并留位置": {
     "primaryMechanic": "boundary",
     "mode": "resultVariant",
     "patch": [
@@ -2287,7 +2287,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "partnership::试了这么久，怎么收尾？::重新在一起。但别急着搬": {
+  "partnership::这次见完，还要不要重新在一起？::重新在一起。但别急着搬": {
     "primaryMechanic": "negotiation",
     "mode": "resultVariant",
     "patch": [
@@ -2491,7 +2491,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "remote::平台依赖这件事，怎么收？::分散开。平台只留一小块": {
+  "remote::还要把饭碗全押在这个账号上吗？::分散开。平台只留一小块": {
     "primaryMechanic": "network",
     "mode": "resultVariant",
     "patch": [

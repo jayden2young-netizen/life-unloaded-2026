@@ -1,5 +1,5 @@
 export const UI_COPY={
-  homeTagline:'起点由不得你，后面的日子还得自己过。',
+  homeTagline:'出身决定起点，选择决定命运',
   mainMenu:'主菜单',
   restartActive:'重启人生',
   restartActiveHint:'放弃当前进度，从出生重新开始',
@@ -8,7 +8,6 @@ export const UI_COPY={
   birthHouseholdNote:'家里有房有债，但都还不是你的。',
   birthNext:'分配起点',
   attributesTitle:'你天生更靠什么',
-  attributesLead:'起点不能选，但这二十点花在哪儿，由你。',
   attributesConfirm:'就这样出生',
   cardPrompts:{
     0:'你带着什么开始这一生？',
@@ -16,7 +15,7 @@ export const UI_COPY={
     35:'这些年，什么成了你的底气？',
     55:'走到这里，你留下了哪样本事？'
   },
-  heldCardsLabel:'待生效',
+  heldCardsLabel:'手里的牌',
   streamEmpty:'点一下，第一年开始。',
   consequenceLabel:'以前的事又回来了',
   activityField:'现在在干嘛',

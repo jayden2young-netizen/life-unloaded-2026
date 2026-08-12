@@ -12,7 +12,7 @@
   const APP_KEY = 'life-unloaded-2026-v1';
   const VERSION = '0.6.11',
     SCHEMA_VERSION = 13,
-    CONTENT_REVISION = 29;
+    CONTENT_REVISION = 30;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -1674,7 +1674,7 @@
       return '执行未结，当前不能再开一笔新信贷';
     if (choice?.debtGate === 'midHighJob')
       return '这次中高阶岗位审查没有通过，基础工作仍可继续';
-    return '当前债务执行状态不支持这项安排';
+    return '眼下的债务执行还没收完，这项安排暂时做不了';
   }
   function choiceEnabled(choice, run = state.run, event = run?.currentDecision) {
     const effective = resolveDecisionChoice(choice, event, run).choice;
@@ -2325,7 +2325,7 @@
   }
   function graduateApplicationResult(run) {
     if (run.education.graduateApplicationStatus === 'notAdmitted')
-      return ' 没有形成可用录取，本轮转入求职。';
+      return ' 没有一份录取能真正拿去报到，你开始找工作。';
     const region =
       { domestic: '国内', us: '美国', europe: '欧洲' }[run.education.graduateOfferRegion] || '当前';
     return ` ${region}录取已经形成；${run.education.graduateFundingStatus === 'ready' ? '资金条件可进入报到' : '资金仍有缺口，不能直接报到'}。`;
@@ -3739,13 +3739,13 @@
     },
     guarantee_recourse: {
       deadline:
-        '从签担保起，三年了。合同、催收单、还款凭证和债权人回复——你放进同一份清单。不再口头拖。这次担保，以没追回来的实际损失收场。',
+        '这件担保拖了三年。合同、催收单、还款凭证和债权人回复都摊开了。真正付出去多少、追回多少，只认账上的数。',
       invalidated:
         '这笔担保结了，或失效了。结清证明和往来记录你收好。不再走一条已经不存在的追偿路。',
     },
     acute_illness: {
       deadline:
-        '检查后第四年了。复诊、治疗和功能评估不能再悬着。你按现在的能力做了最后一次康复评估。这次疾病，以长期管理和功能调整收场。',
+        '检查后第四年了。最后一次评估做完。以后怎么复诊、怎么安排日常，都按现在的身体来。',
       invalidated:
         '复查确认了——现在的问题不再需要这条治疗路线。检查与结案记录你留着。以后只按普通身体状态管。',
     },
@@ -3754,24 +3754,24 @@
     const type = id.split('_')[1],
       copyByType = {
         gambling: {
-          deadline: '两年过去，最近有没有再下、限额改过几次，流水上都看得见。账先算到这里。',
-          invalidated: '原来的处理办法停了。下过的流水还在，后面的账按新情况算。',
+          deadline: '两年了。下过的注和改过的限额都印在流水上。这一页翻过去了，账没跟着翻过去。',
+          invalidated: '原来的办法停了。流水还在，账从今天的余额接着算。',
         },
         alcohol: {
-          deadline: '两年过去，最近喝了多少、身体有什么反应，已经能说清。先照眼下的情况过。',
-          invalidated: '原来的安排停了。喝过多少、身体怎样，不能跟着一起抹掉。',
+          deadline: '两年了。喝过多少、睡没睡好、第二天请没请假，都落在记录里。身体记着账，你自己也记得。',
+          invalidated: '原来的安排停了。喝过多少、身体怎样，都记在那。想重来，得从真的数算起。',
         },
         gaming: {
-          deadline: '这两年几点关机、第二天漏了什么，作息自己会说。先把这一周过稳。',
-          invalidated: '原来的计划不再走。熬过的夜和漏掉的事还在，后面另算。',
+          deadline: '两年了。几点关机、第二天漏了什么事，作息自己记得。那一局打完了，天亮还有别的事等着。',
+          invalidated: '原来的计划不再走。熬过的夜还在，第二天的事没等你。',
         },
         shopping: {
-          deadline: '两年了。包裹退了多少、分期还剩多少，账单上都有。这个月先这么算。',
-          invalidated: '原来的办法停了。订单和账单没有消失，后面按新的情况来。',
+          deadline: '两年了。退过的包裹、没退的分期，账单上都列着。下单的手比眼睛快，这个月的账还是得照付。',
+          invalidated: '原来的办法停了。订单和账单没消失，该还的还在还款日等你。',
         },
         medication: {
-          deadline: '两年了。药盒、实际用量、身体反应和复诊日能不能对上，已经能看清。接下来照实走。',
-          invalidated: '原来的调法停了。药盒和复诊记录还在，原来的病也得照实际情况继续看。',
+          deadline: '两年了。药盒空了几次、实际吃过多少，病历上都写得清。药不能替你回忆，记录可以。',
+          invalidated: '原来的调法停了。药盒和病历还在，原来的病也得按真实情况继续看。',
         },
       };
     return copyByType[type]?.[reason] || '这段安排到这里停了。';
@@ -5560,7 +5560,7 @@
           enforcement: '执行中',
           consequence: '执行后果持续',
           resolved: '已结清',
-        }[run.finance.debtStage] || '状态待核',
+        }[run.finance.debtStage] || '还要查清',
       flags = [];
     if (run.finance.dishonestStatus === 'listed') flags.push('游戏内失信');
     if (run.finance.restrictedConsumption) flags.push('限制消费');
@@ -5613,7 +5613,7 @@
       items = Object.entries(run.later || {})
         .filter(([, value]) => value && value !== 'none')
         .map(([key, value]) => `${names[key]}·${labels[key]?.[value] || value}`);
-    return items.join('；') || '尚无晚年状态记录';
+    return items.join('；') || '眼下还没安排到这些事';
   }
   function habitLabel(run) {
     const type = {
@@ -5637,7 +5637,7 @@
           relapse: '复发',
         },
         alcohol: {
-          exposed: '开始记录',
+          exposed: '开始留意杯数',
           repeating: '反复饮酒',
           dependent: '酒精依赖',
           uncontrolled: '饮酒失控',
@@ -5645,7 +5645,7 @@
           relapse: '复饮',
         },
         gaming: {
-          exposed: '开始记录',
+          exposed: '开始留意超时',
           repeating: '反复超时',
           dependent: '游戏依赖',
           uncontrolled: '游戏失控',
@@ -5653,7 +5653,7 @@
           relapse: '复发',
         },
         shopping: {
-          exposed: '开始记录',
+          exposed: '开始留意冲动下单',
           repeating: '反复下单',
           dependent: '消费难停',
           uncontrolled: '消费失控',
@@ -5694,9 +5694,24 @@
   function birthView() {
     const run = state.run,
       origin = run.originHousehold,
+      archetype = DATA.familyArchetypes.find((item) => item.id === origin.familyId),
+      compactOriginSummary = {
+        较早接触升学信息: '升学信息较多',
+        住处相对稳定: '住处相对稳定',
+        遇到变动时更快找到新过法: '适应变化更快',
+        额外费用会压缩选择: '额外开支挤压选择',
+        照顾者经常不在场: '照顾者经常不在场',
+        家里说话和做决定都有压力: '家里做决定压力较大',
+        照护会抢走很多时间: '照护占用很多时间',
+        现金流不是每个月都宽松: '现金流经常吃紧',
+      },
+      advantageSource = archetype?.advantages?.[1] || archetype?.advantages?.[0],
+      riskSource = archetype?.risks?.[1] || archetype?.risks?.[0],
+      originAdvantage = compactOriginSummary[advantageSource] || advantageSource,
+      originRisk = compactOriginSummary[riskSource] || riskSource,
       parents = origin.people.filter((item) => ['father', 'mother'].includes(item.relation)),
       siblings = origin.people.filter((item) => item.relation === 'sibling' && item.bornAt <= 0);
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">${esc(UI_COPY.birthTitle)}</div><span></span></div><section class="card hero"><div class="muted">${run.gender === 'female' ? '女性' : '男性'} · ${run.location.name}</div><div class="birth-place">${esc(origin.familyName)}</div><p>${esc(UI_COPY.birthHouseholdNote)}</p><p class="tiny origin-hint">起点优势：${esc(DATA.familyArchetypes.find((item) => item.id === origin.familyId)?.advantages.join(' · '))} · 潜在压力：${esc(DATA.familyArchetypes.find((item) => item.id === origin.familyId)?.risks.join(' · '))}</p></section><dl class="spec-list"><div class="spec"><dt>家庭环境</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>父母</dt><dd>${parents.map((item) => `${item.relation === 'father' ? '父亲' : '母亲'}：${item.occupation} · ${item.timeAvailability >= 60 ? '时间较稳定' : '常常抽不开身'}`).join('；') || '由其他照护者抚养'}</dd></div><div class="spec"><dt>兄弟姐妹</dt><dd>${siblings.length ? `${siblings.length}人` : '目前没有'}</dd></div><div class="spec"><dt>家庭住房</dt><dd>${esc(origin.housing)} · ${origin.context.housingStability >= 60 ? '居住较稳定' : '住处可能变化'}</dd></div><div class="spec"><dt>家庭账面</dt><dd>资产约 ${money(origin.assets)} · 债务约 ${money(origin.debt)}</dd></div><div class="spec"><dt>教育起点</dt><dd>${origin.context.educationCapital >= 65 ? '较早接触升学信息' : origin.context.educationCapital >= 42 ? '信息主要来自学校' : '需要额外寻找路线信息'} · ${origin.context.educationBudget >= 68 ? '可承担较多准备成本' : '费用会限制部分选择'}</dd></div></dl><div class="bottom-actions"><button class="btn primary" data-act="birth-next">${esc(UI_COPY.birthNext)}</button></div></main>`;
+    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">${esc(UI_COPY.birthTitle)}</div><span></span></div><section class="card hero"><div class="muted">${run.gender === 'female' ? '女性' : '男性'} · ${run.location.name}</div><div class="birth-place">${esc(origin.familyName)}</div><p>${esc(UI_COPY.birthHouseholdNote)}</p>${originAdvantage || originRisk ? `<div class="origin-summary">${originAdvantage ? `<div><span>优势</span><p>${esc(originAdvantage)}</p></div>` : ''}${originRisk ? `<div><span>压力</span><p>${esc(originRisk)}</p></div>` : ''}</div>` : ''}</section><dl class="spec-list"><div class="spec"><dt>家庭环境</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>父母</dt><dd>${parents.map((item) => `${item.relation === 'father' ? '父亲' : '母亲'}：${item.occupation} · ${item.timeAvailability >= 60 ? '时间较稳定' : '常常抽不开身'}`).join('；') || '由其他照护者抚养'}</dd></div><div class="spec"><dt>兄弟姐妹</dt><dd>${siblings.length ? `${siblings.length}人` : '目前没有'}</dd></div><div class="spec"><dt>家庭住房</dt><dd>${esc(origin.housing)} · ${origin.context.housingStability >= 60 ? '居住较稳定' : '住处可能变化'}</dd></div><div class="spec"><dt>家庭账面</dt><dd>资产约 ${money(origin.assets)} · 债务约 ${money(origin.debt)}</dd></div><div class="spec"><dt>教育起点</dt><dd>${origin.context.educationCapital >= 65 ? '较早接触升学信息' : origin.context.educationCapital >= 42 ? '信息主要来自学校' : '需要额外寻找路线信息'} · ${origin.context.educationBudget >= 68 ? '可承担较多准备成本' : '费用会限制部分选择'}</dd></div></dl><div class="bottom-actions"><button class="btn primary" data-act="birth-next">${esc(UI_COPY.birthNext)}</button></div></main>`;
   }
   const attrMeta = {
     intellect: ['理解', '学习、证据与复杂判断'],
@@ -5708,7 +5723,7 @@
   };
   function attributesView() {
     const run = state.run;
-    return `<main class="screen attributes-screen"><div class="topbar"><button class="iconbtn" data-act="attributes-back" aria-label="返回出生信息">‹</button><div class="title">${esc(UI_COPY.attributesTitle)}</div><span></span></div><div class="remain"><div class="row"><span class="muted">剩余点数</span><b class="big-number">${run.points}</b></div><p class="tiny">${esc(UI_COPY.attributesLead)}</p></div><section class="card">${Object.entries(
+    return `<main class="screen attributes-screen"><div class="topbar"><button class="iconbtn" data-act="attributes-back" aria-label="返回出生信息">‹</button><div class="title">${esc(UI_COPY.attributesTitle)}</div><span></span></div><div class="remain"><div class="row"><span class="muted">剩余点数</span><b class="big-number">${run.points}</b></div></div><section class="card">${Object.entries(
       attrMeta
     )
       .map(
@@ -5802,7 +5817,7 @@
         : latestSocialIntent(run) === 'solitude' && (Number(run.pressures.loneliness) || 0) < 40
           ? '主要独来独往'
           : '认识一些人，但没有常联系的朋友';
-    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>成长证据</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner}</dd></div><div class="spec"><dt>朋友</dt><dd>${friendSummary}</dd></div><div class="spec"><dt>子女</dt><dd>${
+    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>学习与支持</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner}</dd></div><div class="spec"><dt>朋友</dt><dd>${friendSummary}</dd></div><div class="spec"><dt>子女</dt><dd>${
       run.relationships.childCount
         ? childPeople(run)
             .map((child) => `${personAge(child, run)}岁`)
