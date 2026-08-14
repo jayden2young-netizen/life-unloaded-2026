@@ -12,7 +12,7 @@
   const APP_KEY = 'life-unloaded-2026-v1';
   const VERSION = '0.6.11',
     SCHEMA_VERSION = 13,
-    CONTENT_REVISION = 30;
+    CONTENT_REVISION = 31;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -3724,7 +3724,7 @@
       deadline:
         '两轮招录过去了。你不再等名单，材料袋收好，招聘软件重新开始推别的工作。',
       invalidated:
-        '你已经通过另一项招录进了公共部门。原报考单位的邮件不再回复。这次重复报名，到此结束。',
+        '你已经进了公共部门。原报考单位的邮件留在收件箱里，这份报名材料也不用再往下补。',
     },
     layoff_reemployment: {
       deadline:
@@ -3735,7 +3735,7 @@
     career_break: {
       deadline:
         '第三次对账了。房租和日常不能还只靠备用金。你不再拖了，开始接能马上结算的活儿。这段主动不工作，到底被钱催着收了。',
-      invalidated: '你恢复了全职。工作日闹钟又响了，原来的空窗预算表也不再往下记。',
+      invalidated: '后来没再按原来的计划过。预算表停在最后记下的那一页，接下来的日子另算。',
     },
     guarantee_recourse: {
       deadline:
@@ -5609,7 +5609,7 @@
           invalidated: '失效重做',
         },
       },
-      names = { retirement: '工作转段', inheritance: '继承', care: '照护', will: '遗嘱' },
+      names = { retirement: '退休安排', inheritance: '继承', care: '照护', will: '遗嘱' },
       items = Object.entries(run.later || {})
         .filter(([, value]) => value && value !== 'none')
         .map(([key, value]) => `${names[key]}·${labels[key]?.[value] || value}`);
@@ -5631,8 +5631,8 @@
         gambling: {
           exposed: '已接触',
           repeating: '反复下注',
-          dependent: '追损依赖',
-          uncontrolled: '追损失控',
+          dependent: '总想翻本',
+          uncontrolled: '已经停不下',
           treatment: '治疗中',
           relapse: '复发',
         },

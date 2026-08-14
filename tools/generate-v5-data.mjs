@@ -36,7 +36,7 @@ const registrationGroups=[
 for(const [domain,registrations] of registrationGroups)
   for(const registration of registrations)
     registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
-const VERSION='0.6.11',SCHEMA_VERSION=13,CONTENT_REVISION=30;
+const VERSION='0.6.11',SCHEMA_VERSION=13,CONTENT_REVISION=31;
 const debtSourceCatalog=Object.freeze({
   mortgage:Object.freeze({label:'住房按揭',enforcementEligible:true,housingSecured:true}),
   consumer:Object.freeze({label:'消费借款',enforcementEligible:true,housingSecured:false}),
@@ -1182,7 +1182,7 @@ const echoes=decisions.map(decision=>{
 
 const swanRows=[
   {age:[0,5],text:'一次罕见感染让家里临时改了排班，复查日期贴在奶粉罐旁。',track:'health',valence:'mixed',requirements:req(),actors:[],effects:[c('add','health.mental',-3),c('add','relationships.originBond',2)]},
-  {age:[3,12],text:'一次交通事故让你暂停原来的上学路线，康复和接送从今天重新安排。',track:'health',valence:'loss',requirements:req(),actors:[],effects:[c('healthIncident','health',18,{condition:'trafficAccident'}),c('add','pressures.body',6)]},
+  {age:[3,12],text:'一场车祸打断了原来的上学路。康复怎么排、以后谁接送，都得从今天重新算。',track:'health',valence:'loss',requirements:req(),actors:[],effects:[c('healthIncident','health',18,{condition:'trafficAccident'}),c('add','pressures.body',6)]},
   {age:[16,25],text:'学校递来一项全国竞赛的入围通知，异地行程和费用都写得清楚。',track:'education',valence:'gain',requirements:req([p('education.status','eq','enrolled')]),actors:[],effects:[c('add','education.practiceEvidence',8),c('add','development.routeKnowledge',5)]},
   {age:[18,30],text:'你所在行业突然扩张，原本冷门的技能出现在正式招聘要求里。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','capabilities.employability',8),c('add','pressures.career',-4)]},
   {age:[18,35],text:'父母留作应急的钱被一个“稳赚”群聊转走，报警回执只确认了损失，没有承诺追回。',track:'finance',valence:'loss',requirements:req([p('originHousehold.assets','gte',50000)]),actors:[{slot:'parent',relationAny:['father','mother'],alive:true,optional:false}],effects:[c('add','originHousehold.assets',-50000),c('add','pressures.family',8)]},
@@ -1190,7 +1190,7 @@ const swanRows=[
   {age:[22,40],text:'一场公共事件让你所在的单位突然停摆，复工日期和工资安排都没有立刻确定。',track:'employment',valence:'mixed',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','finance.cash',-12000),c('add','pressures.career',9)]},
   {age:[25,50],text:'你持有股份的公司打开了新市场，书面估值上调，现金却没有同步到账。',track:'business',valence:'gain',requirements:req([p('business.equity','gte',1)]),actors:[],effects:[c('add','business.equity',200000),c('add','pressures.money',2)]},
   {age:[25,55],text:'单位复核工资时发现一笔少发款，补发日期和明细一起进了账户。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','finance.cash',6000),c('add','pressures.money',-2)]},
-  {age:[30,58],text:'一个合作多年的客户把整条业务线交给你的企业，合同也写清了付款节点。',track:'business',valence:'gain',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',160000),c('add','business.operatingSkill',5)]},
+  {age:[30,58],text:'合作多年的老客户把整条业务交了过来。合同一签，你先算的不是赚多少，是哪天能收到钱。',track:'business',valence:'gain',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',160000),c('add','business.operatingSkill',5)]},
   {age:[30,60],text:'新规落地，你的企业必须停掉一块原本赚钱的业务，旧合同也要逐份处理。',track:'business',valence:'loss',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',-120000),c('add','pressures.money',10)]},
   {age:[35,62],text:'一次体检和复查确认了需要治疗的异常，后续不再只是“再看看”。',track:'health',valence:'loss',requirements:req(),actors:[],effects:[c('healthIncident','health',28,{condition:'blackSwanDiagnosis'}),c('add','pressures.body',8)]},
   {age:[35,65],text:'旧同事带着公开账目来谈合作，项目是否加入仍由你按自己的企业状况判断。',track:'business',valence:'gain',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',90000),c('add','capabilities.evidence',4)]},
@@ -1248,8 +1248,8 @@ const titleSets={ordinaryContent:['够用的人生','没有登上热搜的一生
 const endingTitles=endingProfiles.flatMap(profile=>titleSets[profile.id].map((title,index)=>({id:`ending_${profile.id}_${index+1}`,profileId:profile.id,title,contentRevision:CONTENT_REVISION})));
 
 const codexCopy={
-  education:{entryName:'课桌以外的选择',costName:'学习留下的账',entryHint:'亲手选一次真正要走的升学或学习路',entryUnlocked:'你曾为读什么、怎么读，或还要不要读，认真做过一次决定。',costHint:'让学费、时间或没走成的路留下结果',costUnlocked:'学过的东西留在身上，花掉的钱和时间也没退回来。'},
-  employment:{entryName:'工作这扇门',costName:'工资换走的东西',entryHint:'认真处理一次工作的入口',entryUnlocked:'你曾为一份工作决定进去、留下、转身，或要求它先把条件写清。',costHint:'经历一次裁员、空档或工作留下的代价',costUnlocked:'有一份工作曾经改掉你的时间、身体或下一步。'},
+  education:{entryName:'课桌以外的选择',costName:'学习留下的账',entryHint:'亲手选一次真正要走的升学或学习路',entryUnlocked:'读什么、怎么读，或者还要不要读——这件事你真替自己拿过一次主意。',costHint:'让学费、时间或没走成的路留下结果',costUnlocked:'学过的东西留在身上，花掉的钱和时间也没退回来。'},
+  employment:{entryName:'工作这扇门',costName:'工资换走的东西',entryHint:'认真处理一次工作的入口',entryUnlocked:'你为一份工作做过决定：进去、留下、转身，或者先让对方把条件说清楚。',costHint:'经历一次裁员、空档或工作留下的代价',costUnlocked:'有一份工作曾经改掉你的时间、身体或下一步。'},
   public:{entryName:'规程落到人身上',costName:'号码牌和人情',entryHint:'走进一次公开招录或公共岗位',entryUnlocked:'你在公共职业里做过一次不能只靠口号回答的决定。',costHint:'在程序、人情和责任之间作一次选择',costUnlocked:'有一次，号码牌、规程和熟人的话同时摆在你面前。'},
   remote:{entryName:'办公桌到处都是',costName:'时差会收费',entryHint:'拿到远程合同，或亲手决定在哪里工作',entryUnlocked:'你过过一段工作地址不再固定的日子。',costHint:'让平台、时区、许可或漂泊真正留下代价',costUnlocked:'平台、时区或一张退件通知，曾经真正改过你的生活。'},
   business:{entryName:'租金先叫你老板',costName:'流水不是你的钱',entryHint:'让一门生意真正开起来',entryUnlocked:'你曾把一门生意的房租、库存或工资，真算到自己头上。',costHint:'让现金流、担保或控制权给出结果',costUnlocked:'收款声很热闹，进货、房租和欠款会在关门后重新算一遍。'},

@@ -118,11 +118,15 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.11', 13, 30]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.11', 13, 31]);
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
     {beat:480,decision:205,consequence:205,blackSwan:20},
   );
+  const guaranteeDecision = DATA.events.find(event => event.id === 'decision_107');
+  const guaranteeEcho = DATA.events.find(event => event.id === 'echo_107');
+  assert.equal(guaranteeDecision?.prompt, '这份担保，你签不签？', 'guarantee decision ID drifted');
+  assert.equal(guaranteeEcho?.sourceDecisionId, 'decision_107', 'guarantee echo ID drifted');
   assert.equal(summary.evidenceRecords, 11);
   for (const type of ['resolveConception','resolveDebtEnforcement','transitionHousing','scaleEmployment','resolveInheritance','createSocialPerson','updateSocialPerson','transitionSocialToDating','createEmploymentReferral','socialCoResidence'])
     assert.ok(contract.COMMAND_TYPES.includes(type));

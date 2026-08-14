@@ -60,7 +60,7 @@ async function fitDrawer(page,label){
   assert.ok(geometry.scrollWidth<=geometry.innerWidth+1,`${label}: horizontal overflow`);
   assert.ok(geometry.rect&&geometry.rect.left>=-1&&geometry.rect.right<=geometry.innerWidth+1,`${label}: drawer outside viewport`);
   assert.ok(geometry.rect.top>=-1&&geometry.rect.bottom<=geometry.innerHeight+1,`${label}: drawer outside viewport height`);
-  assert.match(geometry.text,/工作转段·已退出工作/);
+  assert.match(geometry.text,/退休安排·已退出工作/);
   assert.match(geometry.text,/照护·安排稳定/);
 }
 

@@ -1130,5 +1130,6 @@ export const DECISION_SLOT_REGISTRATIONS = [
   {key:'@author/decision/e0fd447513873cc3f1c706af',slot:{id:'decision_107',track:'finance',localIndex:1},replaces:'@author/decision/d5b540ed1aa8d566691c9255'},
   {key:'@author/decision/5f08940322a72a5e66535c6e',slot:{id:'decision_153',track:'later',localIndex:1},replaces:'@author/decision/00f71da6de56a29e4f5c0e62'},
   {key:'@author/decision/cb54c3322e2cfa51a5ac0dec',slot:{id:'decision_160',track:'later',localIndex:8},replaces:'@author/decision/b7ed10e29ce7137d7e240aee'},
+  {key:'@author/decision/1a25b9575f1d546c86e68da7',slot:{id:'decision_107',track:'finance',localIndex:1},replaces:'@author/decision/e0fd447513873cc3f1c706af'},
 ];
 export const CARD_SLOT_REGISTRATIONS = [];
