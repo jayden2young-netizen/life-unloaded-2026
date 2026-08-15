@@ -20,7 +20,7 @@ export const REMOTE_COPY=track('远程与平台工作',[
   b('awkward','签证表问固定住址，你写了上个月的民宿。',{requirements:{all:[{path:'mobility.mode',op:'eq',value:'overseasNomad'}],any:[],none:[]}}),
   b('friction','客户临时改时区，交付时间却没有跟着改。'),
   b('friction','平台抽成涨了，旧客户的联系方式仍不能导出。'),
-  b('friction','房东不让注册办公地址，合同已经等着盖章。'),
+  b('friction','房东不让注册办公地址，合同已经等着盖章。',{requirements:{all:[{path:'housing.status',op:'eq',value:'renting'}],any:[],none:[]}}),
   b('friction','海外款到账少了一截，中间行费用没人解释。'),
   b('friction','网断了半小时，客户按失联扣掉一天费用。'),
   b('friction','算法改版后，熟客也搜不到你的主页。'),

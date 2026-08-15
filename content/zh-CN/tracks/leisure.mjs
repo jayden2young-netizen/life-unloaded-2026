@@ -30,10 +30,10 @@ export const LEISURE_COPY=track('停下来不工作',[
   b('pressure','家里停止转账那天，缴费单已经堆到月底。'),
   b('pressure','昼夜彻底颠倒，你连续一周没在白天出门。'),
   b('pressure','一场急病花掉大半备用金，社保刚好断着。'),
-  b('major','你交回工牌那天，没有给自己定下一份工作的日期。'),
+  b('major','你交回工牌那天，没有给自己定下一份工作的日期。',{requirements:{all:[{path:'employment.lastJob',op:'truthy',value:true}],any:[],none:[]}}),
   b('major','一次必须早起办事的早晨，闹钟响起时像隔了很多年。')
 ],[
-  e({id:'career_break',lane:'lifestyle',phase:1,role:'start',delayYears:1,deadlineYears:3},
+  e({id:'career_break',lane:'lifestyle',phase:1,role:'start',delayYears:1,deadlineYears:3,opportunity:{group:'lifestyle.careerBreak',desires:['freedom','peace','body','creation'],response:'weight'}},
     '你准备主动停下全职工作。预算表上有房租、日常开销、社保和备用金——最后还空着一行：这段时间靠什么过，到哪天再做决定。',
     '钱从哪来？','那张预算表后来翻过很多次。有些数字擦掉又重写。',
     c('用自己的积蓄。写个结束日期','你把固定开支和备用金分开，给自己留了十二个月。重新做决定的日子圈在了日历上。','期限到的时候，每笔大的花销都还能在表里找到。'),

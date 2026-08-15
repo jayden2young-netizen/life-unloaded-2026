@@ -111,6 +111,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
   },
   "children::你先怎么接？::一起定个规矩。隐私和安全都写进去": {
     "primaryMechanic": "boundary",
+    "scope": "family",
     "mode": "resultVariant",
     "patch": [
       {
@@ -267,6 +268,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
   },
   "children::手机和房门，最后按什么规矩来？::定下来了。有事能说": {
     "primaryMechanic": "boundary",
+    "scope": "family",
     "mode": "resultVariant",
     "patch": [
       {
@@ -871,7 +873,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "education::这张证，最后怎么用？::过了。证拿去用": {
+  "education::这段准备，最后怎么用？::把能核验的成果放进材料": {
     "primaryMechanic": "evidence",
     "mode": "resultVariant",
     "patch": [
@@ -1951,7 +1953,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "identity::你第一次认真决定，这一生最不愿失去什么。::哪怕不稳，也要自由": {
+  "identity::你第一次认真决定，这一生最不愿失去什么。::哪怕不稳，也要能自己选路": {
     "primaryMechanic": "boundary",
     "mode": "resultVariant",
     "patch": [
@@ -1963,7 +1965,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "identity::你发现早年最想要的东西，已经不完全适合现在。::重新排一次轻重": {
+  "identity::你发现早年最想要的东西，已经不完全适合现在。::给自己留一条换路，也留一件想做的事": {
     "primaryMechanic": "creativity",
     "mode": "resultVariant",
     "patch": [
@@ -2642,7 +2644,7 @@ export function cardInteractionFor(track, index, option, authoredDecision) {
   void index;
   const choice = authoredDecision?.choices?.[option];
   const configured = EXPLICIT_CARD_INTERACTIONS[interactionKey(track, authoredDecision, choice)];
-  return configured ? structuredClone(configured) : null;
+  return configured ? {scope:'general',...structuredClone(configured)} : null;
 }
 
 export const CARD_INTERACTION_WITNESSES = [

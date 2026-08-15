@@ -5,6 +5,7 @@ import {CARD_COPY} from '../content/zh-CN/cards.mjs';
 import {cardInteractionFor,CARD_INTERACTION_WITNESSES} from '../content/zh-CN/card-interactions.mjs';
 import {EMPLOYMENT_CATALOG_SOURCE} from '../content/zh-CN/employment-catalog.mjs';
 import {RECRUITMENT_SCENARIO_COPY} from '../content/zh-CN/tracks/employment.mjs';
+import {FAMILY_PLANNING_COPY} from '../content/zh-CN/tracks/children.mjs';
 import {TRACK_COPY} from '../content/zh-CN/tracks/index.mjs';
 import {
   beatAuthorKey,
@@ -20,7 +21,13 @@ import {
   DECISION_SLOT_REGISTRATIONS,
 } from './author-slot-manifest.mjs';
 import {validateGeneratedData} from './validate-content-contract.mjs';
-import {compareByOperator} from '../runtime-content-contract.mjs';
+import {
+  EPISODE_CATALOG_EXCEPTION_IDS,
+  compareByOperator,
+  isCardInteractionScope,
+  isOpportunityMetadata,
+  isRouteSituations,
+} from '../runtime-content-contract.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const output=process.env.LIFE_DATA_OUTPUT?path.resolve(process.env.LIFE_DATA_OUTPUT):path.join(here,'..','data.json');
@@ -36,7 +43,7 @@ const registrationGroups=[
 for(const [domain,registrations] of registrationGroups)
   for(const registration of registrations)
     registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
-const VERSION='0.6.11',SCHEMA_VERSION=13,CONTENT_REVISION=31;
+const VERSION='0.6.12',SCHEMA_VERSION=13,CONTENT_REVISION=32;
 const debtSourceCatalog=Object.freeze({
   mortgage:Object.freeze({label:'住房按揭',enforcementEligible:true,housingSecured:true}),
   consumer:Object.freeze({label:'消费借款',enforcementEligible:true,housingSecured:false}),
@@ -518,7 +525,7 @@ const EPISODE_CATALOG={
   divorce:{label:'离婚交接',abandonedRoutes:['paused','conflict'],deadline:'两年了。财产清单、账单和探望日历你还留着。没谈完的部分，变成了以后仍要处理的事。',invalidated:'那个人不在了，或者关系已经失效。已有的清单留了下来，剩下的交接没法再继续。'},
   reconciliation:{label:'复合尝试',abandonedRoutes:['declined','exited','repeated_break'],deadline:'两年了。两把钥匙还是各在一边。你们把暂存的东西还了。伴侣那条线，没有再恢复。',invalidated:'那个人联系不上了，或者关系已经变了。旧号码从联系人里删了。这次复合，试过了。'},
   late_companionship:{label:'晚年相伴',abandonedRoutes:['declined','exited','invalidated'],deadline:'三年了。医疗联系人、费用和门锁密码都已说清。你们按现在的样子过——住一起，或者住得近。',invalidated:'人、住处或身体条件有一样变了。联系人和文件保管安排重新改过，备用照护也接上了。'},
-  becoming_parent:{label:'生育计划',ageBound:true,abandonedRoutes:['childfree','closed'],deadline:'复议日期过去了。共同日历上的提醒被取消，这次主动备孕不再继续往后排。',invalidated:'伴侣关系已经结束，原来的请假和照护排班也取消了。',notPregnant:'复查没有确认怀孕。医生说，一次结果说明不了不孕，不能拿它当诊断。你们停下了这次计划。'},
+  becoming_parent:{label:'生育计划',ageBound:true,abandonedRoutes:['childfree','closed'],deadline:'复议日期过去了。共同日历上的提醒被取消，这次主动备孕不再继续往后排。',invalidated:'伴侣关系已经结束，原来的请假和照护排班也取消了。',notPregnant:'复查没有确认怀孕。医生说，一次结果说明不了不孕，不能拿它当诊断。你们停下了这次计划。',latePartnerEcho:FAMILY_PLANNING_COPY.latePartnerEcho},
   adoption_process:{label:'单身收养',ageBound:true,abandonedRoutes:['withdrawn','invalidated'],deadline:'三年了。窗口通知这轮材料不能继续悬着。你按真实条件选择继续等待或正式撤回。',invalidated:'申请期间，你的家庭关系变了。窗口暂停原来的单身申请，要求按现在的情况重新核材料；这轮没有自动转成共同收养。'},
   pregnancy_decision:{label:'怀孕决定',ageBound:true,resolvedRoutes:['continued','terminated'],deadline:'医生说明的医疗时间窗口和下一次复诊日期都到了，预约不能再一直往后改。',invalidated:'检查结果或决定已经变化，原来的复议预约随之取消。'},
   school_entry:{label:'子女入学',ageBound:true,abandonedRoutes:['alternative','invalidated'],deadline:'入学那扇窗快关上了。登记表、接送人和能去的学校——得落定。',invalidated:'孩子、住址或照护人——有一样变了。原申请退回。家里按新条件另做安排。'},
@@ -836,7 +843,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
   if(episode?.id==='late_companionship'){
     if(episode.phase===1&&option===0)housing({arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[],kind:'choice',reason:'lateCompanionshipNearbyHomes',housingChoiceKind:'partnerReconfiguration'});
     if(episode.phase===1&&option===1)housing({arrangement:'partner',stability:'stable',costShare:'joint',coResidentRefs:['$activePartner'],kind:'choice',reason:'lateCompanionshipCohabitation',housingChoiceKind:'partnerReconfiguration'});
-    if(episode.phase===2){set('relationships.partnerStatus',['partnered','partnered','none','none'][option]);housing(option===0?{arrangement:'partner',stability:'stable',costShare:'joint',coResidentRefs:['$activePartner'],kind:'background',reason:'lateCompanionshipSettledTogether'}:{arrangement:'solo',stability:option===3?'temporary':'stable',costShare:'self',coResidentRefs:[],kind:'background',reason:'lateCompanionshipSeparateHomes'});if(option>=2)effects.push(c('transitionPartner','people','exPartner'))}
+    if(episode.phase===2){if(option<2)effects.push(c('confirmPartnership','relationships.partnerStatus','partnered'));else set('relationships.partnerStatus','none');housing(option===0?{arrangement:'partner',stability:'stable',costShare:'joint',coResidentRefs:['$activePartner'],kind:'background',reason:'lateCompanionshipSettledTogether'}:{arrangement:'solo',stability:option===3?'temporary':'stable',costShare:'self',coResidentRefs:[],kind:'background',reason:'lateCompanionshipSeparateHomes'});if(option>=2)effects.push(c('transitionPartner','people','exPartner'))}
     add('relationships.partnerBond',episode.phase===1?[4,5,-1][option]:[7,4,-4,-6][option]);add('relationships.network',episode.phase===1?[3,2,1][option]:[5,3,1,-2][option]);add('pressures.family',episode.phase===1?[-1,1,-1][option]:[-2,-1,0,4][option]);
   }
   if(id==='children'&&!episode){add('relationships.childBond',[4,1,-3][option]);add('pressures.family',[-1,4,2][option])}
@@ -996,6 +1003,11 @@ for(const id of trackOrder){
   const spec=TRACKS[id];
   for(let sourceIndex=0;sourceIndex<TRACK_COPY[id].decisions.length;sourceIndex++){
     const authoredDecision=TRACK_COPY[id].decisions[sourceIndex],slot=resolveAuthorSlot(authorSlots,'decisions',decisionAuthorKey(id,authoredDecision.prompt,authoredDecision.choices),`${id}.decisions[${sourceIndex}]`),index=slot.localIndex;
+    if(authoredDecision.opportunity){
+      if(!isOpportunityMetadata(authoredDecision.opportunity))throw new Error(`${id}.decisions[${sourceIndex}]: invalid opportunity metadata`);
+      if(authoredDecision.episode&&authoredDecision.episode.role!=='start')throw new Error(`${id}.decisions[${sourceIndex}]: opportunity is only valid on episode starts or independent decisions`);
+    }
+    if(authoredDecision.routeSituations&&!isRouteSituations(authoredDecision.routeSituations))throw new Error(`${id}.decisions[${sourceIndex}]: invalid routeSituations`);
     const eventId=slot.id,echoId=eventId.replace('decision_','echo_'),requirements=mergeRequirements(requirementsFor(id),authoredDecision.requirements),actors=(Object.hasOwn(authoredDecision,'actors')?authoredDecision.actors:id==='habits'?[]:authoredDecision.episode?episodeActorsFor(authoredDecision):actorsFor(id,index,'decision')).map(actor=>({...actor})),ageRange=authoredDecision.age||(id==='habits'?authoredDecision.age:TRACK_NODE_AGES[id][index]);
     if(id==='business'&&authoredDecision.episode?.phase>1)requirements.all=requirements.all.filter(rule=>rule.path!=='finance.available');
     if(id==='employment'&&!authoredDecision.episode){
@@ -1114,14 +1126,14 @@ for(const id of trackOrder){
       const generatedHousingKind=result.effects.find(effect=>effect.type==='transitionHousing'&&effect.value?.kind==='choice')?.value?.housingChoiceKind,housingChoiceKind=copyItem.housingChoiceKind||generatedHousingKind;
       return{id:`${eventId}_choice_${option+1}`,text,resultText:copyItem.resultText,hints:copyItem.hints||[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),...(copyItem.debtGate?{debtGate:copyItem.debtGate}:{}),...(housingChoiceKind?{housingChoiceKind}:{}),...(socialOutcome?{socialOutcome}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences,outcomeTags:result.outcomeTags,memoryKey,route:result.route};
     });
-    decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',...(authoredDecision.situation?{situation:authoredDecision.situation}:{}),prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{episode:authoredDecision.episode}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:authoredDecision.weight??16+index%3,contentRevision:CONTENT_REVISION});
+    decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',...(authoredDecision.situation?{situation:authoredDecision.situation}:{}),...(authoredDecision.routeSituations?{routeSituations:authoredDecision.routeSituations}:{}),prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{episode:authoredDecision.episode}:{}),...(authoredDecision.opportunity?{opportunity:authoredDecision.opportunity}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:authoredDecision.weight??16+index%3,contentRevision:CONTENT_REVISION});
     authoredDecisionById.set(eventId,authoredDecision);
   }
 }
 
 const globalRows=[
-  {track:'identity',age:[14,17],prompt:'你第一次认真决定，这一生最不愿失去什么。',verbs:['哪怕不稳，也要自由','先保住安稳','把重要的人留身边'],results:['你把远方写进计划，也知道没人替你兜底。','你先选了能站稳的地方，没有急着往远处走。','你开始把别人的需要算进自己的决定。'],echoText:'少年时最不愿失去的东西又来敲门。',consequences:['后来一次搬家，你没等所有人同意就买了票。','机会和风险同时到来时，你还是先看账户余额。','真正要分别时，你为留下多承担了一段日子。'],desire:[['freedom','exploration'],['security','achievement'],['love','familyBelonging']]},
-  {track:'identity',age:[30,55],prompt:'你发现早年最想要的东西，已经不完全适合现在。',verbs:['重新排一次轻重','继续守住原来的目标','不再只认一个答案'],results:['你取消一项旧计划，把时间留给身体和安静。','你没有换目标，只调整了到达它的速度。','你允许几件事同时重要，不再排唯一名次。'],echoText:'那次重新排序后来改变了一天的用法。',consequences:['下一次加码之前，你先看自己还能不能睡好觉。','旧目标终于接近时，你仍认得当年为什么出发。','有一条路停下后，另一件在意的事接住了你。'],desire:[['peace','body'],['achievement','security'],['freedom','creation']],reclaim:true}
+  {track:'identity',age:[14,17],prompt:'你第一次认真决定，这一生最不愿失去什么。',verbs:['哪怕不稳，也要能自己选路','先站稳，再把事情做到拿得出手','别把重要的人落在身后'],results:['你把自己能选这件事放在前面，也知道不稳的时候得自己找退路。','你先要一块站得住的地方，也想把手里的事做到能拿出来说。','你做决定时开始给重要的人留位置，也知道留下有时要多承担一点。'],echoText:'少年时最不愿失去的东西又来敲门。',consequences:['后来一次搬家，你没等所有人同意就买了票。','机会和风险同时到来时，你还是先看账户余额。','真正要分别时，你为留下多承担了一段日子。'],desire:[['freedom','exploration'],['security','achievement'],['love','familyBelonging']]},
+  {track:'identity',age:[30,55],prompt:'你发现早年最想要的东西，已经不完全适合现在。',verbs:['把身体和安静排回前面','先把家底做厚，再谈下一步','给自己留一条换路，也留一件想做的事'],results:['你停掉一项不再值得硬撑的安排，把睡眠、看病和安静的时间放回日历。','你决定先把能应急的积蓄攒厚，下一步不再只靠一口气往前冲。','你给改道留了余地，也把一件一直想做的事认真排进日子里。'],echoText:'那次重新排序后来改变了一天的用法。',consequences:['下一次加码之前，你先看自己还能不能睡好觉。','下一次要押上一笔钱时，你先算这点家底能不能接住停工和意外。','有一条路停下后，另一件在意的事接住了你。'],desire:[['peace','body'],['wealth','security'],['freedom','creation']],reclaim:true}
 ];
 for(const [sourceIndex,row] of globalRows.entries()){
   const slot=resolveAuthorSlot(authorSlots,'decisions',decisionAuthorKey(row.track,row.prompt,row.verbs),`globalRows[${sourceIndex}]`),globalIndex=slot.localIndex,id=slot.id,echoId=id.replace('decision_','echo_');
@@ -1144,6 +1156,7 @@ function validateCardInteractions(){
     if(choice.cardInteraction){
       const spec=choice.cardInteraction;
       if(!['unlock','requirementShift','costShift','riskShift','resultVariant'].includes(spec.mode))throw new Error(`${choice.id}: invalid card mode`);
+      if(!isCardInteractionScope(spec.scope))throw new Error(`${choice.id}: invalid card interaction scope`);
       if(!spec.primaryMechanic||!Array.isArray(spec.patch)||spec.source!=='eventAuthored')throw new Error(`${choice.id}: incomplete or non-authored card interaction`);
       if(spec.explanation!==undefined&&(typeof spec.explanation!=='string'||!spec.explanation.trim()))throw new Error(`${choice.id}: invalid card explanation`);
       if(spec.resultSuffix!==undefined&&(typeof spec.resultSuffix!=='string'||!spec.resultSuffix.trim()))throw new Error(`${choice.id}: invalid card result suffix`);
@@ -1221,7 +1234,9 @@ function cardEffects(mechanic,drawAge){
 const cards=[];
 for(const drawAge of[0,18,35,55])for(const authored of CARD_COPY[drawAge]){
   const slot=resolveAuthorSlot(authorSlots,'cards',cardAuthorKey(drawAge,authored.displayName),`cards.${drawAge}.${authored.displayName}`);
-  cards.push({id:slot.id,kind:drawAge===0?'innate':'stage',drawAge,displayName:authored.displayName,text:authored.text,mechanic:authored.mechanic,effects:cardEffects(authored.mechanic,drawAge),contentRevision:CONTENT_REVISION});
+  const interactionScope=authored.interactionScope||'general';
+  if(!isCardInteractionScope(interactionScope))throw new Error(`${slot.id}: invalid card interactionScope`);
+  cards.push({id:slot.id,kind:drawAge===0?'innate':'stage',drawAge,displayName:authored.displayName,text:authored.text,mechanic:authored.mechanic,requirements:authored.requirements||req(),interactionScope,effects:cardEffects(authored.mechanic,drawAge),contentRevision:CONTENT_REVISION});
 }
 cards.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
 const cardInteractionCoverage=validateCardInteractions();
@@ -1287,6 +1302,17 @@ const employmentCatalog={
     ...RECRUITMENT_SCENARIO_COPY[scenario.id]
   }))
 };
+const generatedEpisodeIds=[...new Set(decisions.filter(decision=>decision.episode).map(decision=>decision.episode.id))].sort();
+const generatedCatalogExceptions=generatedEpisodeIds.filter(id=>!Object.hasOwn(EPISODE_CATALOG,id));
+if(JSON.stringify(generatedCatalogExceptions)!==JSON.stringify(EPISODE_CATALOG_EXCEPTION_IDS))throw new Error(`episodeCatalog exception inventory drift: ${generatedCatalogExceptions.join(', ')}`);
+for(const decision of decisions.filter(decision=>decision.routeSituations)){
+  const previous=decisions.find(candidate=>candidate.episode?.id===decision.episode?.id&&candidate.episode.phase===decision.episode.phase-1);
+  if(!previous)throw new Error(`${decision.id}: routeSituations has no previous episode phase`);
+  const abandoned=new Set(EPISODE_CATALOG[decision.episode.id]?.abandonedRoutes||[]);
+  const expected=[...new Set(previous.choices.map(choice=>choice.route).filter(route=>!abandoned.has(route)))].sort();
+  const actual=Object.keys(decision.routeSituations).sort();
+  if(JSON.stringify(actual)!==JSON.stringify(expected))throw new Error(`${decision.id}: routeSituations must cover ${expected.join(', ')}`);
+}
 const data={version:VERSION,gameVersion:VERSION,schemaVersion:SCHEMA_VERSION,contentRevision:CONTENT_REVISION,stages,locations,desires,conflicts,familyArchetypes,familySecrets,employmentCatalog,debtSourceCatalog,cards,events:[...annualBeats,...decisions,...echoes,...blackSwans],episodeCatalog:EPISODE_CATALOG,endingProfiles,endingTitles,codex,realityRules,trackCoverage,cardInteractionCoverage,cardInteractionWitnesses:CARD_INTERACTION_WITNESSES};
 validateGeneratedData(data);
 fs.writeFileSync(output,`${JSON.stringify(data,null,2)}\n`,'utf8');

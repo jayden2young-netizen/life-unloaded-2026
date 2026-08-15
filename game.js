@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.11');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.12');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.11',
+  const VERSION = '0.6.12',
     SCHEMA_VERSION = 13,
-    CONTENT_REVISION = 31;
+    CONTENT_REVISION = 32;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -57,16 +57,18 @@
   const stageForAge = (age) =>
     Object.entries(DATA.stages).find(([, range]) => age >= range[0] && age <= range[1])?.[0] ||
     'elder';
-  const weighted = (items, weightFn = (item) => item.weight || 1) => {
+  const weightedAt = (items, weightFn, rollUnit) => {
     if (!items.length) return null;
     let total = items.reduce((sum, item) => sum + Math.max(0, weightFn(item)), 0),
-      roll = rng() * total;
+      roll = rollUnit * total;
     for (const item of items) {
       roll -= Math.max(0, weightFn(item));
       if (roll <= 0) return item;
     }
     return items.at(-1);
   };
+  const weighted = (items, weightFn = (item) => item.weight || 1) =>
+    weightedAt(items, weightFn, rng());
   const chance = (value) => rng() < value;
   let DATA,
     INDEX,
@@ -79,6 +81,13 @@
     x ^= x >>> 17;
     x ^= x << 5;
     if (state.run) state.run.rngState = x >>> 0;
+    return (x >>> 0) / 4294967296;
+  }
+  function peekRng(run) {
+    let x = run?.rngState || hashSeed(run?.seed || 'preview');
+    x ^= x << 13;
+    x ^= x >>> 17;
+    x ^= x << 5;
     return (x >>> 0) / 4294967296;
   }
   function stable(seed, key, max = 100) {
@@ -1543,7 +1552,11 @@
     const spec = choice?.cardInteraction;
     if (!spec || !run) return { choice, card: null, spec: null };
     const cardId = (run.cards || []).find(
-        (id) => INDEX.cards.get(id)?.mechanic === spec.primaryMechanic
+        (id) => {
+          const candidate = INDEX.cards.get(id);
+          return candidate?.mechanic === spec.primaryMechanic &&
+            (candidate.interactionScope || 'general') === (spec.scope || 'general');
+        }
       ),
       card = cardId ? INDEX.cards.get(cardId) : null;
     if (!card) return { choice, card: null, spec: null };
@@ -2996,6 +3009,14 @@
     }
     return true;
   }
+  function confirmPartnership(run) {
+    const id = run.relationships.activePartnerId,
+      item = run.people.find((personItem) => personItem.id === id);
+    if (!item?.alive || item.relation !== 'partner') return false;
+    if (run.relationships.partnerStatus === 'dating')
+      run.relationships.partnerStatus = 'partnered';
+    return ['partnered', 'married'].includes(run.relationships.partnerStatus);
+  }
   function rollbackCommands(before, context, error) {
     return { ok: false, before, after: copy(state.run), context, error: String(error || '结算失败') };
   }
@@ -3119,6 +3140,10 @@
         if (!transitionPartner(run, command))
           return rollbackCommands(before, context, '关系人物已经失效');
       }
+      else if (command.type === 'confirmPartnership') {
+        if (!confirmPartnership(run))
+          return rollbackCommands(before, context, '当前没有可以确认的伴侣关系');
+      }
       else if (command.type === 'transitionHousing') {
         const transition = transitionHousing(run, command.value, context);
         if (!transition.applied && !['duplicate', 'unchanged'].includes(transition.reason)) {
@@ -3236,6 +3261,18 @@
     return match
       ? `${HABIT_TYPE_LABELS[match[1]]}：${HABIT_EPISODE_LABELS[match[1]][match[2]]}`
       : episodeCatalog(id).label || EPISODE_LABELS[id] || id;
+  }
+  function episodeMetadata(id) {
+    const catalog = episodeCatalog(id),
+      spec = episodeSpec(id);
+    return {
+      id,
+      label: episodeLabel(id),
+      lane: spec?.lane || null,
+      cataloged: INDEX.episodes.has(id),
+      ageBound: Boolean(catalog.ageBound),
+      organization: catalog.organization || EPISODE_ORGANIZATIONS[id] || null,
+    };
   }
   const EPISODE_ORGANIZATIONS = {
     shop_opening: '本轮考察的门店',
@@ -3448,7 +3485,8 @@
       syncDerived(run);
     }
     event = prepareRecruitmentDecision(event, run);
-    const situationText = event.episode?.id === 'parental_inheritance' && event.episode.phase === 1
+    const routeSituation = event.routeSituations?.[run.episodes[event.episode.id]?.route],
+      situationText = event.episode?.id === 'parental_inheritance' && event.episode.phase === 1
       ? (() => {
           const parents = run.people.filter((item) => ['father', 'mother'].includes(item.relation));
           if (parents.length === 1)
@@ -3457,7 +3495,7 @@
             ? '父母都已去世。两边留下的钥匙、死亡证明、账户资料和欠款通知放到了一起；遗产有多少、债有多少、还涉及谁，都要按现有文件查清。'
             : '一位父母去世后，另一位仍在世。旧钥匙、死亡证明、账户资料和欠款通知一起到了；哪些属于遗产、哪些仍属于在世父母，必须分别查清。';
         })()
-      : event.situation;
+      : routeSituation || event.situation;
     run.currentDecision = { ...event, situation: situationText };
     run.phase = 'episode';
     run.sceneQueue = [{ kind: 'choice', eventId: event.id }];
@@ -3575,6 +3613,7 @@
     run.currentDecision = null;
     run.sceneQueue = [];
     run.phase = 'playing';
+    openFamilyPlanningIfEligible(run);
     const educationEventsThisAge = run.decisionHistory.filter(
         (item) =>
           item.age === run.age &&
@@ -3602,8 +3641,9 @@
         pregnancyEventsThisAge < 2 &&
         INDEX.kinds.decision.some(
           (candidate) => candidate.episode?.id === 'pregnancy_decision' && eligible(candidate, run)
-        );
-    if (canContinueEducationSameAge || canContinuePregnancySameAge) {
+        ),
+      canContinueFamilyPlanningSameAge = familyPlanningStartReady(run);
+    if (canContinueEducationSameAge || canContinuePregnancySameAge || canContinueFamilyPlanningSameAge) {
       run.yearStarted = true;
       save();
       render();
@@ -3832,6 +3872,34 @@
     render();
     return true;
   }
+  function queueFamilyPlanningEcho(run) {
+    const text = episodeCatalog('becoming_parent')?.latePartnerEcho;
+    if (typeof text !== 'string' || !text.trim()) return false;
+    run.sceneQueue = [{
+      kind: 'result',
+      familyPlanningEcho: true,
+      text,
+    }];
+    run.currentDecision = null;
+    run.phase = 'episode';
+    save();
+    render();
+    return true;
+  }
+  function finishFamilyPlanningEcho(scene) {
+    const run = state.run;
+    addTimeline(
+      { id: `family_planning_late_echo_${run.age}`, kind: 'consequence', track: 'children', icon: '♡' },
+      scene.text,
+      'chosen'
+    );
+    run.sceneQueue = [];
+    run.currentDecision = null;
+    run.phase = 'playing';
+    run.yearStarted = false;
+    save();
+    render();
+  }
   function finishDebtRelief(scene) {
     const run = state.run;
     run.finance.debtStage = unresolvedLiabilities(run).length ? 'current' : 'resolved';
@@ -3941,6 +4009,7 @@
     }
     if (scene.kind === 'result') {
       if (scene.debtRelief) finishDebtRelief(scene);
+      else if (scene.familyPlanningEcho) finishFamilyPlanningEcho(scene);
       else if (scene.forced) finishForcedEpisode(scene);
       else finishEpisodeResult(scene);
     }
@@ -3982,6 +4051,7 @@
       render();
       return;
     }
+    openFamilyPlanningIfEligible(run);
     for (const tag of choice.outcomeTags || []) addTag(run, tag);
     scheduleConsequence(event, choice);
     run.decisionHistory.push({
@@ -4028,6 +4098,13 @@
     );
     run.currentDecision = null;
     run.phase = 'playing';
+    if (familyPlanningStartReady(run)) {
+      run.yearStarted = true;
+      save();
+      render();
+      setTimeout(() => (inputLocked = false), 180);
+      return;
+    }
     run.yearStarted = false;
     settleYear(run);
     run.age++;
@@ -4507,18 +4584,38 @@
         ['dating', 'partnered', 'married'].includes(run.relationships.partnerStatus)
     );
   }
+  function openFamilyPlanningIfEligible(run) {
+    const relationships = run.relationships;
+    if (
+      relationships.familyPlanningOffered ||
+      relationships.familyPlanningClosed ||
+      run.age < 23 ||
+      run.age > 39 ||
+      !validPlanningPartner(run)
+    ) return false;
+    relationships.familyPlanningOffered = true;
+    return true;
+  }
+  function familyPlanningStartReady(run) {
+    return run.age === 39 && INDEX.kinds.decision.some(
+      (event) =>
+        event.episode?.id === 'becoming_parent' &&
+        event.episode.phase === 1 &&
+        eligible(event, run)
+    );
+  }
   function prepareFamilyState(run) {
     const relationships = run.relationships;
+    openFamilyPlanningIfEligible(run);
     if (
       !relationships.familyPlanningOffered &&
       !relationships.familyPlanningClosed &&
-      run.age >= 23 &&
-      run.age <= 39 &&
+      run.age > 39 &&
       validPlanningPartner(run)
     ) {
       relationships.familyPlanningOffered = true;
-      if (stable(run.seed, 'family-planning-opportunity', 100) >= 85)
-        relationships.familyPlanningClosed = true;
+      relationships.familyPlanningClosed = true;
+      return queueFamilyPlanningEcho(run);
     }
     if (
       !relationships.adoptionOffered &&
@@ -4615,11 +4712,21 @@
       contentRevision: CONTENT_REVISION,
     };
   }
-  function eventWeight(event) {
-    const run = state.run;
+  function claimedDesireIds(run) {
+    return Object.entries(run.desires || {})
+      .filter(([, desire]) => desire && typeof desire === 'object' && desire.claimed)
+      .map(([id]) => id);
+  }
+  function opportunityMatchesClaim(event, run) {
+    const claimed = new Set(claimedDesireIds(run));
+    return Boolean(event.opportunity?.desires?.some((desire) => claimed.has(desire)));
+  }
+  function eventWeight(event, run = state.run) {
     let weight = event.weight || 10;
     const conflict = DATA.conflicts.find((item) => item.id === run.mainConflict);
-    weight *= CONTRACT.conflictWeightMultiplier(event.track, conflict?.desires);
+    const conflictMultiplier = CONTRACT.conflictWeightMultiplier(event.track, conflict?.desires),
+      claimedMultiplier = opportunityMatchesClaim(event, run) ? 1.35 : 1;
+    weight *= Math.min(1.5, conflictMultiplier * claimedMultiplier);
     if (event.track === 'remote') weight *= 1 + run.capabilities.portableSkill * 0.12;
     if (event.track === 'business') weight *= 1 + run.business.operatingSkill / 180;
     if (event.track === 'health') {
@@ -4674,8 +4781,9 @@
         )[0] || null
     );
   }
-  function activeEpisodeDecision(run) {
-    for (const [id, record] of Object.entries(run.episodes)) {
+  function activeEpisodeCandidates(run) {
+    const candidates = [];
+    for (const [id, record] of Object.entries(run.episodes || {})) {
       if (record.status !== 'active' || run.age < record.nextPhaseAge) continue;
       const candidate = INDEX.kinds.decision.find(
         (event) =>
@@ -4683,9 +4791,9 @@
           event.episode.phase === record.phase &&
           !run.usedEvents.includes(event.id)
       );
-      if (candidate && eligible(candidate, run)) return candidate;
+      if (candidate && eligible(candidate, run)) candidates.push(candidate);
     }
-    return null;
+    return candidates;
   }
   function mandatoryDecision(run) {
     const pendingPregnancy = INDEX.kinds.decision.find(
@@ -4719,8 +4827,8 @@
     if (run.age <= 75) return Math.min(18, run.targetDecisions);
     return run.targetDecisions;
   }
-  function crisisDecision(run) {
-    if (run.age - run.lastDecisionAge < 2) return null;
+  function crisisDecisionCandidates(run) {
+    if (run.age - run.lastDecisionAge < 2) return [];
     const track =
       run.finance.totalDebt > Math.max(50000, run.finance.lastIncome * 1.5)
         ? 'finance'
@@ -4733,19 +4841,16 @@
                 run.activity.years >= 2
               ? 'employment'
               : null;
-    if (!track || trackDecisionCount(run, track) >= 4) return null;
+    if (!track || trackDecisionCount(run, track) >= 4) return [];
     const episodic = ['health', 'habits'].includes(track);
-    return weighted(
-      INDEX.kinds.decision.filter(
-        (event) =>
-          event.track === track &&
-          (episodic ? event.episode?.role === 'start' : !event.episode) &&
-          eligible(event, run)
-      ),
-      eventWeight
+    return INDEX.kinds.decision.filter(
+      (event) =>
+        event.track === track &&
+        (episodic ? event.episode?.role === 'start' : !event.episode) &&
+        eligible(event, run)
     );
   }
-  function ageBoundEpisodeStart(run) {
+  function ageBoundEpisodeCandidates(run) {
     const candidates = INDEX.kinds.decision.filter(
         (event) =>
           event.episode?.role === 'start' &&
@@ -4767,7 +4872,20 @@
           run.employment.firstJobAge === null &&
           ['none', 'unemployed'].includes(run.employment.status)
       );
-    return familyPlanning || singleAdoption || unresolvedSchoolHarm || firstJobReentry || weighted(candidates, eventWeight);
+    const reserved = new Set(
+      [familyPlanning, singleAdoption, unresolvedSchoolHarm, firstJobReentry]
+        .filter(Boolean)
+        .map((event) => event.id)
+    );
+    return familyPlanning
+      ? [familyPlanning]
+      : singleAdoption
+        ? [singleAdoption]
+        : unresolvedSchoolHarm
+          ? [unresolvedSchoolHarm]
+          : firstJobReentry
+            ? [firstJobReentry]
+            : candidates.filter((event) => !reserved.has(event.id));
   }
   function educationGatewayDecision(run) {
     return (
@@ -4787,41 +4905,101 @@
       if (Number.isFinite(record.deadlineAge)) record.deadlineAge += 1;
     }
   }
-  function startDecision(run) {
-    const forced = mandatoryDecision(run),
-      educationGateway = educationGatewayDecision(run),
-      episode = activeEpisodeDecision(run),
-      ageBound = ageBoundEpisodeStart(run),
-      crisis = crisisDecision(run);
-    if (ageBound?.episode?.id === 'long_term_first_job_reentry') return ageBound;
-    if (forced || educationGateway || episode || ageBound || crisis)
-      return forced || educationGateway || episode || ageBound || crisis;
-    const starts = INDEX.kinds.decision.filter(
-      (event) => event.episode?.role === 'start' && eligible(event, run)
-    );
+  function ordinaryDecisionCandidates(run) {
+    return INDEX.kinds.decision.filter((event) => {
+      if (!eligible(event, run) || event.track === 'identity') return false;
+      if (!event.episode) return true;
+      if (event.episode.role !== 'start') return false;
+      if (event.episode.id === 'pregnancy_decision') return false;
+      if (['secondary_diversion', 'undergraduate_application'].includes(event.episode.id))
+        return false;
+      return !episodeCatalog(event.episode.id).ageBound;
+    });
+  }
+  function protectionAvailable(run) {
+    if (!claimedDesireIds(run).length) return false;
+    let claimIndex = -1;
+    for (let index = run.decisionHistory.length - 1; index >= 0; index--) {
+      if (['decision_161', 'decision_162'].includes(run.decisionHistory[index].eventId)) {
+        claimIndex = index;
+        break;
+      }
+    }
+    if (claimIndex < 0) return false;
+    return !run.decisionHistory.slice(claimIndex + 1).some((record) => {
+      const event = INDEX.event.get(record.eventId);
+      return event?.opportunity?.response === 'protect' && opportunityMatchesClaim(event, run);
+    });
+  }
+  function decisionCandidateLayers(run) {
+    const ordinary = ordinaryDecisionCandidates(run),
+      protectedCandidates = protectionAvailable(run)
+        ? ordinary.filter(
+            (event) =>
+              event.opportunity?.response === 'protect' && opportunityMatchesClaim(event, run)
+          )
+        : [];
+    return {
+      mandatory: [mandatoryDecision(run)].filter(Boolean),
+      educationGateway: [educationGatewayDecision(run)].filter(Boolean),
+      activeEpisode: activeEpisodeCandidates(run),
+      ageBound: ageBoundEpisodeCandidates(run),
+      crisis: crisisDecisionCandidates(run),
+      protected: protectedCandidates,
+      ordinary,
+    };
+  }
+  const DECISION_LAYER_ORDER = Object.freeze([
+    'mandatory',
+    'educationGateway',
+    'activeEpisode',
+    'ageBound',
+    'crisis',
+    'protected',
+    'ordinary',
+  ]);
+  const PROTECTED_OVER_LIMIT_LAYER_ORDER = Object.freeze([
+    'mandatory',
+    'educationGateway',
+    'activeEpisode',
+    'ageBound',
+    'protected',
+  ]);
+  function decisionQuotaOpen(run) {
     return (
-      weighted(starts, eventWeight) ||
-      weighted(
-        INDEX.kinds.decision.filter((event) => eligible(event, run)),
-        eventWeight
-      )
+      run.decisionCount < run.targetDecisions &&
+      run.decisionCount < decisionAllowance(run)
     );
   }
+  function startDecision(run, { preview = false } = {}) {
+    const layers = decisionCandidateLayers(run),
+      layerOrder = decisionQuotaOpen(run)
+        ? DECISION_LAYER_ORDER
+        : PROTECTED_OVER_LIMIT_LAYER_ORDER,
+      candidates = layerOrder.map((key) => layers[key]).find((items) => items.length) || [];
+    if (!candidates.length) return null;
+    const weightFn = (event) => eventWeight(event, run);
+    return preview
+      ? weightedAt(candidates, weightFn, peekRng(run))
+      : weighted(candidates, weightFn);
+  }
   function shouldOfferDecision(run) {
-    if (
-      mandatoryDecision(run) ||
-      educationGatewayDecision(run) ||
-      activeEpisodeDecision(run) ||
-      ageBoundEpisodeStart(run)
-    )
+    const layers = decisionCandidateLayers(run);
+    if (['mandatory', 'educationGateway', 'activeEpisode', 'ageBound'].some((key) => layers[key].length))
       return true;
-    if (run.decisionCount >= run.targetDecisions || run.decisionCount >= decisionAllowance(run))
-      return false;
-    if (crisisDecision(run)) return true;
+    if (!decisionQuotaOpen(run)) {
+      if (run.age - run.lastDecisionAge < 2) return false;
+      return layers.protected.length > 0;
+    }
+    if (layers.crisis.length) return true;
     if (run.age - run.lastDecisionAge < 2) return false;
+    if (layers.protected.length) return true;
+    if (!layers.ordinary.length) return false;
     const remaining = Math.max(1, (run.naturalDeathAge - run.age) / 4),
-      needed = run.targetDecisions - run.decisionCount;
-    return chance(Math.min(0.55, (needed / remaining) * 0.35));
+      needed = run.targetDecisions - run.decisionCount,
+      threshold = Math.min(0.55, (needed / remaining) * 0.35),
+      offerRoll = stable(run.seed, `decision-offer:${run.age}`, 10000) / 10000;
+    return offerRoll < threshold;
   }
 
   function addTimeline(event, text, variant = 'event') {
@@ -4963,7 +5141,10 @@
 
   function startCardDraw(age) {
     const pool = DATA.cards.filter(
-      (card) => card.drawAge === age && !state.run.cards.includes(card.id)
+      (card) =>
+        card.drawAge === age &&
+        !state.run.cards.includes(card.id) &&
+        requirementsMatch(card.requirements, state.run)
     );
     state.run.phase = 'card';
     state.run.cardAge = age;
@@ -5935,7 +6116,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.11-存档.json';
+    link.download = '人生尚未加载-v0.6.12-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }
@@ -6308,7 +6489,14 @@
           forceAge: (age) =>
             patchRun({ age: clamp(age, 0, 105), yearStarted: false, yearQueue: [] }),
           forceDecision,
-          nextDecisionId: () => startDecision(state.run)?.id || null,
+          nextDecisionId: () => startDecision(state.run, { preview: true })?.id || null,
+          decisionCandidateLayers: () => Object.fromEntries(
+            Object.entries(decisionCandidateLayers(state.run)).map(([key, events]) => [
+              key,
+              events.map((event) => event.id),
+            ])
+          ),
+          episodeMetadata: (id) => copy(episodeMetadata(String(id))),
           forceCardDraw: (age) => {
             startCardDraw(Number(age));
             return copy(state.run.cardOptions);

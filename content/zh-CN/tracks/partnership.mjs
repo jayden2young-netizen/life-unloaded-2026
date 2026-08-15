@@ -20,7 +20,7 @@ export const PARTNERSHIP_COPY=track('恋爱和过日子',[
   b('awkward','亲戚问什么时候结婚，你们同时低头夹菜。'),
   b('awkward','家庭群发错表情，解释比原消息长得多。'),
   b('awkward','分开后共同会员到期，平台仍提醒一起续费。'),
-  b('friction','房租能省一半，家务却很难刚好一人一半。'),
+  b('friction','房租能省一半，家务却很难刚好一人一半。',{requirements:req([p('housing.status','eq','renting'),p('housing.arrangement','eq','partner'),p('housing.costShare','eq','joint')])}),
   b('friction','共同账户少了一笔钱，对方只说晚点解释。'),
   b('friction','工作调动来了，谁跟谁走成了新的问题。'),
   b('friction','双方父母都说不干涉，又各自给了一套意见。'),
@@ -35,7 +35,7 @@ export const PARTNERSHIP_COPY=track('恋爱和过日子',[
   b('major','两把钥匙还挂在一起，但这次争吵后谁都没有带走。'),
   b('major','多年共同生活结束后，搬走的人只带了一个箱子。')
 ],[
-  e({id:'relationship_start',lane:'relationship',phase:1,role:'start',delayYears:1,deadlineYears:2},
+  e({id:'relationship_start',lane:'relationship',phase:1,role:'start',delayYears:1,deadlineYears:2,opportunity:{group:'relationship.start',desires:['love','familyBelonging'],response:'protect'}},
     '你们把手机放到桌边，第一次认真谈钱、在哪个城市、独处时间、以后。没有共同账户，也没有谁能默认拿着对方的钥匙。',
     '这段关系怎么开始？','那次把话说开的晚上，后来没有被暧昧盖过去。',
     c('在一起，先把边界说清楚','你们确认了关系，也把大额开销、失联和见家人的边界先谈了一遍。备用钥匙还没交出去。','下一次意见不合的时候，你们先翻到了那天说过的话。'),

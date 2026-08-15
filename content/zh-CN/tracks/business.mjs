@@ -33,7 +33,7 @@ export const BUSINESS_COPY=track('自己做生意',[
   b('major','你第一次拉开自己的卷帘门，门外一个客人也没有。'),
   b('major','打烊后，你把松动的招牌拆下维修，螺丝和新报价装了满满一袋。')
 ],[
-  e({id:'shop_opening',lane:'career',phase:1,role:'start',delayYears:1,deadlineYears:5},
+  e({id:'shop_opening',lane:'career',phase:1,role:'start',delayYears:1,deadlineYears:5,opportunity:{group:'business.opening',desires:['wealth','creation'],response:'weight'}},
     '招商经理把预算表推到你面前，最后一栏写着"今天签约才保留商圈"。样板店收银台很亮——房租、损耗和退出那几行，表里没有。',
     '交定金之前，先怎么搞清楚能不能做？','那次签约前的功课，后来决定了店从哪里起步。',
     c('查备案。找做过的人看账','你查了备案和公开材料。从二手设备信息摸到离场店主——宣传的流水，头一次和房租、人工、损耗摆在同一张表上。','开业后遇到淡季，你还是先看净现金——不是排队照片。'),

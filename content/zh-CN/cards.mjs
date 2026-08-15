@@ -1,4 +1,6 @@
-const card=(displayName,text,mechanic)=>({displayName,text,mechanic});
+const p=(path,op,value)=>({path,op,value});
+const req=(all=[],any=[],none=[])=>({all,any,none});
+const card=(displayName,text,mechanic,extra={})=>({displayName,text,mechanic,...extra});
 
 export const CARD_COPY={
   0:[
@@ -72,13 +74,14 @@ export const CARD_COPY={
     card('有件事只为喜欢','它不赚钱，也没人点赞，你还是一直在做。','creativity'),
     card('照护也会轮班','你知道照顾人不能靠一个人长期硬撑。','careSkill'),
     card('把遗嘱谈清楚','钱、物品和照护安排，你愿意当面说清楚。','negotiation'),
-    card('一张能带走的证书','离开原单位后，你仍有一项资格可以使用。','portableSkill'),
+    card('一种能反复练的本事','换了工具和场合，你仍知道怎么把事情做下去。','portableSkill'),
     card('旧合同找得到','多年以前签过的文件，你仍知道放在哪里。','evidence'),
     card('认识靠谱的年轻人','遇到新工具和新规矩时，有人愿意耐心解释。','network'),
     card('生活可以重新排','原来的日程走不通，你愿意换一种过法。','resilience'),
     card('手里留着现金','临时开销来了，你不用当天卖掉长期资产。','cashBuffer'),
     card('知道何时求助','疼痛、失眠或情绪失控时，你不会一直拖着。','healthLiteracy'),
-    card('允许孩子不同意','关心下一代，不等于替他们把答案写好。','boundary'),
-    card('肯从零开始','年纪没有让你假装什么都会，你仍能重新学。','learning')
+    card('允许孩子不同意','关心下一代，不等于替他们把答案写好。','boundary',{requirements:req([p('relationships.childCount','gte',1)]),interactionScope:'family'}),
+    card('肯从零开始','年纪没有让你假装什么都会，你仍能重新学。','learning'),
+    card('自己的答复自己给','别人替你着急，也不能替你把那声同意说出口。','boundary',{requirements:req([p('relationships.childCount','eq',0)]),interactionScope:'general'})
   ]
 };

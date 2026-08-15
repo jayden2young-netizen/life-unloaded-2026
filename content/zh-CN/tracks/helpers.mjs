@@ -2,8 +2,17 @@ export const beat=(tone,text,extra={})=>({tone,text,...extra});
 export const choice=(text,resultText,consequenceText,extra={})=>({text,resultText,consequenceText,...extra});
 export const decision=(prompt,echoText,...choices)=>({prompt,echoText,choices});
 export const episodeDecision=(episode,situation,prompt,echoText,...choices)=>{
-  const {age,...episodeSpec}=episode;
-  return{episode:episodeSpec,...(age?{age}:{}),situation,prompt,echoText,choices};
+  const {age,opportunity,routeSituations,...episodeSpec}=episode;
+  return{
+    episode:episodeSpec,
+    ...(age?{age}:{}),
+    ...(opportunity?{opportunity}:{}),
+    ...(routeSituations?{routeSituations}:{}),
+    situation,
+    prompt,
+    echoText,
+    choices,
+  };
 };
 export const track=(label,beats,decisions)=>({
   label,

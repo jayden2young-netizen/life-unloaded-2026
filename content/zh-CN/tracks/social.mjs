@@ -38,7 +38,7 @@ const beats=[
   // 同事、合作与职场人情（5）
   b('ordinary','午饭群每天十一点半问吃什么，真正决定方向的是谁先按下电梯。',{age:[18,68],requirements:req([], [p('employment.status','in',['employed','gig','selfEmployed'])]),effects:[]}),
   b('awkward','群公告写着聚餐自愿，报名表最后一栏却是“不能来的原因”。',{age:[18,68],requirements:req([p('employment.status','eq','employed')]),effects:[]}),
-  b('ordinary','旧同事转来一张内部招聘截图，先提醒你别只看职位名称。',{age:[22,68],requirements:req([], [p('employment.status','in',['employed','unemployed','gig'])]),effects:[add('capabilities.network',1)]}),
+  b('ordinary','旧同事转来一张内部招聘截图，先提醒你别只看职位名称。',{age:[22,68],requirements:req([p('employment.lastJob','truthy',true)]),effects:[add('capabilities.network',1)]}),
   b('ordinary','小周把会议纪要抄送给你，也把午休时那句抱怨留在了线下。',{age:[22,68],actors:[actor('social.secondaryPersonId',{socialSource:'work',socialTieAny:['friend','close'],socialProximity:'local'})],effects:[add('relationships.network',1)]}),
   b('friction','离职群退得很快。以前每天一起吃饭的人，后来只在朋友圈互相点过一次赞。',{age:[22,70],requirements:req([p('employment.status','notIn',['employed','selfEmployed'])]),effects:[]}),
 
@@ -60,7 +60,7 @@ const beats=[
 
   // 迁移、重逢与晚年（3）
   b('ordinary','搬到新城市后，通讯录没有变短，能临时叫出来吃饭的人却要重新数。',{age:[18,70],requirements:req([], [p('mobility.mode','in',['domesticNomad','overseasNomad','studyAbroad']),p('housing.stability','eq','temporary')]),effects:[]}),
-  b('ordinary','隔着时区，那位旧识还是会在你复诊或搬家那天问一句到家没有。',{age:[30,105],actors:[actor('social.primaryPersonId',{socialTieAny:['friend','close','distant'],socialProximity:'remote'})],effects:[add('pressures.loneliness',-1)]}),
+  b('ordinary','隔着时区，那位旧识还是会在你提到麻烦那天问一句到家没有。',{age:[30,105],actors:[actor('social.primaryPersonId',{socialTieAny:['friend','close','distant'],socialProximity:'remote'})],effects:[add('pressures.loneliness',-1)]}),
   b('ordinary','你拒绝了临时活动，把下午留给一顿慢饭和没看完的书，屋里安静但不空。',{age:[18,105],requirements:req([p('social.latestIntent','eq','solitude')]),effects:[add('desires.peace.fulfillment',1)]})
 ];
 
@@ -71,7 +71,7 @@ const decisions=[
     '这条旧消息，发不发？','那张同学录后来仍夹在旧照片里，旁边多了一次发送或一次停下。',[
       c('发一句具体的近况','你写了自己是谁，也问了对方现在过得怎样，没有先约下一次见面。','那条消息留下了已送达；关系会不会继续，还得等另一个人回应。',{route:'reachedOut',effects:[add('relationships.network',1)],outcomeTags:['social:intent:connect','social:childhood:reachedOut']}),
       c('先不打扰','你关掉搜索页，把照片重新放好，没有编一个忙碌的理由。','旧名字还在通讯录里。这次也没变成新的联系。',{route:'leftAlone',effects:[add('desires.peace.fulfillment',1)],outcomeTags:['social:childhood:leftAlone']})
-    ]),
+    ],{opportunity:{group:'social.reconnect',desires:['love','familyBelonging'],response:'weight'}}),
 
   // 2／8：校园边界与关系转折（3 选；有界稳定随机之一）。
   sd([17,30],req([p('education.status','eq','enrolled'),p('social.primaryPersonId','eq',null)]),
@@ -128,7 +128,7 @@ const decisions=[
         variant('online_persistent',25,'小禾记得你提过的考试或排班，后来仍会在固定时间上线聊几句。','这段关系先留在线上；距离不近，回应却不全靠群消息。',[createSocial('primary','小禾','online',{tie:'friend',proximity:'unknown',turn:'met',support:'unseen'}),add('relationships.network',2)],{outcomeTags:['social:firstMeeting:persistent']})
       ]}}),
       c('把周末留给自己','你退出这次报名，关掉群提醒，给自己做了顿饭。','没有赴约不等于错过人生；这个周末确实被休息接住了。',{route:'choseSolitude',effects:[add('desires.peace.fulfillment',2)],outcomeTags:['social:intent:solitude','social:firstMeeting:declined']})
-    ]),
+    ],{opportunity:{group:'social.firstMeeting',desires:['freedom','exploration'],response:'protect'}}),
 
   // 7／8：严重压力中的有限支持（2 选；有界稳定随机之一）。
   sd([22,85],req([], [p('finance.totalDebt','gte',100000),p('housing.stability','in',['conditional','temporary']),p('employment.status','eq','unemployed'),p('health.status','in',['treating','limited']),p('development.careLoad','gte',20)]),
@@ -140,7 +140,7 @@ const decisions=[
         variant('support_unable',25,'对方说明自己这次实在接不住，也没有拿一句“改天”拖着你等。','你听见了拒绝。眼前的缺口没变，关系以后怎样仍不能由这一次自动决定。',[updateSocial({personId:'$actor',support:'unable'}),add('pressures.loneliness',3)],{outcomeTags:['social:support:unable']})
       ]}}),
       c('先走正式渠道','你把账单、合同、就诊单或照护安排中最急的一项拿去核实，没有要求朋友替制度签字。','能办的事按正式入口继续；联系朋友仍是以后可以另做的选择。',{route:'usedFormalRoute',effects:[add('capabilities.evidence',2),add('capabilities.riskSense',1)],outcomeTags:['social:crisis:formalRoute']})
-    ],{actors:[actor('social.primaryPersonId',{socialTieAny:['friend','close','distant']})]}),
+    ],{actors:[actor('social.primaryPersonId',{socialTieAny:['friend','close','distant']})],opportunity:{group:'social.support',desires:['love','familyBelonging'],response:'weight'}}),
 
   // 8／8：中晚年重联、约会入口、主动独处与明确求连接（4 选；有界稳定随机之一）。
   sd([45,105],req(),
@@ -158,7 +158,7 @@ const decisions=[
       ]}}),
       c('今天就自己待着','你把手机放远，做饭、散步或看完一场电影，没有给谁写请假条。','那天的时间全归你。屋里安静，你没觉得少了谁。',{route:'activeSolitude',effects:[add('desires.peace.fulfillment',2)],outcomeTags:['social:intent:solitude','social:later:solitude']}),
       c('去认识附近的人','你报了一个写明时间、费用和退出方式的附近活动，没有假装已经交到朋友。','活动结束时，你只记住几个名字。下一次还去不去，日历上还是空的。',{route:'soughtConnection',effects:[add('relationships.network',2),add('mobility.localTies',1)],outcomeTags:['social:intent:connect','social:later:newCircle']})
-    ],{actors:[actor('social.primaryPersonId',{socialTieAny:['friend','close','distant'],optional:true})]})
+    ],{actors:[actor('social.primaryPersonId',{socialTieAny:['friend','close','distant'],optional:true})],opportunity:{group:'social.reconnect',desires:['freedom','exploration'],response:'protect'}})
 ];
 
 export const SOCIAL_COPY=track('社会交往与人生联系',beats,decisions);

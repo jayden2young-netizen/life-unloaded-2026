@@ -774,6 +774,7 @@ export const CARD_AUTHOR_SLOT_HASHES = Object.freeze([
   "0d329969665094f7341ea31c"
 ]);
 export const BEAT_SLOT_REGISTRATIONS = [
+  {key:'@author/beat/ca8a627d31fa4f5269c90c14',slot:{id:'beat_262',track:'finance',localIndex:5},replaces:'@author/beat/bd46781b9095af9d3fc44451'},
   {key:'@author/beat/70c70d6ce8fa2c58df89640a',slot:{id:'beat_353',track:'later',localIndex:0},replaces:'@author/beat/0bf59d9c21065816a3f8c46a'},
   {key:'@author/beat/f873aa2dfa9776ace7c0291a',slot:{id:'beat_356',track:'later',localIndex:3},replaces:'@author/beat/4f986738f1a4a16aad787b39'},
   {key:'@author/beat/796b452dff5eb43fb683c7e2',slot:{id:'beat_360',track:'later',localIndex:7},replaces:'@author/beat/bef16c309d43c715aa436c7f'},
@@ -899,6 +900,11 @@ export const BEAT_SLOT_REGISTRATIONS = [
   {key:'@author/beat/3b552d36de97f6c25ec21321',slot:{id:'beat_478',track:'social',localIndex:21}},
   {key:'@author/beat/eb603ef8271186ec32255652',slot:{id:'beat_479',track:'social',localIndex:22}},
   {key:'@author/beat/2b4880011e173a941435da30',slot:{id:'beat_480',track:'social',localIndex:23}},
+  {key:'@author/beat/648e0fad0b6a6eadcffbfa1b',slot:{id:'beat_263',track:'finance',localIndex:6},replaces:'@author/beat/d5dd450dc798f04b514d542a'},
+  {key:'@author/beat/8a260a2065c28f9e5de157a1',slot:{id:'beat_265',track:'finance',localIndex:8},replaces:'@author/beat/d97c7cb60fb0b4d443b3b9e0'},
+  {key:'@author/beat/c19696202b5b2e5c9cb1fd8f',slot:{id:'beat_324',track:'habits',localIndex:3},replaces:'@author/beat/3dedea7b0d6ee4655858dd04'},
+  {key:'@author/beat/65622bfd8177373f80819f13',slot:{id:'beat_339',track:'habits',localIndex:18},replaces:'@author/beat/38dd64d85dc9c1289a779f83'},
+  {key:'@author/beat/66971e53ecd0ea5dcf767729',slot:{id:'beat_479',track:'social',localIndex:22},replaces:'@author/beat/eb603ef8271186ec32255652'},
 ];
 export const DECISION_SLOT_REGISTRATIONS = [
   {key:'@author/decision/634049bbb763505201d5b7c5',slot:{id:'decision_122',track:'habits',localIndex:0},replaces:'@author/decision/db3789a2ba410d8d591ef9f2'},
@@ -1131,5 +1137,11 @@ export const DECISION_SLOT_REGISTRATIONS = [
   {key:'@author/decision/5f08940322a72a5e66535c6e',slot:{id:'decision_153',track:'later',localIndex:1},replaces:'@author/decision/00f71da6de56a29e4f5c0e62'},
   {key:'@author/decision/cb54c3322e2cfa51a5ac0dec',slot:{id:'decision_160',track:'later',localIndex:8},replaces:'@author/decision/b7ed10e29ce7137d7e240aee'},
   {key:'@author/decision/1a25b9575f1d546c86e68da7',slot:{id:'decision_107',track:'finance',localIndex:1},replaces:'@author/decision/e0fd447513873cc3f1c706af'},
+  {key:'@author/decision/0db247b46578ad0eb0ca27a5',slot:{id:'decision_161',track:'identity',localIndex:0},replaces:'@author/decision/22cad5bad339e3fb814d491f'},
+  {key:'@author/decision/d8bbc03f4315e991d1075929',slot:{id:'decision_162',track:'identity',localIndex:1},replaces:'@author/decision/9f6ea094475c7a952a2b8ea0'},
+  {key:'@author/decision/11d7715870bf164297c93acf',slot:{id:'decision_009',track:'education',localIndex:8},replaces:'@author/decision/10003c4ddacabd2a7a832eba'},
 ];
-export const CARD_SLOT_REGISTRATIONS = [];
+export const CARD_SLOT_REGISTRATIONS = [
+  {key:'@author/card/ed8a1e4158c896c0201ede79',slot:{id:'card_65',globalIndex:64},replaces:'@author/card/2bd61b8762cbb06688238d60'},
+  {key:'@author/card/b899f2cde367cd9f324d2987',slot:{id:'card_73',globalIndex:72}},
+];

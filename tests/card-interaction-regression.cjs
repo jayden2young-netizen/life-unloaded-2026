@@ -32,6 +32,9 @@ async function forceOrdinary(page,target,cards){
   assert.ok(activeInteractions.every(choice=>!choice.cardInteraction.explanation?.includes('准备')&&!choice.cardInteraction.resultSuffix?.includes('你这次走的是')),'no template recap survives');
   assert.deepEqual(data.cardInteractionCoverage,{decisionPanels:205,activePanels:205,interactions:214,witnesses:2});
   assert.deepEqual(new Set(choices.filter(choice=>choice.cardInteraction).map(choice=>choice.cardInteraction.mode)),new Set(['unlock','requirementShift','costShift','riskShift','resultVariant']));
+  assert.equal(activeInteractions.filter(choice=>choice.cardInteraction.scope==='family').length,2);
+  assert.ok(activeInteractions.every(choice=>['family','general'].includes(choice.cardInteraction.scope)));
+  assert.deepEqual(data.cards.filter(card=>['card_71','card_73'].includes(card.id)).map(card=>[card.id,card.interactionScope]),[['card_71','family'],['card_73','general']]);
 
   const browser=await launchChromium();
   try{
@@ -45,10 +48,18 @@ async function forceOrdinary(page,target,cards){
     await page.addInitScript(({key,value})=>localStorage.setItem(key,JSON.stringify(value)),{key:SAVE_KEY,value:oldSave});
     await page.goto(URL,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.11',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.12',null]);
     assert.equal(migrated.meta.histories[0].title,'旧人生');
     await page.evaluate(key=>localStorage.removeItem(key),SAVE_KEY);await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     await page.locator('[data-act="new"]').click();await page.locator('[data-act="birth-next"]').click();await page.locator('[data-act="random-attributes"]').click();await page.locator('[data-act="attributes-done"]').click();await page.locator('[data-card]').first().click();
+
+    const heldAge55=data.cards.filter(card=>card.drawAge===55&&!['card_71','card_73'].includes(card.id)).map(card=>card.id);
+    let drawOptions=await page.evaluate(held=>{window.__LIFE_DEBUG__.patchRun({people:[],relationships:{childCount:0},cards:held,cardAges:[0,18,35],phase:'playing',sceneQueue:[],currentDecision:null});return window.__LIFE_DEBUG__.forceCardDraw(55)},heldAge55);
+    assert.deepEqual(drawOptions.map(card=>card.id),['card_73'],'child-free draw exposed the child-only boundary card');
+    const drawChild={id:'card_scope_child',relation:'child',bornAt:40,alive:true,status:'living',bond:60,legalStatus:'biological'};
+    drawOptions=await page.evaluate(({held,child})=>{window.__LIFE_DEBUG__.patchRun({people:[child],relationships:{childCount:1},cards:held,cardAges:[0,18,35],phase:'playing',sceneQueue:[],currentDecision:null});return window.__LIFE_DEBUG__.forceCardDraw(55)},{held:heldAge55,child:drawChild});
+    assert.deepEqual(drawOptions.map(card=>card.id),['card_71'],'parent draw exposed the child-free boundary card');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({cards:[],cardAges:[0],phase:'playing',sceneQueue:[],currentDecision:null}));
 
     const resultVariant=interaction('resultVariant',false),resultCard=cardFor(resultVariant.choice.cardInteraction.primaryMechanic);
     await forceOrdinary(page,resultVariant,[]);assert.equal(await page.locator('.card-active').count(),0);await page.locator(`[data-choice="${resultVariant.index}"]`).click();await page.waitForTimeout(240);

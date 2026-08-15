@@ -183,7 +183,7 @@ export const EMPLOYMENT_COPY={
         {text:'不续了，走人',resultText:'你交了工牌，结了工资和假期。退不退休的事，不是这份合同能定的。',consequenceText:'下次再想退不退休的时候，社保年限还得另外算。'}
       ]
     },
-    e({id:'first_job_application',lane:'career',phase:1,role:'start',delayYears:1,deadlineYears:4,age:[16,28]},
+    e({id:'first_job_application',lane:'career',phase:1,role:'start',delayYears:1,deadlineYears:4,age:[16,28],opportunity:{group:'career.firstJob',desires:['security','achievement','wealth'],response:'weight'}},
       '上一段学业停在成绩单上，工作还没有着落。招聘网站、学校或项目群里每天都有新链接，每个都催你尽快投，每份表又都要把经历重填一遍。',
       '第一份工作，你先从哪儿找？','你选了一个入口，开始真的往外投。',
       c('先投入门岗位','学历和离校时间照实填，做过什么也照实写。你没把一次社团活动改成三年管理经验。','收藏夹短了一点，“已申请”那栏终于不再是空的。'),

@@ -17,6 +17,7 @@ const oneShot=(age,prompt,echoText,...choices)=>({
   echoText,
   choices:choices.map(choice=>({consequenceDelay:1,...choice}))
 });
+const withOpportunity=(opportunity,decision)=>({...decision,opportunity});
 
 const tx=[
  ['工作日的闹钟关掉以后，你花了几周才不在七点准时醒。',{age:[55,105],retirement:retired}],
@@ -133,11 +134,11 @@ const decisions=[
    c('暂不签，写明原因','你停下这轮签署，把未完成原因和资料位置写清。','你暂时没签。欠款和分配还没说清，硬留一份纸只会让以后更难收拾。'),
    c('条件变了，旧稿作废','账户或见证条件变化，你标记旧稿作废并收回副本。','旧稿收回了。真要再办，得按现在的人和账户重新签。')),
 
- oneShot([60,105],'热门课程只剩候补。报名页催你尽快确认，真正想学的那门却不知道什么时候有空位。','后来再看到候补两个字，你已经有了自己的处理办法。',
+ withOpportunity({group:'later.learning',desires:['freedom','creation'],response:'protect'},oneShot([60,105],'热门课程只剩候补。报名页催你尽快确认，真正想学的那门却不知道什么时候有空位。','后来再看到候补两个字，你已经有了自己的处理办法。',
    c('等候补','你保留名额，也给自己定了不再等的日期。','名额后来空出时，你没有把整段时间都押在它身上。',{route:'waitlisted',effects:[],consequenceEffects:[add('agency',1),tag('history','echo:later')]}),
    c('换一门冷门课','你选了人少的课程，第一节就坐到了前排。','原本只是替代的东西，后来真学了进去。',{route:'alternative',effects:[add('capabilities.learning',1)],consequenceEffects:[add('capabilities.learning',1),tag('history','echo:later')]}),
    c('按自己的办法学','你找来书和公开视频，把进度写在纸上。','没人点名，学过的那几页仍留了下来。',{route:'self_taught',effects:[add('capabilities.learning',1)],consequenceEffects:[add('capabilities.learning',1),tag('history','echo:later')]}),
-   c('这次不报','你关掉报名页，把时间留给别的事。','空下来的下午没有自动变成浪费。',{route:'declined',effects:[add('desires.peace.fulfillment',1)],consequenceEffects:[add('desires.peace.fulfillment',1),tag('history','echo:later')]})),
+   c('这次不报','你关掉报名页，把时间留给别的事。','空下来的下午没有自动变成浪费。',{route:'declined',effects:[add('desires.peace.fulfillment',1)],consequenceEffects:[add('desires.peace.fulfillment',1),tag('history','echo:later')]}))),
  oneShot([55,105],'有人听说你“时间多”，想把一件临时帮忙变成每周固定安排。你不讨厌这件事，只是不想默认答应。','那次谈过以后，“有空”不再等于随时都能叫到你。',
    c('固定接下来','你答应固定时段，其他时间仍按自己的安排走。','被需要有了位置，也占掉了固定的一块时间。',{route:'regular',effects:[add('pressures.family',2)],consequenceEffects:[add('agency',1),tag('history','echo:later')]}),
    c('只帮这一次','你把这次做完，也明确没有下一次默认续上。','人情留住了，日历没有跟着被接管。',{route:'once',effects:[add('capabilities.boundary',1)],consequenceEffects:[add('capabilities.boundary',1),tag('history','echo:later')]}),

@@ -142,7 +142,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.11',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.12',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.11完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,11);
@@ -383,6 +383,8 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
 
     const reentryBase={age:34,education:{status:'completed',level:4,path:'college',highestCompleted:'undergraduate',nextStage:'career'},employment:{status:'unemployed',entryCredential:'bachelor',applicationStatus:'searching',firstJobAge:null,firstJobEntryPath:'reentry'},activity:{mode:'seeking'}};
     await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({...value,age:32,phase:'playing',sceneQueue:[],currentDecision:null,episodes:null}),reentryBase);
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),'decision_162','reentry must not bypass the adult identity decision');
+    await page.evaluate(()=>{const run=window.__LIFE_DEBUG__.snapshot();window.__LIFE_DEBUG__.patchRun({usedEvents:[...new Set([...(run.usedEvents||[]),'decision_162'])],desires:{reclaimed:true}})});
     assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),eventFor('long_term_first_job_reentry',1).id);
     await preparePhase(page,'long_term_first_job_reentry',3,reentryBase);
     run=await choose(page,0);

@@ -1,5 +1,8 @@
 import {beat as b,choice as c,episodeDecision as e,track} from './helpers.mjs';
 const child=(ageMin,ageMax)=>({actors:[{slot:'child',relationAny:['child','adoptedChild','stepChild'],alive:true,ageMin,ageMax,optional:false}]});
+export const FAMILY_PLANNING_COPY=Object.freeze({
+  latePartnerEcho:'你们把以后谈到孩子时，才发现这件事此前从未由两个人一起决定过。没有说过，不等于谁已经放弃；现在若要再谈，只能从彼此的身体和现实重新看。'
+});
 export const CHILDREN_COPY=track('生不生、怎么养',[
   b('ordinary','产检单夹进文件袋，下一次日期圈在月历上。'),
   b('ordinary','奶瓶晾在窗边，你终于记住了半夜那顿的时间。',child(0,2)),
@@ -19,7 +22,7 @@ export const CHILDREN_COPY=track('生不生、怎么养',[
   b('awkward','青春期孩子把房门锁上，又忘了拿充电器。',child(12,19)),
   b('awkward','毕业照里孩子站最后一排，你放大找了半天。',child(16,26)),
   b('awkward','成年孩子说自己做主，报平安仍只发一个到。',child(18,60)),
-  b('friction','谁请育儿假说了三次，排班表先替你做了决定。',child(0,5)),
+  b('friction','谁请育儿假说了三次，排班表先替你做了决定。',{...child(0,5),requirements:{all:[{path:'employment.status',op:'eq',value:'employed'}],any:[],none:[]}}),
   b('friction','祖辈来帮忙，也把另一套养法一起带进了家。',child(0,12)),
   b('friction','学区房广告发来，首付正好超过全部积蓄。',child(5,18)),
   b('friction','补课费涨了，孩子却说根本不想再去。',child(6,18)),

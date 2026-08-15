@@ -1,5 +1,6 @@
 import {
   COMMAND_TYPES,
+  EPISODE_CATALOG_EXCEPTION_IDS,
   EMPLOYMENT_REFERRAL_STATUS,
   HOUSING_ACCESSIBILITY,
   HOUSING_ARRANGEMENTS,
@@ -19,7 +20,10 @@ import {
   TRACK_DESIRE_EVIDENCE,
   WRITE_PATHS,
   isCommandType,
+  isCardInteractionScope,
+  isOpportunityMetadata,
   isReadPath,
+  isRouteSituations,
   isRuntimeOperator,
   isWritePath,
 } from '../runtime-content-contract.mjs';
@@ -55,6 +59,7 @@ const COMMAND_TARGETS = Object.freeze({
   transitionSocialToDating: 'relationships.partnerStatus',
   createEmploymentReferral: 'employment',
   transitionPartner: 'people',
+  confirmPartnership: 'relationships.partnerStatus',
   transitionHousing: 'housing',
   socialCoResidence: 'housing',
   resolveInheritance: 'originHousehold.assets',
@@ -293,12 +298,14 @@ export function validateCommand(command, location = 'command') {
   if (
     ['expose', 'tag', 'resolveApplication', 'resolveGraduateApplication', 'resolveFirstJobApplication',
       'acceptFirstJobOffer', 'applyEmploymentProfile', 'leaveEmployment', 'resolveLayoff',
-      'grantCredential', 'transitionPartner', 'transition'].includes(command.type) &&
+      'grantCredential', 'transitionPartner', 'confirmPartnership', 'transition'].includes(command.type) &&
     typeof command.value !== 'string'
   )
     fail(location, `${command.type}.value 必须是字符串`);
   if (command.type === 'adjustJobTier' && !finite(command.value))
     fail(location, 'adjustJobTier.value 必须是有限数值');
+  if (command.type === 'confirmPartnership' && command.value !== 'partnered')
+    fail(location, 'confirmPartnership.value 只允许 partnered');
   if (
     command.type === 'set' &&
     !(
@@ -451,16 +458,59 @@ function validateReferences(data) {
   const events = new Map(data.events.map((event) => [event.id, event]));
   const profiles = new Set(data.endingProfiles.map((profile) => profile.id));
   const episodePhases = new Map();
-  for (const event of data.events.filter(
+  const episodeEvents = data.events.filter(
     (candidate) => candidate.kind === 'decision' && candidate.episode?.id
-  )) {
+  );
+  for (const event of episodeEvents) {
     const key = `${event.episode.id}\0${event.episode.phase}`;
     if (episodePhases.has(key))
       fail(`events.${event.id}.episode`, `重复 episode phase：${event.episode.id}#${event.episode.phase}`);
     episodePhases.set(key, event);
   }
+  const episodeIds = [...new Set(episodeEvents.map((event) => event.episode.id))].sort(),
+    missingCatalogIds = episodeIds.filter((id) => !Object.hasOwn(data.episodeCatalog || {}, id));
+  if (JSON.stringify(missingCatalogIds) !== JSON.stringify(EPISODE_CATALOG_EXCEPTION_IDS))
+    fail('episodeCatalog', `稀疏例外漂移：${missingCatalogIds.join(', ')}`);
+  const latePartnerEcho = data.episodeCatalog?.becoming_parent?.latePartnerEcho;
+  if (typeof latePartnerEcho !== 'string' || !latePartnerEcho.trim())
+    fail('episodeCatalog.becoming_parent.latePartnerEcho', '缺少晚成伴侣的一次性作者回响');
+  if (/(不孕|不可能怀孕|系统|窗口)/.test(latePartnerEcho))
+    fail('episodeCatalog.becoming_parent.latePartnerEcho', '不得写成医学绝对线或泄露状态机');
+  for (const id of episodeIds) {
+    const phases = episodeEvents
+      .filter((event) => event.episode.id === id)
+      .sort((a, b) => a.episode.phase - b.episode.phase),
+      lanes = new Set(phases.map((event) => event.episode.lane));
+    if (lanes.size !== 1) fail(`episodes.${id}`, '同一 episode 的 lane 必须一致');
+    if (phases[0].episode.phase !== 1 || phases[0].episode.role !== 'start')
+      fail(`episodes.${id}`, '必须从 phase 1 / start 开始');
+    if (phases.at(-1).episode.role !== (phases.length === 1 ? 'start' : 'resolve'))
+      fail(`episodes.${id}`, '多阶段 episode 必须以 resolve 结束');
+    phases.forEach((event, index) => {
+      if (event.episode.phase !== index + 1)
+        fail(`episodes.${id}`, 'phase 必须从 1 连续递增');
+      if (!Number.isInteger(event.episode.deadlineYears) || event.episode.deadlineYears < 1 || event.episode.deadlineYears > 5)
+        fail(`events.${event.id}.episode.deadlineYears`, '必须在 1 到 5 年之间');
+    });
+  }
 
   for (const event of data.events) {
+    if (event.opportunity !== undefined) {
+      if (event.kind !== 'decision' || !isOpportunityMetadata(event.opportunity))
+        fail(`events.${event.id}.opportunity`, '非法 opportunity metadata');
+      if (event.episode && event.episode.role !== 'start')
+        fail(`events.${event.id}.opportunity`, '只允许独立选择或 episode start 声明');
+    }
+    if (event.routeSituations !== undefined) {
+      if (!event.episode || event.episode.phase <= 1 || !isRouteSituations(event.routeSituations))
+        fail(`events.${event.id}.routeSituations`, '只允许后续 episode phase 声明合法 route 文案');
+      const previous = episodePhases.get(`${event.episode.id}\0${event.episode.phase - 1}`),
+        abandoned = new Set(data.episodeCatalog?.[event.episode.id]?.abandonedRoutes || []),
+        expected = [...new Set((previous?.choices || []).map((choice) => choice.route).filter((route) => !abandoned.has(route)))].sort(),
+        actual = Object.keys(event.routeSituations).sort();
+      if (JSON.stringify(actual) !== JSON.stringify(expected))
+        fail(`events.${event.id}.routeSituations`, `必须覆盖前序可继续路线：${expected.join(', ')}`);
+    }
     validateRecurrence(event, `events.${event.id}`);
     if (event.episode?.ageAdvanceYears !== undefined) {
       if (event.track !== 'education' && event.episode.id !== 'pregnancy_decision')
@@ -473,6 +523,8 @@ function validateReferences(data) {
     for (const [choiceIndex, choice] of (event.choices || []).entries()) {
       const choiceLocation = `events.${event.id}.choices[${choiceIndex}]`;
       validateRequirements(choice.requirements ?? [], choiceLocation);
+      if (choice.cardInteraction && !isCardInteractionScope(choice.cardInteraction.scope || 'general'))
+        fail(`${choiceLocation}.cardInteraction.scope`, '非法卡牌互动 scope');
       validateSocialOutcome(choice, choiceLocation);
       const consequenceOwners = [choice, ...(choice.socialOutcome?.variants || [])];
       for (const owner of consequenceOwners) for (const [specIndex, spec] of (owner.consequences || []).entries()) {
@@ -655,6 +707,11 @@ export function validateGeneratedData(data) {
   assertUnique(data.endingProfiles, 'endingProfiles');
   assertUnique(data.endingTitles, 'endingTitles');
   assertUnique(data.codex, 'codex');
+  for (const [index, card] of data.cards.entries()) {
+    validateRequirements(card.requirements ?? [], `cards[${index}].requirements`);
+    if (!isCardInteractionScope(card.interactionScope || 'general'))
+      fail(`cards[${index}].interactionScope`, '非法卡牌 scope');
+  }
   assertUnique(
     data.events.flatMap((event) => event.choices || []),
     'choices'

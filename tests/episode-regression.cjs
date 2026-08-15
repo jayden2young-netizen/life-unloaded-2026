@@ -14,6 +14,7 @@ const laterBeats=data.events.filter(event=>event.kind==='beat'&&event.track==='l
 const socialDecisions=decisions.filter(event=>event.track==='social');
 const eventFor=(id,phase)=>decisions.find(event=>event.episode?.id===id&&(phase===undefined||event.episode.phase===phase));
 const beatFor=id=>laterBeats.find(event=>event.id===id);
+const nextRngState=value=>{let x=value>>>0;x^=x<<13;x^=x>>>17;x^=x<<5;return x>>>0};
 const episodeIds=['secondary_diversion','professional_certification','adult_reeducation','business_expansion','wealth_peak','retirement_transition','parental_inheritance','long_term_care','will_planning'];
 const expectedRoutes={
   secondary_diversion:['academic','vocational','employment','alternative_school'],
@@ -86,7 +87,7 @@ async function chooseAndFinish(page,event,index){
   await page.locator(`[data-choice="${index}"]`).click();
   let run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
   assert.equal(run.age,age);
-  assert.equal(run.sceneQueue[0].kind,'result');
+  assert.equal(run.sceneQueue[0].kind,'result',`${event.id}/${index}: choice did not settle`);
   await page.locator('[data-act="episode-next"]').click();
   run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
   assert.equal(run.age,age+1);
@@ -192,7 +193,7 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.6.11');
+    assert.equal(migrated.gameVersion,'0.6.12');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
@@ -227,6 +228,158 @@ async function prepareFinal(page,id,event){
     assert.equal(schema12Migrated.run,null,'v0.6.8 Schema 12 active run was not cleared');
     assert.notEqual(preservedAge,undefined);
     await openPlayable(page);
+    const habitMetadata=await page.evaluate(()=>window.__LIFE_DEBUG__.episodeMetadata('habit_alcohol_formation')),
+      shopMetadata=await page.evaluate(()=>window.__LIFE_DEBUG__.episodeMetadata('shop_opening'));
+    assert.deepEqual([habitMetadata.cataloged,habitMetadata.lane,habitMetadata.ageBound],[false,'personal',false]);
+    assert.match(habitMetadata.label,/酒精/);
+    assert.deepEqual([shopMetadata.cataloged,shopMetadata.label,shopMetadata.lane],[false,'开店','career']);
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:30,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],usedEvents:[],decisionHistory:[],decisionCount:0,lastDecisionAge:-99}));
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceDecision('decision_162')),'decision_162');
+    await page.locator('[data-choice="1"]').click();
+    await page.waitForTimeout(240);
+    let run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.desires.wealth.claimed,true);
+    assert.equal(run.desires.security.claimed,true);
+    const identityHistory=run.decisionHistory.slice();
+    const schedulerPatch={
+      age:35,rngState:0x12345678,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],
+      usedEvents:['decision_161','decision_162'],decisionHistory:identityHistory,decisionCount:1,lastDecisionAge:30,targetDecisions:20,
+      education:{status:'completed',level:4,path:'college',nextStage:'none'},
+      employment:{status:'employed',firstJobAge:24,lastJob:{career:'受雇岗位'},career:'受雇岗位',incomeAnnualGross:120000},
+      activity:{mode:'work',years:1},finance:{cash:200000,available:200000,totalDebt:0},
+      housing:{status:'renting',region:'tier2',arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[]},
+      social:{primaryPersonId:null,secondaryPersonId:null},relationships:{partnerStatus:'none',activePartnerId:null,familyPlanningOffered:false,familyPlanningClosed:false,adoptionOffered:false},
+      episodes:{},timeline:[]
+    };
+    await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun(value),schedulerPatch);
+    const beforeCandidateProbe=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    let layers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    for(const id of['decision_008','decision_197','decision_204'])assert.ok(layers.ordinary.includes(id),`${id} missing from unified ordinary pool`);
+    assert.deepEqual(layers.protected,['decision_197']);
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),'decision_197');
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),'decision_197');
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).rngState,beforeCandidateProbe.rngState,'candidate inspection advanced RNG');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.currentDecision.id,'decision_197','normal annual scheduling did not honor the protected purchase entry');
+    assert.equal(run.rngState,nextRngState(beforeCandidateProbe.rngState),'actual decision selection did not consume exactly one RNG step');
+    await fitSheet(page,'protected-purchase-360x773');
+    await page.screenshot({path:path.join(OUT,'protected-purchase-360x773.png'),fullPage:true});
+    const selectedRng=run.rngState;
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.currentDecision.id,'decision_197');
+    assert.equal(run.rngState,selectedRng,'refresh changed selected decision RNG');
+    await page.locator('[data-choice="3"]').click();
+    await page.waitForTimeout(240);
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.decisionHistory.at(-1).eventId,'decision_197');
+    const consumedHistory=run.decisionHistory.slice();
+    await page.evaluate(({patch,history})=>window.__LIFE_DEBUG__.patchRun({...patch,usedEvents:['decision_161','decision_162'],decisionHistory:history,decisionCount:2}),{patch:schedulerPatch,history:consumedHistory});
+    layers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.equal(layers.protected.length,0,'waiting on the purchase panel did not consume protection');
+    await page.evaluate(()=>{const run=window.__LIFE_DEBUG__.snapshot();const desires=Object.fromEntries(Object.entries(run.desires).map(([key,value])=>[key,value&&typeof value==='object'?{...value,claimed:false}:value]));window.__LIFE_DEBUG__.patchRun({desires,housing:{history:[],keyChoiceCount:0},decisionHistory:[],usedEvents:['decision_161','decision_162']})});
+    layers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.equal(layers.protected.length,0);
+    assert.ok(layers.ordinary.includes('decision_197'),'unclaimed housing disappeared from the ordinary pool');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({finance:{available:1000,cash:1000}}));
+    layers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.ok(!layers.ordinary.includes('decision_197'),'ineligible purchase entered the ordinary pool');
+
+    const adultExplorationHistory=[{
+      age:30,eventId:'decision_162',choiceId:'explore',choice:'给自己留一条换路，也留一件想做的事',result:'',outcomeTags:[]
+    }],protectedAtLimit={
+      ...schedulerPatch,
+      age:35,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],
+      usedEvents:['decision_161','decision_162'],decisionHistory:adultExplorationHistory,decisionCount:20,lastDecisionAge:30,targetDecisions:20,
+      desires:{freedom:{claimed:true},exploration:{claimed:true}},
+      education:{status:'completed',level:4,path:'college',nextStage:'career'},
+      employment:{status:'unemployed',firstJobAge:24,lastJob:{career:'受雇岗位'},career:null,incomeAnnualGross:0},
+      activity:{mode:'seeking',years:3},finance:{cash:200000,available:200000,totalDebt:0},
+      housing:{status:'renting',region:'tier2',arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[]},
+      relationships:{partnerStatus:'none',activePartnerId:null,familyPlanningOffered:false,familyPlanningClosed:false,adoptionOffered:false},
+      episodes:{},timeline:[]
+    };
+    await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun(value),protectedAtLimit);
+    layers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.ok(layers.crisis.length>0,'fixture did not include a competing crisis candidate');
+    assert.deepEqual(layers.protected,['decision_204']);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.currentDecision.id,'decision_204','a crisis stole the protected over-limit slot');
+    await page.locator('[data-choice="2"]').click();
+    await page.waitForTimeout(240);
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.decisionCount,21,'first protected opportunity did not add exactly one decision');
+
+    const relationshipStart=eventFor('relationship_start',1),
+      twoClaimHistory=[
+        {age:14,eventId:'decision_161',choiceId:'family',choice:'别把重要的人落在身后',result:'',outcomeTags:[]},
+        {age:26,eventId:relationshipStart.id,choiceId:'meet',choice:'继续认识',result:'',outcomeTags:[]},
+        ...identityHistory,
+      ];
+    await page.evaluate(({patch,history,relationshipStartId})=>window.__LIFE_DEBUG__.patchRun({...patch,
+      age:35,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],
+      usedEvents:['decision_161','decision_162',relationshipStartId],decisionHistory:history,decisionCount:21,lastDecisionAge:30,targetDecisions:20,
+      desires:{freedom:{claimed:false},exploration:{claimed:false},wealth:{claimed:true},security:{claimed:true}},
+      employment:{status:'employed',firstJobAge:24,lastJob:{career:'受雇岗位'},career:'受雇岗位',incomeAnnualGross:120000},
+      activity:{mode:'work',years:1},
+      finance:{cash:200000,available:200000,totalDebt:0},
+      housing:{status:'renting',region:'tier2',arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[]},
+      social:{primaryPersonId:null,secondaryPersonId:null},relationships:{partnerStatus:'none',activePartnerId:null,familyPlanningOffered:false,familyPlanningClosed:false,adoptionOffered:false},
+      episodes:{},timeline:[]}),{patch:protectedAtLimit,history:twoClaimHistory,relationshipStartId:relationshipStart.id});
+    layers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.deepEqual(layers.protected,['decision_197'],'the adult claim did not retain exactly its own purchase protection');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.currentDecision.id,'decision_197','the second legal identity claim did not receive its protected addition');
+    await page.locator('[data-choice="3"]').click();
+    await page.waitForTimeout(240);
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.decisionCount,22,'two identity claims exceeded the approved two protected additions');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:36,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],lastDecisionAge:30,episodes:{}}));
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.phase,'playing','ordinary candidates bypassed the original target after both protections were consumed');
+    assert.equal(run.decisionCount,22,'ordinary candidates added a third over-target decision');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:35,desires:{reclaimed:false},employment:{status:'unemployed',firstJobAge:null},activity:{mode:'seeking',years:3},relationships:{partnerStatus:'none',activePartnerId:null,adoptionOffered:false,adoptionStatus:'none'},usedEvents:['decision_161'],decisionHistory:[],decisionCount:1,lastDecisionAge:30,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,episodes:{}}));
+    layers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.ok(layers.ageBound.includes(eventFor('long_term_first_job_reentry',1).id));
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),'decision_162','first-job reentry bypassed mandatory identity');
+    const readyCertification={status:'active',phase:2,startedAt:34,nextPhaseAge:35,deadlineAge:37,route:'verified',boundActors:{},commitments:[],closureReason:null};
+    await page.evaluate(record=>window.__LIFE_DEBUG__.patchRun({usedEvents:['decision_161','decision_162'],episodes:{professional_certification:record}}),readyCertification);
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),eventFor('professional_certification',2).id,'first-job reentry bypassed a ready active episode');
+    await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun(value),schedulerPatch);
+
+    const certificationResolve=eventFor('professional_certification',2);
+    const certificationRecord=route=>({status:'active',phase:2,startedAt:34,nextPhaseAge:35,deadlineAge:37,route,boundActors:{},commitments:[],closureReason:null});
+    await page.evaluate(({id,record})=>window.__LIFE_DEBUG__.patchRun({age:35,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,usedEvents:[],episodes:{[id]:record}}),{id:'professional_certification',record:certificationRecord('verified')});
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),certificationResolve.id),certificationResolve.id);
+    assert.match((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).currentDecision.situation,/考试结果/);
+    await page.evaluate(({id,record})=>window.__LIFE_DEBUG__.patchRun({phase:'playing',sceneQueue:[],currentDecision:null,usedEvents:[],episodes:{[id]:record}}),{id:'professional_certification',record:certificationRecord('skill_route')});
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),certificationResolve.id),certificationResolve.id);
+    assert.match((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).currentDecision.situation,/岗位训练/);
+
+    const companionshipResolve=eventFor('late_companionship',2),latePartner={id:'late_partner_fixture',relation:'partner',bornAt:3,alive:true,status:'living',bond:70,legalStatus:'married',gender:'male',health:70};
+    await page.evaluate(({event,partner})=>window.__LIFE_DEBUG__.patchRun({age:70,gender:'female',people:[partner],relationships:{activePartnerId:partner.id,lastPartnerId:null,partnerStatus:'married',partnerBond:70},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,usedEvents:[],episodes:{late_companionship:{status:'active',phase:2,startedAt:68,nextPhaseAge:70,deadlineAge:71,route:'cohabitation',boundActors:{partner:{kind:'person',id:partner.id,alive:true}},commitments:[],closureReason:null}}}),{event:companionshipResolve.id,partner:latePartner});
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),companionshipResolve.id),companionshipResolve.id);
+    await page.locator('[data-choice="0"]').click();
+    await page.waitForTimeout(240);
+    await page.locator('[data-act="episode-next"]').click();
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).relationships.partnerStatus,'married','late companionship downgraded marriage');
+    const separatingPartner={...latePartner,id:'late_partner_separation'};
+    await page.evaluate(partner=>window.__LIFE_DEBUG__.patchRun({age:70,gender:'female',people:[partner],relationships:{activePartnerId:partner.id,lastPartnerId:null,partnerStatus:'married',partnerBond:70},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,usedEvents:[],episodes:{late_companionship:{status:'active',phase:2,startedAt:68,nextPhaseAge:70,deadlineAge:71,route:'cohabitation',boundActors:{partner:{kind:'person',id:partner.id,alive:true}},commitments:[],closureReason:null}}}),separatingPartner);
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),companionshipResolve.id),companionshipResolve.id);
+    await page.locator('[data-choice="2"]').click();
+    await page.waitForTimeout(240);
+    await page.locator('[data-act="episode-next"]').click();
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.relationships.partnerStatus,'none','late companionship separation left a stale relationship status');
+    assert.equal(run.relationships.activePartnerId,null);
+    assert.equal(run.people.find(person=>person.id===separatingPartner.id).relation,'exPartner');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({people:[],relationships:{activePartnerId:null,lastPartnerId:null,partnerStatus:'none'},housing:{status:'renting',arrangement:'solo',region:'tier2',stability:'stable',costShare:'self',coResidentRefs:[]},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true}));
 
     const inheritanceStart=eventFor('parental_inheritance',1);
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:60,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,people:[
@@ -246,7 +399,7 @@ async function prepareFinal(page,id,event){
     const diversion=eventFor('secondary_diversion',1);
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({attrs:{intellect:10},education:{status:'completed',level:2,path:'middleSchool'},development:{learningHabit:90,attendance:96,teacherSupport:82,peerSupport:70,selfAdvocacy:75,careLoad:2,traumaLoad:2,routeKnowledge:75,languagePreparation:20}}));
     assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),diversion.id),diversion.id);
-    let run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
     const diversionAge=run.age;
     assert.equal(run.sceneQueue[0].kind,'choice');
     assert.ok((await page.locator('.choice-sheet').innerText()).includes(diversion.situation));

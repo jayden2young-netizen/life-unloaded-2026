@@ -118,11 +118,69 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.11', 13, 31]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.12', 13, 32]);
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
     {beat:480,decision:205,consequence:205,blackSwan:20},
   );
+  const generatedDecisions=DATA.events.filter(event=>event.kind==='decision');
+  const episodeDecisions=generatedDecisions.filter(event=>event.episode);
+  const generatedEpisodeIds=[...new Set(episodeDecisions.map(event=>event.episode.id))].sort();
+  assert.deepEqual(
+    [DATA.cards.length,generatedEpisodeIds.length,Object.keys(DATA.episodeCatalog).length,episodeDecisions.length,generatedDecisions.length-episodeDecisions.length],
+    [73,62,41,144,61],
+  );
+  assert.deepEqual(
+    generatedEpisodeIds.filter(id=>!Object.hasOwn(DATA.episodeCatalog,id)),
+    contract.EPISODE_CATALOG_EXCEPTION_IDS,
+  );
+  const opportunities=generatedDecisions.filter(event=>event.opportunity);
+  assert.equal(opportunities.length,14);
+  assert.ok(opportunities.every(event=>contract.isOpportunityMetadata(event.opportunity)));
+  assert.ok(opportunities.every(event=>!event.episode||event.episode.role==='start'));
+  const adultIdentity=generatedDecisions.find(event=>event.id==='decision_162');
+  assert.deepEqual(adultIdentity.choices[1].effects.find(effect=>effect.type==='claimDesire').value,['wealth','security']);
+  assert.equal(adultIdentity.choices[1].text,'先把家底做厚，再谈下一步');
+  const certificationResolve=generatedDecisions.find(event=>event.id==='decision_009');
+  assert.deepEqual(Object.keys(certificationResolve.routeSituations).sort(),['skill_route','verified']);
+  assert.ok(!certificationResolve.choices.some(choice=>choice.resultText.includes('岗位没有把这张证当准入')));
+  const oldColleague=DATA.events.find(event=>event.kind==='beat'&&event.text.includes('旧同事转来'));
+  assert.ok(oldColleague.requirements.all.some(rule=>rule.path==='employment.lastJob'&&rule.op==='truthy'));
+  const wageRent=DATA.events.find(event=>event.kind==='beat'&&event.text.includes('工资到账后，房租'));
+  assert.ok(wageRent.requirements.all.some(rule=>rule.path==='employment.status'&&rule.value==='employed'));
+  assert.ok(!DATA.events.some(event=>event.text?.includes('存款多了一点')));
+  const successfulRepayment=DATA.events.find(event=>event.kind==='beat'&&event.text.includes('本月还款已经成功'));
+  assert.ok(successfulRepayment.requirements.all.some(rule=>rule.path==='finance.hasArrears'&&rule.op==='eq'&&rule.value===false));
+  assert.ok(!DATA.events.some(event=>event.text?.includes('你补了一笔逾期款')));
+  assert.ok(!DATA.events.some(event=>event.text?.includes('重复扣款核对后退了回来')));
+  const badgeReturn=DATA.events.find(event=>event.kind==='beat'&&event.text.includes('交回工牌那天'));
+  assert.ok(badgeReturn.requirements.all.some(rule=>rule.path==='employment.lastJob'&&rule.op==='truthy'));
+  const parentalLeave=DATA.events.find(event=>event.kind==='beat'&&event.text.includes('谁请育儿假'));
+  assert.ok(parentalLeave.requirements.all.some(rule=>rule.path==='employment.status'&&rule.value==='employed'));
+  const landlordOffice=DATA.events.find(event=>event.kind==='beat'&&event.text.includes('房东不让注册办公地址'));
+  assert.ok(landlordOffice.requirements.all.some(rule=>rule.path==='housing.status'&&rule.value==='renting'));
+  const sharedRent=DATA.events.find(event=>event.kind==='beat'&&event.text.includes('房租能省一半'));
+  assert.ok(sharedRent.requirements.all.some(rule=>rule.path==='housing.status'&&rule.value==='renting'));
+  assert.ok(sharedRent.requirements.all.some(rule=>rule.path==='housing.arrangement'&&rule.value==='partner'));
+  assert.ok(sharedRent.requirements.all.some(rule=>rule.path==='housing.costShare'&&rule.value==='joint'));
+  assert.ok(!DATA.events.some(event=>event.text?.includes('房租到账后')));
+  assert.ok(!DATA.events.some(event=>event.text?.includes('你和家里人把睡眠')));
+  assert.ok(!DATA.events.some(event=>event.text?.includes('复诊或搬家那天')));
+  const childBoundary=DATA.cards.find(card=>card.id==='card_71'),generalBoundary=DATA.cards.find(card=>card.id==='card_73');
+  const portableCard=DATA.cards.find(card=>card.id==='card_65');
+  assert.equal(portableCard.displayName,'一种能反复练的本事');
+  assert.doesNotMatch(portableCard.text,/证书|资格|原单位/);
+  assert.equal(childBoundary.interactionScope,'family');
+  assert.ok(childBoundary.requirements.all.some(rule=>rule.path==='relationships.childCount'&&rule.op==='gte'&&rule.value===1));
+  assert.equal(generalBoundary.interactionScope,'general');
+  assert.ok(generalBoundary.requirements.all.some(rule=>rule.path==='relationships.childCount'&&rule.op==='eq'&&rule.value===0));
+  const age55Cards=DATA.cards.filter(card=>card.drawAge===55);
+  for(const childCount of[0,1])assert.ok(age55Cards.filter(card=>(card.requirements.all||[]).every(rule=>rule.path!=='relationships.childCount'||contract.compareByOperator(childCount,rule.op,rule.value))).length>=3);
+  assert.equal(collect(DATA,value=>value?.cardInteraction&&value.cardInteraction.scope==='family').length,2);
+  assert.ok(contract.COMMAND_TYPES.includes('confirmPartnership'));
+  assert.ok(collect(DATA,value=>value.type==='confirmPartnership').length>=2);
+  assert.equal(typeof DATA.episodeCatalog.becoming_parent.latePartnerEcho,'string');
+  assert.doesNotMatch(DATA.episodeCatalog.becoming_parent.latePartnerEcho,/不孕|不可能怀孕|系统|窗口/);
   const guaranteeDecision = DATA.events.find(event => event.id === 'decision_107');
   const guaranteeEcho = DATA.events.find(event => event.id === 'echo_107');
   assert.equal(guaranteeDecision?.prompt, '这份担保，你签不签？', 'guarantee decision ID drifted');
@@ -343,6 +401,34 @@ function neutralTrace(multiplier) {
   );
   expectContractFailure(
     validator.validateGeneratedData,
+    data => {
+      data.events.find(event=>event.opportunity).opportunity.group='housing.everything';
+    },
+    /非法 opportunity/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    data => {
+      data.events.find(event=>event.routeSituations).routeSituations={verified:'只剩一路'};
+    },
+    /必须覆盖前序可继续路线/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    data => {
+      data.cards.find(card=>card.id==='card_71').interactionScope='children-only';
+    },
+    /非法卡牌 scope/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    data => {
+      findObject(data,value=>value.type==='confirmPartnership').value='dating';
+    },
+    /只允许 partnered/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
     data => data.events.push(clone(data.events[0])),
     /重复 ID/,
   );
@@ -458,6 +544,7 @@ function neutralTrace(multiplier) {
   );
 
   const gameSource = fs.readFileSync(path.join(ROOT, 'game.js'), 'utf8');
+  assert.ok(!gameSource.includes(DATA.episodeCatalog.becoming_parent.latePartnerEcho),'late family-planning echo bypassed generated author source');
   assert.match(gameSource,/aria-pressed/);
   assert.match(gameSource,/role="dialog"/);
   assert.match(gameSource,/aria-modal="true"/);
@@ -525,7 +612,7 @@ function neutralTrace(multiplier) {
   assert.match(unregisteredFailure, /未登记定义/);
 
   assert.ok(
-    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.11')") <
+    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.12')") <
       gameSource.indexOf('fetch(`./data.json?v=${VERSION}`'),
     'shared contract import must precede data fetch',
   );

@@ -3,11 +3,11 @@ const p=(path,op,value)=>({path,op,value});
 const req=(all=[],any=[],none=[])=>({all,any,none});
 const withFacts=(decision,requirements)=>({...decision,requirements});
 export const FINANCE_COPY=track('钱、房和债',[
-  b('ordinary','工资到账后，房租在第二天自动扣走。',{requirements:req([p('housing.status','eq','renting')])}),b('ordinary','银行短信提醒，本月还款已经成功。',{requirements:req([p('finance.totalDebt','gte',1)])}),
+  b('ordinary','工资到账后，房租在第二天自动扣走。',{requirements:req([p('housing.status','eq','renting'),p('employment.status','eq','employed')])}),b('ordinary','银行短信提醒，本月还款已经成功。',{requirements:req([p('finance.totalDebt','gte',1),p('finance.hasArrears','eq',false)])}),
   b('ordinary','你把一张旧银行卡注销，余额只有几块钱。'),b('ordinary','超市小票塞进钱包，月底才想起记账。'),
-  b('ordinary','房东续租没涨价，只要求再签一年。',{requirements:req([p('housing.status','eq','renting')])}),b('ordinary','存款多了一点，离首付仍隔着很长的数字。'),
-  b('ordinary','你补了一笔逾期款，征信报告上的记录还在。'),b('ordinary','家里寄来一张旧借条，字迹已经有些淡。'),
-  b('ordinary','一笔重复扣款核对后退了回来，到账短信只有几行字。'),b('ordinary','整理遗物时，存折和欠条放在同一个抽屉。'),
+  b('ordinary','房东续租没涨价，只要求再签一年。',{requirements:req([p('housing.status','eq','renting')])}),b('ordinary','账户余额离首付仍隔着很长的数字。'),
+  b('ordinary','你查了一遍逾期款的补交入口，征信报告上的记录还在。'),b('ordinary','家里寄来一张旧借条，字迹已经有些淡。'),
+  b('ordinary','你发现一笔重复扣款，核对页面只给了几行说明。'),b('ordinary','整理遗物时，存折和欠条放在同一个抽屉。'),
   b('awkward','银行经理叫你贵宾，门槛是刚借够一笔钱。'),b('awkward','亲戚说家里的钱不分你我，借条却不肯写。'),
   b('awkward','理财页面写稳健，亏损提示藏在下一页。'),b('awkward','房产中介说最后一套，隔天又发来同一户型。'),
   b('awkward','账单说消费升级，你只记得买了很多小东西。'),b('awkward','朋友劝你上车，他自己的房子还在等买家。'),

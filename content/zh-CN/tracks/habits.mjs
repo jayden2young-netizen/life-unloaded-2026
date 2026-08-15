@@ -7,7 +7,7 @@ const beats=[
   hb('gambling','low',['repeating','dependent'],'risk','比分结束前，你又刷新了几次下注页面。','ordinary',[18,70]),
   hb('gambling','low',['repeating'],'neutral','银行流水里出现了几笔同样收款方的小额转出。','awkward',[18,72]),
   hb('gambling','medium',['dependent','uncontrolled'],'risk','输掉的一笔钱被你记成"下一场再拿回来"。','friction',[18,75]),
-  hb('gambling','medium',['dependent','uncontrolled'],'risk','房租到账后，你先算还能留下多少继续下注。','friction',[20,78]),
+  hb('gambling','medium',['dependent','uncontrolled'],'risk','固定开销扣完后，你先算还能留下多少继续下注。','friction',[20,78]),
   hb('gambling','medium',['treatment','recovery'],'recovery','支付限制拦住一笔冲动转账，你给治疗联系人发了消息。','ordinary',[20,85]),
   hb('gambling','high',['uncontrolled','relapse'],'risk','借款利息和新的损失在同一张表里继续增长。','pressure',[20,82]),
   hb('gambling','high',['treatment','recovery'],'recovery','真实欠款逐笔核完，没有再用下一场比赛解释数字。','major',[22,90]),
@@ -24,7 +24,7 @@ const beats=[
   hb('gaming','low',['repeating'],'risk','闹钟响过两轮。你还在等下一局匹配。','awkward',[13,68]),
   hb('gaming','medium',['dependent','uncontrolled'],'risk','该回的消息堆在另一块屏幕上。回得越来越晚。','friction',[16,72]),
   hb('gaming','medium',['dependent','uncontrolled'],'risk','朋友约见面。你只说临时忙，推掉了第三次。','friction',[16,75]),
-  hb('gaming','medium',['treatment','recovery'],'recovery','你和家里人把睡眠、日常责任和游戏时间重新排了一遍。','ordinary',[16,82]),
+  hb('gaming','medium',['treatment','recovery'],'recovery','你把睡眠、日常责任和游戏时间重新排了一遍。','ordinary',[16,82]),
   hb('gaming','high',['uncontrolled','relapse'],'risk','一项原定安排被你取消了。从下午一直打到了第二天早上。','pressure',[18,78]),
 
   hb('shopping','low',['exposed','repeating'],'neutral','退货标签打印出来的时候，门口又到了两个包裹。','awkward',[18,72]),

@@ -170,7 +170,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.11',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.12',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.9完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,9);
@@ -232,7 +232,10 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     assert.equal(run.episodes.acute_illness.deadlineAge,20);
     run=await chooseAndFinish(page,1);
     assert.equal(run.age,17);
-    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),phase('school_harm',2).id);
+    const readyActiveLayers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.ok(readyActiveLayers.activeEpisode.includes(phase('school_harm',2).id));
+    assert.ok(readyActiveLayers.activeEpisode.includes(phase('acute_illness',2).id));
+    assert.ok([phase('school_harm',2).id,phase('acute_illness',2).id].includes(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId())));
 
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:17,education:{status:'enrolled',level:3,path:'highSchool'},employment:{status:'none'},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[],episodes:null,usedEvents:[],decisionHistory:[],timeline:[]}));
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
@@ -405,8 +408,61 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
     assert.equal(run.relationships.familyPlanningOffered,true);
-    assert.equal(run.relationships.familyPlanningClosed,true);
+    assert.equal(run.relationships.familyPlanningClosed,false);
     assert.equal(run.relationships.childCount,1);
+    for(const seed of['seed-0','seed-1','seed-8','family-open-a','family-open-b']){
+      await page.evaluate(({seed,partner,child})=>window.__LIFE_DEBUG__.patchRun({seed,age:30,people:[partner,child],relationships:{partnerStatus:'partnered',activePartnerId:partner.id,familyPlanningOffered:false,familyPlanningClosed:false},yearStarted:false,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null,episodes:{},usedEvents:[],decisionHistory:[],timeline:[]}),{seed,partner,child});
+      await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+      const opened=await snapshot(page);
+      assert.equal(opened.relationships.familyPlanningOffered,true,`${seed}: family planning was not offered`);
+      assert.equal(opened.relationships.familyPlanningClosed,false,`${seed}: family planning was silently closed`);
+    }
+
+    await page.evaluate(partner=>window.__LIFE_DEBUG__.patchRun({seed:'family-age-39-priority',gender:'female',age:39,people:[partner],desires:{reclaimed:false},relationships:{partnerStatus:'partnered',activePartnerId:partner.id,familyPlanningOffered:false,familyPlanningClosed:false},cardAges:[0,18,35,55],yearStarted:false,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null,episodes:{},usedEvents:['decision_161'],decisionHistory:[],decisionCount:1,lastDecisionAge:30,timeline:[]}),partner);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.relationships.familyPlanningOffered,true);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({yearStarted:true,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null}));
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.currentDecision.id,'decision_162','adult identity should retain mandatory priority at age 39');
+    await page.locator('[data-choice="0"]').click();
+    await page.waitForTimeout(220);
+    run=await snapshot(page);
+    assert.equal(run.age,39,'age-39 family planning expired behind a mandatory decision');
+    assert.equal(run.yearStarted,true);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.currentDecision.episode.id,'becoming_parent');
+    assert.equal(run.currentDecision.episode.phase,1);
+
+    await enterPhase(page,relationshipStart,{seed:'family-age-39-new-partner',gender:'female',age:39,people:[],desires:{reclaimed:true},relationships:{partnerStatus:'none',activePartnerId:null,familyPlanningOffered:false,familyPlanningClosed:false},cardAges:[0,18,35,55],episodes:{},usedEvents:['decision_161','decision_162'],decisionHistory:[],decisionCount:2,lastDecisionAge:30,timeline:[]});
+    await page.locator('[data-choice="0"]').click();
+    await page.waitForTimeout(220);
+    assert.equal((await snapshot(page)).sceneQueue[0].kind,'result');
+    await page.locator('[data-act="episode-next"]').click();
+    run=await snapshot(page);
+    assert.equal(run.age,39,'partner formed at age 39 skipped the last planning opportunity');
+    assert.equal(run.relationships.familyPlanningOffered,true);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.currentDecision.episode.id,'becoming_parent');
+    assert.equal(run.currentDecision.episode.phase,1);
+
+    const latePartner={...partner,id:'late_family_partner',bornAt:8};
+    await page.evaluate(partner=>window.__LIFE_DEBUG__.patchRun({seed:'late-family',gender:'female',age:45,people:[partner],relationships:{partnerStatus:'partnered',activePartnerId:partner.id,familyPlanningOffered:false,familyPlanningClosed:false},cardAges:[0,18,35,55],yearStarted:false,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null,episodes:{},usedEvents:[],decisionHistory:[],timeline:[]}),latePartner);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.relationships.familyPlanningOffered,true);
+    assert.equal(run.relationships.familyPlanningClosed,true);
+    assert.equal(run.sceneQueue[0].familyPlanningEcho,true);
+    assert.doesNotMatch(run.sceneQueue[0].text,/不孕|不可能怀孕|系统|窗口/);
+    await page.locator('[data-act="episode-next"]').click();
+    run=await snapshot(page);
+    assert.equal(run.age,45,'late family-planning echo skipped a year');
+    assert.equal(run.timeline.filter(item=>item.id==='family_planning_late_echo_45').length,1);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    assert.equal((await snapshot(page)).timeline.filter(item=>item.id==='family_planning_late_echo_45').length,1,'late family-planning echo repeated');
 
     const carrierProfiles=await page.evaluate(({partner,child})=>{
       const debug=window.__LIFE_DEBUG__;
@@ -591,7 +647,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     }
 
     assert.deepEqual(errors,[]);
-    console.log(JSON.stringify({ok:true,migration:'schema-8-run-cleared-meta-preserved-indexed-seen-reset',familyMilestones:['strained-unsafe','comfortable-present','comfortable-unsafe'],familyPlanning:['opportunity-hit','opportunity-miss','existing-child-eligible','planned-conception','deferred-unplanned-hit','deferred-review','50-90-bounds'],pregnancy:['same-age-review','continued-birth-once','terminated-no-child','reload-safe'],adoption:['offer-hit','offer-miss','zero-or-one-child','two-child-blocked','partner-blocked','partner-invalidation','registered-completion','waiting','withdrawn'],gating:['core-visible-locked','special-hidden-until-exposed','domestic-funding-locked','scholarship-hidden'],routes:['domestic-enrolled','overseas-enrolled','not-admitted','deferred'],phaseScheduling:'natural-after-start',sameAgeCards:true,refreshRestored:['choice','result'],timelinePerPhase:1,viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));
+    console.log(JSON.stringify({ok:true,migration:'schema-8-run-cleared-meta-preserved-indexed-seen-reset',familyMilestones:['strained-unsafe','comfortable-present','comfortable-unsafe'],familyPlanning:['all-five-seeds-open','late-partner-echo-once','existing-child-eligible','planned-conception','deferred-unplanned-hit','deferred-review','50-90-bounds'],pregnancy:['same-age-review','continued-birth-once','terminated-no-child','reload-safe'],adoption:['offer-hit','offer-miss','zero-or-one-child','two-child-blocked','partner-blocked','partner-invalidation','registered-completion','waiting','withdrawn'],gating:['core-visible-locked','special-hidden-until-exposed','domestic-funding-locked','scholarship-hidden'],routes:['domestic-enrolled','overseas-enrolled','not-admitted','deferred'],phaseScheduling:'natural-after-start',sameAgeCards:true,refreshRestored:['choice','result'],timelinePerPhase:1,viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));
     await context.close();
   }finally{
     await browser.close();

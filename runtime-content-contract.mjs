@@ -39,6 +39,7 @@ export const COMMAND_TYPES = Object.freeze([
   'createSocialPerson',
   'updateSocialPerson',
   'transitionSocialToDating',
+  'confirmPartnership',
   'createEmploymentReferral',
   'transitionPartner',
   'transitionHousing',
@@ -152,6 +153,7 @@ export const READ_PATHS = Object.freeze([
   'employment.firstJobOutcome',
   'employment.incomeStability',
   'employment.jobTier',
+  'employment.lastJob',
   'employment.pendingOfferId',
   'employment.profileId',
   'employment.referralPersonId',
@@ -458,15 +460,110 @@ export const TRACK_DESIRE_EVIDENCE = Object.freeze([
   Object.freeze({track:'later',desire:'care',evidenceType:'state-effect',evidencePath:'pressures.family',introducedIn:'0.6.9',note:'晚年照护选择直接改变真实家庭分工压力。'}),
 ]);
 
+export const DESIRE_IDS = Object.freeze([
+  'freedom',
+  'security',
+  'achievement',
+  'wealth',
+  'love',
+  'familyBelonging',
+  'recognition',
+  'exploration',
+  'peace',
+  'care',
+  'body',
+  'status',
+  'creation',
+]);
+
+export const OPPORTUNITY_GROUPS = Object.freeze([
+  'business.opening',
+  'career.firstJob',
+  'education.qualification',
+  'education.reeducation',
+  'health.management',
+  'housing.purchase',
+  'housing.workMigration',
+  'later.learning',
+  'lifestyle.careerBreak',
+  'relationship.start',
+  'social.firstMeeting',
+  'social.reconnect',
+  'social.support',
+]);
+
+export const OPPORTUNITY_RESPONSES = Object.freeze(['protect', 'weight']);
+export const CARD_INTERACTION_SCOPES = Object.freeze(['family', 'general']);
+
+const habitEpisodeCatalogExceptions = [
+  'alcohol',
+  'gambling',
+  'gaming',
+  'medication',
+  'shopping',
+].flatMap((habit) =>
+  ['formation', 'relapse', 'treatment'].map((stage) => `habit_${habit}_${stage}`)
+);
+
+export const EPISODE_CATALOG_EXCEPTIONS = Object.freeze({
+  habits: Object.freeze([...habitEpisodeCatalogExceptions].sort()),
+  standalone: Object.freeze([
+    'acute_illness',
+    'career_break',
+    'guarantee_recourse',
+    'layoff_reemployment',
+    'public_exam',
+    'shop_opening',
+  ]),
+});
+
+export const EPISODE_CATALOG_EXCEPTION_IDS = Object.freeze(
+  [...EPISODE_CATALOG_EXCEPTIONS.habits, ...EPISODE_CATALOG_EXCEPTIONS.standalone].sort()
+);
+
 const operatorSet = new Set(RUNTIME_OPERATORS);
 const commandSet = new Set(COMMAND_TYPES);
 const readPathSet = new Set(READ_PATHS);
 const writePathSet = new Set(WRITE_PATHS);
+const desireIdSet = new Set(DESIRE_IDS);
+const opportunityGroupSet = new Set(OPPORTUNITY_GROUPS);
+const opportunityResponseSet = new Set(OPPORTUNITY_RESPONSES);
+const cardInteractionScopeSet = new Set(CARD_INTERACTION_SCOPES);
 
 export const isRuntimeOperator = (value) => operatorSet.has(value);
 export const isCommandType = (value) => commandSet.has(value);
 export const isReadPath = (value) => readPathSet.has(value);
 export const isWritePath = (value) => writePathSet.has(value);
+export const isDesireId = (value) => desireIdSet.has(value);
+export const isOpportunityGroup = (value) => opportunityGroupSet.has(value);
+export const isOpportunityResponse = (value) => opportunityResponseSet.has(value);
+export const isCardInteractionScope = (value) => cardInteractionScopeSet.has(value);
+
+export function isOpportunityMetadata(value) {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      isOpportunityGroup(value.group) &&
+      Array.isArray(value.desires) &&
+      value.desires.length > 0 &&
+      new Set(value.desires).size === value.desires.length &&
+      value.desires.every(isDesireId) &&
+      isOpportunityResponse(value.response)
+  );
+}
+
+export function isRouteSituations(value) {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      Object.keys(value).length > 0 &&
+      Object.entries(value).every(
+        ([route, situation]) => route.length > 0 && typeof situation === 'string' && situation.trim()
+      )
+  );
+}
 
 export function compareByOperator(actual, op, expected) {
   if (!isRuntimeOperator(op)) throw new Error(`未知 operator：${String(op)}`);

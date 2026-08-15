@@ -8,6 +8,7 @@ const hc=(kind,text,resultText,consequenceText,value,extra={})=>c(
   {...extra,housingChoiceKind:kind,effects:[...(extra.effects||[]),move({residenceOnly:true,...value,kind:'choice',housingChoiceKind:kind})]}
 );
 const hd=(age,requirements,prompt,echoText,...choices)=>({age,requirements,prompt,echoText,choices});
+const withOpportunity=(opportunity,decision)=>({...decision,opportunity});
 
 const beats=[
   b('ordinary','小时候，能摊开作业本的地方常常也是家里的饭桌。',{age:[6,15],requirements:req([p('housing.arrangement','eq','originFamily')])}),
@@ -66,13 +67,13 @@ const decisions=[
     hc('firstIndependent','住远一点，保住独处','你接受更长的路，把合同只签在自己名下。','每天多坐几站，关门以后不用再解释作息。',{status:'renting',value:0,arrangement:'solo',stability:'conditional',costShare:'self',coResidentRefs:[],reason:'firstSoloHome'}),
     hc('firstIndependent','先留在家里住','你没有签新合同，通勤和家里的作息继续一起算。','存款没有先交给押金，房门后的边界仍要慢慢谈。',{status:'family',value:0,arrangement:'originFamily',region:'$homeRegion',stability:'stable',costShare:'supported',coResidentRefs:[],reason:'stayWithOriginFamily'})),
 
-  hd([20,65],req([], [p('mobility.mode','in',['domesticNomad','overseasNomad','studyAbroad']),p('employment.arrangement','in',['remote','hybrid'])]),
+  withOpportunity({group:'housing.workMigration',desires:['freedom','exploration','creation'],response:'protect'},hd([20,65],req([], [p('mobility.mode','in',['domesticNomad','overseasNomad','studyAbroad']),p('employment.arrangement','in',['remote','hybrid'])]),
     '工作或许可已经把你带到新的生活半径。短住继续续下去，还是给日常留一个固定地址，要现在决定。',
     '后来每次填地址，你都会想起那次决定。',
     hc('workMigration','在国内固定下来','你签下长期合同，书桌和收件地址都不再跟着行李走。','固定地址留下了，也留下了下一次离开的成本。',{status:'renting',value:0,arrangement:'solo',region:'$homeRegion',stability:'stable',costShare:'self',coResidentRefs:[],reason:'domesticWorkBase'}, {showWhen:req([p('mobility.mode','neq','overseasNomad')])}),
     hc('workMigration','在美国租下长期住处','你核完租约、押金和通勤，把长期地址留在当地。','假期和工作变动时，那份租约仍按日期走。',{status:'renting',value:0,arrangement:'shared',region:'us',stability:'conditional',costShare:'self',coResidentRefs:[],reason:'usWorkBase'}, {showWhen:req([p('mobility.lastOverseasSystem','eq','us'),p('mobility.mode','in',['studyAbroad','overseasNomad'])])}),
     hc('workMigration','在欧洲找一间长期合租','房源面谈和押金凭据都对上以后，你拿到了钥匙。','当地语言不再只出现在课堂，也出现在报修消息里。',{status:'renting',value:0,arrangement:'shared',region:'europe',stability:'conditional',costShare:'self',coResidentRefs:[],reason:'europeWorkBase'}, {showWhen:req([p('mobility.lastOverseasSystem','eq','europe'),p('mobility.mode','in',['studyAbroad','overseasNomad'])])}),
-    hc('workMigration','继续短住，保留下一站','你没有签长期租约，行李仍按下一次出发的重量收。','省下的不是全部成本，只是离开时少一份合同。',{status:'unstable',value:0,arrangement:'solo',stability:'temporary',costShare:'self',coResidentRefs:[],reason:'continueMobileHousing'})),
+    hc('workMigration','继续短住，保留下一站','你没有签长期租约，行李仍按下一次出发的重量收。','省下的不是全部成本，只是离开时少一份合同。',{status:'unstable',value:0,arrangement:'solo',stability:'temporary',costShare:'self',coResidentRefs:[],reason:'continueMobileHousing'}))),
 
   hd([22,80],req([p('relationships.activePartnerId','truthy',true),p('relationships.partnerStatus','in',['dating','partnered','married'])]),
     '两个人已经在谈每天怎么过。备用钥匙、通勤和各自能承担的住房开支，不能只靠一句“以后再说”。',
@@ -81,13 +82,13 @@ const decisions=[
     hc('partnerReconfiguration','住在附近，各留一扇门','你们没有退掉各自住处，把见面和照应放进步行距离。','距离缩短了，谁都还保留能关上的门。',{status:'renting',value:0,arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[],reason:'nearbySeparateHomes'}),
     hc('partnerReconfiguration','先维持现在的住法','你们没有交换钥匙，只把通勤和见面的时间重新排过。','没搬家不等于没选择，那条边界后来一直在。',{reason:'keepSeparateHousing'})),
 
-  hd([24,68],req([p('housing.region','in',['tier1','tier2','county','town']),p('housing.status','notIn',['owned','mortgaged']),p('finance.available','gte',59800)], [p('employment.status','in',['employed','gig','selfEmployed'])]),
+  withOpportunity({group:'housing.purchase',desires:['security','wealth'],response:'protect'},hd([24,68],req([p('housing.region','in',['tier1','tier2','county','town']),p('housing.status','notIn',['owned','mortgaged']),p('finance.available','gte',59800)], [p('employment.status','in',['employed','gig','selfEmployed'])]),
     '首付、交易费用、现有债务和接下来的收入都摊在桌上。房子能不能买，不只看银行愿不愿放款。',
     '那次决定没有替未来房价下结论，只把签约或暂缓如实留下。',
     hc('homePurchase','自己承担，签下这套房','首付和搬入缓冲从现金里扣掉，按揭本金与房屋价值分别记账。','钥匙属于你，月供也没有因为签约变轻。',{status:'mortgaged',arrangement:'solo',stability:'stable',accessibility:'standard',costShare:'self',coResidentRefs:[],reason:'homePurchase'}, {debtGate:'homePurchase'}),
     hc('homePurchase','两个人共同住，由我背按揭','伴侣住房收入只抵共同住处的一部分，按揭仍完整留在你名下。','关系没有替债务担保；共同分担停下时，余额还在。',{status:'mortgaged',arrangement:'partner',stability:'stable',accessibility:'standard',costShare:'joint',coResidentRefs:['$activePartner'],reason:'jointHomePurchase'}, {requirements:req([p('relationships.activePartnerId','truthy',true),p('relationships.partnerStatus','in',['dating','partnered','married'])]),debtGate:'homePurchase'}),
     hc('homePurchase','继续租，把现金留在手里','你没有签购房合同，租约和可用现金继续留在当下。','后来搬走时，行李比房产交易简单；租住也仍有自己的账。',{status:'renting',value:0,arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[],reason:'rentInsteadOfBuy'},{requirements:req([p('housing.status','eq','renting')])}),
-    hc('homePurchase','这次先不动住处','估价和贷款方案收进文件夹，你没有为了期限制造一笔交易。','错过的可能性留在那一页，现住处没有被改写。',{reason:'deferPurchase'})),
+    hc('homePurchase','这次先不动住处','估价和贷款方案收进文件夹，你没有为了期限制造一笔交易。','错过的可能性留在那一页，现住处没有被改写。',{reason:'deferPurchase'}))),
 
   hd([55,105],req([p('health.careNeed','gte',1),p('housing.accessibility','eq','standard'),p('housing.arrangement','neq','service')]),
     '现在的住处开始和洗澡、上下楼、看诊或照应时间打架。要改的是房子、距离，还是生活方式？',
