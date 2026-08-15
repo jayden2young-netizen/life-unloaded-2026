@@ -26,6 +26,8 @@ export const COMMAND_TYPES = Object.freeze([
   'resolveGraduateApplication',
   'resolveFirstJobApplication',
   'acceptFirstJobOffer',
+  'resolveCareerGrowth',
+  'resolveWorkTransition',
   'applyEmploymentProfile',
   'scaleEmployment',
   'leaveEmployment',

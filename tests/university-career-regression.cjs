@@ -43,7 +43,7 @@ async function choose(page,index){
   await page.locator('[data-act="episode-next"]').click();
   run=await snapshot(page);
   if(before.currentDecision.episode.ageAdvanceYears===0)assert.ok([before.age,before.age+1].includes(run.age));
-  else assert.equal(run.age,before.age+1);
+  else assert.equal(run.age,before.age+1,JSON.stringify({eventId:before.currentDecision.id,episode:before.currentDecision.episode,after:{age:run.age,phase:run.phase,yearStarted:run.yearStarted,yearQueue:run.yearQueue,currentDecision:run.currentDecision,sceneQueue:run.sceneQueue}}));
   assert.equal(run.timeline.length,before.timeline.length+1);
   return run;
 }
@@ -91,13 +91,18 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
   assert.deepEqual([...encodedResearchSeeds].sort(),expectedResearchSeeds.sort());
   assert.deepEqual(
     decisions.filter(event=>event.episode?.id==='first_job_application').map(event=>[event.ageMin,event.ageMax]),
-    [[16,28],[17,29],[18,30],[19,31]]
+    [[16,28],[17,29],[18,30],[19,31],[20,32]]
+  );
+  assert.deepEqual(
+    decisions.filter(event=>event.episode?.id==='first_job_application').map(event=>event.episode.deadlineYears),
+    [5,5,5,5,5],
+    'the fifth first-job phase does not fit inside the authored deadline'
   );
   assert.ok(eventFor('undergraduate_application',1).requirements.all.some(rule=>rule.path==='education.nextStage'&&rule.op==='eq'&&rule.value==='undergraduateApplication'));
   assert.deepEqual(eventFor('first_job_application',1).requirements.all.find(rule=>rule.path==='education.nextStage'),{path:'education.nextStage',op:'in',value:['firstJob','workOrVocational']});
   for(const id of episodeIds){
     const rows=decisions.filter(event=>event.episode?.id===id).sort((a,b)=>a.episode.phase-b.episode.phase);
-    assert.ok(rows.length>=1&&rows.length<=4,`${id}: phase count`);
+    assert.ok(rows.length>=1&&rows.length<=5,`${id}: phase count`);
     assert.deepEqual(rows.map(row=>row.episode.phase),rows.map((_,index)=>index+1),`${id}: phase sequence`);
     assert.equal(rows[0].episode.role,'start',`${id}: first phase role`);
     if(rows.length>1)assert.equal(rows.at(-1).episode.role,'resolve',`${id}: final phase role`);
@@ -142,7 +147,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.12',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.13',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.11完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,11);
@@ -224,7 +229,9 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
 
     const bachelorBase={education:{status:'enrolled',level:4,path:'college',enrollmentRegion:'domestic',nextStage:'undergraduate',undergraduateSystem:'domestic',highestCompleted:'secondary',courseworkEvidence:18,campusEvidence:8,practiceEvidence:18,researchEvidence:8},employment:{status:'none',entryCredential:'none',applicationStatus:'none'},activity:{mode:'study'}};
     await preparePhase(page,'undergraduate_domestic',4,bachelorBase);
+    const bachelorCompletionAge=(await snapshot(page)).age;
     run=await choose(page,0);
+    assert.equal(run.age,bachelorCompletionAge+1,'finishing undergraduate study incorrectly opened an unrelated same-age education episode');
     assert.equal(run.education.highestCompleted,'undergraduate');
     assert.equal(run.education.nextStage,'firstJob');
     assert.equal(run.employment.entryCredential,'bachelor');
@@ -249,13 +256,60 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     await preparePhase(page,'first_job_application',4,{...bachelorJob,employment:bachelorOffer});
     assert.equal(await optionEnabled(page,0),true);
     assert.equal(await optionEnabled(page,1),true);
-    assert.equal(await optionEnabled(page,2),true);
+    assert.equal(await optionEnabled(page,2),false);
     run=await choose(page,0);
     assert.ok(['employed','gig'].includes(run.employment.status));
     assert.equal(run.employment.firstJobOutcome,run.employment.profileId);
     assert.ok(['T1','T2'].includes(run.employment.jobTier));
     assert.ok(run.employment.salary>0&&run.employment.incomeAnnualGross>0);
     assert.equal(run.employment.pendingOfferId,'none');
+
+    const noOfferJob={seed:'bridge-entry',location:{id:'tier2'},education:{status:'completed',level:3,path:'vocational',highestCompleted:'upperSecondary',nextStage:'firstJob',courseworkEvidence:8,practiceEvidence:8,researchEvidence:0},employment:{status:'unemployed',entryCredential:'highSchool',applicationRegion:'domestic',applicationChannel:'openRecruitment',firstJobEntryPath:'openRecruitment',applicationStatus:'searching',pendingOfferId:'none',firstJobAge:null},activity:{mode:'seeking'}};
+    const naturalNoOfferJob={...noOfferJob,seed:scenarioWitnesses.E01,age:16,episodes:null};
+    await preparePhase(page,'first_job_application',1,naturalNoOfferJob);
+    run=await choose(page,0);
+    assert.equal(run.episodes.first_job_application.deadlineAge,21);
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),eventFor('first_job_application',2).id),eventFor('first_job_application',2).id);
+    run=await choose(page,0);
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),eventFor('first_job_application',3).id),eventFor('first_job_application',3).id);
+    const naturalScenario=(await snapshot(page)).currentDecision.recruitmentScenarioId;
+    const noOfferIndex=data.employmentCatalog.recruitmentScenarios.find(item=>item.id===naturalScenario).choices.findIndex(choice=>!choice.offerIntent);
+    assert.ok(noOfferIndex>=0,`${naturalScenario}: natural fixture had no no-offer choice`);
+    run=await choose(page,noOfferIndex);
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),eventFor('first_job_application',4).id),eventFor('first_job_application',4).id);
+    run=await choose(page,2);
+    assert.equal(run.age,20);
+    assert.equal(run.episodes.first_job_application.phase,5);
+    assert.ok(run.episodes.first_job_application.deadlineAge>run.age,'phase five expired at the start of its own year');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[]}));
+    for(let guard=0;guard<6;guard++){
+      run=await snapshot(page);
+      if(run.currentDecision?.episode?.id==='first_job_application'&&run.currentDecision.episode.phase===5)break;
+      await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    }
+    run=await snapshot(page);
+    assert.equal(run.currentDecision?.episode?.phase,5,'natural year planning closed the new first-job phase before showing it');
+    assert.equal(await optionEnabled(page,0),true,'legal bridge job was unavailable on the natural fifth phase');
+
+    await preparePhase(page,'first_job_application',4,noOfferJob);
+    assert.equal(await optionEnabled(page,0),false);
+    assert.equal(await optionEnabled(page,1),false);
+    assert.equal(await optionEnabled(page,2),true);
+    run=await choose(page,2);
+    assert.equal(run.episodes.first_job_application.status,'active');
+    assert.equal(run.episodes.first_job_application.phase,5);
+    assert.equal(run.employment.firstJobAge,null);
+    await preparePhase(page,'first_job_application',5,{...noOfferJob,age:run.age,employment:run.employment});
+    run=await choose(page,0);
+    assert.ok(['employed','gig'].includes(run.employment.status));
+    assert.ok(['T0','T1'].includes(run.employment.jobTier));
+    assert.equal(run.episodes.first_job_application.status,'resolved');
+    assert.equal(run.episodes.first_job_application.closureReason,'bridge_job');
+    const blockedBridge={...noOfferJob,age:25,location:{id:'us'},mobility:{workAuthorization:'restricted'},employment:{...noOfferJob.employment,applicationRegion:'us'}};
+    await preparePhase(page,'first_job_application',5,blockedBridge);
+    assert.equal(await optionEnabled(page,0),false,'unavailable overseas bridge job remained selectable');
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.bridgeFirstJobCandidates())).length,0);
+    assert.match((await snapshot(page)).currentDecision.situation,/没有一份资格、地区和合同条件都允许/);
 
     const changeBase={education:{status:'enrolled',level:4,path:'college',enrollmentRegion:'domestic',nextStage:'undergraduate',undergraduateSystem:'domestic',highestCompleted:'secondary',changeIntent:'none'},pressures:{career:20},activity:{mode:'study'}};
     await preparePhase(page,'undergraduate_change',1,changeBase);
@@ -330,6 +384,55 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     assert.ok(!['doctor','lawyer','university_lecturer'].includes(run.employment.pendingOfferId));
 
     const publicJob={status:'employed',profileId:'public_clerk',career:'公共部门职员',jobTier:'T2',rank:2,sector:'public',employerType:'public',contractType:'service',contract:'service',arrangement:'onsite',incomeStability:'fixedPlusBonus',salary:15800,incomeAnnualGross:205000,tenure:7,applicationStatus:'employed',pendingOfferId:'none'};
+    const careerGrowth=eventFor('career_growth',1),growthSamples=[
+      ['warehouse_picker','employed','responsibility',null],
+      ['factory_operator','employed','responsibility',null],
+      ['admin_assistant','employed','responsibility',null],
+      ['accountant','employed','professional',null],
+      ['store_clerk','employed','promotion','store_supervisor'],
+      ['crowd_rider','gig','responsibility',null],
+    ];
+    for(const [profileId,status,growthType,promotionTarget] of growthSamples){
+      const profile=profiles[profileId],monthly=profile.tier==='T0'?4200:profile.tier==='T1'?6000:12000;
+      await preparePhase(page,'career_growth',1,{age:30,location:{id:'tier2'},employment:{status,profileId,career:profile.name,jobTier:profile.tier,rank:Number(profile.tier.slice(1)),sector:profile.sector,employerType:profile.employerType,contractType:profile.contractType,contract:profile.contractType,arrangement:profile.arrangement,incomeStability:profile.incomeStability,salary:monthly,incomeAnnualGross:monthly*12,tenure:3,firstJobAge:24,applicationStatus:'employed',pendingOfferId:'none',growthType:'none',growthCount:0,lastGrowthAge:null},activity:{mode:status==='gig'?'flexible':'work'}});
+      const beforeGrowth=await snapshot(page);
+      assert.match(beforeGrowth.currentDecision.situation,new RegExp(profile.name));
+      run=await choose(page,0);
+      assert.equal(run.employment.growthType,growthType,profileId);
+      assert.equal(run.employment.growthCount,1,profileId);
+      if(promotionTarget)assert.equal(run.employment.profileId,promotionTarget,profileId);
+      else assert.ok(run.employment.incomeAnnualGross>beforeGrowth.employment.incomeAnnualGross,profileId);
+    }
+    const debtLimitedProfile=profiles.software_engineer;
+    await page.evaluate(({profile,eventId})=>window.__LIFE_DEBUG__.patchRun({
+      age:30,phase:'playing',sceneQueue:[],currentDecision:null,episodes:null,usedEvents:[],
+      employment:{status:'employed',profileId:profile.id,career:profile.name,jobTier:profile.tier,rank:2,sector:profile.sector,employerType:profile.employerType,contractType:profile.contractType,contract:profile.contractType,arrangement:profile.arrangement,incomeStability:profile.incomeStability,salary:12000,incomeAnnualGross:144000,tenure:3,firstJobAge:24,applicationStatus:'employed',pendingOfferId:'none',growthType:'none',growthCount:0,lastGrowthAge:null},
+      finance:{
+        debtStage:'enforcement',enforcementStatus:'active',enforcementDebtId:'growth_debt',dishonestStatus:'listed',restrictedConsumption:true,
+        liabilities:[{id:'growth_debt',kind:'consumer',principal:40000,rate:.08,status:'delinquent',arrears:2,enforcementEligible:true,housingSecured:false}]
+      },relationships:{activePartnerId:null,partnerStatus:'none',familyPlanningClosed:true},activity:{mode:'work'}
+    }),{profile:debtLimitedProfile,eventId:careerGrowth.id});
+    assert.ok((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(careerGrowth.id),'a debt-limited promotion removed the whole career-growth panel');
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),careerGrowth.id),careerGrowth.id);
+    assert.equal(await page.locator('[data-choice="0"]').isEnabled(),false,'debt restriction did not block the high-tier promotion itself');
+    assert.equal(await page.locator('[data-choice="1"]').isEnabled(),true,'debt restriction also removed the legal keep-current-job choice');
+    run=await choose(page,1);
+    assert.equal(run.employment.profileId,'software_engineer');
+    assert.equal(run.employment.growthCount,0);
+    await preparePhase(page,'career_growth',1,{
+      age:40,usedEvents:[],relationships:{activePartnerId:null,partnerStatus:'none',familyPlanningClosed:true},
+      employment:{status:'employed',profileId:'admin_assistant',career:'行政助理',jobTier:'T1',rank:1,sector:'administration',employerType:'private',contractType:'openEnded',contract:'openEnded',arrangement:'onsite',incomeStability:'fixed',salary:6000,incomeAnnualGross:72000,tenure:3,firstJobAge:24,applicationStatus:'employed',pendingOfferId:'none',growthType:'responsibility',growthCount:1,lastGrowthAge:28},
+      activity:{mode:'work'}
+    });
+    run=await choose(page,1);
+    assert.equal(run.employment.lastGrowthAge,28,'declining growth rewrote the age of an older job growth');
+    await page.locator('[data-act="open-drawer"]').click();
+    const declinedGrowthDrawer=await page.locator('.drawer').innerText();
+    assert.match(declinedGrowthDrawer,/行政助理已经连续做了 3 年/);
+    assert.doesNotMatch(declinedGrowthDrawer,/行政助理已经有过一次写进职责或收入的成长/);
+    await page.locator('.drawer [data-act="close-drawer"]').click();
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:30,usedEvents:[],episodes:{},finance:{dishonestStatus:'clear',restrictedConsumption:false},employment:{status:'selfEmployed',profileId:'small_shop_owner',career:'小店经营者',tenure:5,firstJobAge:24},activity:{mode:'work'}}));
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(careerGrowth.id),false,'self-employed work used company growth copy');
     const careLeaveDecision=decisions.find(event=>event.prompt.startsWith('外面的岗位薪水更高'));
     await page.evaluate(({eventId,employment})=>{
       window.__LIFE_DEBUG__.patchRun({age:40,phase:'playing',sceneQueue:[],currentDecision:null,episodes:null,employment,activity:{mode:'work'}});
@@ -381,8 +484,9 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     assert.equal(run.employment.status,'employed');
     assert.equal(run.employment.profileId,'admin_assistant');
 
-    const reentryBase={age:34,education:{status:'completed',level:4,path:'college',highestCompleted:'undergraduate',nextStage:'career'},employment:{status:'unemployed',entryCredential:'bachelor',applicationStatus:'searching',firstJobAge:null,firstJobEntryPath:'reentry'},activity:{mode:'seeking'}};
-    await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({...value,age:32,phase:'playing',sceneQueue:[],currentDecision:null,episodes:null}),reentryBase);
+    const firstJobFailure=eventFor('first_job_application',5),firstJobFailureChoice=firstJobFailure.choices[1];
+    const reentryBase={age:34,education:{status:'completed',level:4,path:'college',highestCompleted:'undergraduate',nextStage:'career'},employment:{status:'unemployed',entryCredential:'bachelor',applicationStatus:'searching',firstJobAge:null,firstJobEntryPath:'reentry'},activity:{mode:'seeking'},decisionHistory:[{age:27,eventId:firstJobFailure.id,choiceId:firstJobFailureChoice.id,choice:firstJobFailureChoice.text,result:firstJobFailureChoice.resultText,outcomeTags:[]}],usedEvents:['decision_161',firstJobFailure.id],episodes:{first_job_application:{status:'resolved',phase:5,startedAt:22,nextPhaseAge:27,deadlineAge:28,route:'continued_search',boundActors:{},commitments:[],closureReason:'continued_search'}}};
+    await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({...value,age:32,phase:'playing',sceneQueue:[],currentDecision:null}),reentryBase);
     assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),'decision_162','reentry must not bypass the adult identity decision');
     await page.evaluate(()=>{const run=window.__LIFE_DEBUG__.snapshot();window.__LIFE_DEBUG__.patchRun({usedEvents:[...new Set([...(run.usedEvents||[]),'decision_162'])],desires:{reclaimed:true}})});
     assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),eventFor('long_term_first_job_reentry',1).id);

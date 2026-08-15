@@ -118,17 +118,17 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.12', 13, 32]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.13', 13, 33]);
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
-    {beat:480,decision:205,consequence:205,blackSwan:20},
+    {beat:480,decision:206,consequence:206,blackSwan:20},
   );
   const generatedDecisions=DATA.events.filter(event=>event.kind==='decision');
   const episodeDecisions=generatedDecisions.filter(event=>event.episode);
   const generatedEpisodeIds=[...new Set(episodeDecisions.map(event=>event.episode.id))].sort();
   assert.deepEqual(
     [DATA.cards.length,generatedEpisodeIds.length,Object.keys(DATA.episodeCatalog).length,episodeDecisions.length,generatedDecisions.length-episodeDecisions.length],
-    [73,62,41,144,61],
+    [73,63,42,145,61],
   );
   assert.deepEqual(
     generatedEpisodeIds.filter(id=>!Object.hasOwn(DATA.episodeCatalog,id)),
@@ -263,7 +263,7 @@ function neutralTrace(multiplier) {
   assert.ok(mortgagePressure.requirements.all.some(rule=>rule.path==='housing.status'&&rule.op==='eq'&&rule.value==='mortgaged'));
   assert.ok(mortgagePressure.requirements.all.some(rule=>rule.path==='finance.mortgagePaymentStress'&&rule.op==='eq'&&rule.value===true));
   const allChoices=DATA.events.filter(event=>event.kind==='decision').flatMap(event=>event.choices);
-  assert.equal(allChoices.filter(choice=>choice.cardInteraction).length,214);
+  assert.equal(allChoices.filter(choice=>choice.cardInteraction).length,212);
   const cardSource=fs.readFileSync(path.join(ROOT,'content/zh-CN/card-interactions.mjs'),'utf8');
   assert.doesNotMatch(cardSource,/universalRotation|genericInteraction|genericPatch|authoredMechanics|eventAuthoredInteraction|\(index\s*\+/);
   assert.match(cardSource,/EXPLICIT_CARD_INTERACTIONS/);
@@ -612,7 +612,7 @@ function neutralTrace(multiplier) {
   assert.match(unregisteredFailure, /未登记定义/);
 
   assert.ok(
-    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.12')") <
+    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.13')") <
       gameSource.indexOf('fetch(`./data.json?v=${VERSION}`'),
     'shared contract import must precede data fetch',
   );

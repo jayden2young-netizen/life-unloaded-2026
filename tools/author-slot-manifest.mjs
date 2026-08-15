@@ -1140,6 +1140,9 @@ export const DECISION_SLOT_REGISTRATIONS = [
   {key:'@author/decision/0db247b46578ad0eb0ca27a5',slot:{id:'decision_161',track:'identity',localIndex:0},replaces:'@author/decision/22cad5bad339e3fb814d491f'},
   {key:'@author/decision/d8bbc03f4315e991d1075929',slot:{id:'decision_162',track:'identity',localIndex:1},replaces:'@author/decision/9f6ea094475c7a952a2b8ea0'},
   {key:'@author/decision/11d7715870bf164297c93acf',slot:{id:'decision_009',track:'education',localIndex:8},replaces:'@author/decision/10003c4ddacabd2a7a832eba'},
+  {key:'@author/decision/6791e5263e93b28ec93271cf',slot:{id:'decision_207',track:'employment',localIndex:31}},
+  {key:'@author/decision/c3fb379f9af01a23f9de1daf',slot:{id:'decision_208',track:'employment',localIndex:32}},
+  {key:'@author/decision/1626558411fcca92ea379d71',slot:{id:'decision_152',track:'later',localIndex:0},replaces:'@author/decision/2df29c9328f6906832abdcb9'},
 ];
 export const CARD_SLOT_REGISTRATIONS = [
   {key:'@author/card/ed8a1e4158c896c0201ede79',slot:{id:'card_65',globalIndex:64},replaces:'@author/card/2bd61b8762cbb06688238d60'},

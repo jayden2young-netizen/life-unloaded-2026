@@ -43,7 +43,7 @@ const registrationGroups=[
 for(const [domain,registrations] of registrationGroups)
   for(const registration of registrations)
     registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
-const VERSION='0.6.12',SCHEMA_VERSION=13,CONTENT_REVISION=32;
+const VERSION='0.6.13',SCHEMA_VERSION=13,CONTENT_REVISION=33;
 const debtSourceCatalog=Object.freeze({
   mortgage:Object.freeze({label:'住房按揭',enforcementEligible:true,housingSecured:true}),
   consumer:Object.freeze({label:'消费借款',enforcementEligible:true,housingSecured:false}),
@@ -499,7 +499,8 @@ const EPISODE_ROUTES={
   ,adult_reeducation:{1:['enrolled','reduced','declined'],2:['completed','low_intensity','non_degree','forced_exit']}
   ,business_expansion:{1:['validated','limited_test','not_ready'],2:['internal_cash','debt_finance','equity_finance'],3:['scaled','downsized','sold','debt_failure']}
   ,wealth_peak:{1:['reviewed','partial_exit','declined'],2:['controlled','cashed_out','management_exit','invalidated']}
-  ,retirement_transition:{1:['reviewed','phased','delayed'],2:['retired','semi_retired','continued','forced']}
+  ,career_growth:{1:['accepted','declined','failed']}
+  ,retirement_transition:{1:['stopped','reduced','continued','left_search','light_work','kept_searching']}
   ,parental_inheritance:{1:['inventoried','delegated','planned_renunciation'],2:['accepted','limited','renounced','disputed']}
   ,long_term_care:{1:['assessed','adapted','refused'],2:['combined','institutional','family_only'],3:['stable','changed','minimum_support','family_break']}
   ,will_planning:{1:['inventoried','separated','debt_first'],2:['documented','partial','deferred','invalidated']}
@@ -514,7 +515,7 @@ const EPISODE_ROUTES={
   ,postgraduate_us:{1:['funding','methods','authorized_practice'],2:['specialist','industry','return_prep'],3:['us_job','return_job','europe_job','long_search']}
   ,postgraduate_europe:{1:['planned','host_language','project'],2:['local_job','local_reference','return_prep'],3:['europe_job','return_job','us_job','long_search']}
   ,overseas_postgraduate_belonging:{1:['dual_network','institutional_support','host_language'],2:['bounded_cooperation','documented','environment_change','allies']}
-  ,first_job_application:{1:['graduate_channel','conversion','specialist','bridge'],2:['bachelor_evidence','postgraduate_evidence','work_sample','application_withdrawn'],3:['verified_offer','overseas_verified','return_verified','long_search'],4:['accept_offer','decline_offer','long_search']}
+  ,first_job_application:{1:['graduate_channel','conversion','specialist','bridge'],2:['bachelor_evidence','postgraduate_evidence','work_sample','application_withdrawn'],3:['verified_offer','overseas_verified','return_verified','long_search'],4:['accept_offer','decline_offer','continue_search'],5:['bridge_job','continued_search','paused']}
   ,professional_entry_qualification:{1:['medical','legal','teaching','ordinary_job'],2:['passed','retake','adjacent_job','withdrawn']}
   ,long_term_first_job_reentry:{1:['bounded','introduced','independent'],2:['downsized','short_work','continued'],3:['accepted','searching','declined']}
 };
@@ -542,7 +543,8 @@ const EPISODE_CATALOG={
   adult_reeducation:{label:'成年再教育',organization:'本轮继续教育项目',abandonedRoutes:['declined','forced_exit'],deadline:'三年了。上完的课和交清的费用都在记录里；剩下没读完的，不再继续占着排班。',invalidated:'项目、排班或家里有一样撑不住了。退费办到哪里、课上到哪里，最后都写在回函上。'},
   business_expansion:{label:'企业扩张',organization:'本轮扩张单元',abandonedRoutes:['not_ready','debt_failure'],deadline:'四年了。你不再往里投。货清了，人结算完了，设备也交了。',invalidated:'原来的企业关了，或不再有经营条件。第二地点的意向书作废，已经投进去的按现状结清。'},
   wealth_peak:{label:'财富顶点',organization:'本轮交易方',abandonedRoutes:['declined','invalidated'],deadline:'两年了。没完成的估值，不能还当自己的钱。排他谈判停了，临时交出去的权限又回到你手里。',invalidated:'企业规模、买方或交易条件变了。尽调资料还在，交易没有继续。'},
-  retirement_transition:{label:'工作转段',abandonedRoutes:['forced'],deadline:'两年了。你按现在的工作量、收入和身体负担定了——停下、减量，还是继续。复核日期不再往后拖。',invalidated:'岗位或身体条件变了。原来的安排不再适用，你按当下能做的部分完成交接。'},
+  career_growth:{label:'职业成长',deadline:'谈好的日期到了。新职责和收入有书面安排的照着执行；没有落下来的，这次就到这里。',invalidated:'工作形态、岗位或任期变了。原来的成长安排停下，已经做过的工作仍照实留在履历里。'},
+  retirement_transition:{label:'工作转段',deadline:'复核日期到了。排班、求职提醒和日常开销照现在的安排继续；要再改，得重新坐下来谈。',invalidated:'工作史、岗位或身体条件变了。原来的安排不再适用，你只按当下仍能做的部分重新决定。'},
   parental_inheritance:{label:'父母遗产',abandonedRoutes:['renounced','disputed'],deadline:'两年了。资产、债务和往来清单你都留着。没办完的转入正式程序，其他日子照常往下过。',invalidated:'人员、遗产范围或文件条件变了。旧钥匙和清点表都还在，后面只按新情况办。'},
   long_term_care:{label:'长期照护',abandonedRoutes:['refused','family_break'],deadline:'四年了。照护按现在的身体定了：只留下最低限度的服务和一个紧急联系人。日子小了一些，每天要做的还是那些。',invalidated:'身体、服务或住处——变了。旧的排班表不再续。照护由新的安排接手。'},
   will_planning:{label:'遗嘱规划',abandonedRoutes:['deferred','invalidated'],deadline:'两年了。签过的文件留着，没签的仍然只是草稿。',invalidated:'身份、账户或见证条件变了。旧稿收回作废，真要再办就得按新情况重写。'},
@@ -557,7 +559,7 @@ const EPISODE_CATALOG={
   postgraduate_us:{label:'美国研究生生活',ageBound:true,abandonedRoutes:['long_search'],deadline:'第四年，学位审核、资助期限和工作资格一起到期。没发下来的文件，不能拿一句“应该没问题”代替。',invalidated:'这段美国研究生学籍停了。研究、资助和工作资格记录都留了下来。'},
   postgraduate_europe:{label:'欧洲研究生生活',ageBound:true,abandonedRoutes:['long_search'],deadline:'第四年，学分、论文和学位审核都到了最后期限。学校最后发下来的记录，就是这段学业的结果。',invalidated:'这段欧洲研究生学籍停了。学分单、行政回函和项目材料都还在。'},
   overseas_postgraduate_belonging:{label:'海外研究生生活与归属',deadline:'两年了。常走的路已经不用导航。至于出了事能找谁，试过才知道。',invalidated:'你离开了这段海外研究生生活。手续停在离开那天，想继续联系的人不用一起归零。'},
-  first_job_application:{label:'第一份工作申请',ageBound:true,abandonedRoutes:['withdrawn','long_search'],deadline:'四年了。申请页还在更新，工牌那一栏仍然空着。没有合同，就不能把“快了”填成已经入职。',invalidated:'你已经正式入职，或者不再投这一轮岗位。旧申请收进文件夹，求职那一页终于可以翻过去了。'},
+  first_job_application:{label:'第一份工作申请',ageBound:true,resolvedRoutes:['accept_offer','decline_offer'],abandonedRoutes:['withdrawn','application_withdrawn','paused'],deadline:'五年了。最后留下的是一份合同、继续投递的记录，或暂停求职的消息。招聘网站上的这轮申请到这里收起。',invalidated:'你已经正式入职，或者不再投这一轮岗位。旧申请收进文件夹，求职那一页终于可以翻过去了。'},
   professional_entry_qualification:{label:'专业职业入口',ageBound:true,abandonedRoutes:['ordinary_job','withdrawn'],deadline:'报名和考核期限到了。拿到的凭证照实放进材料，没拿到的不能拿一句“快了”代替。',invalidated:'学业、报考条件或职业方向变了。这一轮材料留着，旧入口不再继续占着日程。'},
   long_term_first_job_reentry:{label:'长期求职再入场',ageBound:true,abandonedRoutes:['declined'],deadline:'三年了。合同、短工记录和还在投的简历各自摆着。没有正式工作的，不能把临时收入写成已经报到。',invalidated:'你已经入职、重新在读，或不再走这轮安排。旧招聘链接和预算表收进抽屉。'},
 };
@@ -653,6 +655,7 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     if(episode.phase===2){add('education.practiceEvidence',[6,2,5,0][option]);add('education.researchEvidence',[0,6,2,0][option]);add('capabilities.employability',[5,5,6,0][option]);if(option===3){set('employment.applicationStatus','searching');set('employment.firstJobOutcome','longSearch')}}
     if(episode.phase===3){if(option<3){if(option===2)set('employment.applicationRegion','domestic');effects.push(c('resolveFirstJobApplication','employment',['domestic','overseas','return'][option]))}else{set('employment.applicationStatus','searching');set('employment.firstJobOutcome','longSearch');set('activity.mode','seeking')}}
     if(episode.phase===4){set('education.nextStage','career');if(option===0)effects.push(c('acceptFirstJobOffer','employment','pending'));if(option===1)effects.push(c('leaveEmployment','employment','declined'));if(option===2)effects.push(c('leaveEmployment','employment','longSearch'))}
+    if(episode.phase===5){set('education.nextStage','career');if(option===0)effects.push(c('acceptFirstJobOffer','employment','bridge'));else effects.push(c('leaveEmployment','employment',option===1?'longSearch':'paused'))}
   }
   if(episode?.id==='professional_entry_qualification'){
     if(episode.phase===1){
@@ -687,6 +690,11 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
       add('health.mental',[1,0,-2][option]);
       effects.push(c('tag','history','research:E67'),c('tag','history','research:E68'));
     }
+  }
+  if(episode?.id==='career_growth'){
+    effects.push(c('resolveCareerGrowth','employment',['accepted','declined','failed'][option]));
+    add('pressures.career',[-2,-1,3][option]);
+    add('capabilities.skill',[3,0,1][option]);
   }
   if(episode?.id==='professional_certification'){
     add('capabilities.skill',episode.phase===1?[2,3,0][option]:[5,2,4,0][option]);add('finance.cash',episode.phase===1?[-1500,-2500,0][option]:[-2500,-1800,-1200,0][option]);add('pressures.career',episode.phase===1?[-1,-1,2][option]:[-3,1,-1,2][option]);
@@ -956,13 +964,9 @@ const decisionEffects=(id,index,option,authoredDecision)=>{
     }
   }
   if(episode?.id==='retirement_transition'){
-    if(episode.phase===1)set('later.retirement',['reviewing','phased','delayed'][option]);
-    else{
-      set('later.retirement',['retired','semiRetired','working','forced'][option]);
-      if(option===1)effects.push(c('scaleEmployment','employment',.55));
-      if(option===0||option===3)effects.push(c('leaveEmployment','employment','retired'));
-    }
-    add('desires.peace.fulfillment',episode.phase===1?[1,2,-1][option]:[5,3,0,-2][option]);add('pressures.career',episode.phase===1?[-1,-2,2][option]:[-4,-2,1,4][option]);
+    effects.push(c('resolveWorkTransition','employment',['stopped','reduced','continued','leftSearch','lightWork','keptSearching'][option]));
+    add('desires.peace.fulfillment',[5,3,0,4,2,-1][option]);
+    add('pressures.career',[-4,-2,1,-3,-1,2][option]);
   }
   if(episode?.id==='parental_inheritance'){
     if(episode.phase===1)set('later.inheritance',['inventory','delegated','renouncing'][option]);
@@ -998,6 +1002,25 @@ const RESEARCH_SEED_PROFILES={
   E56:['software_engineer','engineering_specialist','designer','research_specialist','rd_engineer'],
   E59:['junior_manager'],E62:['junior_manager','department_executive']
 };
+const normalizeLifecycle=(value,source)=>{
+  if(value===undefined)return null;
+  if(!value||typeof value!=='object'||Array.isArray(value)||typeof value.kind!=='string'||!value.kind)
+    throw new Error(`${source}: invalid lifecycle metadata`);
+  const allowed=new Set(['kind','minTenureYears','relativeTo','minYearsAfter','checkpointRange','employmentModes']);
+  for(const key of Object.keys(value))if(!allowed.has(key))throw new Error(`${source}: unsupported lifecycle field ${key}`);
+  if(value.checkpointRange&&(!Array.isArray(value.checkpointRange)||value.checkpointRange.length!==2))
+    throw new Error(`${source}: lifecycle checkpointRange must contain two ages`);
+  if(value.employmentModes&&!Array.isArray(value.employmentModes))
+    throw new Error(`${source}: lifecycle employmentModes must be an array`);
+  return{
+    kind:value.kind,
+    ...(Number.isFinite(value.minTenureYears)?{minTenureYears:value.minTenureYears}:{}),
+    ...(typeof value.relativeTo==='string'?{relativeTo:value.relativeTo}:{}),
+    ...(Number.isFinite(value.minYearsAfter)?{minYearsAfter:value.minYearsAfter}:{}),
+    ...(value.checkpointRange?{checkpointRange:[...value.checkpointRange]}:{}),
+    ...(value.employmentModes?{employmentModes:[...value.employmentModes]}:{})
+  };
+};
 const decisions=[],authoredDecisionById=new Map();
 for(const id of trackOrder){
   const spec=TRACKS[id];
@@ -1008,7 +1031,7 @@ for(const id of trackOrder){
       if(authoredDecision.episode&&authoredDecision.episode.role!=='start')throw new Error(`${id}.decisions[${sourceIndex}]: opportunity is only valid on episode starts or independent decisions`);
     }
     if(authoredDecision.routeSituations&&!isRouteSituations(authoredDecision.routeSituations))throw new Error(`${id}.decisions[${sourceIndex}]: invalid routeSituations`);
-    const eventId=slot.id,echoId=eventId.replace('decision_','echo_'),requirements=mergeRequirements(requirementsFor(id),authoredDecision.requirements),actors=(Object.hasOwn(authoredDecision,'actors')?authoredDecision.actors:id==='habits'?[]:authoredDecision.episode?episodeActorsFor(authoredDecision):actorsFor(id,index,'decision')).map(actor=>({...actor})),ageRange=authoredDecision.age||(id==='habits'?authoredDecision.age:TRACK_NODE_AGES[id][index]);
+    const eventId=slot.id,echoId=eventId.replace('decision_','echo_'),requirements=mergeRequirements(requirementsFor(id),authoredDecision.requirements),actors=(Object.hasOwn(authoredDecision,'actors')?authoredDecision.actors:id==='habits'?[]:authoredDecision.episode?episodeActorsFor(authoredDecision):actorsFor(id,index,'decision')).map(actor=>({...actor})),ageRange=authoredDecision.age||(id==='habits'?authoredDecision.age:TRACK_NODE_AGES[id][index]),lifecycle=normalizeLifecycle(authoredDecision.episode?.lifecycle,`${id}.decisions[${sourceIndex}]`);
     if(id==='business'&&authoredDecision.episode?.phase>1)requirements.all=requirements.all.filter(rule=>rule.path!=='finance.available');
     if(id==='employment'&&!authoredDecision.episode){
       if(authoredDecision.seedId){
@@ -1016,7 +1039,7 @@ for(const id of trackOrder){
       }else if(index===0)requirements.all.push(p('education.nextStage','eq','career'),p('employment.status','in',['unemployed','gig']));
       else requirements.all.push(p('employment.status','eq','employed'));
     }
-    if(id==='employment'&&authoredDecision.episode?.role==='start'&&!['first_job_application','long_term_first_job_reentry'].includes(authoredDecision.episode.id)&&index>0)requirements.all.push(p('employment.status','eq','employed'));
+    if(id==='employment'&&authoredDecision.episode?.role==='start'&&!['first_job_application','long_term_first_job_reentry','career_growth'].includes(authoredDecision.episode.id)&&index>0)requirements.all.push(p('employment.status','eq','employed'));
     if(id==='public'&&authoredDecision.episode?.role==='start')requirements.none.push(p('employment.employerType','eq','public'));
     if(id==='public'&&index>1)requirements.all.push(p('employment.employerType','eq','public'));
     if(id==='remote'&&index>0)requirements.any.push(p('employment.arrangement','in',['remote','hybrid']),p('mobility.mode','in',['domesticNomad','overseasNomad']));
@@ -1076,14 +1099,16 @@ for(const id of trackOrder){
     if(authoredDecision.episode?.id==='postgraduate_europe')requirements.all.push(p('education.status','eq','enrolled'),p('education.postgraduateSystem','eq','europe'),p('education.nextStage','eq','postgraduate'));
     if(authoredDecision.episode?.id==='overseas_postgraduate_belonging')requirements.all.push(p('education.status','eq','enrolled'),p('education.postgraduateSystem','in',['us','europe']));
     if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.nextStage','in',['firstJob','workOrVocational']),p('employment.status','notIn',['employed','selfEmployed']));
+    if(authoredDecision.episode?.id==='first_job_application'&&authoredDecision.episode.phase===5)requirements.all.push(p('employment.firstJobAge','eq',null),p('employment.applicationStatus','neq','offered'));
     if(authoredDecision.episode?.id==='professional_entry_qualification'){
       requirements.all.push(p('education.highestCompleted','eq','postgraduate'),p('employment.status','notIn',['employed','selfEmployed']));
       if(authoredDecision.episode.phase===1)requirements.all.push(p('education.professionalQualificationIntent','eq','none'));
       else requirements.all.push(p('education.professionalQualificationIntent','in',['medical_practice','legal_practice','university_teaching']));
     }
     if(authoredDecision.episode?.id==='long_term_first_job_reentry'){
-      requirements.all.push(p('age','gte',32),p('education.status','notIn',['notStarted','enrolled']),p('employment.status','notIn',['employed','selfEmployed']),p('employment.firstJobAge','eq',null));
+      requirements.all.push(p('education.status','notIn',['notStarted','enrolled']),p('employment.status','notIn',['employed','selfEmployed']),p('employment.firstJobAge','eq',null));
     }
+    if(authoredDecision.episode?.id==='career_growth')requirements.all.push(p('employment.status','in',['employed','gig']));
     if(authoredDecision.episode?.id==='debt_enforcement'){
       if(authoredDecision.episode.phase===1)requirements.all.push(p('finance.hasEnforceableArrears','eq',true),p('finance.debtStage','eq','overdue'));
       if(authoredDecision.episode.phase===2)requirements.all.push(p('finance.debtStage','eq','overdue'),p('finance.enforcementDebtId','truthy',true),p('finance.enforcementStatus','in',['noticePending','noticeExpired']));
@@ -1093,7 +1118,7 @@ for(const id of trackOrder){
     if(authoredDecision.episode?.id==='adult_reeducation'&&authoredDecision.episode.phase===1)requirements.all.push(p('education.status','notIn',['notStarted','enrolled']));
     if(authoredDecision.episode?.id==='business_expansion'&&authoredDecision.episode.phase===1)requirements.all.push(p('business.status','eq','operating'),p('business.operatingSkill','gte',45),p('business.equity','gte',30000));
     if(authoredDecision.episode?.id==='wealth_peak'&&authoredDecision.episode.phase===1)requirements.all.push(p('business.status','eq','operating'),p('business.scale','in',['national','global']),p('business.equity','gte',1e8));
-    if(authoredDecision.episode?.id==='retirement_transition'&&authoredDecision.episode.phase===1)requirements.all.push(p('employment.status','in',['employed','gig','selfEmployed']));
+    if(authoredDecision.episode?.id==='retirement_transition'&&authoredDecision.episode.phase===1)requirements.all.push(p('employment.firstJobAge','neq',null));
     if(authoredDecision.episode?.id==='long_term_care'&&authoredDecision.episode.phase===1)requirements.any.push(p('health.careNeed','gte',1),p('health.status','eq','limited'),p('health.disability','neq','none'));
     if(id==='health'&&index===0)requirements.all.push(p('health.status','in',['monitoring','treating','recovering']),p('health.conditionSeverity','gte',5));
     if(id==='health'&&index===4)requirements.any.push(p('health.status','eq','limited'),p('health.conditionSeverity','gte',35),p('health.disability','neq','none'));
@@ -1104,8 +1129,6 @@ for(const id of trackOrder){
       const text=copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`,cardInteraction=cardInteractionFor(id,index,option,authoredDecision);
       if(id==='partnership'&&!authoredDecision.episode&&index===0&&option<2)result.effects.push(c('createPerson','people',1,{relation:'partner'}));
       const choiceRules=copyItem.requirements||req();
-      if(authoredDecision.episode?.id==='retirement_transition'&&authoredDecision.episode.phase===2&&option<3)
-        choiceRules.all.push(p('employment.status','in',['employed','gig','selfEmployed']));
       if(authoredDecision.episode?.id==='long_term_care'&&authoredDecision.episode.phase===2&&option===2)
         choiceRules.all.push(p('relationships.childCount','gte',1));
       if(authoredDecision.episode?.id==='long_term_care'&&authoredDecision.episode.phase===3&&option===3)
@@ -1126,7 +1149,7 @@ for(const id of trackOrder){
       const generatedHousingKind=result.effects.find(effect=>effect.type==='transitionHousing'&&effect.value?.kind==='choice')?.value?.housingChoiceKind,housingChoiceKind=copyItem.housingChoiceKind||generatedHousingKind;
       return{id:`${eventId}_choice_${option+1}`,text,resultText:copyItem.resultText,hints:copyItem.hints||[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),...(copyItem.debtGate?{debtGate:copyItem.debtGate}:{}),...(housingChoiceKind?{housingChoiceKind}:{}),...(socialOutcome?{socialOutcome}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences,outcomeTags:result.outcomeTags,memoryKey,route:result.route};
     });
-    decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',...(authoredDecision.situation?{situation:authoredDecision.situation}:{}),...(authoredDecision.routeSituations?{routeSituations:authoredDecision.routeSituations}:{}),prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{episode:authoredDecision.episode}:{}),...(authoredDecision.opportunity?{opportunity:authoredDecision.opportunity}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:authoredDecision.weight??16+index%3,contentRevision:CONTENT_REVISION});
+    decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',...(authoredDecision.situation?{situation:authoredDecision.situation}:{}),...(authoredDecision.routeSituations?{routeSituations:authoredDecision.routeSituations}:{}),prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{episode:{...authoredDecision.episode,...(lifecycle?{lifecycle}:{})}}:{}),...(authoredDecision.opportunity?{opportunity:authoredDecision.opportunity}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:authoredDecision.weight??16+index%3,contentRevision:CONTENT_REVISION});
     authoredDecisionById.set(eventId,authoredDecision);
   }
 }
@@ -1243,7 +1266,7 @@ const cardInteractionCoverage=validateCardInteractions();
 
 const endingProfiles=[
   ['ordinaryContent','你没有赢下所有比较，但日子最终适合自己。','常见',['lifeEnded','decisionDiversity']],
-  ['freeLife','你没有工牌，却认真支付了自由的账单。','少见',['leisure:deliberate','freedom']],
+  ['freeLife','你主动把一段时间从工作里拿回来，也承担了那段自由的账单。','少见',['leisure:deliberate','freedom']],
   ['driftedLife','你能在任何地方工作，也因此很少真正下班。','罕见',['remote:risk','leisure:risk']],
   ['familyCycle','你成功保住所有退路，因此从未真正离开。','罕见',['children:negotiated','familyControlCycle']],
   ['cycleBreaker','你没有摆脱家庭，只是没让下一代再替同一件事买单。','极罕',['children:deliberate','cycleBroken']],
@@ -1259,7 +1282,7 @@ const endingProfiles=[
   ['childfree','没有后代不等于没有关系，空房间也不是空人生。','少见',['children:risk','peace']],
   ['earlyExit','句号来得太早。有些事才刚开头。','极罕',['earlyDeath','lifeEnded']]
 ].map(([id,summary,rarity,signals])=>({id,summary,rarity,signals,contentRevision:CONTENT_REVISION}));
-const titleSets={ordinaryContent:['够用的人生','没有登上热搜的一生','把灯按时关掉','日子终于不欠谁'],freeLife:['星期一也没有闹钟','主动退出排行榜','无工牌生活实验','时间重新属于自己'],driftedLife:['所有地址都可退订','有 Wi-Fi 的地方','任何地方都在工作','行李箱没有故乡'],familyCycle:['账本换了封面','所有退路都还在','一家人的钱','旧路又走了一遍'],cycleBreaker:['旧规矩到你为止','担保止于此处','你把密码还给自己','下一代不必交账'],publicDuty:['窗口灯熄灭以后','编制里的漫长四季','号码牌背面的人','稳定也有重量'],fragmentedWorker:['被切开的白天','八小时以外','空档不算生活','排班表上的人'],rootedRemote:['有网，也有门牌','关机后的城市','远程的固定地址','把时区留在门外'],founder:['老板称呼退潮以后','真实流水','样板店之外','小店活过了品牌'],wealthApex:['数字失去单位','全球估值的孤岛','控制权稀释之前','世界首富没有下班'],debtLegacy:['遗嘱和欠款','最后一位担保人','百万负债说明书','余额不足的一生'],recovered:['复发没有成为结局','重新拿回银行卡','清醒日历','承认之后'],lostControl:['下一次没有回来','被隐藏的账单','赔率吞掉清晨','失控留下的空位'],parentLegacy:['孩子没有复述你','旅行不用报备','代际回声停下','回家不用交差'],childfree:['空房间不是空人生','没有后代的晚餐','照护另有名字','把晚年交给协议'],earlyExit:['句号来得太早','日历提早停了','还没过完的日子','时间没有保证书']};
+const titleSets={ordinaryContent:['把日子过到这里','工牌后面的几年','简历和账单之间','家里一直有人等','按身体能走的路','工作停在这一天'],freeLife:['星期一也没有闹钟','主动退出排行榜','给自己留过一段时间','时间重新属于自己'],driftedLife:['所有地址都可退订','有 Wi-Fi 的地方','任何地方都在工作','行李箱没有故乡'],familyCycle:['账本换了封面','所有退路都还在','一家人的钱','旧路又走了一遍'],cycleBreaker:['旧规矩到你为止','担保止于此处','你把密码还给自己','下一代不必交账'],publicDuty:['窗口灯熄灭以后','编制里的漫长四季','号码牌背面的人','稳定也有重量'],fragmentedWorker:['被切开的白天','八小时以外','空档不算生活','排班表上的人'],rootedRemote:['有网，也有门牌','关机后的城市','远程的固定地址','把时区留在门外'],founder:['老板称呼退潮以后','真实流水','样板店之外','小店活过了品牌'],wealthApex:['数字失去单位','全球估值的孤岛','控制权稀释之前','世界首富没有下班'],debtLegacy:['遗嘱和欠款','最后一位担保人','百万负债说明书','余额不足的一生'],recovered:['复发没有成为结局','重新拿回银行卡','清醒日历','承认之后'],lostControl:['下一次没有回来','被隐藏的账单','赔率吞掉清晨','失控留下的空位'],parentLegacy:['孩子没有复述你','旅行不用报备','代际回声停下','回家不用交差'],childfree:['空房间不是空人生','没有后代的晚餐','照护另有名字','把晚年交给协议'],earlyExit:['句号来得太早','日历提早停了','还没过完的日子','时间没有保证书']};
 const endingTitles=endingProfiles.flatMap(profile=>titleSets[profile.id].map((title,index)=>({id:`ending_${profile.id}_${index+1}`,profileId:profile.id,title,contentRevision:CONTENT_REVISION})));
 
 const codexCopy={
@@ -1306,6 +1329,11 @@ const generatedEpisodeIds=[...new Set(decisions.filter(decision=>decision.episod
 const generatedCatalogExceptions=generatedEpisodeIds.filter(id=>!Object.hasOwn(EPISODE_CATALOG,id));
 if(JSON.stringify(generatedCatalogExceptions)!==JSON.stringify(EPISODE_CATALOG_EXCEPTION_IDS))throw new Error(`episodeCatalog exception inventory drift: ${generatedCatalogExceptions.join(', ')}`);
 for(const decision of decisions.filter(decision=>decision.routeSituations)){
+  if(decision.episode?.phase===1&&decision.episode?.lifecycle?.kind==='workTransition'){
+    const actual=Object.keys(decision.routeSituations).sort();
+    if(JSON.stringify(actual)!==JSON.stringify(['careLeave','former','working']))throw new Error(`${decision.id}: work transition situations must cover careLeave, former, working`);
+    continue;
+  }
   const previous=decisions.find(candidate=>candidate.episode?.id===decision.episode?.id&&candidate.episode.phase===decision.episode.phase-1);
   if(!previous)throw new Error(`${decision.id}: routeSituations has no previous episode phase`);
   const abandoned=new Set(EPISODE_CATALOG[decision.episode.id]?.abandonedRoutes||[]);

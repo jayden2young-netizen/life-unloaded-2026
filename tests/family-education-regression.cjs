@@ -170,7 +170,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.12',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.13',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.9完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,9);
@@ -210,7 +210,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
       const claim=Object.keys(desires).find(key=>desires[key]&&typeof desires[key]==='object'&&Object.hasOwn(desires[key],'claimed'));
       desires[claim].claimed=true;
       window.__LIFE_DEBUG__.patchRun({
-        age:16,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],
+        age:16,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[],
         education:{status:'completed',level:2,path:'middleSchool',nextStage:'secondary'},
         employment:{status:'none'},health:{status:'treating'},desires,usedEvents:[],decisionHistory:[],timeline:[],
         episodes:{
@@ -231,6 +231,10 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     assert.equal(run.episodes.acute_illness.nextPhaseAge,17);
     assert.equal(run.episodes.acute_illness.deadlineAge,20);
     run=await chooseAndFinish(page,1);
+    for(let guard=0;guard<4&&run.age<17;guard++){
+      await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+      run=await snapshot(page);
+    }
     assert.equal(run.age,17);
     const readyActiveLayers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
     assert.ok(readyActiveLayers.activeEpisode.includes(phase('school_harm',2).id));
@@ -244,7 +248,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     assert.equal(run.education.nextStage,'undergraduateApplication');
     assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(phase('undergraduate_application',1).id),true);
     assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes(phase('first_job_application',1).id),false);
-    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({yearStarted:true,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null}));
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({yearStarted:false,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null}));
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
     assert.equal(run.currentDecision.episode.id,'undergraduate_application');
@@ -386,6 +390,10 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await advanceToPhase(page,'undergraduate_application',3);
     run=await chooseAndFinish(page,3);
     assert.equal(run.education.extraApplicationYearUsed,true);
+    for(let guard=0;guard<4&&run.age<20;guard++){
+      await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+      run=await snapshot(page);
+    }
     assert.equal(run.age,20);
     await advanceToPhase(page,'undergraduate_application',4);
     run=await snapshot(page);
@@ -422,7 +430,7 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
     assert.equal(run.relationships.familyPlanningOffered,true);
-    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({yearStarted:true,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null}));
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({yearStarted:false,yearQueue:[],phase:'playing',sceneQueue:[],currentDecision:null}));
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await snapshot(page);
     assert.equal(run.currentDecision.id,'decision_162','adult identity should retain mandatory priority at age 39');

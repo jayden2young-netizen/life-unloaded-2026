@@ -502,14 +502,26 @@ function validateReferences(data) {
         fail(`events.${event.id}.opportunity`, '只允许独立选择或 episode start 声明');
     }
     if (event.routeSituations !== undefined) {
-      if (!event.episode || event.episode.phase <= 1 || !isRouteSituations(event.routeSituations))
+      const workTransitionStart =
+        event.episode?.phase === 1 && event.episode?.lifecycle?.kind === 'workTransition';
+      if (
+        !event.episode ||
+        (!workTransitionStart && event.episode.phase <= 1) ||
+        !isRouteSituations(event.routeSituations)
+      )
         fail(`events.${event.id}.routeSituations`, '只允许后续 episode phase 声明合法 route 文案');
-      const previous = episodePhases.get(`${event.episode.id}\0${event.episode.phase - 1}`),
-        abandoned = new Set(data.episodeCatalog?.[event.episode.id]?.abandonedRoutes || []),
-        expected = [...new Set((previous?.choices || []).map((choice) => choice.route).filter((route) => !abandoned.has(route)))].sort(),
-        actual = Object.keys(event.routeSituations).sort();
-      if (JSON.stringify(actual) !== JSON.stringify(expected))
-        fail(`events.${event.id}.routeSituations`, `必须覆盖前序可继续路线：${expected.join(', ')}`);
+      if (workTransitionStart) {
+        const actual = Object.keys(event.routeSituations).sort();
+        if (JSON.stringify(actual) !== JSON.stringify(['careLeave', 'former', 'working']))
+          fail(`events.${event.id}.routeSituations`, '工作转段必须覆盖 careLeave、former 与 working');
+      } else {
+        const previous = episodePhases.get(`${event.episode.id}\0${event.episode.phase - 1}`),
+          abandoned = new Set(data.episodeCatalog?.[event.episode.id]?.abandonedRoutes || []),
+          expected = [...new Set((previous?.choices || []).map((choice) => choice.route).filter((route) => !abandoned.has(route)))].sort(),
+          actual = Object.keys(event.routeSituations).sort();
+        if (JSON.stringify(actual) !== JSON.stringify(expected))
+          fail(`events.${event.id}.routeSituations`, `必须覆盖前序可继续路线：${expected.join(', ')}`);
+      }
     }
     validateRecurrence(event, `events.${event.id}`);
     if (event.episode?.ageAdvanceYears !== undefined) {

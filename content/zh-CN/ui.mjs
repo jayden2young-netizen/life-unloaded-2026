@@ -23,6 +23,7 @@ export const UI_COPY={
   habitField:'成瘾与戒断',
   activeArcsTitle:'还有几件事没完',
   noActiveArcs:'眼下没有拖着没完的事',
+  lifeFactsTitle:'这几年绕不开的事',
   coreConflictLabel:'这一生最难两全的事',
   advancePrompt:'点一下，日子继续',
   involvedLabel:'这件事还牵着',
@@ -32,6 +33,7 @@ export const UI_COPY={
   restart:'再活一遍',
   endingTurnsTitle:'这一生真正拐弯的三次',
   endingLedgerTitle:'最后留下的账',
+  endingPortraitTitle:'走到最后的生活',
   axisLabels:{
     自主:'自己做主',
     关系:'身边的人',

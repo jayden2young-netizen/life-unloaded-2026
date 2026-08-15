@@ -75,19 +75,19 @@ const tx=[
 ];
 
 const decisions=[
- e({id:'retirement_transition',lane:'later',phase:1,role:'start',delayYears:1,deadlineYears:2},
-   '工作还在继续，但工时、收入缺口和身体负担已经不再适合含糊带过。你把现在能做多久、少做多少会差多少钱，放到同一张纸上。',
-   '先从哪一项开始谈？','那张纸后来翻出来好几次。每次谈去留，数字都比口头承诺管用。',
-   c('把工作量和缺口算清','你把工时、收入、债务和日常开销逐项核对，没把年龄当成待遇证明。','下一次谈去留时，手里有了自己的数字。'),
-   c('谈一段有期限的减量','你把少做哪些、做到哪天和怎样交接写了下来。','工作还在，边界先有了日期。'),
-   c('先定下次复核日期','眼下继续做，但你写下了再次核对收入和身体负担的时间。','继续不是无限往后拖。')),
- e({id:'retirement_transition',lane:'later',phase:2,role:'resolve',delayYears:0,deadlineYears:2},
-   '一年后，实际收入、工作量和身体反应都有了记录。接下来怎么做，不能再只靠一句“先这样”。',
-   '以后每周还给工作几天？','工作和日常终于不再抢同一块模糊的时间。',
-   c('停下来，重新排日子','你完成交接，关掉工作提醒，先把吃饭、看病和自己的安排放回日历。','收入变了，星期一也第一次不再属于工作。'),
-   c('减到有边界的少量工作','你只接有期限、有范围的活，做完再决定下一段。','别人再说“顺手帮忙”，合同也不会自动续上。'),
-   c('继续做，留下复核点','你保留现在的工作，也把下次检查工时、收入和身体负担的日期写好。','继续工作是当下的选择，不是默认答案。'),
-   c('岗位或身体已经撑不住','工作没法照原样继续。你完成能做的交接，先压住支出和最急的日常。','这不是原计划，但退出也有了明确起点。')),
+ e({id:'retirement_transition',lane:'later',phase:1,role:'start',delayYears:0,deadlineYears:1,age:[55,105],lifecycle:{kind:'workTransition',minTenureYears:3,checkpointRange:[55,65],employmentModes:['employed','gig','selfEmployed','former']},routeSituations:{
+   working:'你还在工作，这一段也已经连续做了三年。工时、收入缺口和身体负担不能再含糊带过；停下、减量或继续，都要按现在的记录来定。',
+   careLeave:'你还在停薪留职，原来的岗位和工作记录没有消失。现在要定的是结束这份工作、复工后减量，还是照原安排回去；每一种都要重新核对收入和身体负担。',
+   former:'你现在不在原来的全职岗位上，过去的工作记录还在。接下来是不再全职求职、只留少量工作，还是继续找，要按眼下收入和身体负担来定。'
+ }},
+   '工作和日常都到了要重新排一次的时候。年龄不能证明待遇，过去做过的工作也不会替你决定以后还找不找。',
+   '接下来，工作占多少日子？','那次决定以后，工作、求职和日常不再挤在同一块模糊的时间里。',
+   c('停下现在的工作','你完成手头交接，关掉排班或项目提醒，先把吃饭、看病和自己的安排放回日历。','收入变了，星期一也第一次不再属于工作。社保和待遇的事，还得拿缴费记录另外去算。',{requirements:req([p('employment.status','in',['employed','gig','selfEmployed','careLeave'])])}),
+   c('减到有边界的少量工作','你把少做哪些、做到哪天和怎样结算写了下来，只接有期限、有范围的活。','别人再说“顺手帮忙”，合同也不会自动续上。',{requirements:req([p('employment.status','in',['employed','gig','selfEmployed','careLeave'])])}),
+   c('继续做，留下复核点','你保留现在的工作，也写下下次检查工时、收入和身体负担的日期。','继续工作是当下的选择，不是退休，也不是默认答案。',{requirements:req([p('employment.status','in',['employed','gig','selfEmployed','careLeave'])])}),
+   c('不再全职求职','你停掉还在更新的全职岗位提醒，把必要开销和日常重新排好。以后要不要回来，不在今天一次说死。','招聘提醒安静下来，过去的工作记录仍然是过去做过的事。',{requirements:req([p('employment.status','notIn',['employed','gig','selfEmployed','careLeave']),p('employment.firstJobAge','neq',null)])}),
+   c('只留少量工作','你只接能说明工时、范围和结算的少量工作，不再按全职岗位安排每天。','收入少了一些，也有了边界；这不等于已经退休。',{requirements:req([p('employment.status','notIn',['employed','gig','selfEmployed','careLeave']),p('employment.firstJobAge','neq',null)])}),
+   c('继续找合适的工作','你保留正在进行的全职求职，也给下一次复核写下日期。投递继续，待遇和结果不提前算进生活。','继续找是现在的决定。下一份合同来不来，还要看以后。',{requirements:req([p('employment.status','notIn',['employed','gig','selfEmployed','careLeave']),p('employment.firstJobAge','neq',null)])})),
  e({id:'parental_inheritance',lane:'later',phase:1,role:'start',delayYears:1,deadlineYears:2},
    '一位父母去世后，旧钥匙、死亡证明、账户资料和欠款通知一起到了。另一位父母是否仍在、遗产有多少、债有多少、还涉及谁，都要按眼前事实查清。',
    '先碰什么？','那串旧钥匙先和资产、债务清单放在了一起。',

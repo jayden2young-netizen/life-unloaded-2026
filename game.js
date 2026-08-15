@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.12');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.13');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.12',
+  const VERSION = '0.6.13',
     SCHEMA_VERSION = 13,
-    CONTENT_REVISION = 32;
+    CONTENT_REVISION = 33;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -57,6 +57,26 @@
   const stageForAge = (age) =>
     Object.entries(DATA.stages).find(([, range]) => age >= range[0] && age <= range[1])?.[0] ||
     'elder';
+  const DECISION_STAGE_BASE = Object.freeze({
+    adolescence: 3,
+    youth: 5,
+    establishment: 4,
+    midlife: 3,
+    later: 2,
+    elder: 1,
+  });
+  const decisionStageBudgets = (run) => {
+    const stages = Object.keys(DECISION_STAGE_BASE),
+      extras = clamp((run.targetDecisions || 18) - 18, 0, stages.length),
+      order = [...stages].sort(
+        (a, b) =>
+          stable(run.seed, `decision-stage-extra:${a}`, 10000) -
+          stable(run.seed, `decision-stage-extra:${b}`, 10000)
+      ),
+      budgets = { ...DECISION_STAGE_BASE };
+    for (const stage of order.slice(0, extras)) budgets[stage]++;
+    return budgets;
+  };
   const weightedAt = (items, weightFn, rollUnit) => {
     if (!items.length) return null;
     let total = items.reduce((sum, item) => sum + Math.max(0, weightFn(item)), 0),
@@ -577,6 +597,9 @@
       applicationChannel: 'none',
       applicationStatus: 'none',
       firstJobOutcome: 'none',
+      growthType: 'none',
+      growthCount: 0,
+      lastGrowthAge: null,
       referralPersonId: null,
       referralStatus: 'none',
       schedule: { stability: 70, splitGapHours: 0, timezoneLoad: 0 },
@@ -698,9 +721,10 @@
     run.yearQueue = [];
     run.yearStarted = false;
     run.decisionCount = 0;
-    run.targetDecisions = 16 + stable(seed, 'decision-target', 5);
+    run.targetDecisions = 18 + stable(seed, 'decision-target', 7);
     run.lastDecisionAge = -5;
     run.stageDecisionCounts = {};
+    run.lifecycleStageOverrides = {};
     run.secretRevealed = false;
     run.lastSwanAge = -20;
     run.swanCount = 0;
@@ -1298,6 +1322,14 @@
       run.employment?.lastJob && typeof run.employment.lastJob === 'object'
         ? copy(run.employment.lastJob)
         : null;
+    merged.stageDecisionCounts =
+      run.stageDecisionCounts && typeof run.stageDecisionCounts === 'object'
+        ? { ...run.stageDecisionCounts }
+        : {};
+    merged.lifecycleStageOverrides =
+      run.lifecycleStageOverrides && typeof run.lifecycleStageOverrides === 'object'
+        ? { ...run.lifecycleStageOverrides }
+        : {};
     merged.social = normalizeSocialState(merged, run.social || fresh.social);
     if (!CONTRACT.EMPLOYMENT_REFERRAL_STATUS.includes(merged.employment.referralStatus))
       merged.employment.referralStatus = 'none';
@@ -1696,6 +1728,12 @@
       (!effective.showWhen || requirementsMatch(effective.showWhen, run)) &&
       requirementsMatch(choiceRequirements(effective), run) &&
       debtGateAllows(effective, run) &&
+      !((effective.effects || []).some(
+        (command) => command.type === 'acceptFirstJobOffer' && command.value === 'bridge'
+      ) && bridgeFirstJobCandidates(run).length === 0) &&
+      !((effective.effects || []).some(
+        (command) => command.type === 'resolveCareerGrowth' && command.value === 'accepted'
+      ) && !careerGrowthAcceptanceReady(run)) &&
       housingChoiceGate(effective, run, event).allowed
     );
   }
@@ -1873,6 +1911,49 @@
         run.age < record.deadlineAge
     );
   }
+  function firstJobFailureAge(run) {
+    const ages = (run.decisionHistory || []).flatMap((record) => {
+      const event = INDEX.event.get(record.eventId);
+      if (event?.episode?.id !== 'first_job_application') return [];
+      const choice = (event.choices || []).find((item) => item.id === record.choiceId),
+        route = choice?.route;
+      return ['decline_offer', 'continue_search', 'continued_search', 'paused', 'long_search']
+        .includes(route)
+        ? [record.age]
+        : [];
+    });
+    const episode = run.episodes?.first_job_application;
+    if (!ages.length && ['abandoned', 'resolved'].includes(episode?.status))
+      ages.push(Number(episode.nextPhaseAge) || Number(episode.startedAt) || 0);
+    return ages.length ? Math.max(...ages) : null;
+  }
+  function lifecycleCheckpointAge(run, lifecycle) {
+    const [minimum = 55, maximum = 65] = lifecycle.checkpointRange || [];
+    return minimum + stable(
+      run.seed,
+      `lifecycle-checkpoint:${lifecycle.kind}`,
+      Math.max(1, maximum - minimum + 1)
+    );
+  }
+  function lifecycleEligible(event, run) {
+    const lifecycle = event.episode?.lifecycle;
+    if (!lifecycle || event.episode.role !== 'start') return true;
+    if (lifecycle.kind === 'careerGrowth') return careerGrowthReady(run);
+    if (lifecycle.kind === 'workTransition')
+      return run.age >= lifecycleCheckpointAge(run, lifecycle) && sustainedWorkHistory(run);
+    if (lifecycle.relativeTo === 'firstJobFailureOrDecline') {
+      const failureAge = firstJobFailureAge(run);
+      if (failureAge === null || run.age < failureAge + (lifecycle.minYearsAfter || 0)) return false;
+    }
+    if (lifecycle.minTenureYears) {
+      const tenure = Math.max(
+        Number(run.employment.tenure) || 0,
+        Number(run.employment.lastJob?.tenure) || 0
+      );
+      if (tenure < lifecycle.minTenureYears) return false;
+    }
+    return true;
+  }
   function eligible(event, run = state.run) {
     if (
       !event ||
@@ -1900,7 +1981,11 @@
         return false;
     } else if (run.usedEvents.includes(event.id)) return false;
     if (!(event.stage || []).includes(stageForAge(run.age))) return false;
-    if (!requirementsMatch(event.requirements, run) || !episodeEligible(event, run)) return false;
+    if (
+      !requirementsMatch(event.requirements, run) ||
+      !lifecycleEligible(event, run) ||
+      !episodeEligible(event, run)
+    ) return false;
     if (
       event.kind === 'decision' &&
       (event.choices || []).length &&
@@ -2517,7 +2602,7 @@
     run.employment.pendingOfferId = 'none';
     run.employment.careLeaveUntilAge = null;
     run.employment.applicationStatus =
-      ['declined', 'offerDeclined', 'retired', 'careLeave', 'leisure', 'careerBreak'].includes(outcome)
+      ['declined', 'offerDeclined', 'retired', 'careLeave', 'leisure', 'careerBreak', 'paused'].includes(outcome)
         ? 'withdrawn'
         : 'searching';
     if (run.employment.referralStatus === 'available' && run.employment.applicationStatus === 'searching') {
@@ -2529,7 +2614,7 @@
       ? 'retired'
       : careLeave
         ? 'flexible'
-        : outcome === 'leisure' || outcome === 'careerBreak'
+        : outcome === 'leisure' || outcome === 'careerBreak' || outcome === 'paused'
           ? 'leisure'
           : 'seeking';
     return true;
@@ -2657,25 +2742,185 @@
     run.employment.applicationStatus = offer ? 'offered' : 'searching';
     run.employment.firstJobOutcome = offer ? 'pending' : 'longSearch';
   }
+  function bridgeFirstJobCandidates(run) {
+    const [minimum, maximum] = educationTierRange(run, false),
+      lowerBound = Math.max(0, minimum - 1),
+      debtMaximum =
+        run.finance.dishonestStatus === 'listed' || run.finance.restrictedConsumption
+          ? Math.min(maximum, 2)
+          : maximum,
+      overseas = ['us', 'europe'].includes(run.location.id),
+      authorizationReady = !overseas || run.mobility.workAuthorization === 'verified';
+    if (!authorizationReady) return [];
+    return employmentProfiles().filter((candidate) => {
+      const tier = JOB_TIER_INDEX[candidate.tier];
+      return (
+        candidate.firstJobEligible &&
+        tier >= lowerBound &&
+        tier <= debtMaximum &&
+        (candidate.regions || []).includes(run.location.id) &&
+        profileCredentialsReady(run, candidate)
+      );
+    });
+  }
   function acceptFirstJobOffer(run, route) {
     let profile = employmentProfile(run.employment.pendingOfferId);
     if (!profile && route === 'reentry') {
       run.employment.firstJobEntryPath = 'reentry';
       profile = selectFirstJobOffer(run, 'reentry', true);
     }
+    if (!profile && route === 'bridge') {
+      const candidates = bridgeFirstJobCandidates(run);
+      profile = candidates[
+        stable(run.seed, `first-job-bridge:${run.age}:${run.location.id}`, Math.max(1, candidates.length))
+      ];
+      if (profile) {
+        run.employment.pendingOfferId = profile.id;
+        run.employment.firstJobEntryPath = 'bridge';
+      }
+    }
+    const allowedCandidates = route === 'bridge'
+      ? [profile].filter(Boolean)
+      : firstJobCandidates(run, { reentry: route === 'reentry' });
     const validPending =
       profile &&
       profile.firstJobEligible &&
       profile.tier !== 'T4' &&
       profileCredentialsReady(run, profile) &&
-      firstJobCandidates(run, { reentry: route === 'reentry' }).some(
-        (candidate) => candidate.id === profile.id
-      );
+      allowedCandidates.some((candidate) => candidate.id === profile.id);
     if (!validPending) {
       leaveEmployment(run, 'longSearch');
       return false;
     }
     return applyEmploymentProfile(run, profile.id, { firstJob: true });
+  }
+  function careerGrowthReady(run) {
+    if (!['employed', 'gig'].includes(run.employment.status) || run.employment.tenure < 3)
+      return false;
+    return Boolean(employmentProfile(run.employment.profileId));
+  }
+  function careerGrowthAcceptanceReady(run) {
+    if (!careerGrowthReady(run)) return false;
+    const current = employmentProfile(run.employment.profileId);
+    const targetId = DATA.employmentCatalog?.promotionMap?.[current.id],
+      target = targetId ? employmentProfile(targetId) : null;
+    if (!target) return true;
+    if (!profileCredentialsReady(run, target)) return false;
+    return !(
+      (run.finance.dishonestStatus === 'listed' || run.finance.restrictedConsumption) &&
+      JOB_TIER_INDEX[target.tier] >= 3
+    );
+  }
+  function resolveCareerGrowth(run, route) {
+    if (!careerGrowthReady(run)) return false;
+    if (route !== 'accepted') return ['declined', 'failed'].includes(route);
+    if (!careerGrowthAcceptanceReady(run)) return false;
+    const current = employmentProfile(run.employment.profileId),
+      targetId = DATA.employmentCatalog?.promotionMap?.[current.id],
+      target = targetId ? employmentProfile(targetId) : null,
+      tenure = run.employment.tenure;
+    if (target) {
+      if (!applyEmploymentProfile(run, target.id)) return false;
+      run.employment.tenure = tenure;
+      run.employment.growthType = 'promotion';
+    } else {
+      const professional = JOB_TIER_INDEX[current.tier] >= 2 ||
+        ['technology', 'health', 'professional', 'research'].includes(current.sector);
+      const factor = professional ? 1.1 : run.employment.status === 'gig' ? 1.08 : 1.06;
+      run.employment.salary = Math.round(run.employment.salary * factor);
+      run.employment.incomeAnnualGross = Math.round(run.employment.incomeAnnualGross * factor);
+      run.employment.schedule.stability = clamp(
+        run.employment.schedule.stability + (professional ? 5 : 10),
+        0,
+        100
+      );
+      run.employment.growthType = professional ? 'professional' : 'responsibility';
+    }
+    run.employment.growthCount++;
+    run.employment.lastGrowthAge = run.age;
+    return true;
+  }
+  function sustainedWorkHistory(run) {
+    const currentlyWorking = ['employed', 'gig', 'selfEmployed'].includes(run.employment.status),
+      currentTenure = currentlyWorking ? Number(run.employment.tenure) || 0 : 0,
+      previousTenure = Number(run.employment.lastJob?.tenure) || 0;
+    return currentTenure >= 3 || previousTenure >= 3 ||
+      (run.employment.status === 'careLeave' && previousTenure >= 3);
+  }
+  function resolveWorkTransition(run, route) {
+    if (!sustainedWorkHistory(run)) return false;
+    const selfEmployed = run.employment.status === 'selfEmployed',
+      careLeave = run.employment.status === 'careLeave',
+      working = ['employed', 'gig', 'selfEmployed'].includes(run.employment.status),
+      workingOrLeave = working || careLeave,
+      restoreLeave = () => {
+        if (!careLeave) return true;
+        const previous = copy(run.employment.lastJob),
+          restored = previous?.profileId && applyEmploymentProfile(run, previous.profileId);
+        if (!restored) return false;
+        run.employment.salary = Math.max(0, Number(previous.salary) || run.employment.salary);
+        run.employment.incomeAnnualGross = Math.max(
+          0,
+          Number(previous.incomeAnnualGross) || run.employment.incomeAnnualGross
+        );
+        run.employment.tenure = Math.max(0, Number(previous.tenure) || 0);
+        return true;
+      };
+    if (route === 'stopped' && workingOrLeave) {
+      if (selfEmployed && run.business.status === 'operating') run.business.status = 'closed';
+      leaveEmployment(run, 'retired');
+      run.later.retirement = 'retired';
+      return true;
+    }
+    if (route === 'reduced' && workingOrLeave) {
+      if (!restoreLeave()) return false;
+      scaleEmployment(run, 0.55);
+      run.later.retirement = 'semiRetired';
+      return true;
+    }
+    if (route === 'continued' && workingOrLeave) {
+      if (!restoreLeave()) return false;
+      run.later.retirement = 'working';
+      return true;
+    }
+    if (route === 'leftSearch' && !working) {
+      leaveEmployment(run, 'leisure');
+      run.later.retirement = 'leftSearch';
+      return true;
+    }
+    if (route === 'lightWork' && !working) {
+      const previous = copy(run.employment.lastJob),
+        previousProfile = employmentProfile(previous?.profileId),
+        previousTier = JOB_TIER_INDEX[previous?.tier] ?? 1,
+        fallbackProfiles = employmentProfiles().filter(
+          (profile) =>
+            profile.incomeStability !== 'business' &&
+            profile.firstJobEligible &&
+            JOB_TIER_INDEX[profile.tier] <= Math.max(0, previousTier - 1) &&
+            (profile.regions || []).includes(run.location.id) &&
+            profileCredentialsReady(run, profile)
+        ),
+        fallback = fallbackProfiles[
+          stable(run.seed, `later-light-work:${run.age}`, Math.max(1, fallbackProfiles.length))
+        ],
+        profileId = previousProfile?.incomeStability === 'business'
+          ? fallback?.id
+          : previous?.profileId,
+        restored = profileId && applyEmploymentProfile(run, profileId);
+      if (!restored) return false;
+      scaleEmployment(run, 0.35);
+      run.employment.tenure = 0;
+      run.later.retirement = 'lightWork';
+      return true;
+    }
+    if (route === 'keptSearching' && !working) {
+      run.employment.status = 'unemployed';
+      run.employment.applicationStatus = 'searching';
+      run.activity.mode = 'seeking';
+      run.later.retirement = 'keptSearching';
+      return true;
+    }
+    return false;
   }
   function adjustJobTier(run, delta) {
     const current = employmentProfile(run.employment.profileId);
@@ -3096,6 +3341,14 @@
         if (!acceptFirstJobOffer(run, command.value))
           return rollbackCommands(before, context, '录用条件已经失效');
       }
+      else if (command.type === 'resolveCareerGrowth') {
+        if (!resolveCareerGrowth(run, command.value))
+          return rollbackCommands(before, context, '职业成长条件已经失效');
+      }
+      else if (command.type === 'resolveWorkTransition') {
+        if (!resolveWorkTransition(run, command.value))
+          return rollbackCommands(before, context, '工作转段条件已经失效');
+      }
       else if (command.type === 'applyEmploymentProfile') {
         if (!applyEmploymentProfile(run, command.value))
           return rollbackCommands(before, context, '职业条件已经失效');
@@ -3411,7 +3664,14 @@
     ];
   }
   function prepareRecruitmentDecision(event, run) {
-    if (event.episode?.id !== 'first_job_application' || event.episode.phase !== 3) return event;
+    if (event.episode?.id !== 'first_job_application') return event;
+    if (event.episode.phase === 5 && bridgeFirstJobCandidates(run).length === 0)
+      return {
+        ...event,
+        situation:
+          '又找了一年。眼下没有一份资格、地区和合同条件都允许你报到的桥接岗位；继续等，还是先停下来，都要由你决定。',
+      };
+    if (event.episode.phase !== 3) return event;
     const scenario = recruitmentScenarioFor(run);
     if (!scenario) return event;
     return {
@@ -3462,6 +3722,29 @@
       }),
     };
   }
+  function prepareCareerGrowthDecision(event, run) {
+    if (event.episode?.id !== 'career_growth') return event;
+    const current = employmentProfile(run.employment.profileId),
+      targetId = current && DATA.employmentCatalog?.promotionMap?.[current.id],
+      target = targetId ? employmentProfile(targetId) : null,
+      professional = current &&
+        (JOB_TIER_INDEX[current.tier] >= 2 ||
+          ['technology', 'health', 'professional', 'research'].includes(current.sector));
+    if (target)
+      return {
+        ...event,
+        situation: `你做${current.name}已经满三年。现在有一份${target.name}的正式安排摆到面前：岗位、职责、收入和生效日都要写清，不能只口头叫你“往上走”。`,
+      };
+    if (professional)
+      return {
+        ...event,
+        situation: `你做${current?.name || '这份专业工作'}已经满三年。最近谈的是项目责任、专业级别和收入档，不是空头称呼；接下以后，交付范围也会一起变。`,
+      };
+    return {
+      ...event,
+      situation: `你做${current?.name || '这份工作'}已经满三年。最近有人问你愿不愿意带班、培训新人，或接一份更稳定的安排。新增的活、工时和收入得一起说清。`,
+    };
+  }
   function startEpisodePhase(event) {
     const run = state.run;
     if (
@@ -3484,8 +3767,17 @@
         run.education.fundingStatus = 'overseasFamily';
       syncDerived(run);
     }
-    event = prepareRecruitmentDecision(event, run);
-    const routeSituation = event.routeSituations?.[run.episodes[event.episode.id]?.route],
+      event = prepareCareerGrowthDecision(prepareRecruitmentDecision(event, run), run);
+    const workTransitionSituation = event.episode?.id === 'retirement_transition'
+        ? event.routeSituations?.[
+            run.employment.status === 'careLeave'
+              ? 'careLeave'
+              : ['employed', 'gig', 'selfEmployed'].includes(run.employment.status)
+                ? 'working'
+                : 'former'
+          ]
+        : null,
+      routeSituation = event.routeSituations?.[run.episodes[event.episode.id]?.route],
       situationText = event.episode?.id === 'parental_inheritance' && event.episode.phase === 1
       ? (() => {
           const parents = run.people.filter((item) => ['father', 'mother'].includes(item.relation));
@@ -3495,7 +3787,7 @@
             ? '父母都已去世。两边留下的钥匙、死亡证明、账户资料和欠款通知放到了一起；遗产有多少、债有多少、还涉及谁，都要按现有文件查清。'
             : '一位父母去世后，另一位仍在世。旧钥匙、死亡证明、账户资料和欠款通知一起到了；哪些属于遗产、哪些仍属于在世父母，必须分别查清。';
         })()
-      : routeSituation || event.situation;
+      : workTransitionSituation || routeSituation || event.situation;
     run.currentDecision = { ...event, situation: situationText };
     run.phase = 'episode';
     run.sceneQueue = [{ kind: 'choice', eventId: event.id }];
@@ -3603,8 +3895,7 @@
     run.usedEvents.push(event.id);
     run.decisionCount++;
     run.lastDecisionAge = run.age;
-    run.stageDecisionCounts[stageForAge(run.age)] =
-      (run.stageDecisionCounts[stageForAge(run.age)] || 0) + 1;
+    recordDecisionBudgetUse(run, event);
     addTimeline(
       event,
       `${choice.text}${/[。！？!?]$/.test(choice.text) ? '' : '。'}${resultText}`,
@@ -3632,7 +3923,7 @@
         INDEX.kinds.decision.some(
           (candidate) =>
             candidate.track === 'education' &&
-            candidate.episode &&
+            candidate.episode?.id === event.episode.id &&
             eligible(candidate, run)
         ),
       canContinuePregnancySameAge =
@@ -3644,6 +3935,17 @@
         ),
       canContinueFamilyPlanningSameAge = familyPlanningStartReady(run);
     if (canContinueEducationSameAge || canContinuePregnancySameAge || canContinueFamilyPlanningSameAge) {
+      queueSameAgeFollowup(run, {
+        educationEpisodeId: canContinueEducationSameAge ? event.episode.id : null,
+        pregnancy: canContinuePregnancySameAge,
+        family: canContinueFamilyPlanningSameAge,
+      });
+      run.yearStarted = true;
+      save();
+      render();
+      return;
+    }
+    if (event.fromAnnualPlan) {
       run.yearStarted = true;
       save();
       render();
@@ -3936,34 +4238,63 @@
     save();
     render();
   }
+  function episodeClosureReason(id, record, run) {
+    if (record.status !== 'active') return null;
+    if (episodeBindingInvalid(id, record, run)) return 'invalidated';
+    if (run.age >= record.deadlineAge) return 'deadline';
+    if (run.age < record.nextPhaseAge) return null;
+    const candidate = INDEX.kinds.decision.find(
+        (event) =>
+          event.episode?.id === id &&
+          event.episode.phase === record.phase &&
+          !run.usedEvents.includes(event.id)
+      ),
+      phaseReady = candidate &&
+        run.age >= candidate.ageMin && run.age <= candidate.ageMax &&
+        (candidate.stage || []).includes(stageForAge(run.age)) &&
+        requirementsMatch(candidate.requirements, run);
+    return phaseReady &&
+      (candidate.choices || []).length &&
+      !(candidate.choices || []).some((choice) => choiceEnabled(choice, run))
+      ? 'invalidated'
+      : null;
+  }
+  function pendingEpisodeClosures(run) {
+    return Object.entries(run.episodes).flatMap(([id, record]) => {
+      const reason = episodeClosureReason(id, record, run);
+      return reason ? [{ id, record, reason }] : [];
+    });
+  }
   function dueEpisodeClosure(run) {
-    const closures = [];
-    for (const [id, record] of Object.entries(run.episodes)) {
-      if (record.status !== 'active') continue;
-      if (episodeBindingInvalid(id, record, run))
-        closures.push({ id, record, reason: 'invalidated' });
-      else if (run.age >= record.deadlineAge)
-        closures.push({ id, record, reason: 'deadline' });
-      else if (run.age >= record.nextPhaseAge) {
-        const candidate = INDEX.kinds.decision.find(
-          (event) =>
-            event.episode?.id === id &&
-            event.episode.phase === record.phase &&
-            !run.usedEvents.includes(event.id)
-        );
-        const phaseReady = candidate &&
-          run.age >= candidate.ageMin && run.age <= candidate.ageMax &&
-          (candidate.stage || []).includes(stageForAge(run.age)) &&
-          requirementsMatch(candidate.requirements, run);
-        if (
-          phaseReady &&
-          (candidate.choices || []).length &&
-          !(candidate.choices || []).some((choice) => choiceEnabled(choice, run))
-        )
-          closures.push({ id, record, reason: 'invalidated' });
-      }
-    }
+    const closures = pendingEpisodeClosures(run);
     return closures.length ? queueEpisodeClosures(closures) : false;
+  }
+  function plannedEpisodeClosure(run, closure) {
+    const event = INDEX.kinds.decision.find((item) => item.episode?.id === closure.id);
+    return {
+      id: `episode_closure_${closure.id}_${closure.reason}_${run.age}`,
+      kind: 'consequence',
+      track: event?.track || 'ordinary',
+      icon: '↩',
+      text: episodeClosureText(closure.id, closure.reason),
+      annualRole: 'episodeClosure',
+      episodeId: closure.id,
+      reason: closure.reason,
+    };
+  }
+  function launchPlannedEpisodeClosure(planned) {
+    const run = state.run,
+      record = run.episodes[planned.episodeId],
+      reason = record ? episodeClosureReason(planned.episodeId, record, run) : null;
+    if (!record || !reason) return false;
+    const scene = prepareEpisodeClosure(run, planned.episodeId, record, reason);
+    scene.fromAnnualPlan = true;
+    run.sceneQueue = [scene];
+    run.currentDecision = null;
+    run.phase = 'episode';
+    save();
+    render();
+    return true;
   }
   function finishForcedEpisode(scene) {
     const run = state.run,
@@ -3986,6 +4317,12 @@
       return;
     }
     run.phase = 'playing';
+    if (scene.fromAnnualPlan) {
+      run.yearStarted = true;
+      save();
+      render();
+      return;
+    }
     run.yearStarted = false;
     settleYear(run);
     if (run.finance.reliefPending) {
@@ -4089,8 +4426,7 @@
     run.usedEvents.push(event.id);
     run.decisionCount++;
     run.lastDecisionAge = run.age;
-    run.stageDecisionCounts[stageForAge(run.age)] =
-      (run.stageDecisionCounts[stageForAge(run.age)] || 0) + 1;
+    recordDecisionBudgetUse(run, event);
     addTimeline(
       event,
       `${choice.text}${/[。！？!?]$/.test(choice.text) ? '' : '。'}${choice.resultText}`,
@@ -4099,6 +4435,14 @@
     run.currentDecision = null;
     run.phase = 'playing';
     if (familyPlanningStartReady(run)) {
+      queueSameAgeFollowup(run, { family: true });
+      run.yearStarted = true;
+      save();
+      render();
+      setTimeout(() => (inputLocked = false), 180);
+      return;
+    }
+    if (event.fromAnnualPlan) {
       run.yearStarted = true;
       save();
       render();
@@ -4360,8 +4704,6 @@
       if (run.activity.mode === 'leisure')
         run.capabilities.employability = clamp(run.capabilities.employability - 2, 0, 100);
     }
-    if (run.activity.mode === 'retired')
-      income = Math.round(run.employment.publicExperience * 350 + 12000);
     income += settleBusiness(run);
     if (run.employment.arrangement === 'remote' || run.employment.arrangement === 'hybrid')
       expense = Math.max(0, expense - 4000);
@@ -4418,7 +4760,9 @@
     }
     for (const key of Object.keys(run.pressures))
       if (run.pressures[key] > 0) run.pressures[key] = clamp(run.pressures[key] - 1, 0, 100);
-    run.employment.tenure = run.employment.status === 'employed' ? run.employment.tenure + 1 : 0;
+    run.employment.tenure = ['employed', 'gig', 'selfEmployed'].includes(run.employment.status)
+      ? run.employment.tenure + 1
+      : 0;
     run.activity.years++;
     run.health.physical = clamp(run.health.physical, 0, 100);
     run.health.mental = clamp(run.health.mental, 0, 100);
@@ -4498,6 +4842,11 @@
       }
     }
   }
+  function mortalityCause(run, source = 'age') {
+    if (source === 'health') return '长期健康问题带来的风险';
+    if (source === 'habit') return '长期失控带来的健康风险';
+    return run.age >= 65 ? '自然衰老' : '一次未记录具体原因的突发状况';
+  }
   function mortality(run) {
     if (run.deathCause) return true;
     const ageRisk =
@@ -4515,32 +4864,27 @@
       healthRisk = run.health.physical < 20 ? 0.18 : run.health.physical < 40 ? 0.04 : 0,
       habitHarm = ['dependent', 'uncontrolled', 'relapse'].includes(run.habits.stage),
       habitRisk = habitHarm ? 0.018 : 0;
-    if (
-      run.age >= run.naturalDeathAge ||
-      chance(Math.min(0.85, ageRisk + healthRisk + habitRisk))
-    ) {
-      run.deathCause =
-        run.age < 18
-          ? '疾病或一次事故'
-          : run.health.physical < 30
-            ? '长期健康问题拖到了最后'
-            : habitHarm
-              ? '失控留下的身体后果'
-              : '自然衰老';
+    if (run.age >= run.naturalDeathAge) {
+      run.deathCause = mortalityCause(run, 'age');
+      if (run.age < 45) addTag(run, 'earlyDeath');
+      return true;
+    }
+    const roll = rng(),
+      totalRisk = Math.min(0.85, ageRisk + healthRisk + habitRisk);
+    if (roll < totalRisk) {
+      const source = roll < healthRisk
+        ? 'health'
+        : roll < healthRisk + habitRisk
+          ? 'habit'
+          : 'age';
+      run.deathCause = mortalityCause(run, source);
       if (run.age < 45) addTag(run, 'earlyDeath');
       return true;
     }
     return false;
   }
 
-  function dueConsequence(run) {
-    const schedule = run.scheduledConsequences
-      .filter(
-        (item) =>
-          item.status === 'scheduled' && item.dueAge <= run.age && item.expiresAge >= run.age
-      )
-      .sort((a, b) => (b.priority || 0) - (a.priority || 0) || a.dueAge - b.dueAge)[0];
-    if (!schedule) return null;
+  function scheduledConsequenceEvent(run, schedule) {
     const event = INDEX.event.get(schedule.eventId),
       outcome = event?.choiceOutcomes?.[schedule.memoryKey];
     if (!event || !outcome) {
@@ -4571,6 +4915,19 @@
       runtimeTags: outcome.outcomeTags,
       scheduleId: schedule.id,
     };
+  }
+  function dueConsequences(run) {
+    return run.scheduledConsequences
+      .filter(
+        (item) =>
+          item.status === 'scheduled' && item.dueAge <= run.age && item.expiresAge >= run.age
+      )
+      .sort((a, b) => (b.priority || 0) - (a.priority || 0) || a.dueAge - b.dueAge)
+      .map((schedule) => scheduledConsequenceEvent(run, schedule))
+      .filter(Boolean);
+  }
+  function dueConsequence(run) {
+    return dueConsequences(run)[0] || null;
   }
   function validPlanningPartner(run) {
     const partner = run.people.find(
@@ -4721,7 +5078,67 @@
     const claimed = new Set(claimedDesireIds(run));
     return Boolean(event.opportunity?.desires?.some((desire) => claimed.has(desire)));
   }
-  function eventWeight(event, run = state.run) {
+  function eventTextureKey(event) {
+    if (event.recurrence?.key) return `recurrence:${event.recurrence.key}`;
+    const text = `${event.text || ''} ${event.situation || ''}`;
+    const marker = [
+      '求职', '债务', '扣款', '报销', '群聊', '照护', '搬家', '住房', '排班', '加班',
+      '生病', '治疗', '孩子', '伴侣', '社交', '工作',
+    ].find((item) => text.includes(item));
+    return marker ? `texture:${marker}` : `event:${event.id}`;
+  }
+  function recentTextureCount(run, event, years = 5) {
+    const key = eventTextureKey(event);
+    return run.timeline.filter((item) => {
+      const prior = INDEX.event.get(item.id);
+      return item.age >= run.age - years + 1 && prior && eventTextureKey(prior) === key;
+    }).length;
+  }
+  function factReactionMultiplier(event, run) {
+    const evidence = JSON.stringify({
+        requirements: event.requirements,
+        actors: event.actors,
+        effects: event.runtimeEffects || event.effects,
+        choices: (event.choices || []).map((choice) => ({
+          requirements: choice.requirements,
+          effects: choice.effects,
+        })),
+        text: `${event.text || ''} ${event.situation || ''} ${event.prompt || ''}`,
+      }),
+      familyFact = Boolean(
+        run.relationships.childCount ||
+        !['none', 'divorced', 'widowed'].includes(run.relationships.partnerStatus)
+      ),
+      debtFact = run.finance.totalDebt > 0 || run.finance.debtStage !== 'current',
+      workFact = Boolean(
+        ['employed', 'gig', 'selfEmployed', 'careLeave'].includes(run.employment.status) ||
+        run.employment.lastJob
+      ),
+      healthFact = run.health.status !== 'well' || run.health.conditionSeverity >= 20;
+    let multiplier = 1;
+    if (
+      familyFact &&
+      ['housing', 'employment', 'finance'].includes(event.track) &&
+      /relationships\.|child|partner|孩子|伴侣|家庭|照护/.test(evidence)
+    ) multiplier *= 1.12;
+    if (
+      debtFact &&
+      ['housing', 'health', 'partnership'].includes(event.track) &&
+      /finance\.|debt|债|欠款|还款/.test(evidence)
+    ) multiplier *= 1.12;
+    if (
+      workFact &&
+      ['housing', 'finance', 'later'].includes(event.track) &&
+      /employment\.|activity\.|工作|岗位|合同|排班/.test(evidence)
+    ) multiplier *= 1.12;
+    if (
+      healthFact &&
+      ['employment', 'children', 'later'].includes(event.track) &&
+      /health\.|careNeed|身体|疾病|治疗|复诊|照护/.test(evidence)
+    ) multiplier *= 1.12;
+    return Math.min(1.35, multiplier);
+  }
+  function eventWeight(event, run = state.run, { continuity = false } = {}) {
     let weight = event.weight || 10;
     const conflict = DATA.conflicts.find((item) => item.id === run.mainConflict);
     const conflictMultiplier = CONTRACT.conflictWeightMultiplier(event.track, conflict?.desires),
@@ -4757,15 +5174,27 @@
     )
       weight *= 3;
     if (event.track === 'partnership' && run.relationships.partnerStatus !== 'none') weight *= 1.25;
-    if (run.timeline.at(-1)?.track === event.track) weight *= 0.45;
+    if (continuity) {
+      weight *= factReactionMultiplier(event, run);
+      const saturation = recentTextureCount(run, event);
+      if (saturation >= 2) weight *= 0.55;
+      if (
+        run.timeline.at(-1) &&
+        eventTextureKey(INDEX.event.get(run.timeline.at(-1).id) || run.timeline.at(-1)) ===
+          eventTextureKey(event)
+      ) weight *= 0.45;
+    }
     if (state.meta.seen.events[event.id]) weight *= 0.75;
     return Math.max(0.1, weight);
   }
-  function selectBeat(run) {
+  function selectBeat(run, excludedIds = new Set()) {
     const pool = INDEX.kinds.beat.filter(
-      (event) => !event.id.startsWith('origin_context_') && eligible(event, run)
+      (event) =>
+        !event.id.startsWith('origin_context_') &&
+        !excludedIds.has(event.id) &&
+        eligible(event, run)
     );
-    return weighted(pool, eventWeight);
+    return weighted(pool, (event) => eventWeight(event, run, { continuity: true }));
   }
   function originMilestone(run) {
     return (
@@ -4785,6 +5214,7 @@
     const candidates = [];
     for (const [id, record] of Object.entries(run.episodes || {})) {
       if (record.status !== 'active' || run.age < record.nextPhaseAge) continue;
+      if (episodeClosureReason(id, record, run)) continue;
       const candidate = INDEX.kinds.decision.find(
         (event) =>
           event.episode?.id === id &&
@@ -4818,14 +5248,8 @@
       .length;
   }
   function decisionAllowance(run) {
-    if (run.age < 14) return 1;
-    if (run.age <= 18) return 3;
-    if (run.age <= 25) return 6;
-    if (run.age <= 35) return 9;
-    if (run.age <= 45) return 12;
-    if (run.age <= 60) return 15;
-    if (run.age <= 75) return Math.min(18, run.targetDecisions);
-    return run.targetDecisions;
+    const stage = stageForAge(run.age);
+    return decisionStageBudgets(run)[stage] || 0;
   }
   function crisisDecisionCandidates(run) {
     if (run.age - run.lastDecisionAge < 2) return [];
@@ -4850,11 +5274,33 @@
         eligible(event, run)
     );
   }
+  const URGENT_AGE_BOUND_EPISODES = new Set([
+    'pregnancy_decision',
+    'debt_enforcement',
+    'school_entry',
+    'first_job_application',
+    'undergraduate_domestic',
+    'undergraduate_overseas_orientation',
+    'undergraduate_us',
+    'undergraduate_europe',
+    'postgraduate_domestic',
+    'postgraduate_us',
+    'postgraduate_europe',
+  ]);
+  function urgentAgeBoundEpisode(event, run) {
+    const id = event.episode?.id;
+    if (!id || !episodeCatalog(id).ageBound) return false;
+    if (id === 'school_harm')
+      return run.development.severeSchoolHarm && !run.development.schoolHarmResolved;
+    if (id === 'becoming_parent') return run.age >= 39;
+    return URGENT_AGE_BOUND_EPISODES.has(id);
+  }
   function ageBoundEpisodeCandidates(run) {
     const candidates = INDEX.kinds.decision.filter(
         (event) =>
           event.episode?.role === 'start' &&
-          episodeCatalog(event.episode.id).ageBound &&
+          urgentAgeBoundEpisode(event, run) &&
+          !event.episode.lifecycle &&
           eligible(event, run)
       ),
       unresolvedSchoolHarm = candidates.find(
@@ -4863,29 +5309,17 @@
           run.development.severeSchoolHarm &&
           !run.development.schoolHarmResolved
       ),
-      familyPlanning = candidates.find((event) => event.episode.id === 'becoming_parent'),
-      singleAdoption = candidates.find((event) => event.episode.id === 'adoption_process'),
-      firstJobReentry = candidates.find(
-        (event) =>
-          event.episode.id === 'long_term_first_job_reentry' &&
-          run.age >= 32 &&
-          run.employment.firstJobAge === null &&
-          ['none', 'unemployed'].includes(run.employment.status)
-      );
+      familyPlanning = candidates.find((event) => event.episode.id === 'becoming_parent');
     const reserved = new Set(
-      [familyPlanning, singleAdoption, unresolvedSchoolHarm, firstJobReentry]
+      [familyPlanning, unresolvedSchoolHarm]
         .filter(Boolean)
         .map((event) => event.id)
     );
     return familyPlanning
       ? [familyPlanning]
-      : singleAdoption
-        ? [singleAdoption]
-        : unresolvedSchoolHarm
+      : unresolvedSchoolHarm
           ? [unresolvedSchoolHarm]
-          : firstJobReentry
-            ? [firstJobReentry]
-            : candidates.filter((event) => !reserved.has(event.id));
+          : candidates.filter((event) => !reserved.has(event.id));
   }
   function educationGatewayDecision(run) {
     return (
@@ -4910,11 +5344,31 @@
       if (!eligible(event, run) || event.track === 'identity') return false;
       if (!event.episode) return true;
       if (event.episode.role !== 'start') return false;
+      if (event.episode.lifecycle) return false;
       if (event.episode.id === 'pregnancy_decision') return false;
       if (['secondary_diversion', 'undergraduate_application'].includes(event.episode.id))
         return false;
-      return !episodeCatalog(event.episode.id).ageBound;
+      return !urgentAgeBoundEpisode(event, run);
     });
+  }
+  function lifecycleDecisionCandidates(run) {
+    return INDEX.kinds.decision.filter(
+      (event) =>
+        event.episode?.role === 'start' &&
+        event.episode.lifecycle &&
+        eligible(event, run)
+    );
+  }
+  function lifecycleDecisionDue(event, run) {
+    const lifecycle = event.episode?.lifecycle;
+    if (!lifecycle) return false;
+    if (lifecycle.kind === 'workTransition')
+      return run.age >= lifecycleCheckpointAge(run, lifecycle);
+    if (lifecycle.relativeTo === 'firstJobFailureOrDecline') {
+      const failureAge = firstJobFailureAge(run);
+      return failureAge !== null && run.age >= failureAge + (lifecycle.minYearsAfter || 0);
+    }
+    return false;
   }
   function protectionAvailable(run) {
     if (!claimedDesireIds(run).length) return false;
@@ -4933,6 +5387,7 @@
   }
   function decisionCandidateLayers(run) {
     const ordinary = ordinaryDecisionCandidates(run),
+      lifecycle = lifecycleDecisionCandidates(run),
       protectedCandidates = protectionAvailable(run)
         ? ordinary.filter(
             (event) =>
@@ -4944,8 +5399,10 @@
       educationGateway: [educationGatewayDecision(run)].filter(Boolean),
       activeEpisode: activeEpisodeCandidates(run),
       ageBound: ageBoundEpisodeCandidates(run),
+      dueLifecycle: lifecycle.filter((event) => lifecycleDecisionDue(event, run)),
       crisis: crisisDecisionCandidates(run),
       protected: protectedCandidates,
+      matureLifecycle: lifecycle.filter((event) => !lifecycleDecisionDue(event, run)),
       ordinary,
     };
   }
@@ -4954,8 +5411,10 @@
     'educationGateway',
     'activeEpisode',
     'ageBound',
+    'dueLifecycle',
     'crisis',
     'protected',
+    'matureLifecycle',
     'ordinary',
   ]);
   const PROTECTED_OVER_LIMIT_LAYER_ORDER = Object.freeze([
@@ -4963,41 +5422,59 @@
     'educationGateway',
     'activeEpisode',
     'ageBound',
+    'dueLifecycle',
     'protected',
+    'matureLifecycle',
   ]);
   function decisionQuotaOpen(run) {
-    return (
-      run.decisionCount < run.targetDecisions &&
-      run.decisionCount < decisionAllowance(run)
-    );
+    const stage = stageForAge(run.age);
+    if (!Object.hasOwn(DECISION_STAGE_BASE, stage)) return false;
+    return (run.stageDecisionCounts[stage] || 0) < decisionAllowance(run);
   }
-  function startDecision(run, { preview = false } = {}) {
+  function lifecycleOverrideAvailable(run) {
+    const stage = stageForAge(run.age);
+    return Object.hasOwn(DECISION_STAGE_BASE, stage) && !run.lifecycleStageOverrides[stage];
+  }
+  function selectedDecisionLayer(run) {
     const layers = decisionCandidateLayers(run),
       layerOrder = decisionQuotaOpen(run)
         ? DECISION_LAYER_ORDER
-        : PROTECTED_OVER_LIMIT_LAYER_ORDER,
-      candidates = layerOrder.map((key) => layers[key]).find((items) => items.length) || [];
+        : PROTECTED_OVER_LIMIT_LAYER_ORDER.filter(
+            (key) => key !== 'matureLifecycle' || lifecycleOverrideAvailable(run)
+          );
+    return { layers, key: layerOrder.find((item) => layers[item].length) || null };
+  }
+  function startDecision(run, { preview = false, rollUnit = null } = {}) {
+    const selection = selectedDecisionLayer(run),
+      layers = selection.layers,
+      selectedLayer = selection.key,
+      candidates = selectedLayer ? layers[selectedLayer] : [];
     if (!candidates.length) return null;
-    const weightFn = (event) => eventWeight(event, run);
-    return preview
-      ? weightedAt(candidates, weightFn, peekRng(run))
-      : weighted(candidates, weightFn);
+    const weightFn = (event) => eventWeight(event, run, { continuity: selectedLayer === 'ordinary' });
+    if (Number.isFinite(rollUnit)) return weightedAt(candidates, weightFn, rollUnit);
+    return preview ? weightedAt(candidates, weightFn, peekRng(run)) : weighted(candidates, weightFn);
   }
   function shouldOfferDecision(run) {
     const layers = decisionCandidateLayers(run);
-    if (['mandatory', 'educationGateway', 'activeEpisode', 'ageBound'].some((key) => layers[key].length))
+    if (
+      ['mandatory', 'educationGateway', 'activeEpisode', 'ageBound', 'dueLifecycle']
+        .some((key) => layers[key].length)
+    )
       return true;
     if (!decisionQuotaOpen(run)) {
+      if (layers.matureLifecycle.length && lifecycleOverrideAvailable(run)) return true;
       if (run.age - run.lastDecisionAge < 2) return false;
       return layers.protected.length > 0;
     }
     if (layers.crisis.length) return true;
+    if (layers.matureLifecycle.length) return true;
     if (run.age - run.lastDecisionAge < 2) return false;
     if (layers.protected.length) return true;
     if (!layers.ordinary.length) return false;
-    const remaining = Math.max(1, (run.naturalDeathAge - run.age) / 4),
-      needed = run.targetDecisions - run.decisionCount,
-      threshold = Math.min(0.55, (needed / remaining) * 0.35),
+    const stage = stageForAge(run.age),
+      remaining = Math.max(1, (DATA.stages[stage]?.[1] || run.age) - run.age + 1),
+      needed = Math.max(0, decisionAllowance(run) - (run.stageDecisionCounts[stage] || 0)),
+      threshold = Math.min(0.72, (needed / remaining) * 1.25),
       offerRoll = stable(run.seed, `decision-offer:${run.age}`, 10000) / 10000;
     return offerRoll < threshold;
   }
@@ -5016,6 +5493,16 @@
     });
     run.timeline = run.timeline.slice(-180);
     state.meta.seen.events[event.id] = (state.meta.seen.events[event.id] || 0) + 1;
+  }
+  function recordDecisionBudgetUse(run, event) {
+    const stage = stageForAge(run.age),
+      count = run.stageDecisionCounts[stage] || 0;
+    if (
+      event.episode?.role === 'start' &&
+      event.episode.lifecycle &&
+      count >= decisionAllowance(run)
+    ) run.lifecycleStageOverrides[stage] = true;
+    run.stageDecisionCounts[stage] = count + 1;
   }
   function revealEvent(event) {
     const run = state.run;
@@ -5041,6 +5528,89 @@
     save();
     render();
   }
+  function currentAgeTimelineCount(run) {
+    return run.timeline.filter((item) => item.age === run.age).length;
+  }
+  function annualTargetSize(obligationCount) {
+    return obligationCount >= 2 ? 3 : obligationCount === 1 ? 2 : 1;
+  }
+  function selectBeatAt(run, excludedIds, rollUnit) {
+    const pool = INDEX.kinds.beat.filter(
+      (event) =>
+        !event.id.startsWith('origin_context_') &&
+        !excludedIds.has(event.id) &&
+        eligible(event, run)
+    );
+    return weightedAt(pool, (event) => eventWeight(event, run, { continuity: true }), rollUnit);
+  }
+  function planYearQueue(run) {
+    const planToken = Math.floor(rng() * 0xffffffff),
+      planRoll = (label) =>
+        stable(run.seed, `year-plan:${run.age}:${planToken}:${label}`, 1000000) / 1000000,
+      closureFacts = pendingEpisodeClosures(run).map((closure) =>
+        plannedEpisodeClosure(run, closure)
+      ),
+      facts = [...closureFacts, ...dueConsequences(run), dueSecret(run)].filter(Boolean),
+      origin = originMilestone(run),
+      projectedDecision = shouldOfferDecision(run)
+        ? startDecision(run, { rollUnit: planRoll('decision') })
+        : null,
+      existingCount = currentAgeTimelineCount(run),
+      obligationCount =
+        existingCount + facts.length + (origin ? 1 : 0) + (projectedDecision ? 1 : 0),
+      targetSize = annualTargetSize(obligationCount),
+      planned = [...facts];
+    if (origin) planned.unshift(origin);
+    if (projectedDecision)
+      planned.push({ ...projectedDecision, annualRole: 'decision', annualPlanToken: planToken });
+
+    const openSlots = () => targetSize - existingCount - planned.length;
+    const swanRate = run.age < 18 ? 0.004 : run.age < 65 ? 0.008 : 0.006;
+    if (
+      openSlots() > 0 &&
+      run.swanCount < 2 &&
+      run.age - run.lastSwanAge >= 10 &&
+      planRoll('swan-chance') < swanRate
+    ) {
+      const swan = weightedAt(
+        INDEX.kinds.blackSwan.filter((event) => eligible(event, run)),
+        (event) => eventWeight(event, run),
+        planRoll('swan-pick')
+      );
+      if (swan) {
+        planned.push(swan);
+        run.swanCount++;
+        run.lastSwanAge = run.age;
+      }
+    }
+
+    const excludedIds = new Set(planned.map((event) => event.id));
+    let beatIndex = 0;
+    while (openSlots() > 0) {
+      const beat = selectBeatAt(run, excludedIds, planRoll(`beat:${beatIndex++}`));
+      if (!beat) break;
+      planned.push(beat);
+      excludedIds.add(beat.id);
+    }
+    if (!planned.length && existingCount === 0) {
+      planned.push({
+        id: `quiet_${run.age}`,
+        kind: 'beat',
+        track: 'ordinary',
+        icon: '·',
+        text: '这一年没有大事。日子还是往前走了。',
+        effects: [],
+      });
+    }
+    return {
+      queue: planned,
+      kind: targetSize === 1 ? 'quiet' : targetSize === 2 ? 'progression' : 'collision',
+      targetSize,
+      existingCount,
+      projectedDecisionId: projectedDecision?.id || null,
+      factIds: facts.map((event) => event.id),
+    };
+  }
   function beginYear() {
     const run = state.run;
     if (run.age > 105 || mortality(run)) {
@@ -5053,63 +5623,61 @@
     if (run.finance.reliefPending && queueDebtRelief(run, false)) return true;
     run.yearStarted = true;
     run.yearQueue = [];
-    if (dueEpisodeClosure(run)) return true;
+    run.yearQueue = planYearQueue(run).queue;
     const dueCard = [0, 18, 35, 55].find((age) => run.age >= age && !run.cardAges.includes(age));
     if (dueCard !== undefined) {
       startCardDraw(dueCard);
       return true;
     }
-    const special = dueConsequence(run) || dueSecret(run),
-      primary = originMilestone(run) ||
-        selectBeat(run) || {
-          id: `quiet_${run.age}`,
-          kind: 'beat',
-          track: 'ordinary',
-          icon: '·',
-          text: '这一年没有大事。日子还是往前走了。',
-          effects: [],
-        };
-    run.yearQueue.push(primary);
-    if (special) run.yearQueue.push(special);
-    else if (chance(0.18)) {
-      const second = selectBeat(run);
-      if (second && second.id !== primary.id) run.yearQueue.push(second);
-    }
-    const rate = run.age < 18 ? 0.004 : run.age < 65 ? 0.008 : 0.006;
-    if (run.swanCount < 2 && run.age - run.lastSwanAge >= 10 && chance(rate)) {
-      const swan = weighted(
-        INDEX.kinds.blackSwan.filter((event) => eligible(event, run)),
-        eventWeight
-      );
-      if (swan) {
-        const index = primary.id.startsWith('origin_context_')
-          ? 1
-          : Math.min(1, run.yearQueue.length - 1);
-        if (index === run.yearQueue.length) run.yearQueue.push(swan);
-        else run.yearQueue[index] = swan;
-        run.swanCount++;
-        run.lastSwanAge = run.age;
-      }
-    }
-    run.yearQueue = run.yearQueue.slice(0, 2);
     return false;
+  }
+  function launchPlannedDecision(event) {
+    const run = state.run,
+      planned = { ...event, fromAnnualPlan: true };
+    delete planned.annualRole;
+    delete planned.annualPlanToken;
+    if (!eligible(planned, run)) return false;
+    deferEpisodesForEducationGateway(run, planned);
+    if (planned.episode) startEpisodePhase(planned);
+    else {
+      run.currentDecision = planned;
+      run.phase = 'decision';
+      save();
+      render();
+    }
+    return true;
+  }
+  function queueSameAgeFollowup(run, allowed = {}) {
+    const candidates = INDEX.kinds.decision.filter((event) => {
+      if (!eligible(event, run)) return false;
+      if (
+        allowed.educationEpisodeId &&
+        event.track === 'education' &&
+        event.episode?.id === allowed.educationEpisodeId
+      ) return true;
+      if (allowed.pregnancy && event.episode?.id === 'pregnancy_decision') return true;
+      return Boolean(
+        allowed.family &&
+        event.episode?.id === 'becoming_parent' &&
+        event.episode.role === 'start'
+      );
+    });
+    if (!candidates.length) return false;
+    const roll = stable(
+        run.seed,
+        `same-age-followup:${run.age}:${run.decisionHistory.length}`,
+        1000000
+      ) / 1000000,
+      event = weightedAt(candidates, (item) => eventWeight(item, run), roll);
+    run.yearQueue.unshift({
+      ...event,
+      annualRole: 'decision',
+      annualPlanToken: `followup:${run.decisionHistory.length}`,
+    });
+    return true;
   }
   function finishYear() {
     const run = state.run;
-    if (shouldOfferDecision(run)) {
-      const event = startDecision(run);
-      if (event) {
-        deferEpisodesForEducationGateway(run, event);
-        if (event.episode) startEpisodePhase(event);
-        else {
-          run.currentDecision = event;
-          run.phase = 'decision';
-          save();
-          render();
-        }
-        return true;
-      }
-    }
     settleYear(run);
     if (run.finance.reliefPending) return queueDebtRelief(run, true);
     run.yearStarted = false;
@@ -5128,7 +5696,18 @@
         if (!run.yearStarted && beginYear()) return true;
         if (run.phase !== 'playing') return true;
         if (run.yearQueue.length) {
-          revealEvent(run.yearQueue.shift());
+          const planned = run.yearQueue.shift();
+          if (planned.annualRole === 'episodeClosure') {
+            if (launchPlannedEpisodeClosure(planned)) return true;
+            save();
+            continue;
+          }
+          if (planned.annualRole === 'decision') {
+            if (launchPlannedDecision(planned)) return true;
+            save();
+            continue;
+          }
+          revealEvent(planned);
           return true;
         }
         if (finishYear()) return true;
@@ -5160,7 +5739,8 @@
   }
   function chooseCard(id) {
     const run = state.run,
-      card = INDEX.cards.get(id);
+      card = INDEX.cards.get(id),
+      resumesStartedYear = run.yearStarted;
     if (!card || run.phase !== 'card') return;
     const result = applyCommands(card.effects, card);
     if (!result.ok) {
@@ -5176,7 +5756,7 @@
     );
     run.phase = run.cardAge === 0 ? 'playing' : 'playing';
     run.cardOptions = [];
-    run.yearStarted = false;
+    if (!resumesStartedYear) run.yearStarted = false;
     save();
     render();
   }
@@ -5276,7 +5856,7 @@
       return { kind: 'passiveLoneliness', adjustment: -12, ceiling: 38 };
     if (intent === 'solitude' && loneliness < 40)
       return { kind: 'activeSolitude', adjustment: 0, floor: 55 };
-    if (run.relationships.network >= 65)
+    if (people.filter((item) => item.alive && item.social?.tie !== 'ended').length >= 2 && run.relationships.network >= 65)
       return { kind: 'broadNetwork', adjustment: 6, floor: 0 };
     return { kind: 'neutral', adjustment: 0, floor: 0 };
   }
@@ -5333,33 +5913,141 @@
       社会影响: impact,
     };
   }
+  function currentSeekingYears(run) {
+    if (run.activity.mode !== 'seeking') return null;
+    let sinceAge = null;
+    for (const item of run.decisionHistory || []) {
+      const before = item.stateBefore?.activity, after = item.stateAfter?.activity;
+      if (!after) continue;
+      if (after === 'seeking' && before !== 'seeking') sinceAge = item.age;
+      else if (after !== 'seeking') sinceAge = null;
+    }
+    if (sinceAge === null) return null;
+    return Math.max(0, run.age - sinceAge);
+  }
   function pivotalFacts(run) {
-    const decisions = [...run.decisionHistory]
-      .sort((a, b) => b.impact - a.impact || a.age - b.age)
-      .slice(0, 3)
-      .sort((a, b) => a.age - b.age)
-      .map((item) => ({
+    const candidates = (run.decisionHistory || []).map((item) => {
+      const milestone = decisionMilestone(item);
+      return {
         age: item.age,
         title: item.choice,
         result: item.result,
         source: item.eventId,
-      }));
-    const used = new Set(decisions.map((item) => `${item.age}:${item.source}`));
-    for (const item of run.timeline
-      .filter((item) => ['blackSwan', 'secret', 'consequence'].includes(item.kind))
-      .reverse()) {
-      if (decisions.length >= 3) break;
-      const key = `${item.age}:${item.id}`;
-      if (!used.has(key)) {
-        decisions.push({
-          age: item.age,
-          title: item.text,
-          result: '这件事改变了后面能走的路。',
-          source: item.id,
-        });
-        used.add(key);
-      }
+        episodeKey: milestone.episodeKey,
+        category: milestone.category,
+        score: milestone.score,
+      };
+    });
+    for (const item of run.timeline || []) {
+      if (!['blackSwan', 'secret', 'consequence'].includes(item.kind)) continue;
+      const isLoss = item.id.startsWith('person_loss_'),
+        isBirth = item.id.startsWith('person_birth_'),
+        event = INDEX.event.get(item.id);
+      candidates.push({
+        age: item.age,
+        title:
+          isLoss || isBirth
+            ? item.text
+            : item.kind === 'secret'
+              ? '家里的旧事被说开'
+              : item.kind === 'blackSwan'
+                ? '没有预告的一天'
+                : '以前的选择有了后果',
+        result:
+          isLoss
+            ? '从那以后，家里少了这个人。'
+            : isBirth
+              ? '从那以后，家里多了这个人。'
+              : item.text,
+        source: item.id,
+        episodeKey: event?.sourceDecisionId || item.id,
+        category: isLoss ? 'person-loss' : isBirth ? 'person-birth' : item.kind,
+        score: isLoss ? 76 : isBirth ? 68 : item.kind === 'blackSwan' ? 66 : 54,
+      });
     }
+    const working = ['employed', 'gig', 'selfEmployed'].includes(run.employment.status),
+      seekingYears = currentSeekingYears(run),
+      longFirstJobSearch =
+        run.activity.mode === 'seeking' &&
+        run.employment.firstJobAge === null &&
+        run.employment.firstJobOutcome === 'longSearch';
+    if (!working && ((seekingYears !== null && seekingYears >= 3) || longFirstJobSearch))
+      candidates.push({
+        age: run.age,
+        title:
+          seekingYears !== null && seekingYears >= 3
+            ? `求职拖了 ${seekingYears} 年`
+            : '稳定工作一直没有落下来',
+        result: '到这一生结束时，稳定工作仍没有落下来。',
+        source: 'final-long-unemployment',
+        episodeKey: 'final-long-unemployment',
+        category: 'employment',
+        score: 78,
+      });
+    if (run.finance.totalDebt > Math.max(50000, run.finance.lastIncome || 0))
+      candidates.push({
+        age: run.age,
+        title: `还有 ${money(run.finance.totalDebt)} 债务没有清完`,
+        result: '这些账跟着你走到了这一生结束。',
+        source: 'final-debt',
+        episodeKey: 'final-debt',
+        category: 'finance',
+        score: 82,
+      });
+    if (run.finance.housingDisposition === 'disposed')
+      candidates.push({
+        age: run.age,
+        title: '原来的住房已经被处置',
+        result: `走到最后，你住在${housingLabel(run)}。`,
+        source: 'final-housing-disposition',
+        episodeKey: 'final-housing-disposition',
+        category: 'housing',
+        score: 74,
+      });
+    if (run.later.retirement !== 'none')
+      candidates.push({
+        age: run.age,
+        title: '工作走到了晚年的安排',
+        result: laterStatusLabel(run),
+        source: 'final-retirement',
+        episodeKey: 'retirement_transition',
+        category: 'retirement',
+        score: 70,
+      });
+    if (run.health.status === 'limited' || run.health.conditionSeverity >= 35)
+      candidates.push({
+        age: run.age,
+        title: '身体的限制留了下来',
+        result: healthStatusLabel(run),
+        source: 'final-health',
+        episodeKey: 'final-health',
+        category: 'health',
+        score: 72,
+      });
+
+    const selected = [], usedEpisodes = new Set(), usedCategories = new Set(), eraCounts = new Map(),
+      era = (age) => age < 25 ? 'early' : age < 55 ? 'middle' : 'late';
+    for (const item of candidates.sort((a, b) => b.score - a.score || b.age - a.age)) {
+      if (selected.length >= 3) break;
+      const itemEra = era(item.age);
+      if (
+        usedEpisodes.has(item.episodeKey) ||
+        usedCategories.has(item.category) ||
+        (eraCounts.get(itemEra) || 0) >= 2
+      )
+        continue;
+      selected.push(item);
+      usedEpisodes.add(item.episodeKey);
+      usedCategories.add(item.category);
+      eraCounts.set(itemEra, (eraCounts.get(itemEra) || 0) + 1);
+    }
+    const decisions = selected.map(({ age, title, result, source }) => ({
+      age,
+      title,
+      result,
+      source,
+    }));
+    const used = new Set(decisions.map((item) => `${item.age}:${item.source}`));
     const realFallbacks = [
       {
         age: 0,
@@ -5382,9 +6070,73 @@
     ];
     for (const item of realFallbacks) {
       if (decisions.length >= 3) break;
-      if (!used.has(`${item.age}:${item.source}`)) decisions.push(item);
+      const itemEra = era(item.age),
+        earlyDeathCompletion = item.source === 'death' && run.age < 25;
+      if (
+        !used.has(`${item.age}:${item.source}`) &&
+        (earlyDeathCompletion || (eraCounts.get(itemEra) || 0) < 2)
+      ) {
+        decisions.push(item);
+        eraCounts.set(itemEra, (eraCounts.get(itemEra) || 0) + 1);
+      }
     }
     return decisions.slice(0, 3).sort((a, b) => a.age - b.age);
+  }
+  function decisionMilestone(item) {
+    const event = INDEX.event.get(item.eventId),
+      before = item.stateBefore || {},
+      after = item.stateAfter || {},
+      tags = item.outcomeTags || [],
+      episodeKey = event?.episode?.id || item.eventId;
+    let category = event?.track || 'ordinary', score = Math.min(28, Number(item.impact || 0));
+    if (before.children !== after.children) ({ category, score } = { category: 'parenthood', score: 82 });
+    else if (before.partner !== after.partner) ({ category, score } = { category: 'partnership', score: 76 });
+    else if (item.housingChoiceKind) ({ category, score } = { category: 'housing', score: 74 });
+    else if (event?.episode?.id === 'retirement_transition')
+      ({ category, score } = { category: 'retirement', score: 72 });
+    else if (event?.episode?.id === 'career_growth')
+      ({ category, score } = { category: 'career-growth', score: 74 });
+    else if (before.employment !== after.employment || runFirstJobAt(item))
+      ({ category, score } = { category: 'employment', score: 72 });
+    else if (event?.track === 'finance' || tags.some((tag) => tag.startsWith('finance:')))
+      ({ category, score } = { category: 'finance', score: 62 });
+    else if (event?.track === 'health' || before.health !== after.health)
+      ({ category, score } = { category: 'health', score: 60 });
+    else if (event?.track === 'business') ({ category, score } = { category: 'business', score: 60 });
+    else if (event?.track === 'remote') ({ category, score } = { category: 'mobility', score: 58 });
+    else if (event?.episode) score += 18;
+    if (item.age >= 45) score += 5;
+    if (item.age >= 60) score += 3;
+    return { category, score, episodeKey };
+  }
+  function runFirstJobAt(item) {
+    return item.stateBefore?.employment !== item.stateAfter?.employment &&
+      ['employed', 'gig', 'selfEmployed'].includes(item.stateAfter?.employment);
+  }
+  function ordinaryEndingSummary(run, profileSummary, facts = pivotalFacts(run)) {
+    const working = ['employed', 'gig', 'selfEmployed'].includes(run.employment.status);
+    let primary = profileSummary;
+    if (run.finance.totalDebt > 0 && run.activity.mode === 'retired')
+      primary = `退休以后，仍有 ${money(run.finance.totalDebt)} 债务没有清完。`;
+    else if (
+      run.finance.totalDebt > 0 &&
+      run.activity.mode === 'seeking' &&
+      run.employment.firstJobAge === null
+    )
+      primary = `走到最后，稳定工作仍没有落下来，未清债务还有 ${money(run.finance.totalDebt)}。`;
+    else if (run.finance.totalDebt > 0)
+      primary = `走到最后，仍有 ${money(run.finance.totalDebt)} 债务没有清完。`;
+    else if (run.relationships.childCount)
+      primary = `这一生有了孩子。最后的住处是${housingLabel(run)}。`;
+    else if (run.health.status !== 'well' || run.health.conditionSeverity > 0)
+      primary = `走到最后，身体仍是${healthStatusLabel(run)}。`;
+    else if (working) primary = `走到最后，你仍在做${employmentDetailLabel(run)}。`;
+    const distinguishingFact = facts.find(
+      (item) => !['origin', 'origin-household', 'death'].includes(item.source)
+    );
+    return distinguishingFact && !primary.includes(distinguishingFact.title)
+      ? `${primary.replace(/。$/, '')}；这一生还经历过“${distinguishingFact.title}”。`
+      : primary;
   }
   function routeTags(run) {
     const historical = {
@@ -5397,17 +6149,28 @@
         partnership: '亲密关系',
         employment: '受雇工作',
       },
+      decisionTracks = new Set(
+        (run.decisionHistory || []).map((item) => INDEX.event.get(item.eventId)?.track)
+      ),
       items = Object.entries(historical)
         .map(([track, label]) => ({
           label,
           count: Object.keys(run.outcomeTags)
             .filter((tag) => tag.startsWith(`${track}:`))
             .reduce((sum, tag) => sum + run.outcomeTags[tag], 0),
+          track,
         }))
-        .filter((item) => item.count > 0);
+        .filter((item) => item.count > 0 && decisionTracks.has(item.track));
     if (run.finance.hasArrears || run.finance.totalDebt > Math.max(50000, run.finance.lastIncome))
       items.push({ label: '债务人生', count: 100 });
-    else if (run.outcomeTags['finance:repaid'] || run.outcomeTags['finance:restructured'])
+    else if (
+      (run.outcomeTags['finance:repaid'] || run.outcomeTags['finance:restructured']) &&
+      (run.decisionHistory || []).some((item) =>
+        (item.outcomeTags || []).some((tag) =>
+          ['finance:repaid', 'finance:restructured'].includes(tag)
+        )
+      )
+    )
       items.push({ label: '财务重建', count: 60 });
     if (
       run.health.status === 'limited' ||
@@ -5417,7 +6180,13 @@
       items.push({ label: '健康危机', count: 100 });
     else if (run.health.status === 'managed' && run.health.conditionSeverity > 0)
       items.push({ label: '与健康问题共处', count: 55 });
-    else if (run.outcomeTags['health:recovered']) items.push({ label: '康复者', count: 60 });
+    else if (
+      run.outcomeTags['health:recovered'] &&
+      (run.decisionHistory || []).some((item) =>
+        (item.outcomeTags || []).includes('health:recovered')
+      )
+    )
+      items.push({ label: '康复者', count: 60 });
     const socialSignal = socialEndingSignal(run);
     if (socialSignal.kind === 'closeFriend') items.push({ label: '有过真朋友', count: 70 });
     else if (socialSignal.kind === 'broadNetwork') items.push({ label: '人脉很广', count: 55 });
@@ -5431,6 +6200,26 @@
       .slice(0, 3)
       .map((item) => item.label);
   }
+  function compatibleEndingTitles(run, profile, titles) {
+    if (profile.id !== 'ordinaryContent') return titles;
+    const seeking = run.activity.mode === 'seeking' || run.employment.firstJobAge === null,
+      preferred = run.finance.totalDebt > 0 || seeking
+        ? '简历和账单之间'
+        : run.relationships.childCount || run.later.care !== 'none'
+          ? '家里一直有人等'
+          : run.health.status !== 'well' || run.health.conditionSeverity > 0
+            ? '按身体能走的路'
+            : ['retired', 'leftSearch'].includes(run.later.retirement)
+              ? '工作停在这一天'
+              : ['semiRetired', 'lightWork', 'working', 'keptSearching'].includes(run.later.retirement)
+                ? '工牌后面的几年'
+              : run.employment.growthCount > 0 ||
+                  ['employed', 'gig', 'selfEmployed'].includes(run.employment.status)
+                ? '工牌后面的几年'
+                : '把日子过到这里',
+      match = titles.find((item) => item.title === preferred);
+    return match ? [match] : titles;
+  }
   function finishLife() {
     const run = state.run;
     if (run.phase === 'ended' && run.ending) {
@@ -5443,14 +6232,18 @@
     syncDerived(run);
     unlockCodex();
     const profile = endingProfile(run),
-      titles = DATA.endingTitles.filter((title) => title.profileId === profile.id),
+      titles = compatibleEndingTitles(
+        run,
+        profile,
+        DATA.endingTitles.filter((title) => title.profileId === profile.id)
+      ),
       title = titles[stable(run.seed, `ending:${profile.id}`, titles.length)] || titles[0],
       facts = pivotalFacts(run),
       axes = endingAxes(run);
     run.ending = {
       profileId: profile.id,
       title: title?.title || '这一生',
-      summary: profile.summary,
+      summary: profile.id === 'ordinaryContent' ? ordinaryEndingSummary(run, profile.summary, facts) : profile.summary,
       rarity: profile.rarity,
       basis: [...profile.signals],
       axes,
@@ -5758,6 +6551,9 @@
           retired: '已退出工作',
           semiRetired: '半退休',
           working: '继续工作',
+          leftSearch: '不再全职求职',
+          lightWork: '只留少量工作',
+          keptSearching: '继续寻找工作',
           forced: '被迫退出',
         },
         inheritance: {
@@ -5892,7 +6688,7 @@
       originRisk = compactOriginSummary[riskSource] || riskSource,
       parents = origin.people.filter((item) => ['father', 'mother'].includes(item.relation)),
       siblings = origin.people.filter((item) => item.relation === 'sibling' && item.bornAt <= 0);
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">${esc(UI_COPY.birthTitle)}</div><span></span></div><section class="card hero"><div class="muted">${run.gender === 'female' ? '女性' : '男性'} · ${run.location.name}</div><div class="birth-place">${esc(origin.familyName)}</div><p>${esc(UI_COPY.birthHouseholdNote)}</p>${originAdvantage || originRisk ? `<div class="origin-summary">${originAdvantage ? `<div><span>优势</span><p>${esc(originAdvantage)}</p></div>` : ''}${originRisk ? `<div><span>压力</span><p>${esc(originRisk)}</p></div>` : ''}</div>` : ''}</section><dl class="spec-list"><div class="spec"><dt>家庭环境</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>父母</dt><dd>${parents.map((item) => `${item.relation === 'father' ? '父亲' : '母亲'}：${item.occupation} · ${item.timeAvailability >= 60 ? '时间较稳定' : '常常抽不开身'}`).join('；') || '由其他照护者抚养'}</dd></div><div class="spec"><dt>兄弟姐妹</dt><dd>${siblings.length ? `${siblings.length}人` : '目前没有'}</dd></div><div class="spec"><dt>家庭住房</dt><dd>${esc(origin.housing)} · ${origin.context.housingStability >= 60 ? '居住较稳定' : '住处可能变化'}</dd></div><div class="spec"><dt>家庭账面</dt><dd>资产约 ${money(origin.assets)} · 债务约 ${money(origin.debt)}</dd></div><div class="spec"><dt>教育起点</dt><dd>${origin.context.educationCapital >= 65 ? '较早接触升学信息' : origin.context.educationCapital >= 42 ? '信息主要来自学校' : '需要额外寻找路线信息'} · ${origin.context.educationBudget >= 68 ? '可承担较多准备成本' : '费用会限制部分选择'}</dd></div></dl><div class="bottom-actions"><button class="btn primary" data-act="birth-next">${esc(UI_COPY.birthNext)}</button></div></main>`;
+    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">${esc(UI_COPY.birthTitle)}</div><span></span></div><section class="card hero"><div class="muted">${run.gender === 'female' ? '女性' : '男性'} · ${run.location.name}</div><div class="birth-place">${esc(origin.familyName)}</div><p>${esc(UI_COPY.birthHouseholdNote)}</p>${originAdvantage || originRisk ? `<div class="origin-summary">${originAdvantage ? `<div><span>优势</span><p>${esc(originAdvantage)}</p></div>` : ''}${originRisk ? `<div><span>压力</span><p>${esc(originRisk)}</p></div>` : ''}</div>` : ''}</section><dl class="spec-list"><div class="spec"><dt>家庭环境</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>父母</dt><dd>${parents.map((item) => `${item.relation === 'father' ? '父亲' : '母亲'}：${item.occupation} · ${item.timeAvailability >= 60 ? '时间较稳定' : '常常抽不开身'}`).join('；') || '由其他照护者抚养'}</dd></div><div class="spec"><dt>兄弟姐妹</dt><dd>${siblings.length ? `${siblings.length}人` : '目前没有'}</dd></div><div class="spec"><dt>家庭住房</dt><dd>${esc(origin.housing)} · ${origin.context.housingStability >= 60 ? '居住较稳定' : '住处可能变化'}</dd></div><div class="spec"><dt>家庭账面</dt><dd>资产约 ${money(origin.assets)} · 债务约 ${money(origin.debt)}</dd></div><div class="spec"><dt>升学信息</dt><dd>${origin.context.educationCapital >= 65 ? '家里熟悉流程' : origin.context.educationCapital >= 42 ? '主要靠学校通知' : '需要自己另外寻找'}</dd></div><div class="spec"><dt>准备费用</dt><dd>${origin.context.educationBudget >= 68 ? '能承担较多' : origin.context.educationBudget >= 42 ? '需要取舍' : '很难长期承担'}</dd></div></dl><div class="bottom-actions"><button class="btn primary" data-act="birth-next">${esc(UI_COPY.birthNext)}</button></div></main>`;
   }
   const attrMeta = {
     intellect: ['理解', '学习、证据与复杂判断'],
@@ -5915,15 +6711,88 @@
         ''
       )}</section><div class="bottom-actions attributes-actions"><button class="btn ghost" data-act="random-attributes">随机分配</button><button class="btn primary" data-act="attributes-done" ${run.points ? 'disabled' : ''}>${esc(UI_COPY.attributesConfirm)}</button></div></main>`;
   }
+  function timelineImportance(item, run) {
+    if (
+      item.id.startsWith('person_birth_') ||
+      item.id.startsWith('person_loss_') ||
+      ['blackSwan', 'secret'].includes(item.kind)
+    )
+      return 'critical';
+    if (item.variant === 'chosen') {
+      const record = [...(run.decisionHistory || [])]
+        .reverse()
+        .find((entry) => entry.age === item.age && entry.eventId === item.id);
+      if (record && decisionMilestone(record).score >= 60) return 'critical';
+      return 'standard';
+    }
+    const event = INDEX.event.get(item.id);
+    if (item.kind === 'consequence' || item.kind === 'card' || event?.intensity === 'high')
+      return 'standard';
+    return 'texture';
+  }
   function streamRows(run) {
     if (!run.timeline.length) return `<div class="stream-empty">${esc(UI_COPY.streamEmpty)}</div>`;
-    return run.timeline
-      .slice(-12)
-      .map(
-        (item) =>
-          `<div class="stream-row ${item.variant === 'chosen' ? 'chosen' : ''}"><span class="stream-age">${item.age}岁</span><span class="stream-icon">${item.icon || '·'}</span><div><p>${esc(item.text)}</p><div class="stream-hints"><span>${esc(TRACK_LABELS[item.track] || '生活')}</span>${item.kind === 'consequence' ? `<span>${esc(UI_COPY.consequenceLabel)}</span>` : ''}</div></div></div>`
-      )
-      .join('');
+    const groups = [];
+    for (const item of run.timeline) {
+      const group = groups.at(-1);
+      if (!group || group.age !== item.age) groups.push({ age: item.age, items: [item] });
+      else group.items.push(item);
+    }
+    let visible = groups.slice(-6);
+    while (visible.flatMap((group) => group.items).length > 18 && visible.length > 1) visible.shift();
+    return visible.map((group) => group.items.map((item, index) =>
+      `<div class="stream-row ${timelineImportance(item, run)} ${item.variant === 'chosen' ? 'chosen' : ''}"><span class="stream-age">${index ? '' : `${group.age}岁`}</span><span class="stream-icon">${item.icon || '·'}</span><div><p>${esc(item.text)}</p><div class="stream-hints"><span>${esc(TRACK_LABELS[item.track] || '生活')}</span>${item.kind === 'consequence' ? `<span>${esc(UI_COPY.consequenceLabel)}</span>` : ''}</div></div></div>`
+    ).join('')).join('');
+  }
+  function lifeFactSummary(run) {
+    const facts = [], seekingYears = currentSeekingYears(run);
+    if (run.activity.mode === 'seeking')
+      facts.push({
+        priority: 95,
+        text:
+          seekingYears !== null && seekingYears >= 2
+            ? `求职已经拖了 ${seekingYears} 年，下一份工作还没有落下来。`
+            : run.employment.firstJobAge === null
+              ? '目前还在求职，稳定工作还没有落下来。'
+              : '目前还在求职，下一份工作还没有落下来。',
+      });
+    if (run.finance.totalDebt > 0)
+      facts.push({
+        priority: 90,
+        text: `未清债务还有 ${money(run.finance.totalDebt)}，目前是${debtStatusLabel(run)}。`,
+      });
+    if (run.relationships.childCount)
+      facts.push({
+        priority: 82,
+        text: `家里有 ${run.relationships.childCount} 个孩子；现在${housingLabel(run)}。`,
+      });
+    if (run.health.status !== 'well' || run.health.conditionSeverity >= 18)
+      facts.push({
+        priority: 78,
+        text: `身体目前是${healthStatusLabel(run)}${run.health.careNeed > 0 ? '，日常还需要照护安排' : ''}。`,
+      });
+    if (run.housing.status === 'unstable')
+      facts.push({ priority: 75, text: `住处目前是${housingLabel(run)}。` });
+    if (run.mobility.mode !== 'home' && run.mobility.lastOverseasSystem !== 'none')
+      facts.push({ priority: 70, text: `这些年在海外生活；现在${housingLabel(run)}。` });
+    if (['employed', 'gig', 'selfEmployed'].includes(run.employment.status) && run.employment.tenure >= 3) {
+      const growthBelongsToCurrentJob =
+        run.employment.growthCount > 0 &&
+        Number.isFinite(run.employment.lastGrowthAge) &&
+        run.employment.lastGrowthAge >= run.age - run.employment.tenure;
+      facts.push({
+        priority: growthBelongsToCurrentJob ? 76 : 64,
+        text: growthBelongsToCurrentJob
+          ? `${run.employment.career}已经有过一次写进职责或收入的成长，现在仍在继续。`
+          : `${run.employment.career}已经连续做了 ${run.employment.tenure} 年。`,
+      });
+    }
+    if (run.later.retirement !== 'none')
+      facts.push({ priority: 68, text: `晚年的工作安排是：${laterStatusLabel(run)}。` });
+    return facts
+      .sort((a, b) => b.priority - a.priority)
+      .slice(0, 2)
+      .map((item) => item.text);
   }
   function heldCards(run) {
     return (run.cards || []).map((id) => INDEX.cards.get(id)).filter(Boolean);
@@ -5997,8 +6866,9 @@
         ? socialPeople.map((item) => esc(socialPersonLabel(item))).join('<br>')
         : latestSocialIntent(run) === 'solitude' && (Number(run.pressures.loneliness) || 0) < 40
           ? '主要独来独往'
-          : '认识一些人，但没有常联系的朋友';
-    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div><div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>学习与支持</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner}</dd></div><div class="spec"><dt>朋友</dt><dd>${friendSummary}</dd></div><div class="spec"><dt>子女</dt><dd>${
+          : '认识一些人，但没有常联系的朋友',
+      facts = lifeFactSummary(run);
+    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div>${facts.length ? `<div class="section-title">${esc(UI_COPY.lifeFactsTitle)}</div><div class="life-facts">${facts.map((item) => `<p>${esc(item)}</p>`).join('')}</div>` : ''}<div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>学习与支持</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner}</dd></div><div class="spec"><dt>朋友</dt><dd>${friendSummary}</dd></div><div class="spec"><dt>子女</dt><dd>${
       run.relationships.childCount
         ? childPeople(run)
             .map((child) => `${personAge(child, run)}岁`)
@@ -6020,19 +6890,47 @@
     return `<main class="screen stream-screen"><header class="game-header"><div class="row"><div><div class="age">${run.age}岁</div><div class="role">${esc(roleLine(run))}</div></div><button class="iconbtn" data-act="open-drawer" aria-label="打开状态面板">☰</button></div><div class="resource-strip"><div class="res"><span>现金</span><b>${money(run.finance.cash)}</b></div><div class="res"><span>净值</span><b>${money(run.finance.netWorth)}</b></div><div class="res"><span>身体</span><b>${Math.round(run.health.physical)}</b></div><div class="res"><span>精神</span><b>${Math.round(run.health.mental)}</b></div></div></header><div class="conflict-line">${esc(UI_COPY.coreConflictLabel)} · ${esc(DATA.conflicts.find((item) => item.id === run.mainConflict)?.name || '还不清楚')}</div><div class="life-stream" tabindex="0" data-act="advance">${streamRows(run)}<div class="stream-cursor"><i></i>${esc(UI_COPY.advancePrompt)}</div></div>${DEBUG ? `<div class="debug-panel">debug · seed ${esc(run.seed)} · choices ${run.decisionCount}/${run.targetDecisions}</div>` : ''}</main>${run.phase === 'decision' ? choiceSheet(run.currentDecision) : ''}${run.phase === 'episode' ? episodeSheet(run) : ''}${run.phase === 'card' ? cardSheet(run) : ''}${state.drawer ? statusDrawer(run) : ''}`;
   }
 
+  function endingPortraitFacts(run) {
+    const people = [],
+      coResidence = {
+        originFamily: '与原生家庭同住',
+        dormitory: '住在宿舍',
+        solo: '独自居住',
+        shared: '与人合住',
+        partner: '与伴侣同住',
+        multigenerational: '多代同住',
+        service: '住在服务型住所',
+      }[run.housing.arrangement];
+    if (run.relationships.partnerStatus !== 'none')
+      people.push({
+        dating: '恋爱中',
+        partnered: '有稳定伴侣',
+        married: '已婚',
+        separated: '与伴侣分居',
+        divorced: '离异',
+        widowed: '伴侣已经离世',
+      }[run.relationships.partnerStatus]);
+    if (run.relationships.childCount) people.push(`${run.relationships.childCount} 个孩子`);
+    const friendCount = CONTRACT.SOCIAL_SLOTS
+      .map((slot) => run.people.find((item) => item.id === run.social?.[`${slot}PersonId`]))
+      .filter((item) => item?.alive && ['friend', 'close'].includes(item.social?.tie)).length;
+    if (friendCount) people.push(`${friendCount} 位仍有来往的朋友`);
+    if (coResidence && !people.some((item) => item.includes(coResidence)))
+      people.push(coResidence);
+    return [
+      { label: '工作', value: employmentDetailLabel(run) },
+      { label: '关系与同住', value: people.join('；') || '没有记录到稳定关系或同住安排' },
+      { label: '住处', value: housingLabel(run) },
+      run.finance.totalDebt > 0
+        ? { label: '未清债务', value: `${money(run.finance.totalDebt)} · ${debtStatusLabel(run)}` }
+        : { label: '身体', value: healthStatusLabel(run) },
+    ];
+  }
+
   function endingView() {
     const run = state.run,
       e = run.ending;
-    return `<main class="screen ending-screen"><div class="ending-share-card"><div class="eyebrow ending-kicker">人生尚未加载 · 2026</div><div class="lifespan">活到 <b>${e.age}</b> 岁</div><div class="ending-title">《${esc(e.title)}》</div><p class="ending-review sharp-summary">${esc(e.summary)}</p><div class="ending-rarity"><span class="pill rare">人生稀有度 · ${esc(e.rarity)}</span><span class="pill">种子 ${esc(e.seed)}</span></div><div class="section-title">${esc(UI_COPY.endingTurnsTitle)}</div><section class="card timeline">${e.facts.map((item) => `<div class="time-item"><span class="time-age">${item.age}岁</span><div><strong>${esc(item.title)}</strong><p class="tiny">${esc(item.result)}</p></div></div>`).join('')}</section><div class="taglist">${e.tags.map((tag) => `<span class="pill">${esc(tag)}</span>`).join('') || '<span class="pill">未归类人生</span>'}</div></div><div class="section-title">${esc(UI_COPY.endingLedgerTitle)}</div><section class="card ending-portrait">${Object.entries(
-      e.axes
-    )
-      .map(
-        ([name, value]) =>
-          `<div class="portrait-row"><div class="row"><span>${esc(UI_COPY.axisLabels[name] || name)}</span><b>${Math.round(value)}</b></div><div class="meter"><i style="width:${clamp(value, 0, 100)}%"></i></div></div>`
-      )
-      .join(
-        ''
-      )}</section><section class="card soft mt"><div class="spec"><dt>最终净值</dt><dd>${money(e.netWorth)}</dd></div><div class="spec"><dt>死亡原因</dt><dd>${esc(e.deathCause)}</dd></div><div class="spec"><dt>亲手选择</dt><dd>${run.decisionCount} 次</dd></div></section><div class="stack mt"><button class="btn primary" data-act="new">${esc(UI_COPY.restart)}</button><button class="btn ghost" data-nav="archive">查看人生档案</button></div></main>`;
+    return `<main class="screen ending-screen"><div class="ending-share-card"><div class="eyebrow ending-kicker">人生尚未加载 · 2026</div><div class="lifespan">活到 <b>${e.age}</b> 岁</div><div class="ending-title">《${esc(e.title)}》</div><p class="ending-review sharp-summary">${esc(e.summary)}</p><div class="ending-rarity"><span class="pill rare">人生稀有度 · ${esc(e.rarity)}</span><span class="pill">种子 ${esc(e.seed)}</span></div><div class="section-title">${esc(UI_COPY.endingTurnsTitle)}</div><section class="card timeline">${e.facts.map((item) => `<div class="time-item"><span class="time-age">${item.age}岁</span><div><strong>${esc(item.title)}</strong><p class="tiny">${esc(item.result)}</p></div></div>`).join('')}</section><div class="taglist">${e.tags.map((tag) => `<span class="pill">${esc(tag)}</span>`).join('') || '<span class="pill">未归类人生</span>'}</div></div><div class="section-title">${esc(UI_COPY.endingPortraitTitle)}</div><section class="card ending-portrait">${endingPortraitFacts(run).map((item) => `<div class="ending-fact"><span>${esc(item.label)}</span><b>${esc(item.value)}</b></div>`).join('')}</section><section class="card soft mt"><div class="spec"><dt>最终净值</dt><dd>${money(e.netWorth)}</dd></div><div class="spec"><dt>死亡原因</dt><dd>${esc(e.deathCause)}</dd></div><div class="spec"><dt>亲手选择</dt><dd>${run.decisionCount} 次</dd></div></section><div class="stack mt"><button class="btn primary" data-act="new">${esc(UI_COPY.restart)}</button><button class="btn ghost" data-nav="archive">查看人生档案</button></div></main>`;
   }
   function archiveView() {
     const all = [...state.meta.histories, ...state.meta.legacyHistories];
@@ -6116,7 +7014,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.12-存档.json';
+    link.download = '人生尚未加载-v0.6.13-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }
@@ -6533,11 +7431,46 @@
             return copy(state.run.health);
           },
           endingAxes: () => endingAxes(state.run),
+          endingProfile: () => copy(endingProfile(state.run)),
+          mortalityCause: (source = 'age') => mortalityCause(state.run, source),
           latestSocialIntent: () => latestSocialIntent(state.run),
           socialEndingSignal: () => copy(socialEndingSignal(state.run)),
           dueConsequence: () => copy(dueConsequence(state.run)),
           routeTags: () => routeTags(state.run),
+          lifeFactSummary: () => copy(lifeFactSummary(state.run)),
+          pivotalFacts: () => copy(pivotalFacts(state.run)),
+          ordinaryEndingSummary: (fallback = '') => ordinaryEndingSummary(state.run, fallback),
+          endingPortraitFacts: () => copy(endingPortraitFacts(state.run)),
+          timelineImportance: (item) => timelineImportance(item, state.run),
+          annualTargetSize,
+          continuityWeight: (id, continuity = false) => {
+            const event = INDEX.event.get(String(id));
+            return event ? eventWeight(event, state.run, { continuity: Boolean(continuity) }) : null;
+          },
+          ensureYearPlan: () => {
+            if (!state.run.yearStarted) beginYear();
+            save();
+            render();
+            return {
+              phase: state.run.phase,
+              yearStarted: state.run.yearStarted,
+              rngState: state.run.rngState,
+              queue: state.run.yearQueue.map((event) => event.id),
+              queueRoles: state.run.yearQueue.map((event) => event.annualRole || event.kind),
+              currentAgeTimelineCount: currentAgeTimelineCount(state.run),
+            };
+          },
           decisionAllowance: () => decisionAllowance(state.run),
+          decisionQuotaOpen: () => decisionQuotaOpen(state.run),
+          decisionStageBudgets: () => copy(decisionStageBudgets(state.run)),
+          bridgeFirstJobCandidates: () => bridgeFirstJobCandidates(state.run).map((profile) => profile.id),
+          firstJobFailureAge: () => firstJobFailureAge(state.run),
+          lifecycleCheckpointAge: (id) => {
+            const event = INDEX.kinds.decision.find((item) => item.episode?.id === id);
+            return event?.episode?.lifecycle
+              ? lifecycleCheckpointAge(state.run, event.episode.lifecycle)
+              : null;
+          },
           housingContext: () => copy(currentHousingContext(state.run)),
           housingAffordability: (candidate = state.run.housing, options = {}) =>
             copy(housingAffordability(state.run, candidate, options)),

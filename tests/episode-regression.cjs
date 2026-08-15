@@ -22,7 +22,7 @@ const expectedRoutes={
   adult_reeducation:['completed','low_intensity','non_degree','forced_exit'],
   business_expansion:['scaled','downsized','sold','debt_failure'],
   wealth_peak:['controlled','cashed_out','management_exit','invalidated'],
-  retirement_transition:['retired','semi_retired','continued','forced'],
+  retirement_transition:['stopped','reduced','continued','left_search','light_work','kept_searching'],
   parental_inheritance:['accepted','limited','renounced','disputed'],
   long_term_care:['stable','changed','minimum_support','family_break'],
   will_planning:['documented','partial','deferred','invalidated']
@@ -120,7 +120,7 @@ async function prepareFinal(page,id,event){
       kind,
       data.events.filter(event=>event.kind===kind).length
     ])),
-    {beat:480,decision:205,consequence:205,blackSwan:20}
+    {beat:480,decision:206,consequence:206,blackSwan:20}
   );
   assert.ok(decisions.every(event=>!('arc' in event)));
   assert.equal(socialDecisions.length,8);
@@ -153,13 +153,13 @@ async function prepareFinal(page,id,event){
   assert.equal(beatFor('beat_370').requirements.all.find(rule=>rule.path==='employment.firstJobAge')?.op,'eq');
   assert.equal(beatFor('beat_375').actors[0]?.slot,'partner');
   assert.equal(beatFor('beat_380').requirements.all.find(rule=>rule.path==='pressures.loneliness')?.op,'gte');
-  assert.equal(decisions.filter(event=>event.track==='later').length,13);
+  assert.equal(decisions.filter(event=>event.track==='later').length,12);
   assert.equal(data.events.filter(event=>event.kind==='beat'&&event.track==='housing').length,32);
   assert.equal(decisions.filter(event=>event.track==='housing').length,6);
   assert.deepEqual(beatFor('beat_384').requirements.all,[{path:'health.status',op:'in',value:['treating','managed','limited']}]);
-  const workResolution=eventFor('retirement_transition',2);
+  const workResolution=eventFor('retirement_transition',1);
   assert.ok(workResolution.choices.slice(0,3).every(choice=>choice.requirements.all.some(rule=>rule.path==='employment.status'&&rule.op==='in')));
-  assert.equal(workResolution.choices[3].requirements.all.some(rule=>rule.path==='employment.status'),false);
+  assert.ok(workResolution.choices.slice(3).every(choice=>choice.requirements.all.some(rule=>rule.path==='employment.status'&&rule.op==='notIn')));
   assert.ok(data.episodeCatalog.long_term_care.abandonedRoutes.includes('refused'));
   const establishBaseStart=eventFor('establish_base',1),establishBaseFollowup=eventFor('establish_base',2);
   assert.ok(establishBaseStart.choices.every(choice=>choice.housingChoiceKind==='workMigration'&&choice.effects.some(effect=>effect.type==='transitionHousing'&&effect.value.kind==='choice')),'establish-base trial did not consume the work-migration housing choice');
@@ -193,7 +193,7 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.6.12');
+    assert.equal(migrated.gameVersion,'0.6.13');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
@@ -234,6 +234,76 @@ async function prepareFinal(page,id,event){
     assert.match(habitMetadata.label,/酒精/);
     assert.deepEqual([shopMetadata.cataloged,shopMetadata.label,shopMetadata.lane],[false,'开店','career']);
 
+    const stageBase={adolescence:3,youth:5,establishment:4,midlife:3,later:2,elder:1};
+    for(let target=18;target<=24;target++){
+      await page.evaluate(({target})=>window.__LIFE_DEBUG__.patchRun({seed:`stage-budget-${target}`,targetDecisions:target,stageDecisionCounts:{},lifecycleStageOverrides:{}}),{target});
+      const budgets=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionStageBudgets());
+      assert.equal(Object.values(budgets).reduce((sum,value)=>sum+value,0),target,`${target}: stage budget total`);
+      for(const [stage,base] of Object.entries(stageBase))
+        assert.ok([base,base+1].includes(budgets[stage]),`${target}/${stage}: invalid seeded extra`);
+    }
+    const adoptionStart=eventFor('adoption_process',1),adoptionReview=eventFor('adoption_process',2),
+      qualificationStart=eventFor('professional_entry_qualification',1),schoolHarmStart=eventFor('school_harm',1),
+      firstJobStart=eventFor('first_job_application',1);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:35,targetDecisions:18,stageDecisionCounts:{establishment:99},lifecycleStageOverrides:{},
+      usedEvents:['decision_161','decision_162'],decisionHistory:[],lastDecisionAge:30,
+      desires:{security:{claimed:true}},episodes:{},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],
+      relationships:{partnerStatus:'none',activePartnerId:null,childCount:0,adoptionOffered:true,adoptionStatus:'offered'},
+      health:{physical:75,careNeed:0}
+    }));
+    let budgetLayers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.ok(budgetLayers.ordinary.includes(adoptionStart.id),'adoption did not remain available inside the ordinary stage budget');
+    assert.ok(!budgetLayers.ageBound.includes(adoptionStart.id),'adoption still bypassed an exhausted stage budget');
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:25,stageDecisionCounts:{youth:99},episodes:{},usedEvents:['decision_161','decision_162'],
+      education:{status:'completed',highestCompleted:'postgraduate',professionalQualificationIntent:'none',nextStage:'career'},
+      employment:{status:'unemployed',firstJobAge:null},relationships:{adoptionOffered:true,adoptionStatus:'declined'}
+    }));
+    budgetLayers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.ok(budgetLayers.ordinary.includes(qualificationStart.id),'professional qualification did not remain available inside the ordinary stage budget');
+    assert.ok(!budgetLayers.ageBound.includes(qualificationStart.id),'professional qualification still bypassed an exhausted stage budget');
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:15,stageDecisionCounts:{adolescence:99},episodes:{},usedEvents:['decision_161','decision_162'],
+      development:{severeSchoolHarm:true,schoolHarmResolved:false},education:{status:'enrolled',nextStage:'secondary'}
+    }));
+    budgetLayers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.ok(budgetLayers.ageBound.includes(schoolHarmStart.id),'severe unresolved school harm lost its urgent entry');
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:22,stageDecisionCounts:{youth:99},episodes:{secondary_diversion:{status:'abandoned',route:'employment'}},usedEvents:['decision_161','decision_162'],
+      development:{severeSchoolHarm:false,schoolHarmResolved:true},
+      education:{status:'completed',level:2,path:'middleSchool',highestCompleted:'middleSchool',nextStage:'firstJob'},
+      employment:{status:'none',firstJobAge:null}
+    }));
+    budgetLayers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    const firstJobFixture=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.ok(budgetLayers.ageBound.includes(firstJobStart.id),`first-job transition lost its urgent entry: ${JSON.stringify({education:firstJobFixture.education,employment:firstJobFixture.employment,episodes:firstJobFixture.episodes,layers:budgetLayers})}`);
+
+    await page.evaluate(({startId})=>window.__LIFE_DEBUG__.patchRun({
+      age:36,stageDecisionCounts:{establishment:99},usedEvents:['decision_161','decision_162',startId],
+      relationships:{partnerStatus:'none',activePartnerId:null,childCount:0,adoptionOffered:true,adoptionStatus:'assessing'},
+      episodes:{adoption_process:{status:'active',phase:2,startedAt:35,nextPhaseAge:36,deadlineAge:39,route:'submitted',boundActors:{},commitments:[],closureReason:null}}
+    }),{startId:adoptionStart.id});
+    budgetLayers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
+    assert.ok(budgetLayers.activeEpisode.includes(adoptionReview.id),'an adoption already in progress was blocked by the stage budget');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({episodes:null}));
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:31,targetDecisions:18,decisionCount:99,stageDecisionCounts:{adolescence:99,youth:99,establishment:0},
+      usedEvents:['decision_161','decision_162'],decisionHistory:[],desires:{security:{claimed:true}},
+      education:{status:'completed',level:3,path:'vocational',nextStage:'career'},
+      employment:{status:'employed',profileId:'warehouse_picker',career:'仓储分拣员',jobTier:'T0',rank:0,sector:'logistics',employerType:'private',contractType:'fixedTerm',contract:'fixedTerm',arrangement:'onsite',incomeStability:'fixed',salary:4200,incomeAnnualGross:50400,tenure:3,firstJobAge:24,applicationStatus:'employed',growthType:'none',growthCount:0,lastGrowthAge:null},
+      activity:{mode:'work'},episodes:{},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],lastDecisionAge:29
+    }));
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.decisionQuotaOpen()),true,'early stage overage still consumed the establishment budget');
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),eventFor('career_growth',1).id,'global decision count blocked career growth');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({stageDecisionCounts:{establishment:99},lifecycleStageOverrides:{}}));
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.decisionQuotaOpen()),false);
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),eventFor('career_growth',1).id,'career growth did not receive its one stage lifecycle override');
+
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:30,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],usedEvents:[],decisionHistory:[],decisionCount:0,lastDecisionAge:-99}));
     assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.forceDecision('decision_162')),'decision_162');
     await page.locator('[data-choice="1"]').click();
@@ -243,13 +313,13 @@ async function prepareFinal(page,id,event){
     assert.equal(run.desires.security.claimed,true);
     const identityHistory=run.decisionHistory.slice();
     const schedulerPatch={
-      age:35,rngState:0x12345678,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],
+      age:35,rngState:0x12345678,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[],
       usedEvents:['decision_161','decision_162'],decisionHistory:identityHistory,decisionCount:1,lastDecisionAge:30,targetDecisions:20,
       education:{status:'completed',level:4,path:'college',nextStage:'none'},
       employment:{status:'employed',firstJobAge:24,lastJob:{career:'受雇岗位'},career:'受雇岗位',incomeAnnualGross:120000},
       activity:{mode:'work',years:1},finance:{cash:200000,available:200000,totalDebt:0},
       housing:{status:'renting',region:'tier2',arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[]},
-      social:{primaryPersonId:null,secondaryPersonId:null},relationships:{partnerStatus:'none',activePartnerId:null,familyPlanningOffered:false,familyPlanningClosed:false,adoptionOffered:false},
+      social:{primaryPersonId:null,secondaryPersonId:null},relationships:{partnerStatus:'none',activePartnerId:null,familyPlanningOffered:false,familyPlanningClosed:false,adoptionOffered:true,adoptionStatus:'declined'},
       episodes:{},timeline:[]
     };
     await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun(value),schedulerPatch);
@@ -260,10 +330,15 @@ async function prepareFinal(page,id,event){
     assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),'decision_197');
     assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),'decision_197');
     assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).rngState,beforeCandidateProbe.rngState,'candidate inspection advanced RNG');
-    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    for(let step=0;step<6;step++){
+      run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+      if(run.currentDecision)break;
+      await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    }
     run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.ok(run.currentDecision,JSON.stringify({phase:run.phase,age:run.age,yearStarted:run.yearStarted,queue:run.yearQueue.map(item=>[item.id,item.annualRole]),timeline:run.timeline.slice(-3),cardAges:run.cardAges}));
     assert.equal(run.currentDecision.id,'decision_197','normal annual scheduling did not honor the protected purchase entry');
-    assert.equal(run.rngState,nextRngState(beforeCandidateProbe.rngState),'actual decision selection did not consume exactly one RNG step');
+    assert.equal(run.rngState,nextRngState(nextRngState(beforeCandidateProbe.rngState)),'year start should consume one mortality roll and one annual-plan roll');
     await fitSheet(page,'protected-purchase-360x773');
     await page.screenshot({path:path.join(OUT,'protected-purchase-360x773.png'),fullPage:true});
     const selectedRng=run.rngState;
@@ -292,14 +367,15 @@ async function prepareFinal(page,id,event){
       age:30,eventId:'decision_162',choiceId:'explore',choice:'给自己留一条换路，也留一件想做的事',result:'',outcomeTags:[]
     }],protectedAtLimit={
       ...schedulerPatch,
-      age:35,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],
+      age:35,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[],
       usedEvents:['decision_161','decision_162'],decisionHistory:adultExplorationHistory,decisionCount:20,lastDecisionAge:30,targetDecisions:20,
+      stageDecisionCounts:{establishment:99},lifecycleStageOverrides:{},
       desires:{freedom:{claimed:true},exploration:{claimed:true}},
       education:{status:'completed',level:4,path:'college',nextStage:'career'},
       employment:{status:'unemployed',firstJobAge:24,lastJob:{career:'受雇岗位'},career:null,incomeAnnualGross:0},
       activity:{mode:'seeking',years:3},finance:{cash:200000,available:200000,totalDebt:0},
       housing:{status:'renting',region:'tier2',arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[]},
-      relationships:{partnerStatus:'none',activePartnerId:null,familyPlanningOffered:false,familyPlanningClosed:false,adoptionOffered:false},
+      relationships:{partnerStatus:'none',activePartnerId:null,familyPlanningOffered:false,familyPlanningClosed:false,adoptionOffered:true,adoptionStatus:'declined'},
       episodes:{},timeline:[]
     };
     await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun(value),protectedAtLimit);
@@ -321,14 +397,14 @@ async function prepareFinal(page,id,event){
         ...identityHistory,
       ];
     await page.evaluate(({patch,history,relationshipStartId})=>window.__LIFE_DEBUG__.patchRun({...patch,
-      age:35,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],
+      age:35,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[],
       usedEvents:['decision_161','decision_162',relationshipStartId],decisionHistory:history,decisionCount:21,lastDecisionAge:30,targetDecisions:20,
       desires:{freedom:{claimed:false},exploration:{claimed:false},wealth:{claimed:true},security:{claimed:true}},
       employment:{status:'employed',firstJobAge:24,lastJob:{career:'受雇岗位'},career:'受雇岗位',incomeAnnualGross:120000},
       activity:{mode:'work',years:1},
       finance:{cash:200000,available:200000,totalDebt:0},
       housing:{status:'renting',region:'tier2',arrangement:'solo',stability:'stable',costShare:'self',coResidentRefs:[]},
-      social:{primaryPersonId:null,secondaryPersonId:null},relationships:{partnerStatus:'none',activePartnerId:null,familyPlanningOffered:false,familyPlanningClosed:false,adoptionOffered:false},
+      social:{primaryPersonId:null,secondaryPersonId:null},relationships:{partnerStatus:'none',activePartnerId:null,familyPlanningOffered:false,familyPlanningClosed:false,adoptionOffered:true,adoptionStatus:'declined'},
       episodes:{},timeline:[]}),{patch:protectedAtLimit,history:twoClaimHistory,relationshipStartId:relationshipStart.id});
     layers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
     assert.deepEqual(layers.protected,['decision_197'],'the adult claim did not retain exactly its own purchase protection');
@@ -339,14 +415,18 @@ async function prepareFinal(page,id,event){
     await page.waitForTimeout(240);
     run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
     assert.equal(run.decisionCount,22,'two identity claims exceeded the approved two protected additions');
-    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:36,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],lastDecisionAge:30,episodes:{}}));
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:36,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[],lastDecisionAge:30,episodes:{},
+      employment:{status:'unemployed',profileId:'none',career:'待业中',tenure:0,firstJobAge:24,lastJob:null},activity:{mode:'seeking',years:0}
+    }));
     await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
     run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
     assert.equal(run.phase,'playing','ordinary candidates bypassed the original target after both protections were consumed');
     assert.equal(run.decisionCount,22,'ordinary candidates added a third over-target decision');
-    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:35,desires:{reclaimed:false},employment:{status:'unemployed',firstJobAge:null},activity:{mode:'seeking',years:3},relationships:{partnerStatus:'none',activePartnerId:null,adoptionOffered:false,adoptionStatus:'none'},usedEvents:['decision_161'],decisionHistory:[],decisionCount:1,lastDecisionAge:30,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,episodes:{}}));
+    const failedFirstJob=eventFor('first_job_application',5),failedChoice=failedFirstJob.choices[1];
+    await page.evaluate(({eventId,choiceId})=>window.__LIFE_DEBUG__.patchRun({age:35,desires:{reclaimed:false},employment:{status:'unemployed',firstJobAge:null},activity:{mode:'seeking',years:3},relationships:{partnerStatus:'none',activePartnerId:null,adoptionOffered:true,adoptionStatus:'declined'},usedEvents:['decision_161',eventId],decisionHistory:[{age:29,eventId,choiceId,choice:'保留原区间，继续找',result:'',outcomeTags:[]}],decisionCount:2,lastDecisionAge:30,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,episodes:{first_job_application:{status:'resolved',phase:5,startedAt:24,nextPhaseAge:29,deadlineAge:30,route:'continued_search',boundActors:{},commitments:[],closureReason:'continued_search'}}}),{eventId:failedFirstJob.id,choiceId:failedChoice.id});
     layers=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionCandidateLayers());
-    assert.ok(layers.ageBound.includes(eventFor('long_term_first_job_reentry',1).id));
+    assert.ok(layers.dueLifecycle.includes(eventFor('long_term_first_job_reentry',1).id));
     assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),'decision_162','first-job reentry bypassed mandatory identity');
     const readyCertification={status:'active',phase:2,startedAt:34,nextPhaseAge:35,deadlineAge:37,route:'verified',boundActors:{},commitments:[],closureReason:null};
     await page.evaluate(record=>window.__LIFE_DEBUG__.patchRun({usedEvents:['decision_161','decision_162'],episodes:{professional_certification:record}}),readyCertification);
@@ -471,6 +551,18 @@ async function prepareFinal(page,id,event){
       for(let index=startIndex;index<finalEvent.choices.length;index++){
         if(id==='secondary_diversion'&&index===3)await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({development:{routeExposure:['alternativeSchool']}}));
         if(finalEvent.episode.role!=='start')await prepareFinal(page,id,finalEvent);
+        if(id==='retirement_transition'){
+          const checkpoint=await page.evaluate(()=>window.__LIFE_DEBUG__.lifecycleCheckpointAge('retirement_transition'));
+          const working=index<3;
+          await page.evaluate(({checkpoint,working})=>window.__LIFE_DEBUG__.patchRun({
+            age:checkpoint,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,usedEvents:[],timeline:[],
+            episodes:{retirement_transition:{status:'inactive'}},later:{retirement:'none'},
+            employment:working
+              ? {status:'employed',profileId:'admin_assistant',career:'行政助理',jobTier:'T1',rank:1,sector:'general',employerType:'private',contractType:'fixedTerm',contract:'fixedTerm',incomeStability:'fixed',salary:6000,incomeAnnualGross:72000,tenure:4,firstJobAge:25,applicationStatus:'employed',lastJob:null}
+              : {status:'unemployed',profileId:'none',career:'待业中',jobTier:null,rank:0,sector:'none',employerType:'none',contractType:'none',contract:'none',incomeStability:'none',salary:0,incomeAnnualGross:0,tenure:0,firstJobAge:25,applicationStatus:'searching',lastJob:{profileId:'admin_assistant',career:'行政助理',tier:'T1',sector:'general',employerType:'private',contractType:'fixedTerm',salary:6000,incomeAnnualGross:72000,incomeStability:'fixed',tenure:4}},
+            activity:{mode:working?'work':'seeking'}
+          }),{checkpoint,working});
+        }
         if(id==='long_term_care'&&index===3)await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({later:{care:'familyOnly'}}));
         run=await chooseAndFinish(page,finalEvent,index);
         assert.equal(run.episodes[id].closureReason,finalEvent.choices[index].route,`${id}/${index}: closure route`);
@@ -493,24 +585,69 @@ async function prepareFinal(page,id,event){
       business_expansion:{status:'resolved'},
       retirement_transition:{status:'inactive'}
     };
+    const checkpoint=await page.evaluate(()=>window.__LIFE_DEBUG__.lifecycleCheckpointAge('retirement_transition'));
+    const checkpointStage=checkpoint<=59?'midlife':'later';
+    await page.evaluate(({checkpoint,checkpointStage,episodes})=>window.__LIFE_DEBUG__.patchRun({
+      age:checkpoint,targetDecisions:18,decisionCount:99,stageDecisionCounts:{[checkpointStage]:99},lifecycleStageOverrides:{[checkpointStage]:true},
+      usedEvents:['decision_161','decision_162'],decisionHistory:[],desires:{security:{claimed:true}},
+      education:{status:'completed',level:3,path:'vocational',nextStage:'career'},episodes,
+      employment:{status:'employed',profileId:'admin_assistant',career:'行政助理',jobTier:'T1',rank:1,sector:'general',employerType:'private',contractType:'fixedTerm',contract:'fixedTerm',incomeStability:'fixed',salary:6000,incomeAnnualGross:72000,tenure:4,firstJobAge:25,applicationStatus:'employed'},
+      activity:{mode:'work'},later:{retirement:'none'},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[]
+    }),{checkpoint,checkpointStage,episodes:noActiveEpisodes});
+    assert.equal(await page.evaluate(()=>window.__LIFE_DEBUG__.nextDecisionId()),workTransition.id,'due work transition was blocked by both the stage budget and lifecycle override');
     for(const status of ['employed','gig','selfEmployed']){
-      await page.evaluate(({status,episodes})=>window.__LIFE_DEBUG__.patchRun({age:60,episodes,usedEvents:[],timeline:[],yearQueue:[],later:{retirement:'none',inheritance:'none',care:'none',will:'none'},employment:{status,firstJobAge:25},activity:{mode:'work'}}),{status,episodes:noActiveEpisodes});
+      await page.evaluate(({status,episodes,checkpoint})=>window.__LIFE_DEBUG__.patchRun({age:checkpoint,episodes,usedEvents:[],timeline:[],yearQueue:[],later:{retirement:'none',inheritance:'none',care:'none',will:'none'},employment:{status,firstJobAge:25,tenure:3,profileId:'admin_assistant'},activity:{mode:'work'}}),{status,episodes:noActiveEpisodes,checkpoint});
       eligible=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'));
       assert.ok(eligible.includes(workTransition.id),`${status}: current paid work could not enter work transition`);
     }
+    const leaveJob={profileId:'admin_assistant',career:'行政助理',tier:'T1',sector:'general',employerType:'private',contractType:'fixedTerm',salary:6000,incomeAnnualGross:72000,incomeStability:'fixed',tenure:4};
+    await page.evaluate(({episodes,checkpoint,leaveJob})=>window.__LIFE_DEBUG__.patchRun({
+      age:checkpoint,episodes,usedEvents:[],timeline:[],later:{retirement:'none'},
+      employment:{status:'careLeave',profileId:'none',career:'停薪留职',firstJobAge:25,tenure:0,lastJob:leaveJob,careLeaveUntilAge:checkpoint+2,applicationStatus:'withdrawn'},
+      activity:{mode:'flexible'}
+    }),{episodes:noActiveEpisodes,checkpoint,leaveJob});
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),workTransition.id),workTransition.id);
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.match(run.currentDecision.situation,/停薪留职/);
+    assert.deepEqual(await page.locator('[data-choice]').evaluateAll(nodes=>nodes.map(node=>!node.disabled)),[true,true,true,false,false,false]);
+    run=await chooseAndFinish(page,workTransition,2);
+    assert.equal(run.employment.profileId,'admin_assistant','continuing after care leave did not restore the held job');
+    assert.equal(run.later.retirement,'working');
+    await page.evaluate(({episodes,checkpoint})=>window.__LIFE_DEBUG__.patchRun({
+      age:checkpoint,episodes,usedEvents:[],timeline:[],later:{retirement:'none'},
+      employment:{status:'selfEmployed',firstJobAge:25,tenure:5,profileId:'small_shop_owner',career:'小店经营者'},
+      business:{status:'operating',mode:'independent',scale:'local',operatingSkill:50,equity:80000},activity:{mode:'work'}
+    }),{episodes:noActiveEpisodes,checkpoint});
+    run=await chooseAndFinish(page,workTransition,0);
+    assert.equal(run.employment.status,'retired','self-employed stop did not leave paid work');
+    assert.equal(run.business.status,'closed','self-employed stop left the business earning money');
+    await page.evaluate(({episodes,checkpoint})=>window.__LIFE_DEBUG__.patchRun({
+      age:checkpoint,episodes,usedEvents:[],timeline:[],later:{retirement:'none'},
+      employment:{status:'unemployed',profileId:'none',career:'待业中',firstJobAge:25,tenure:0,lastJob:{profileId:'small_shop_owner',career:'小店经营者',tier:'T2',sector:'retail',employerType:'self',contractType:'business',salary:0,incomeAnnualGross:0,incomeStability:'business',tenure:5},applicationStatus:'searching'},
+      business:{status:'sold',mode:'independent',scale:'local',operatingSkill:50,equity:0},activity:{mode:'seeking'}
+    }),{episodes:noActiveEpisodes,checkpoint});
+    run=await chooseAndFinish(page,workTransition,4);
+    assert.ok(['employed','gig'].includes(run.employment.status),'former self-employment restored a closed business as paid work');
+    assert.ok(run.employment.incomeAnnualGross>0,'former self-employment light work had no income');
+    assert.equal(run.business.status,'sold','light work silently reopened a sold business');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:70,activity:{mode:'retired'},employment:{status:'retired',profileId:'none',career:'已退休',publicExperience:20,incomeAnnualGross:0,salary:0},business:{status:'closed'},finance:{cash:100000,liabilities:[]}
+    }));
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.settleYear());
+    assert.equal(run.finance.lastIncome,0,'work transition created retirement income without a qualification or funding source');
     for(const sample of [
-      {label:'long-search',status:'unemployed',firstJobAge:25,mode:'seeking'},
-      {label:'never-worked',status:'unemployed',firstJobAge:null,mode:'seeking'},
-      {label:'left-labour-force',status:'unemployed',firstJobAge:25,mode:'leisure'}
+      {label:'long-search',status:'unemployed',firstJobAge:25,mode:'seeking',lastJob:{profileId:'admin_assistant',tenure:3}},
+      {label:'never-worked',status:'unemployed',firstJobAge:null,mode:'seeking',lastJob:null},
+      {label:'short-history',status:'unemployed',firstJobAge:25,mode:'leisure',lastJob:{profileId:'admin_assistant',tenure:2}}
     ]){
-      await page.evaluate(({sample,episodes})=>window.__LIFE_DEBUG__.patchRun({age:60,episodes,usedEvents:[],later:{retirement:'none'},employment:{status:sample.status,firstJobAge:sample.firstJobAge},activity:{mode:sample.mode}}),{sample,episodes:noActiveEpisodes});
+      await page.evaluate(({sample,episodes,checkpoint})=>window.__LIFE_DEBUG__.patchRun({age:checkpoint,episodes,usedEvents:[],later:{retirement:'none'},employment:{status:sample.status,firstJobAge:sample.firstJobAge,lastJob:sample.lastJob,tenure:0},activity:{mode:sample.mode}}),{sample,episodes:noActiveEpisodes,checkpoint});
       eligible=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'));
-      assert.ok(!eligible.includes(workTransition.id),`${sample.label}: non-working player entered work transition`);
+      assert.equal(eligible.includes(workTransition.id),sample.label==='long-search',`${sample.label}: wrong work-history transition eligibility`);
     }
-    for(const age of [54,81]){
-      await page.evaluate(({age,episodes})=>window.__LIFE_DEBUG__.patchRun({age,episodes,usedEvents:[],employment:{status:'employed',firstJobAge:25},activity:{mode:'work'}}),{age,episodes:noActiveEpisodes});
+    for(const age of [checkpoint-1,81]){
+      await page.evaluate(({age,episodes})=>window.__LIFE_DEBUG__.patchRun({age,episodes,usedEvents:[],employment:{status:'employed',firstJobAge:25,tenure:4,profileId:'admin_assistant'},activity:{mode:'work'}}),{age,episodes:noActiveEpisodes});
       eligible=await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'));
-      assert.ok(!eligible.includes(workTransition.id),`${age}: work transition escaped 55-80 age window`);
+      assert.equal(eligible.includes(workTransition.id),age===81,`${age}: work transition checkpoint handling failed`);
     }
 
     await page.evaluate(episodes=>window.__LIFE_DEBUG__.patchRun({
@@ -723,15 +860,25 @@ async function prepareFinal(page,id,event){
       const solitude={intent:debug.latestSocialIntent(),signal:debug.socialEndingSignal(),run:debug.snapshot()};
       debug.patchRun({relationships:{network:75},pressures:{loneliness:12},decisionHistory:[]});
       const broad=debug.socialEndingSignal();
-      debug.patchRun({relationships:{network:8},pressures:{loneliness:65},decisionHistory:[{outcomeTags:['social:intent:connect']}]});
+      debug.patchRun({
+        people:[
+          {id:'social_primary',relation:'social',bornAt:20,alive:true,status:'living',social:{displayName:'阿宁',source:'campus',metAtAge:20,tie:'friend',proximity:'local',turn:'kept',support:'mutual'}},
+          {id:'social_secondary',relation:'social',bornAt:22,alive:true,status:'living',social:{displayName:'小周',source:'workplace',metAtAge:24,tie:'friend',proximity:'local',turn:'kept',support:'mutual'}}
+        ],
+        social:{primaryPersonId:'social_primary',secondaryPersonId:'social_secondary'},
+        relationships:{network:75}
+      });
+      const evidencedBroad=debug.socialEndingSignal();
+      debug.patchRun({people:[],social:{primaryPersonId:null,secondaryPersonId:null},relationships:{network:8},pressures:{loneliness:65},decisionHistory:[{outcomeTags:['social:intent:connect']}]});
       const lonely=debug.socialEndingSignal();
-      return{solitude,broad,lonely};
+      return{solitude,broad,evidencedBroad,lonely};
     });
     assert.equal(socialEndings.solitude.intent,'solitude');
     assert.equal(socialEndings.solitude.signal.kind,'activeSolitude');
     assert.equal(socialEndings.solitude.signal.floor,55);
     assert.equal(socialEndings.solitude.run.pressures.loneliness,12,'active solitude changed loneliness by itself');
-    assert.equal(socialEndings.broad.kind,'broadNetwork');
+    assert.equal(socialEndings.broad.kind,'neutral','abstract network score created a social ending without people');
+    assert.equal(socialEndings.evidencedBroad.kind,'broadNetwork');
     assert.equal(socialEndings.lonely.kind,'passiveLoneliness');
 
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
@@ -946,6 +1093,34 @@ async function prepareFinal(page,id,event){
     assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age,45,'the first of two same-age closures advanced the year');
     await page.locator('[data-act="episode-next"]').click();
     assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot())).age,46,'two same-age closures did not advance exactly once');
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({episodes:null}));
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:45,naturalDeathAge:105,rngState:0x12345678,yearStarted:false,yearQueue:[],sceneQueue:[],phase:'playing',currentDecision:null,
+      cardAges:[0,18,35,55],relationships:{familyPlanningClosed:true,adoptionOffered:true,adoptionStatus:'declined'},
+      finance:{reliefPending:false},
+      episodes:{shop_opening:{status:'active',phase:2,startedAt:43,nextPhaseAge:44,deadlineAge:45,route:'testing',boundActors:{},commitments:[],closureReason:null}}
+    }));
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.phase,'episode','a due closure was not launched from the persisted annual plan');
+    assert.equal(run.sceneQueue[0].fromAnnualPlan,true);
+    assert.ok(run.yearQueue.length>0,'a due closure swallowed the rest of its annual plan');
+    const closureQueueIds=run.yearQueue.map(item=>item.id),closureRng=run.rngState;
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.deepEqual(run.yearQueue.map(item=>item.id),closureQueueIds,'refresh redrew the year after a planned closure');
+    assert.equal(run.rngState,closureRng);
+    await page.locator('[data-act="episode-next"]').click();
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(run.age,45,'a planned closure advanced the age before the rest of the year');
+    assert.equal(run.yearStarted,true);
+    const remainingAfterClosure=run.yearQueue.length;
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.ok(run.yearQueue.length<remainingAfterClosure||run.age>45,'the year did not continue after its planned closure');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({phase:'playing',currentDecision:null,sceneQueue:[],yearStarted:false,yearQueue:[],episodes:null}));
 
     const affordabilityCashGate=await page.evaluate(()=>{
       const debug=window.__LIFE_DEBUG__;
