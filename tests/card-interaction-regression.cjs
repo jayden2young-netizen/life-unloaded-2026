@@ -30,7 +30,7 @@ async function forceOrdinary(page,target,cards){
   assert.equal(activeInteractions.filter(choice=>choice.cardInteraction.explanation).length,8);
   assert.equal(activeInteractions.filter(choice=>choice.cardInteraction.resultSuffix).length,2);
   assert.ok(activeInteractions.every(choice=>!choice.cardInteraction.explanation?.includes('准备')&&!choice.cardInteraction.resultSuffix?.includes('你这次走的是')),'no template recap survives');
-  assert.deepEqual(data.cardInteractionCoverage,{decisionPanels:206,activePanels:203,interactions:212,witnesses:2});
+  assert.deepEqual(data.cardInteractionCoverage,{decisionPanels:214,activePanels:203,interactions:212,witnesses:2});
   assert.deepEqual(new Set(choices.filter(choice=>choice.cardInteraction).map(choice=>choice.cardInteraction.mode)),new Set(['unlock','requirementShift','costShift','riskShift','resultVariant']));
   assert.equal(activeInteractions.filter(choice=>choice.cardInteraction.scope==='family').length,2);
   assert.ok(activeInteractions.every(choice=>['family','general'].includes(choice.cardInteraction.scope)));
@@ -48,7 +48,7 @@ async function forceOrdinary(page,target,cards){
     await page.addInitScript(({key,value})=>localStorage.setItem(key,JSON.stringify(value)),{key:SAVE_KEY,value:oldSave});
     await page.goto(URL,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.13',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[14,'0.7.0',null]);
     assert.equal(migrated.meta.histories[0].title,'旧人生');
     await page.evaluate(key=>localStorage.removeItem(key),SAVE_KEY);await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     await page.locator('[data-act="new"]').click();await page.locator('[data-act="birth-next"]').click();await page.locator('[data-act="random-attributes"]').click();await page.locator('[data-act="attributes-done"]').click();await page.locator('[data-card]').first().click();
@@ -82,10 +82,45 @@ async function forceOrdinary(page,target,cards){
 
     const shift=interaction('requirementShift',true),shiftCard=cardFor(shift.choice.cardInteraction.primaryMechanic);await page.evaluate(value=>window.__LIFE_DEBUG__.patchRun({cards:[value.card],cardAges:[0],capabilities:{cashBuffer:1},education:{domesticOffer:true,domesticFundingReady:false},originHousehold:{assets:0,debt:999999,context:{educationBudget:0}},finance:{cash:7900},phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true}),{card:shiftCard.id});assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),shift.event.id),shift.event.id);assert.equal(await page.locator(`[data-choice="${shift.index}"]`).isEnabled(),true);await page.locator(`[data-choice="${shift.index}"]`).click();run=await snapshot(page);const cashAfterChoice=run.finance.cash;assert.equal(run.sceneQueue[0].kind,'result');const refreshPage=await context.newPage();refreshPage.on('pageerror',error=>errors.push(`pageerror: ${error.message}`));refreshPage.on('console',message=>{if(message.type()==='error')errors.push(`console: ${message.text()}`)});await refreshPage.goto(URL,{waitUntil:'domcontentloaded'});await refreshPage.waitForFunction(()=>window.__LIFE_BOOTED__===true);run=await snapshot(refreshPage);assert.equal(run.finance.cash,cashAfterChoice,'refresh does not repeat the card patch');await refreshPage.evaluate(()=>window.__LIFE_DEBUG__.patchRun({activity:{mode:'childhood',funding:'family'},employment:{status:'none'},finance:{liabilities:[]}}));await refreshPage.locator('[data-act="episode-next"]').click();run=await snapshot(refreshPage);assert.equal(run.finance.cash,cashAfterChoice,'result confirmation does not repeat the card patch');await refreshPage.close();
 
+    const reliableCard='card_79',guardedCard='card_81',delayCard='card_83';
+    assert.deepEqual(await page.evaluate(cards=>{window.__LIFE_DEBUG__.patchRun({cards});return window.__LIFE_DEBUG__.ongoingModifiers()},[reliableCard,guardedCard,delayCard]),['reliableCarePressure','guardedPartnerBond','delayHelpSeeking']);
+    const dependentChild={id:'modifier-child',relation:'child',bornAt:28,alive:true,status:'living'};
+    const yearlyFixture={age:36,phase:'playing',timeline:[{id:'modifier-year',age:36}],activity:{mode:'work',years:1},employment:{status:'none',tenure:0},finance:{cash:500000,liabilities:[]},pressures:{money:10,family:10,career:10,body:10,loneliness:10},development:{careLoad:50},people:[dependentChild],relationships:{childCount:1},outcomeTags:{}};
+    const baselineFamily=await page.evaluate(fixture=>{window.__LIFE_DEBUG__.patchRun({...fixture,cards:[]});return window.__LIFE_DEBUG__.settleYear().pressures.family},yearlyFixture);
+    const reliableFamily=await page.evaluate(({fixture,card})=>{window.__LIFE_DEBUG__.patchRun({...fixture,cards:[card]});return window.__LIFE_DEBUG__.settleYear().pressures.family},{fixture:yearlyFixture,card:reliableCard});
+    assert.equal(reliableFamily,baselineFamily+2,'靠得住 did not add pressure for a current dependent child');
+    const historicalCareFixture={...yearlyFixture,people:[],relationships:{childCount:0},development:{careLoad:50}};
+    const historicalCareBaseline=await page.evaluate(fixture=>{window.__LIFE_DEBUG__.patchRun({...fixture,cards:[]});return window.__LIFE_DEBUG__.settleYear().pressures.family},historicalCareFixture);
+    const historicalCareHeld=await page.evaluate(({fixture,card})=>{window.__LIFE_DEBUG__.patchRun({...fixture,cards:[card]});return window.__LIFE_DEBUG__.settleYear().pressures.family},{fixture:historicalCareFixture,card:reliableCard});
+    assert.equal(historicalCareHeld,historicalCareBaseline,'靠得住 treated a historical care load as a current responsibility');
+    const ownCareFixture={...yearlyFixture,people:[],development:{careLoad:0},relationships:{childCount:0},later:{care:'needsSupport'}};
+    const ownCareBaseline=await page.evaluate(fixture=>{window.__LIFE_DEBUG__.patchRun({...fixture,cards:[]});return window.__LIFE_DEBUG__.settleYear().pressures.family},ownCareFixture);
+    const ownCareHeld=await page.evaluate(({fixture,card})=>{window.__LIFE_DEBUG__.patchRun({...fixture,cards:[card]});return window.__LIFE_DEBUG__.settleYear().pressures.family},{fixture:ownCareFixture,card:reliableCard});
+    assert.equal(ownCareHeld,ownCareBaseline,'靠得住 treated receiving care as caring for somebody else');
+
+    const guardedPartner={id:'guarded-partner',relation:'partner',bornAt:0,alive:true,status:'living',bond:50};
+    await page.evaluate(({card,partner})=>window.__LIFE_DEBUG__.patchRun({cards:[card],people:[partner],relationships:{partnerBond:50,partnerStatus:'partnered',activePartnerId:partner.id}}),{card:guardedCard,partner:guardedPartner});
+    await page.evaluate(()=>window.__LIFE_DEBUG__.applyCommands([{type:'add',target:'relationships.partnerBond',value:10}]));
+    assert.equal((await snapshot(page)).relationships.partnerBond,57,'嘴硬 did not weaken positive partner bond growth by 30%');
+    await page.evaluate(partner=>window.__LIFE_DEBUG__.patchRun({people:[partner],relationships:{partnerBond:50}}),guardedPartner);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.applyCommands([{type:'add',target:'relationships.partnerBond',value:-10}]));
+    assert.equal((await snapshot(page)).relationships.partnerBond,40,'嘴硬 incorrectly amplified negative partner bond damage');
+    await page.evaluate(partner=>window.__LIFE_DEBUG__.patchRun({people:[partner],relationships:{partnerBond:50}}),guardedPartner);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.applyCommands([{type:'add',target:'relationships.partnerBond',value:1}]));
+    assert.equal((await snapshot(page)).relationships.partnerBond,50.7,'嘴硬 did not weaken a small positive partner-bond gain');
+
+    const delayedEvent=data.events.find(event=>event.id==='beat_299'),neutralHealth=data.events.find(event=>event.kind==='beat'&&event.track==='health'&&!event.helpDelay);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({cards:[]}));
+    const baseWeights=await page.evaluate(({delayed,neutral})=>[window.__LIFE_DEBUG__.continuityWeight(delayed,true),window.__LIFE_DEBUG__.continuityWeight(neutral,true)],{delayed:delayedEvent.id,neutral:neutralHealth.id});
+    await page.evaluate(card=>window.__LIFE_DEBUG__.patchRun({cards:[card]}),delayCard);
+    const heldWeights=await page.evaluate(({delayed,neutral})=>[window.__LIFE_DEBUG__.continuityWeight(delayed,true),window.__LIFE_DEBUG__.continuityWeight(neutral,true)],{delayed:delayedEvent.id,neutral:neutralHealth.id});
+    assert.ok(Math.abs(heldWeights[0]/baseWeights[0]-1.25)<1e-10,'不肯麻烦人 did not weight an explicitly marked delay-help event');
+    assert.equal(heldWeights[1],baseWeights[1],'不肯麻烦人 changed an event without an explicit helpDelay marker');
+
     assert.deepEqual(errors,[]);
     await context.close();
 
     const reduced=await browser.newContext({viewport:{width:360,height:773},reducedMotion:'reduce'}),reducedPage=await reduced.newPage();await reducedPage.goto(URL,{waitUntil:'domcontentloaded'});await reducedPage.waitForFunction(()=>window.__LIFE_BOOTED__===true);await reducedPage.locator('[data-act="new"]').click();await reducedPage.locator('[data-act="birth-next"]').click();await reducedPage.locator('[data-act="random-attributes"]').click();await reducedPage.locator('[data-act="attributes-done"]').click();assert.equal(await reducedPage.locator('.card-draw-pulse').evaluate(node=>getComputedStyle(node).animationName),'none');await reduced.close();
-    console.log(JSON.stringify({ok:true,modes:['unlock','requirementShift','costShift','riskShift','resultVariant'],migration:'schema-10-run-cleared-meta-preserved',refresh:'single card patch',reducedMotion:'static',screenshot:path.join(OUT,'active-card-choice.png')},null,2));
+    console.log(JSON.stringify({ok:true,modes:['unlock','requirementShift','costShift','riskShift','resultVariant'],ongoingModifiers:['reliableCarePressure','guardedPartnerBond','delayHelpSeeking'],migration:'schema-10-run-cleared-meta-preserved',refresh:'single card patch',reducedMotion:'static',screenshot:path.join(OUT,'active-card-choice.png')},null,2));
   }finally{await browser.close()}
 })().catch(error=>{console.error(error);process.exitCode=1});

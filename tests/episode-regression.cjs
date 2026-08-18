@@ -120,17 +120,17 @@ async function prepareFinal(page,id,event){
       kind,
       data.events.filter(event=>event.kind===kind).length
     ])),
-    {beat:480,decision:206,consequence:206,blackSwan:20}
+    {beat:517,decision:214,consequence:214,blackSwan:20}
   );
   assert.ok(decisions.every(event=>!('arc' in event)));
-  assert.equal(socialDecisions.length,8);
-  assert.ok(socialDecisions.every(event=>event.situation&&event.choices.some(choice=>
+  assert.equal(socialDecisions.length,9);
+  assert.ok(socialDecisions.filter(event=>event.id!=='decision_210').every(event=>event.situation&&event.choices.some(choice=>
     choice.outcomeTags?.includes('social:intent:solitude')||
     ['leftAlone','changedCircle','leftOnTime','refusedFavor','declinedHousing','usedFormalRoute'].includes(choice.route)
   )),'social decisions lost their shared facts or reasonable refusal route');
   assert.equal(socialDecisions.find(event=>event.id==='decision_206').actors[0].optional,true,'later social choice still required an old friend');
   assert.ok(laterBeats.every(event=>event.ageMin>=55),'later beat appeared before midlife');
-  assert.equal(laterBeats.length,48);
+  assert.equal(laterBeats.length,51);
   const recurringBeats=laterBeats.filter(event=>event.recurrence);
   assert.deepEqual(recurringBeats.map(event=>event.id),Array.from({length:16},(_,index)=>`beat_${409+index}`));
   assert.deepEqual(
@@ -154,13 +154,18 @@ async function prepareFinal(page,id,event){
   assert.equal(beatFor('beat_375').actors[0]?.slot,'partner');
   assert.equal(beatFor('beat_380').requirements.all.find(rule=>rule.path==='pressures.loneliness')?.op,'gte');
   assert.equal(decisions.filter(event=>event.track==='later').length,12);
-  assert.equal(data.events.filter(event=>event.kind==='beat'&&event.track==='housing').length,32);
+  assert.equal(data.events.filter(event=>event.kind==='beat'&&event.track==='housing').length,35);
   assert.equal(decisions.filter(event=>event.track==='housing').length,6);
   assert.deepEqual(beatFor('beat_384').requirements.all,[{path:'health.status',op:'in',value:['treating','managed','limited']}]);
   const workResolution=eventFor('retirement_transition',1);
   assert.ok(workResolution.choices.slice(0,3).every(choice=>choice.requirements.all.some(rule=>rule.path==='employment.status'&&rule.op==='in')));
   assert.ok(workResolution.choices.slice(3).every(choice=>choice.requirements.all.some(rule=>rule.path==='employment.status'&&rule.op==='notIn')));
   assert.ok(data.episodeCatalog.long_term_care.abandonedRoutes.includes('refused'));
+  const parentLossRows=decisions.filter(event=>event.episode?.id==='parent_loss').sort((a,b)=>a.episode.phase-b.episode.phase);
+  assert.deepEqual(parentLossRows.map(event=>[event.id,event.episode.phase,event.episode.role]),[
+    ['decision_214',1,'start'],['decision_215',2,'progress'],['decision_216',3,'resolve']
+  ]);
+  assert.ok(data.episodeCatalog.parent_loss?.deadline&&data.episodeCatalog.parent_loss?.invalidated);
   const establishBaseStart=eventFor('establish_base',1),establishBaseFollowup=eventFor('establish_base',2);
   assert.ok(establishBaseStart.choices.every(choice=>choice.housingChoiceKind==='workMigration'&&choice.effects.some(effect=>effect.type==='transitionHousing'&&effect.value.kind==='choice')),'establish-base trial did not consume the work-migration housing choice');
   assert.ok(establishBaseFollowup.choices.every(choice=>!choice.housingChoiceKind&&choice.effects.some(effect=>effect.type==='transitionHousing'&&effect.value.kind==='background')),'establish-base follow-up could be locked by repeating the same housing choice kind');
@@ -193,12 +198,12 @@ async function prepareFinal(page,id,event){
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.equal(migrated.gameVersion,'0.6.13');
+    assert.equal(migrated.gameVersion,'0.7.0');
     assert.equal(migrated.run,null);
     assert.equal(migrated.meta.histories[0].title,'v0.5.8完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,8);
-    assert.equal(migrated.meta.seen.events.beat_001,undefined);
+    assert.equal(migrated.meta.seen.events.beat_001,3,'schema migration must preserve seen history');
     assert.deepEqual(migrated.meta.recentSeeds,['v058-finished']);
     await context.close();
 
@@ -234,13 +239,13 @@ async function prepareFinal(page,id,event){
     assert.match(habitMetadata.label,/酒精/);
     assert.deepEqual([shopMetadata.cataloged,shopMetadata.label,shopMetadata.lane],[false,'开店','career']);
 
-    const stageBase={adolescence:3,youth:5,establishment:4,midlife:3,later:2,elder:1};
-    for(let target=18;target<=24;target++){
+    const stageBase={infancy:1,childhood:2,adolescence:3,youth:5,establishment:4,midlife:3,later:2,elder:3};
+    for(let target=22;target<=28;target++){
       await page.evaluate(({target})=>window.__LIFE_DEBUG__.patchRun({seed:`stage-budget-${target}`,targetDecisions:target,stageDecisionCounts:{},lifecycleStageOverrides:{}}),{target});
       const budgets=await page.evaluate(()=>window.__LIFE_DEBUG__.decisionStageBudgets());
       assert.equal(Object.values(budgets).reduce((sum,value)=>sum+value,0),target,`${target}: stage budget total`);
       for(const [stage,base] of Object.entries(stageBase))
-        assert.ok([base,base+1].includes(budgets[stage]),`${target}/${stage}: invalid seeded extra`);
+        assert.ok([Math.max(stage==='infancy'?0:1,base-1),base,base+1].includes(budgets[stage]),`${target}/${stage}: invalid seeded extra`);
     }
     const adoptionStart=eventFor('adoption_process',1),adoptionReview=eventFor('adoption_process',2),
       qualificationStart=eventFor('professional_entry_qualification',1),schoolHarmStart=eventFor('school_harm',1),
@@ -570,6 +575,35 @@ async function prepareFinal(page,id,event){
         routeResults[id].push(finalEvent.choices[index].route);
       }
     }
+
+    const [lossMoment,lossBelongings,lossContact]=parentLossRows;
+    const lostParent={id:'parent_loss_father',relation:'father',bornAt:-40,alive:false,status:'deceased',bond:55};
+    const livingParent={id:'parent_loss_mother',relation:'mother',bornAt:-38,alive:true,status:'living',bond:58};
+    await page.evaluate(({lostParent,livingParent})=>window.__LIFE_DEBUG__.patchRun({
+      age:40,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],usedEvents:[],timeline:[],decisionHistory:[],outcomeTags:{'parentLoss:firstCall':0,'parentLoss:inheritance':0,'parentLoss:belongings':0,'parentLoss:contact':0},episodes:{parent_loss:{status:'inactive'},parental_inheritance:{status:'inactive'}},
+      people:[lostParent,livingParent],relationships:{parentLost:true,lastParentLossAge:40,lastParentLossPersonId:lostParent.id}
+    }),{lostParent,livingParent});
+    run=await chooseAndFinish(page,lossMoment,0);
+    assert.equal(run.episodes.parent_loss.status,'active');
+    assert.equal(run.episodes.parent_loss.phase,2);
+    assert.equal(run.episodes.parent_loss.boundActors.lostParent.id,lostParent.id);
+    assert.equal(run.outcomeTags['parentLoss:firstCall'],1);
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.eligibleIds('decision').includes(id),lossBelongings.id),false,'belongings appeared before inheritance procedure');
+    await page.evaluate(id=>window.__LIFE_DEBUG__.patchRun({age:41,people:[{id:'parent_loss_father',relation:'father',bornAt:-40,alive:false,status:'deceased',bond:55},{id,relation:'mother',bornAt:-38,alive:false,status:'deceased',bond:58}],relationships:{lastParentLossAge:41,lastParentLossPersonId:id}}),livingParent.id);
+    const parentLossInheritanceStart=eventFor('parental_inheritance',1);
+    run=await chooseAndFinish(page,parentLossInheritanceStart,0);
+    assert.equal(run.outcomeTags['parentLoss:inheritance'],1);
+    run=await chooseAndFinish(page,lossBelongings,0);
+    assert.equal(run.episodes.parent_loss.phase,3);
+    assert.equal(run.episodes.parent_loss.nextPhaseAge,45);
+    assert.equal(run.episodes.parent_loss.startedAt,40,'second parent loss reset the original episode clock');
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.eligibleIds('decision').includes(id),lossContact.id),false,'long-tail contact appeared before five real years');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:45,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[]}));
+    run=await chooseAndFinish(page,lossContact,0);
+    assert.equal(run.episodes.parent_loss.status,'resolved');
+    assert.equal(run.episodes.parent_loss.phase,3);
+    assert.equal(run.outcomeTags['parentLoss:contact'],1);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({episodes:{parental_inheritance:{status:'resolved'}}}));
 
     const sameLaneAge=45;
     await page.evaluate(age=>window.__LIFE_DEBUG__.patchRun({age,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,education:{status:'enrolled',level:4,path:'college'},employment:{status:'employed'},business:{status:'operating',operatingSkill:70,equity:200000,scale:'regional'},episodes:{adult_reeducation:{status:'active',phase:2,startedAt:44,nextPhaseAge:45,deadlineAge:47,route:'formal_program',boundActors:{},commitments:[],closureReason:null}}}),sameLaneAge);

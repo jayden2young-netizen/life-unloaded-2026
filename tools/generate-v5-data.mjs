@@ -6,6 +6,16 @@ import {cardInteractionFor,CARD_INTERACTION_WITNESSES} from '../content/zh-CN/ca
 import {EMPLOYMENT_CATALOG_SOURCE} from '../content/zh-CN/employment-catalog.mjs';
 import {RECRUITMENT_SCENARIO_COPY} from '../content/zh-CN/tracks/employment.mjs';
 import {FAMILY_PLANNING_COPY} from '../content/zh-CN/tracks/children.mjs';
+import {
+  FABLE_BEATS,
+  FABLE_CARDS,
+  FABLE_DECISIONS,
+  FABLE_ENDING_PROFILES,
+  DECISION_PRESENTATION,
+  ECHO_TEXT_OVERRIDES,
+  RESULT_TEXT_OVERRIDES,
+  attitudesFor,
+} from '../content/zh-CN/fable-v070.mjs';
 import {TRACK_COPY} from '../content/zh-CN/tracks/index.mjs';
 import {
   beatAuthorKey,
@@ -31,6 +41,7 @@ import {
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const output=process.env.LIFE_DATA_OUTPUT?path.resolve(process.env.LIFE_DATA_OUTPUT):path.join(here,'..','data.json');
+const baselineAuthorSlots=createAuthorSlotRegistry();
 const authorSlots=createAuthorSlotRegistry();
 // New authored definitions must claim an unused local slot here before they can generate.
 // New item example: {domain:'beats',key:beatAuthorKey('education','...'),slot:{id:'beat_409',track:'education',localIndex:32}}
@@ -43,7 +54,7 @@ const registrationGroups=[
 for(const [domain,registrations] of registrationGroups)
   for(const registration of registrations)
     registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
-const VERSION='0.6.13',SCHEMA_VERSION=13,CONTENT_REVISION=33;
+const VERSION='0.7.0',SCHEMA_VERSION=14,CONTENT_REVISION=34;
 const debtSourceCatalog=Object.freeze({
   mortgage:Object.freeze({label:'住房按揭',enforcementEligible:true,housingSecured:true}),
   consumer:Object.freeze({label:'消费借款',enforcementEligible:true,housingSecured:false}),
@@ -149,48 +160,48 @@ const familyArchetypes=familyNames.map((name,index)=>{
 
 const secretBlueprints=[
   ['未结清的经营贷款','催款单上的本金比家里一直说的多，借款人确实是父母一方。','debt',35],
-  ['替亲戚做过的担保','合同里写着连带责任，但眼下还没有发生追偿。','guarantee',28],
+  ['替亲戚做过的担保','签字那天两家人一起吃了饭，说是走个形式。合同第三页写着连带责任，那顿饭没人提这一页。','guarantee',28],
   ['一位家长中断过的升学计划','旧录取通知下面压着退学材料。日期对得上：那次中断，不是当事人自己选的。','education',18],
   ['没有完成过户的房子','付款收据存在，登记姓名却不是家里任何一个人。','property',32],
   ['长期隐瞒的失业期','所谓“出差”的那几年，留下来的只有零工记录和一封封没下文的面试邮件。','income',22],
-  ['祖辈留下的慢性病史','病历能提醒你复查，却不能替任何人下诊断。','health',30],
+  ['祖辈留下的慢性病史','老人的病历一直收在铁盒里，没人主动提。翻到最后几页，同样的字出现在两代人的名字后面。家里管这叫「体质」。','health',30],
   ['父母分开保管的账本','两本账记的是同一段日子，缺口来自谁承担了哪些开销。','relationship',24],
-  ['被当作存款的保险','保单有退保损失和受益人，不是随取随用的存款。','asset',25],
-  ['一封未确认的寻亲来信','来信只说有人曾登记询问，现有材料还不能确认新的亲属关系。','relationship',20],
+  ['被当作存款的保险','家里一直把那份保单当存款说，急用时才发现取出来要少一截。当初签字的人只记得业务员说过「随时能拿」。','asset',25],
+  ['一封未确认的寻亲来信','信封上的字迹很陌生，落款是个没听过的地名。家里读完就收进了柜子，没回，也没扔。','relationship',20],
   ['替别人垫付的医药费','转账和票据都在，但对方从未承诺何时归还。','asset',27],
   ['小店真实的月度流水','收款额看着不少，扣去进货和房租后只剩很薄一层。','company',21],
   ['父母婚姻中的长期分居','两份租约隔着一座城。来回车票攒了不少，那几年还是没人把“分居”两个字说出口。','relationship',26],
-  ['多年未归还的借款','借条还在，约定日期已经过去，欠款人也没有继续确认。','asset',29],
+  ['多年未归还的借款','借条还压在户口本下面，日期早过了。那家人每年还来，坐一会儿，谁也不先开口。','asset',29],
   ['失败加盟留下的设备','仓库里的机器仍属家里，转卖价值远低于原合同价格。','company',31],
-  ['家里代管的压岁钱','存取记录能算清一部分去向，剩下的不能再含糊成保管。','asset',18],
-  ['缴费年限不足的社保记录','断缴月份一目了然，未来待遇需要按真实记录重算。','income',40],
+  ['家里代管的压岁钱','每年红包都说「先给你存着」。真去问的时候，能对上的只有前几年。剩下的，家里说都花在你身上了。','asset',18],
+  ['缴费年限不足的社保记录','打出来的记录上，中间有几段是空的。那几年家里说是「自己做点小生意」。断掉的月份，一格一格排得很整齐。','income',40],
   ['父母拒绝过的迁城机会','调动函是真的，放弃原因却同时写着照护和住房。','relationship',23],
-  ['旧房的产权争议','登记、付款和实际居住不是同一个人，房子不能当成可随时出售的资产。','property',36],
-  ['一位家长长期服药的原因','处方记录解释了用药用途，也提醒家里别再代为停药。','health',19],
+  ['旧房的产权争议','老房子住着一家人，本上的名字是另一房的。逢年过节还坐在一起吃饭，只是没人再提过户。','property',36],
+  ['一位家长长期服药的原因','那盒药吃了很多年，药名和用途一直没在饭桌上说清。停过一次——不是本人要停的。','health',19],
   ['一位家长戒酒前的几年','复诊记录和请假单对得上：戒过，复饮过，又回去复诊。','health',20],
   ['亲戚名下却由家里偿还的车','还款从家里账户扣，车辆登记却不在父母名下。','debt',30],
   ['被藏起的录取通知书','学校的章是真的，报到日也真的过去了。收到信的人，当年甚至没见过这只信封。','education',17],
   ['祖父母承担的育儿费用','零散转账累积成一笔不小的支出，照护从来不是免费的。','care',25],
-  ['给弟妹预留的教育金','账户用途写得明确，这笔钱不属于你的个人缓冲。','asset',18],
+  ['给弟妹预留的教育金','那个账户开得比你上学还早，用途写得清清楚楚。你知道它在，也知道它不是给你留的。','asset',18],
   ['没有说出口的离婚协议','草稿里连住处和抚养都分好了，最后却没人签字。那段婚姻后来怎么走，不能拿这几页草稿算数。','relationship',21],
-  ['工伤后的补偿款','结算单写清用途，其中一部分已经用于后续治疗。','asset',33],
+  ['工伤后的补偿款','那笔钱下来时，家里松了一口气，说以后不用愁了。到现在剩下多少没人说——用掉的那部分，都花在同一个人身上。','asset',33],
   ['家里坚持保留的小额现金','信封上的数目不大，是为停工或看病留下的应急钱。','asset',16],
-  ['被注销前仍欠费的公司','注销材料没有抹掉供应商和服务费的尾款。','companyDebt',37],
-  ['父母准备的首付款来源','其中一部分来自借款，不是无条件赠与你的现金。','debt',26],
-  ['无法继承的集体资产','资格跟成员身份绑定，口头承诺不能把它变成个人遗产。','property',45],
+  ['被注销前仍欠费的公司','营业执照注销那天，家里当成一件事办完了。三年后还有电话找过来，报的是当年那几家供应商的名字。','companyDebt',37],
+  ['父母准备的首付款来源','那笔首付一直被说成「家里出的」。转账记录里有一笔来自别人的名字，按月往回还的人是父母。','debt',26],
+  ['无法继承的集体资产','村里那份地，家里念了二十年「以后是你的」。真去问才知道，名字在册子上的人已经不在了，册子也不认继承。','property',45],
   ['家里依赖的兼职收入','几笔稳定小额转账填上了日常账本里长期存在的缺口。','income',19],
-  ['写错受益人的保单','受益人姓名与家里理解的不一致，需要由投保人依法更正。','asset',34],
-  ['亲戚口中的稳赚项目','收款账户属于个人，材料里没有受监管产品应有的信息。','fraud',23],
+  ['写错受益人的保单','保单是十几年前买的，受益人那一栏填了个名字——不是家里以为的那个。当年谁陪着去办的，现在也说不清了。','asset',34],
+  ['亲戚口中的稳赚项目','介绍的时候讲了好几个赚到的人，名字都说得出。收款那一栏是个人名字，家里说都是熟人，不用看那么细。','fraud',23],
   ['共同隐瞒的信用卡账单','最低还款持续了很久，余额并没有随着每月付款真正消失。','debt',24],
-  ['长期空置的县城门面','产权存在，但欠费、空置和维修让它不能等同于现金。','property',42],
-  ['家庭成员的照护诊断','评估写清了哪些日常需要帮助，也写清了仍能自己做的事。','care',38],
-  ['一位家长交出的银行卡密码','密码交给家人并不等于账户所有权转移。','relationship',36],
+  ['长期空置的县城门面','县城那间门面锁了很多年，家里提起时总说「那是给你留的底」。钥匙在，欠的物业费和漏水也在。','property',42],
+  ['家庭成员的照护诊断','评估表上「仍能自己完成」那几项，家里早就替着做了。理由是快一点、干净一点。','care',38],
+  ['一位家长交出的银行卡密码','密码是那年住院前给的，说方便取钱。出院以后没换回来，卡也一直在别人手里。谁的钱，从来没人当面算过。','relationship',36],
   ['一位家长保存的租房收据','一叠收据证明那几年家里反复搬家，并非一直住在原来的房子。','property',20],
   ['没有报警的网络诈骗','转账一笔不少，报警记录却是空的。“肯定能追回来”那句话，谁也拿不出凭据。','fraud',27],
-  ['借名买房','付款人、登记人和实际还款人各不相同，任何人都不能凭口头说法直接处置。','property',41],
+  ['借名买房','付钱的、登记的和每月还的，是三个人。当年图省事的那句「都是一家人」，后来谁都不敢再提。','property',41],
   ['被夸大的职业资格','证书只覆盖短期培训，不能支持家里一直使用的职业称谓。','education',18],
-  ['祖辈口头承诺的遗产','没有遗嘱或登记支持，承诺不能先计入家里的资产。','relationship',44],
-  ['小生意欠下的供应商货款','对账单能逐笔确认，停业没有让这些货款自动消失。','companyDebt',32],
+  ['祖辈口头承诺的遗产','老人在世时说过好几次给谁给谁，说的时候满屋子人都在。后来找遍抽屉，一张写下来的都没有。','relationship',44],
+  ['小生意欠下的供应商货款','店关了，货架都拉走了。有一沓对账单没人提；逢年过节送东西来的，其实是同一批人。','companyDebt',32],
   ['彼此都以为对方知道的事','两个人各自沉默多年，最后发现谁也没多知道什么，只是都以为对方知道。','relationship',35],
 ];
 const secretSpec={
@@ -383,8 +394,13 @@ for(const id of trackOrder){
   for(let index=0;index<TRACK_COPY[id].beats.length;index++){
     const authoredBeat=TRACK_COPY[id].beats[index],slot=resolveAuthorSlot(authorSlots,'beats',beatAuthorKey(id,authoredBeat.text),`${id}.beats[${index}]`),stableIndex=slot.localIndex;
     if(id==='health'){
-      const row=HEALTH_BEATS[stableIndex];
-      annualBeats.push({id:slot.id,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'+',text:authoredBeat.text,tone:authoredBeat.tone,intensity:row.intensity,requirements:row.requirements,actors:[],effects:row.effects,assertions:[],weight:row.weight,contentRevision:CONTENT_REVISION});
+      const row=HEALTH_BEATS[stableIndex],requirements=req(
+        [...row.requirements.all],
+        [...row.requirements.any],
+        [...row.requirements.none]
+      );
+      if(slot.id==='beat_309')requirements.all.push(p('employment.status','in',['employed','careLeave']));
+      annualBeats.push({id:slot.id,kind:'beat',track:id,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'+',text:authoredBeat.text,tone:authoredBeat.tone,intensity:row.intensity,requirements,actors:[],effects:row.effects,assertions:[],weight:row.weight,contentRevision:CONTENT_REVISION});
       continue;
     }
     if(id==='habits'){
@@ -431,6 +447,14 @@ const originProfiles=[
   {key:'stable',requirements:req()}
 ];
 const originMilestones={
+  0:{
+    strained_safe:['出生那晚的东西是借的多、买的少。名字倒是早就想好了。',[c('add','relationships.originBond',2),c('add','development.learningHabit',1)]],
+    strained_unsafe:['你出生的消息，是和一笔新借款一起到家的。',[c('add','development.traumaLoad',6),c('add','pressures.family',4)]],
+    comfortable_present:['婴儿房提前三个月布置好了。夜里谁起来，排了一张表。',[c('add','development.learningHabit',3),c('add','relationships.originBond',3)]],
+    comfortable_unsafe:['出生视频拍了很多条。哭得太久的那几段，都删掉了。',[c('add','development.traumaLoad',4),c('add','relationships.originBond',-1)]],
+    comfortable_absent:['月子中心的护理记录很全。第一页的签字人，之后很少出现。',[c('add','development.traumaLoad',3),c('add','development.routeKnowledge',1)]],
+    stable:['家里多了一张小床，旧物腾了一半给你。',[c('add','relationships.originBond',2),c('add','development.learningHabit',1)]]
+  },
   2:{
     strained_safe:['婴儿的东西分装在旧纸盒里。你哭了，还是有人来。',[c('add','development.learningHabit',2),c('add','relationships.originBond',2)]],
     strained_unsafe:['大人吵得盖过了你的哭声。第二天没人解释昨晚怎么了。',[c('add','development.traumaLoad',8),c('add','health.mental',-3)]],
@@ -438,6 +462,14 @@ const originMilestones={
     comfortable_unsafe:['东西都是按清单买的。但你一哭，大人就说“又不听话了”。',[c('add','development.traumaLoad',5),c('add','relationships.originBond',-2)]],
     comfortable_absent:['衣服和课从不缺。真正陪你睡着的人，常常换来换去。',[c('add','development.traumaLoad',3),c('add','development.routeKnowledge',2)]],
     stable:['家里给你腾了一个抽屉。照顾你的顺序，慢慢固定了下来。',[c('add','development.learningHabit',2),c('add','relationships.originBond',1)]]
+  },
+  4:{
+    strained_safe:['幼儿园选了最近的那家。接你的人会迟到，但每天都来。',[c('add','development.attendance',2),c('add','relationships.originBond',2)]],
+    strained_unsafe:['你在别人家借住过一阵。大人说是「去玩几天」，你数得清是几天。',[c('add','development.traumaLoad',7),c('add','development.selfAdvocacy',-2)]],
+    comfortable_present:['睡前故事换你来挑了。挑得再离谱，也有人照着念完。',[c('add','development.learningHabit',4),c('add','development.selfAdvocacy',3)]],
+    comfortable_unsafe:['兴趣班报了三个。哭着不去的那天，大人先关心的是退不退费。',[c('add','development.traumaLoad',5),c('add','development.selfAdvocacy',-2)]],
+    comfortable_absent:['接送你的人证件齐全，工资日结。全家的名字里，你最先记熟的是这一个。',[c('add','development.traumaLoad',3),c('add','development.routeKnowledge',2)]],
+    stable:['你有了自己的小碗和固定的座位。饭桌上的话，开始有你一份。',[c('add','development.learningHabit',2),c('add','relationships.originBond',2)]]
   },
   7:{
     strained_safe:['旧手机得轮着用。但写作业的时候，餐桌角上总给你留块地方。',[c('add','development.learningHabit',3),c('add','development.careLoad',2)]],
@@ -464,7 +496,7 @@ const originMilestones={
     stable:['志愿草表摊在桌上。你们先圈出了真正读得起的几条。',[c('expose','development.routeExposure','vocational'),c('add','development.routeKnowledge',6),c('add','development.selfAdvocacy',2)]]
   }
 };
-for(const age of[2,7,11,14])for(const profile of originProfiles){
+for(const age of[0,2,4,7,11,14])for(const profile of originProfiles){
   const[text,effects]=originMilestones[age][profile.key];
   annualBeats.push({id:`origin_context_${age}_${profile.key}`,kind:'beat',track:'origin',stage:stageFor(age,age),ageMin:age,ageMax:age,icon:'⌂',text,tone:profile.key.includes('unsafe')?'friction':'ordinary',intensity:profile.key.includes('unsafe')?'high':'medium',requirements:profile.requirements,actors:[],effects:[...effects,c('tag','history',`origin:${age}:${profile.key}`)],assertions:[],weight:22,contentRevision:CONTENT_REVISION});
 }
@@ -502,6 +534,7 @@ const EPISODE_ROUTES={
   ,career_growth:{1:['accepted','declined','failed']}
   ,retirement_transition:{1:['stopped','reduced','continued','left_search','light_work','kept_searching']}
   ,parental_inheritance:{1:['inventoried','delegated','planned_renunciation'],2:['accepted','limited','renounced','disputed']}
+  ,parent_loss:{1:['returned','organized','called'],2:['reviewed','selected','stored'],3:['named','deferred','self_contact']}
   ,long_term_care:{1:['assessed','adapted','refused'],2:['combined','institutional','family_only'],3:['stable','changed','minimum_support','family_break']}
   ,will_planning:{1:['inventoried','separated','debt_first'],2:['documented','partial','deferred','invalidated']}
   ,undergraduate_domestic:{1:['planned','explored','grade_first'],2:['club','research','practice','rested'],3:['research','practice','domestic_grad_prep','overseas_grad_prep'],4:['direct_job','domestic_grad','us_grad','europe_grad']}
@@ -546,6 +579,7 @@ const EPISODE_CATALOG={
   career_growth:{label:'职业成长',deadline:'谈好的日期到了。新职责和收入有书面安排的照着执行；没有落下来的，这次就到这里。',invalidated:'工作形态、岗位或任期变了。原来的成长安排停下，已经做过的工作仍照实留在履历里。'},
   retirement_transition:{label:'工作转段',deadline:'复核日期到了。排班、求职提醒和日常开销照现在的安排继续；要再改，得重新坐下来谈。',invalidated:'工作史、岗位或身体条件变了。原来的安排不再适用，你只按当下仍能做的部分重新决定。'},
   parental_inheritance:{label:'父母遗产',abandonedRoutes:['renounced','disputed'],deadline:'两年了。资产、债务和往来清单你都留着。没办完的转入正式程序，其他日子照常往下过。',invalidated:'人员、遗产范围或文件条件变了。旧钥匙和清点表都还在，后面只按新情况办。'},
+  parent_loss:{label:'亲人离世',deadline:'这段时间过去了。没能在当时打开的箱子和没能填下的名字，留在了以后再处理的日子里。',invalidated:'后来再打开箱子时，当时要办的手续已经过去。留下的物件还在，没说完的话也还在。'},
   long_term_care:{label:'长期照护',abandonedRoutes:['refused','family_break'],deadline:'四年了。照护按现在的身体定了：只留下最低限度的服务和一个紧急联系人。日子小了一些，每天要做的还是那些。',invalidated:'身体、服务或住处——变了。旧的排班表不再续。照护由新的安排接手。'},
   will_planning:{label:'遗嘱规划',abandonedRoutes:['deferred','invalidated'],deadline:'两年了。签过的文件留着，没签的仍然只是草稿。',invalidated:'身份、账户或见证条件变了。旧稿收回作废，真要再办就得按新情况重写。'},
   undergraduate_domestic:{label:'国内本科生活',ageBound:true,deadline:'第五年，毕业审核里的红字还在。修完的课进了成绩单，差的那几项也没人替你补上。',invalidated:'原学校的学生证已经不能用了。成绩单开出来，能认的学分带走，没认下来的还得重修。'},
@@ -1025,7 +1059,7 @@ const decisions=[],authoredDecisionById=new Map();
 for(const id of trackOrder){
   const spec=TRACKS[id];
   for(let sourceIndex=0;sourceIndex<TRACK_COPY[id].decisions.length;sourceIndex++){
-    const authoredDecision=TRACK_COPY[id].decisions[sourceIndex],slot=resolveAuthorSlot(authorSlots,'decisions',decisionAuthorKey(id,authoredDecision.prompt,authoredDecision.choices),`${id}.decisions[${sourceIndex}]`),index=slot.localIndex;
+    const sourceDecision=TRACK_COPY[id].decisions[sourceIndex],sourceKey=decisionAuthorKey(id,sourceDecision.prompt,sourceDecision.choices),baselineSlot=baselineAuthorSlots.decisions.get(sourceKey)||DECISION_SLOT_REGISTRATIONS.find(registration=>registration.key===sourceKey)?.slot,presentation=baselineSlot?DECISION_PRESENTATION[baselineSlot.id]:null,authoredDecision=presentation?{...sourceDecision,...presentation}:sourceDecision,slot=resolveAuthorSlot(authorSlots,'decisions',decisionAuthorKey(id,authoredDecision.prompt,authoredDecision.choices),`${id}.decisions[${sourceIndex}]`),index=slot.localIndex;
     if(authoredDecision.opportunity){
       if(!isOpportunityMetadata(authoredDecision.opportunity))throw new Error(`${id}.decisions[${sourceIndex}]: invalid opportunity metadata`);
       if(authoredDecision.episode&&authoredDecision.episode.role!=='start')throw new Error(`${id}.decisions[${sourceIndex}]: opportunity is only valid on episode starts or independent decisions`);
@@ -1123,10 +1157,16 @@ for(const id of trackOrder){
     if(id==='health'&&index===0)requirements.all.push(p('health.status','in',['monitoring','treating','recovering']),p('health.conditionSeverity','gte',5));
     if(id==='health'&&index===4)requirements.any.push(p('health.status','eq','limited'),p('health.conditionSeverity','gte',35),p('health.disability','neq','none'));
     if(id==='finance'&&index===4&&!authoredDecision.episode)requirements.all.push(p('finance.totalDebt','gte',10000));
+    if(eventId==='decision_121'){
+      requirements.all.push(p('health.conditionSeverity','gte',5));
+      requirements.any.push(p('health.status','in',['monitoring','treating','recovering','managed','limited']),p('health.currentCondition','truthy',true));
+    }
     const authoredChoices=authoredDecision.choices;
     const choices=authoredChoices.map((copyItem,option)=>{
       if(!copyItem||typeof copyItem==='string'||!copyItem.text||!copyItem.resultText||!copyItem.consequenceText)throw new Error(`${eventId}_choice_${option+1}: player copy must be fully event-authored`);
-      const text=copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`,cardInteraction=cardInteractionFor(id,index,option,authoredDecision);
+      const text=copyItem.text,result=decisionEffects(id,index,option,authoredDecision),memoryKey=`${eventId}_c${option+1}`,cardInteraction=cardInteractionFor(id,index,option,sourceDecision);
+      if(result.effects.some(effect=>effect.type==='repayDebt'))result.outcomeTags.push('finance:repaid');
+      if(result.effects.some(effect=>effect.type==='restructureDebt'))result.outcomeTags.push('finance:restructured');
       if(id==='partnership'&&!authoredDecision.episode&&index===0&&option<2)result.effects.push(c('createPerson','people',1,{relation:'partner'}));
       const choiceRules=copyItem.requirements||req();
       if(authoredDecision.episode?.id==='long_term_care'&&authoredDecision.episode.phase===2&&option===2)
@@ -1147,7 +1187,8 @@ for(const id of trackOrder){
         return{id:variant.id,weight:variant.weight,requirements:variant.requirements||req(),resultText:variant.resultText,effects:[...(variant.effects||[])],outcomeTags:[...(variant.outcomeTags||[])],memoryKey:variantMemoryKey,consequences:variant.noConsequence?[]:[{eventId:echoId,delayMin:variantDelay??1+option,delayMax:variantDelay??3+option,priority:variant.consequencePriority||copyItem?.consequencePriority||0}],consequenceText:variant.consequenceText,consequenceEffects:[...(variant.consequenceEffects||[])]};
       })}:null;
       const generatedHousingKind=result.effects.find(effect=>effect.type==='transitionHousing'&&effect.value?.kind==='choice')?.value?.housingChoiceKind,housingChoiceKind=copyItem.housingChoiceKind||generatedHousingKind;
-      return{id:`${eventId}_choice_${option+1}`,text,resultText:copyItem.resultText,hints:copyItem.hints||[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),...(copyItem.debtGate?{debtGate:copyItem.debtGate}:{}),...(housingChoiceKind?{housingChoiceKind}:{}),...(socialOutcome?{socialOutcome}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences,outcomeTags:result.outcomeTags,memoryKey,route:result.route};
+      const choiceId=`${eventId}_choice_${option+1}`;
+      return{id:choiceId,text,resultText:RESULT_TEXT_OVERRIDES[choiceId]||copyItem.resultText,hints:copyItem.hints||[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),...(copyItem.debtGate?{debtGate:copyItem.debtGate}:{}),...(housingChoiceKind?{housingChoiceKind}:{}),...(socialOutcome?{socialOutcome}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences,outcomeTags:result.outcomeTags,memoryKey,route:result.route};
     });
     decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',...(authoredDecision.situation?{situation:authoredDecision.situation}:{}),...(authoredDecision.routeSituations?{routeSituations:authoredDecision.routeSituations}:{}),prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{episode:{...authoredDecision.episode,...(lifecycle?{lifecycle}:{})}}:{}),...(authoredDecision.opportunity?{opportunity:authoredDecision.opportunity}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:authoredDecision.weight??16+index%3,contentRevision:CONTENT_REVISION});
     authoredDecisionById.set(eventId,authoredDecision);
@@ -1165,10 +1206,29 @@ for(const [sourceIndex,row] of globalRows.entries()){
   authoredDecisionById.set(id,{echoText:row.echoText,choices:row.consequences.map(consequenceText=>({consequenceText}))});
 }
 
+for(const event of annualBeats){
+  const attitudes=attitudesFor(event.id);
+  if(attitudes.length)event.attitudes=attitudes;
+}
+for(const [index,row] of FABLE_BEATS.entries()){
+  const slot=resolveAuthorSlot(authorSlots,'beats',beatAuthorKey(row.track,row.text),`FABLE_BEATS[${index}]`);
+  if(slot.id!==row.id)throw new Error(`${row.id}: author slot resolved to ${slot.id}`);
+  annualBeats.push({id:slot.id,kind:'beat',track:row.track,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:{leisure:'○',housing:'⌂',health:'+',finance:'¥',social:'◎',origin:'⌂',later:'↩'}[row.track]||'·',text:row.text,tone:row.tone,intensity:['pressure','major'].includes(row.tone)?'high':['friction','awkward'].includes(row.tone)?'medium':'low',requirements:row.requirements,actors:[],effects:[],assertions:[],weight:row.tone==='major'?18:row.tone==='pressure'?14:10,contentRevision:CONTENT_REVISION});
+}
+for(const [index,row] of FABLE_DECISIONS.entries()){
+  const slot=resolveAuthorSlot(authorSlots,'decisions',decisionAuthorKey(row.track,row.prompt,row.choices.map(choice=>choice.text)),`FABLE_DECISIONS[${index}]`);
+  if(slot.id!==row.id)throw new Error(`${row.id}: author slot resolved to ${slot.id}`);
+  const echoId=row.id.replace('decision_','echo_'),routes=row.episode?EPISODE_ROUTES[row.episode.id]?.[row.episode.phase]:null,choices=row.choices.map((choice,choiceIndex)=>({id:`${row.id}_choice_${choiceIndex+1}`,text:choice.text,resultText:choice.resultText,hints:[],requirements:req(),mechanicTags:[],cardInteraction:null,effects:[...(choice.effects||[])],commitments:[],consequences:[{eventId:echoId,delayMin:1+choiceIndex,delayMax:3+choiceIndex}],outcomeTags:[row.track,`${row.track}:${['deliberate','negotiated','risk'][choiceIndex]}`,...(row.episode?[`episode:${row.episode.id}`]:[])],memoryKey:`${row.id}_c${choiceIndex+1}`,route:routes?.[choiceIndex]||['deliberate','negotiated','risk'][choiceIndex]}));
+  decisions.push({id:row.id,kind:'decision',track:row.track,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'◎',situation:row.situation,prompt:row.prompt,requirements:row.requirements,actors:row.actors||[],...(row.episode?{episode:row.episode}:{}),choices,assertions:[],priority:row.id==='decision_214'?60:25,weight:row.id==='decision_214'?60:24,contentRevision:CONTENT_REVISION});
+  authoredDecisionById.set(row.id,{echoText:'后来，这件事又从日常里冒出来。',choices:row.choices.map(choice=>({consequenceText:choice.echoText}))});
+}
+
 const positionedAnnualBeats=annualBeats.filter(event=>event.id.startsWith('beat_')).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
 const fixedAnnualBeats=annualBeats.filter(event=>!event.id.startsWith('beat_'));
 annualBeats.splice(0,annualBeats.length,...positionedAnnualBeats,...fixedAnnualBeats);
 decisions.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
+const HELP_DELAY_EVENT_IDS=new Set(['beat_299','beat_301','beat_303','decision_114','decision_211']);
+for(const event of [...annualBeats,...decisions])if(HELP_DELAY_EVENT_IDS.has(event.id))event.helpDelay=true;
 
 function interactionPath(value,path){return String(path).split('.').reduce((current,key)=>current?.[key],value)}
 function interactionPredicate(rule,state){return compareByOperator(interactionPath(state,rule.path),rule.op,rule.value)}
@@ -1210,33 +1270,34 @@ const echoes=decisions.map(decision=>{
   const authoredDecision=authoredDecisionById.get(decision.id),habitPressure={gambling:'money',alcohol:'body',gaming:'career',shopping:'money',medication:'body'}[authoredDecision?.type],pressure=decision.track==='habits'?habitPressure:echoPressure[decision.track];
   if(!authoredDecision?.echoText||authoredDecision.choices?.some(choice=>!choice.consequenceText))throw new Error(`${decision.id}: consequence copy must be fully event-authored`);
   const choiceOutcomes=Object.fromEntries(decision.choices.flatMap((choice,choiceIndex)=>{
-    const base=[[choice.memoryKey,{text:authoredDecision.choices[choiceIndex].consequenceText,effects:authoredDecision.choices[choiceIndex].consequenceEffects||[choiceIndex===0?c('add','agency',1):choiceIndex===1?c('add','capabilities.resilience',1):c('add',`pressures.${pressure||'money'}`,4),c('tag','history',`echo:${decision.track}`)],outcomeTags:[...choice.outcomeTags,'echo']}]];
+    const base=[[choice.memoryKey,{text:ECHO_TEXT_OVERRIDES[choice.memoryKey]||authoredDecision.choices[choiceIndex].consequenceText,effects:authoredDecision.choices[choiceIndex].consequenceEffects||[choiceIndex===0?c('add','agency',1):choiceIndex===1?c('add','capabilities.resilience',1):c('add',`pressures.${pressure||'money'}`,4),c('tag','history',`echo:${decision.track}`)],outcomeTags:[...choice.outcomeTags,'echo']}]];
     return base.concat((choice.socialOutcome?.variants||[]).map(variant=>[variant.memoryKey,{text:variant.consequenceText,effects:variant.consequenceEffects||[],outcomeTags:[...choice.outcomeTags,...variant.outcomeTags,'echo']}]))
   }));
-  return{id:decision.id.replace('decision_','echo_'),kind:'consequence',track:decision.track,stage:stageNames,ageMin:Math.min(105,decision.ageMin+1),ageMax:105,icon:'↩',text:authoredDecision.echoText,sourceDecisionId:decision.id,requirements:{all:[],any:[],none:[]},actors:[],choiceOutcomes,assertions:[],weight:22,contentRevision:CONTENT_REVISION};
+  const echoId=decision.id.replace('decision_','echo_');
+  return{id:echoId,kind:'consequence',track:decision.track,stage:stageNames,ageMin:Math.min(105,decision.ageMin+1),ageMax:105,icon:'↩',text:ECHO_TEXT_OVERRIDES[echoId]||authoredDecision.echoText,sourceDecisionId:decision.id,requirements:{all:[],any:[],none:[]},actors:[],choiceOutcomes,assertions:[],weight:22,contentRevision:CONTENT_REVISION};
 });
 
 const swanRows=[
   {age:[0,5],text:'一次罕见感染让家里临时改了排班，复查日期贴在奶粉罐旁。',track:'health',valence:'mixed',requirements:req(),actors:[],effects:[c('add','health.mental',-3),c('add','relationships.originBond',2)]},
   {age:[3,12],text:'一场车祸打断了原来的上学路。康复怎么排、以后谁接送，都得从今天重新算。',track:'health',valence:'loss',requirements:req(),actors:[],effects:[c('healthIncident','health',18,{condition:'trafficAccident'}),c('add','pressures.body',6)]},
-  {age:[16,25],text:'学校递来一项全国竞赛的入围通知，异地行程和费用都写得清楚。',track:'education',valence:'gain',requirements:req([p('education.status','eq','enrolled')]),actors:[],effects:[c('add','education.practiceEvidence',8),c('add','development.routeKnowledge',5)]},
-  {age:[18,30],text:'你所在行业突然扩张，原本冷门的技能出现在正式招聘要求里。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','capabilities.employability',8),c('add','pressures.career',-4)]},
+  {age:[16,25],text:'入围通知寄到了学校，老师念名字时念到了你。异地的车费和住宿写在第二页，家里得知道这件事。',track:'education',valence:'gain',requirements:req([p('education.status','eq','enrolled')]),actors:[],effects:[c('add','education.practiceEvidence',8),c('add','development.routeKnowledge',5)]},
+  {age:[18,30],text:'你学过的那门冷门东西，突然出现在招聘要求第一行。同一批人里，会的没几个。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','capabilities.employability',8),c('add','pressures.career',-4)]},
   {age:[18,35],text:'父母留作应急的钱被一个“稳赚”群聊转走，报警回执只确认了损失，没有承诺追回。',track:'finance',valence:'loss',requirements:req([p('originHousehold.assets','gte',50000)]),actors:[{slot:'parent',relationAny:['father','mother'],alive:true,optional:false}],effects:[c('add','originHousehold.assets',-50000),c('add','pressures.family',8)]},
   {age:[20,38],text:'一件旧作品被陌生人重新转发，几封具体的合作询问随后进了邮箱。',track:'remote',valence:'gain',requirements:req([p('desires.creation.fulfillment','gte',1)]),actors:[],effects:[c('add','relationships.network',8),c('add','capabilities.evidence',4)]},
   {age:[22,40],text:'一场公共事件让你所在的单位突然停摆，复工日期和工资安排都没有立刻确定。',track:'employment',valence:'mixed',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','finance.cash',-12000),c('add','pressures.career',9)]},
   {age:[25,50],text:'你持有股份的公司打开了新市场，书面估值上调，现金却没有同步到账。',track:'business',valence:'gain',requirements:req([p('business.equity','gte',1)]),actors:[],effects:[c('add','business.equity',200000),c('add','pressures.money',2)]},
-  {age:[25,55],text:'单位复核工资时发现一笔少发款，补发日期和明细一起进了账户。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','finance.cash',6000),c('add','pressures.money',-2)]},
+  {age:[25,55],text:'单位复核工资时发现少发了一笔，钱和明细一起补进账户。同一份表上，还有几个同事的名字。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','finance.cash',6000),c('add','pressures.money',-2)]},
   {age:[30,58],text:'合作多年的老客户把整条业务交了过来。合同一签，你先算的不是赚多少，是哪天能收到钱。',track:'business',valence:'gain',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',160000),c('add','business.operatingSkill',5)]},
   {age:[30,60],text:'新规落地，你的企业必须停掉一块原本赚钱的业务，旧合同也要逐份处理。',track:'business',valence:'loss',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',-120000),c('add','pressures.money',10)]},
   {age:[35,62],text:'一次体检和复查确认了需要治疗的异常，后续不再只是“再看看”。',track:'health',valence:'loss',requirements:req(),actors:[],effects:[c('healthIncident','health',28,{condition:'blackSwanDiagnosis'}),c('add','pressures.body',8)]},
-  {age:[35,65],text:'旧同事带着公开账目来谈合作，项目是否加入仍由你按自己的企业状况判断。',track:'business',valence:'gain',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',90000),c('add','capabilities.evidence',4)]},
+  {age:[35,65],text:'旧同事带着账本来找你，一页页摊开，连亏的那两个月也没跳过。来意只有一句：想再做一次。',track:'business',valence:'gain',requirements:req([p('business.status','in',['testing','operating'])]),actors:[],effects:[c('add','business.equity',90000),c('add','capabilities.evidence',4)]},
   {age:[40,68],text:'一位仍在世的家人突然需要持续照护，原来的分工当天就不够用了。',track:'health',valence:'mixed',requirements:req(),actors:[{slot:'family',relationAny:['father','mother','partner','child','adoptedChild','stepChild'],alive:true,optional:false}],effects:[c('add','development.careLoad',12),c('add','pressures.family',8)]},
-  {age:[45,72],text:'单位核对历年薪资时发现一笔未补齐的差额，核算明细和补发款一起到了。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','finance.cash',12000),c('add','pressures.money',-2)]},
+  {age:[45,72],text:'退休核算前对了一遍历年工资，缺的那几个月补上了。数字不大，你把回执打印了一份收起来。',track:'employment',valence:'gain',requirements:req([p('employment.status','eq','employed')]),actors:[],effects:[c('add','finance.cash',12000),c('add','pressures.money',-2)]},
   {age:[55,80],text:'你名下的房子被水泡了，保险勘察和维修之间，日常先搬到能住的房间。',track:'finance',valence:'loss',requirements:req([p('housing.status','in',['owned','mortgaged'])]),actors:[],effects:[c('add','finance.cash',-30000),c('add','pressures.money',8)]},
   {age:[60,88],text:'旧档案里翻出的登记材料，把家里老宅的权属关系补全了。房还是那套房，来龙去脉总算写清了。',track:'finance',valence:'gain',requirements:req(),actors:[{slot:'parent',relationAny:['father','mother'],optional:false}],effects:[c('add','originHousehold.assets',30000),c('add','pressures.family',-2)]},
   {age:[65,95],text:'一次摔倒没有造成重伤，却让独自洗澡和上下楼变成需要重新评估的事。',track:'health',valence:'loss',requirements:req(),actors:[],effects:[c('healthIncident','health',12,{condition:'fallRisk'}),c('add','health.careNeed',1)]},
-  {age:[70,100],text:'仍在交往的伴侣问起余下的日子要不要住得更近，答案不会自动变成同居。',track:'partnership',valence:'mixed',requirements:req([p('relationships.partnerStatus','in',['dating','partnered','married'])]),actors:[{slot:'partner',relation:'partner',alive:true,personIdPath:'relationships.activePartnerId',optional:false}],effects:[c('add','relationships.partnerBond',4),c('add','pressures.family',1)]},
-  {age:[75,105],text:'你公开留下的一段经验，后来让一个陌生家庭少走了一次弯路。',track:'later',valence:'gain',requirements:req([p('desires.creation.fulfillment','gte',1)]),actors:[],effects:[c('add','desires.creation.fulfillment',5),c('add','health.mental',3)]},
+  {age:[70,100],text:'余下的日子要不要住得近一点——伴侣问完这句就去洗碗了，没等你当场答。',track:'partnership',valence:'mixed',requirements:req([p('relationships.partnerStatus','in',['dating','partnered','married'])]),actors:[{slot:'partner',relation:'partner',alive:true,personIdPath:'relationships.activePartnerId',optional:false}],effects:[c('add','relationships.partnerBond',4),c('add','pressures.family',1)]},
+  {age:[75,105],text:'有人照着你写下的那几步办成了事，专门找来道谢。谢完又问，能不能再帮一次。',track:'later',valence:'gain',requirements:req([p('desires.creation.fulfillment','gte',1)]),actors:[],effects:[c('add','desires.creation.fulfillment',5),c('add','health.mental',3)]},
 ];
 const blackSwans=swanRows.map((row,index)=>({id:`swan_${String(index+1).padStart(2,'0')}`,kind:'blackSwan',track:row.track,stage:stageFor(...row.age),ageMin:row.age[0],ageMax:row.age[1],icon:'✦',text:row.text,intensity:'high',requirements:row.requirements,actors:row.actors,effects:[...row.effects,c('tag','history',`swan:${index+1}`)],assertions:row.actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),valence:row.valence,weight:1,contentRevision:CONTENT_REVISION}));
 
@@ -1261,6 +1322,10 @@ for(const drawAge of[0,18,35,55])for(const authored of CARD_COPY[drawAge]){
   if(!isCardInteractionScope(interactionScope))throw new Error(`${slot.id}: invalid card interactionScope`);
   cards.push({id:slot.id,kind:drawAge===0?'innate':'stage',drawAge,displayName:authored.displayName,text:authored.text,mechanic:authored.mechanic,requirements:authored.requirements||req(),interactionScope,effects:cardEffects(authored.mechanic,drawAge),contentRevision:CONTENT_REVISION});
 }
+for(const [index,authored] of FABLE_CARDS.entries()){
+  const slot=resolveAuthorSlot(authorSlots,'cards',cardAuthorKey(authored.drawAge,authored.displayName),`FABLE_CARDS[${index}]`);
+  cards.push({id:slot.id,kind:authored.drawAge===0?'innate':'stage',drawAge:authored.drawAge,displayName:authored.displayName,text:authored.text,mechanic:authored.mechanic,requirements:authored.requirements,interactionScope:'general',effects:[...authored.effects,c('tag','history',`card:${authored.mechanic}`)],...(authored.ongoingModifiers?{ongoingModifiers:[...authored.ongoingModifiers]}:{}),contentRevision:CONTENT_REVISION});
+}
 cards.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
 const cardInteractionCoverage=validateCardInteractions();
 
@@ -1282,7 +1347,13 @@ const endingProfiles=[
   ['childfree','没有后代不等于没有关系，空房间也不是空人生。','少见',['children:risk','peace']],
   ['earlyExit','句号来得太早。有些事才刚开头。','极罕',['earlyDeath','lifeEnded']]
 ].map(([id,summary,rarity,signals])=>({id,summary,rarity,signals,contentRevision:CONTENT_REVISION}));
+const baseNearMissHints={
+  freeLife:'差一点，你就真的把时间全部拿回来了。',driftedLife:'再多漂一年，你就是那种没有地址的人了。',familyCycle:'家里那本旧账，差一点又原样传了下去。',cycleBreaker:'差一点，旧规矩就在你手里停下了。',publicDuty:'那身制度里的日子，你差一点穿到最后。',fragmentedWorker:'差一点，排班表就成了你人生的封面。',rootedRemote:'差一点，你就在远方真正住下了。',founder:'那家店差一点成了你一辈子的事。',debtLegacy:'差一点，债就成了你留下的最后一样东西。',recovered:'再守住几年，戒掉的就不只是那样东西。',lostControl:'差一点，就真的收不回来了。',parentLegacy:'差一点，孩子会用另一种语气说起你。',childfree:'差一点，你就把「不要」过成了安稳。'
+};
+for(const profile of endingProfiles)if(baseNearMissHints[profile.id])profile.nearMissHint=baseNearMissHints[profile.id];
+for(const {titles,...profile} of FABLE_ENDING_PROFILES)endingProfiles.push({...profile,contentRevision:CONTENT_REVISION});
 const titleSets={ordinaryContent:['把日子过到这里','工牌后面的几年','简历和账单之间','家里一直有人等','按身体能走的路','工作停在这一天'],freeLife:['星期一也没有闹钟','主动退出排行榜','给自己留过一段时间','时间重新属于自己'],driftedLife:['所有地址都可退订','有 Wi-Fi 的地方','任何地方都在工作','行李箱没有故乡'],familyCycle:['账本换了封面','所有退路都还在','一家人的钱','旧路又走了一遍'],cycleBreaker:['旧规矩到你为止','担保止于此处','你把密码还给自己','下一代不必交账'],publicDuty:['窗口灯熄灭以后','编制里的漫长四季','号码牌背面的人','稳定也有重量'],fragmentedWorker:['被切开的白天','八小时以外','空档不算生活','排班表上的人'],rootedRemote:['有网，也有门牌','关机后的城市','远程的固定地址','把时区留在门外'],founder:['老板称呼退潮以后','真实流水','样板店之外','小店活过了品牌'],wealthApex:['数字失去单位','全球估值的孤岛','控制权稀释之前','世界首富没有下班'],debtLegacy:['遗嘱和欠款','最后一位担保人','百万负债说明书','余额不足的一生'],recovered:['复发没有成为结局','重新拿回银行卡','清醒日历','承认之后'],lostControl:['下一次没有回来','被隐藏的账单','赔率吞掉清晨','失控留下的空位'],parentLegacy:['孩子没有复述你','旅行不用报备','代际回声停下','回家不用交差'],childfree:['空房间不是空人生','没有后代的晚餐','照护另有名字','把晚年交给协议'],earlyExit:['句号来得太早','日历提早停了','还没过完的日子','时间没有保证书']};
+for(const profile of FABLE_ENDING_PROFILES)titleSets[profile.id]=profile.titles;
 const endingTitles=endingProfiles.flatMap(profile=>titleSets[profile.id].map((title,index)=>({id:`ending_${profile.id}_${index+1}`,profileId:profile.id,title,contentRevision:CONTENT_REVISION})));
 
 const codexCopy={
@@ -1313,7 +1384,15 @@ codex.push(
   {id:'codex_31',name:'钥匙拿到手以后',category:'住房',lockedHint:'亲手决定一次住在哪里、和谁一起住',unlockedText:'住在哪里、跟谁住、这笔钱要不要交——你至少有一次自己拿了主意。',unlockRules:{outcomeTagsAny:['housing:deliberate','housing:negotiated','housing:risk']},contentRevision:CONTENT_REVISION},
   {id:'codex_32',name:'房租以外',category:'住房',lockedHint:'看见一处住处后来怎样影响日常',unlockedText:'一扇门背后还有通勤、室友、照护和每月准时来的账。',unlockRules:{outcomeTagsAny:['housing:legacy','echo:housing']},contentRevision:CONTENT_REVISION},
   {id:'codex_33',name:'后来还能叫出名字',category:'社会交往',lockedHint:'在一段具体关系里留下名字',unlockedText:'一次见面、一次帮忙或一次回头，让陌生人不再只叫“那个人”。',unlockRules:{outcomeTagsAny:['social:turn:deepened','social:work:boundedHelp','social:firstMeeting:persistent']},contentRevision:CONTENT_REVISION},
-  {id:'codex_34',name:'真有事时',category:'社会交往',lockedHint:'看见关系在现实压力里怎样回应',unlockedText:'有一段关系在现实里给过回应。回应未必够，但不是一句空话。',unlockRules:{outcomeTagsAny:['social:support:showedUp','social:support:limited','social:support:unable','social:reconnect:close','social:bridge:romance']},contentRevision:CONTENT_REVISION}
+  {id:'codex_34',name:'真有事时',category:'社会交往',lockedHint:'看见关系在现实压力里怎样回应',unlockedText:'有一段关系在现实里给过回应。回应未必够，但不是一句空话。',unlockRules:{outcomeTagsAny:['social:support:showedUp','social:support:limited','social:support:unable','social:reconnect:close','social:bridge:romance']},contentRevision:CONTENT_REVISION},
+  {id:'codex_35',name:'还清的那天',category:'财富与债',lockedHint:'把欠下的账彻底还完',unlockedText:'最后一笔划走的那天没有仪式。你查了两遍余额，关掉手机，睡了个好觉。',unlockRules:{stateAll:[p('finance.everHadDebt','eq',true),p('finance.totalDebt','eq',0)]},contentRevision:CONTENT_REVISION},
+  {id:'codex_36',name:'第三次开始',category:'亲密关系',lockedHint:'经历三段确立过的关系',unlockedText:'开始这件事，你做过不止一次。每一次都当真，这不矛盾。',unlockRules:{stateAll:[p('relationships.partnerHistoryCount','gte',3)]},contentRevision:CONTENT_REVISION},
+  {id:'codex_37',name:'百岁',category:'时间',lockedHint:'活到一百岁',unlockedText:'一百年。你没打算创纪录，只是每天都醒来了。',unlockRules:{stateAll:[p('age','gte',100)]},contentRevision:CONTENT_REVISION},
+  {id:'codex_38',name:'十年零工',category:'受雇工作',lockedHint:'零工或平台工作累计十年',unlockedText:'没有年会、没有工龄奖。十年，是你自己数的。',unlockRules:{stateAll:[p('mobility.platformYears','gte',10)]},contentRevision:CONTENT_REVISION},
+  {id:'codex_39',name:'门口的熟人',category:'身边的人',lockedHint:'独居晚年时有人来过',unlockedText:'一个人住，不等于没人敲过门。来过的人还记得你水壶放哪儿。',unlockRules:{outcomeTagsAny:['social:soloLateFriend']},contentRevision:CONTENT_REVISION},
+  {id:'codex_40',name:'第十年没喝',category:'成瘾与戒断',lockedHint:'戒断维持十年',unlockedText:'第十年没人再提这件事了。你自己记得，也就够了。',unlockRules:{stateAll:[p('habits.recoveryYears','gte',10)]},contentRevision:CONTENT_REVISION},
+  {id:'codex_41',name:'一直开着的店',category:'经营',lockedHint:'一家店经营十年以上',unlockedText:'招牌旧了没换。熟客说别换，换了不认识。',unlockRules:{stateAll:[p('business.activeYears','gte',10)]},contentRevision:CONTENT_REVISION},
+  {id:'codex_42',name:'没挪过的根',category:'迁移',lockedHint:'在同一座城市度过一生',unlockedText:'你这一生的住处都在同一座城。它变过许多次，你没有挪走。',unlockRules:{outcomeTagsAny:['stayedRooted']},contentRevision:CONTENT_REVISION}
 );
 
 const realityRules={education:'家庭资源、关系安全、习惯、出勤、学校支持和个人能力共同形成准备度；金钱不直接生成成绩。国内外本科的申请、录取、资金与报到分别记录。',employment:'裁员、晋升和排班只适用于真实受雇者；求职、退出劳动市场与主动休闲不得混用。',retirement:'退休取决于出生年代、单位类型、缴费年限和个人选择，不用固定年龄覆盖。',debt:'个人债务逐笔计息；生活缺口合并记录，担保、逾期、重组和遗产处理保留独立状态。被执行、限制消费和现实失信名单条件不同；本游戏仅按既定规则把执行未清压缩为游戏内失信。',family:'伴侣与子女是带年龄、存亡、关系和法律身份的人物实体；家庭资源、父母在场和情感安全相互独立。',housing:'住房记录当前主要住处、共同居住和实际搬迁；价格只在签约时使用地区锚点，不按年模拟房价、租金行情或房地产经营。',social:'认识面、持续关系、主动独处和孤独分别记录；朋友能提供有限入口与支持，但不能替代就业、住房、债务、健康或照护系统的硬条件。',platform:'远程与旅居需要可迁移能力或真实远程收入，平台依赖增加波动。',franchise:'加盟成本包含品牌、装修、设备、原料、投流和担保，成功需要技能、现金缓冲与低锁定。'};

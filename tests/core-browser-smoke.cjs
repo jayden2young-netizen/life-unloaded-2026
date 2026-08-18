@@ -97,16 +97,17 @@ let browser;
     legacyKeys: Object.keys(localStorage).filter(item => item.startsWith('life-unloaded-2026-') && item !== key),
     run: window.__LIFE_DEBUG__.snapshot()
   }), SAVE_KEY);
-  assert.equal(migrated.state.schemaVersion, 13);
-  assert.equal(migrated.state.gameVersion, '0.6.13');
+  assert.equal(migrated.state.schemaVersion, 14);
+  assert.equal(migrated.state.gameVersion, '0.7.0');
   assert.equal(migrated.run, null, 'old active life should not survive a version update');
   assert.deepEqual(migrated.legacyKeys, [], 'legacy snapshots should be removed');
   assert.equal(migrated.state.meta.histories[0].title, '保留的人生记录');
   assert.deepEqual(migrated.state.meta.codex, ['codex_01']);
   assert.equal(migrated.state.meta.settings.haptic, false);
+  assert.equal(migrated.state.meta.settings.echoAcrossRuns, false);
   assert.equal(migrated.state.meta.stats.runs, 2);
-  assert.equal(migrated.state.meta.seen.events.beat_001, undefined, 'legacy generated event IDs should be removed during migration');
-  assert.equal(migrated.state.meta.seen.events.swan_001, undefined, 'legacy black-swan IDs should be removed during migration');
+  assert.equal(migrated.state.meta.seen.events.beat_001, 1, 'seen event progress should survive migration');
+  assert.equal(migrated.state.meta.seen.events.swan_001, 1, 'seen black-swan progress should survive migration');
   assert.equal(migrated.state.meta.seen.events['archive-note'], 1, 'non-generated cross-run records should survive migration');
   assert.deepEqual(migrated.state.meta.recentSeeds, ['finished-life']);
   assert.equal(await page.locator('[data-act="new"]').count(), 1);
@@ -117,6 +118,10 @@ let browser;
   page = await preparePage(context);
   await page.goto(URL, { waitUntil: 'domcontentloaded' });
   await waitBoot(page);
+  assert.match(
+    await page.locator('.collection-progress').innerText(),
+    new RegExp(`结局 0/${DATA.endingProfiles.length} · 图鉴 0/${DATA.codex.length}`),
+  );
   await page.locator('[data-act="new"]').click();
   assert.equal(await page.locator('[data-act="return-home"]').count(), 1);
   const birthSeed = (await page.evaluate(() => window.__LIFE_DEBUG__.snapshot())).seed;
@@ -162,6 +167,61 @@ let browser;
     [1, 2, 3, 3],
     'quiet/progression/collision annual capacities changed'
   );
+
+  const attitudeBeat = DATA.events.find(event => event.id === 'beat_053');
+  await page.evaluate(event => {
+    window.__LIFE_DEBUG__.patchRun({
+      age: 24,
+      phase: 'playing',
+      yearStarted: true,
+      yearQueue: [event],
+      sceneQueue: [],
+      currentDecision: null,
+      pendingAttitude: null,
+      timeline: [],
+      outcomeTags: {},
+      desires: { freedom: { fulfillment: 20 } },
+    });
+    window.__LIFE_DEBUG__.advance();
+  }, attitudeBeat);
+  run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
+  assert.equal(run.pendingAttitude, attitudeBeat.id);
+  assert.equal(await page.locator('[data-attitude]').count(), 2);
+  for (const [width, height] of [[360, 773], [360, 640], [320, 568]]) {
+    await page.setViewportSize({ width, height });
+    await fit(page, `attitude-${width}x${height}`);
+    await page.screenshot({ path: path.join(OUT, `attitude-${width}x${height}.png`), fullPage: true });
+  }
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await waitBoot(page);
+  assert.equal((await page.evaluate(() => window.__LIFE_DEBUG__.snapshot())).pendingAttitude, attitudeBeat.id, 'refresh lost pending attitude');
+  assert.deepEqual(await page.locator('[data-attitude]').evaluateAll(items => items.map(item => item.textContent.trim())), attitudeBeat.attitudes.map(item => item.text));
+  await page.locator('[data-attitude="refuse"]').click();
+  run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
+  assert.equal(run.desires.freedom.fulfillment, 21);
+  assert.equal(run.outcomeTags['attitude:refuse'], 1);
+  assert.equal(run.outcomeTags[`attitude-event:${attitudeBeat.id}`], 1);
+  assert.deepEqual(run.timeline.at(-1).attitude, { key: 'refuse', text: '明早再回' });
+  const attitudeSettled = { fulfillment: run.desires.freedom.fulfillment, tags: { ...run.outcomeTags } };
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await waitBoot(page);
+  assert.equal(await page.locator('[data-attitude]').count(), 0);
+  assert.equal(await page.locator('.attitude-note').innerText(), '——明早再回。');
+  assert.equal(await page.evaluate(() => window.__LIFE_DEBUG__.chooseAttitude('refuse')), false);
+  run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
+  assert.deepEqual({ fulfillment: run.desires.freedom.fulfillment, tags: run.outcomeTags }, attitudeSettled, 'refresh or repeat attitude settled twice');
+
+  const skippedBeat = DATA.events.find(event => event.id === 'beat_054');
+  await page.evaluate(event => {
+    window.__LIFE_DEBUG__.patchRun({ phase: 'playing', yearStarted: true, yearQueue: [event], pendingAttitude: null });
+    window.__LIFE_DEBUG__.advance();
+  }, skippedBeat);
+  assert.equal((await page.evaluate(() => window.__LIFE_DEBUG__.snapshot())).pendingAttitude, skippedBeat.id);
+  await page.evaluate(() => window.__LIFE_DEBUG__.advance());
+  run = await page.evaluate(() => window.__LIFE_DEBUG__.snapshot());
+  assert.equal(run.outcomeTags[`attitude-event:${skippedBeat.id}`], 1);
+  assert.equal(run.timeline.find(item => item.id === skippedBeat.id)?.attitude, undefined);
+  await page.setViewportSize({ width: 360, height: 773 });
 
   run = await forceChoice(page, decisionId({ track: 'identity', index: 0 }), 0);
   assert.ok(Object.values(run.desires).some(value => value && typeof value === 'object' && value.claimed));
@@ -432,7 +492,59 @@ let browser;
   assert.ok(!unsupportedTags.includes('康复者'), 'recovery tag appeared without a displayed recovery decision');
   assert.ok(!unsupportedTags.includes('人脉很广'), 'network tag appeared without actual social people');
   await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({
-    outcomeTags: { 'leisure:deliberate': 1 },
+    age:75,outcomeTags:{},decisionHistory:[],development:{careLoad:0},later:{care:'homeCombined'},
+    mobility:{lastOverseasSystem:'none',platformYears:9},housing:{region:'tier2',history:[]},
+    relationships:{childCount:0,parenthoodIntent:'undecided'},finance:{cash:0,liabilities:[]}
+  }));
+  assert.equal((await page.evaluate(() => window.__LIFE_DEBUG__.finalSignals())).includes('careGiver'),false,'receiving care was mistaken for caregiving');
+  assert.equal((await page.evaluate(() => window.__LIFE_DEBUG__.finalSignals())).includes('platformDecade'),false,'current platform state pretended to be ten years of history');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({development:{careLoad:40},mobility:{platformYears:10}}));
+  let rebuiltSignals=await page.evaluate(() => window.__LIFE_DEBUG__.finalSignals());
+  assert.ok(rebuiltSignals.includes('careGiver'));
+  assert.ok(rebuiltSignals.includes('platformDecade'));
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({
+    mobility:{lastOverseasSystem:'us'},housing:{region:'tier2',history:[]}
+  }));
+  assert.equal((await page.evaluate(() => window.__LIFE_DEBUG__.finalSignals())).includes('overseasSettled'),false,'past overseas experience alone became an overseas ending');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({housing:{region:'us'}}));
+  assert.ok((await page.evaluate(() => window.__LIFE_DEBUG__.finalSignals())).includes('overseasSettled'));
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({
+    decisionHistory:[{age:35,eventId:'decision_010',outcomeTags:['education:enrolled']}],
+    relationships:{parenthoodIntent:'childfree',childCount:0},finance:{liabilities:[]},outcomeTags:{}
+  }));
+  rebuiltSignals=await page.evaluate(() => window.__LIFE_DEBUG__.finalSignals());
+  assert.ok(rebuiltSignals.includes('lateStudy'));
+  assert.equal(rebuiltSignals.includes('deliberateSolo'),false,'childfree intent lacked a corresponding choice record');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({
+    people:[],
+    relationships:{parenthoodIntent:'childfree',childCount:0},
+    decisionHistory:[{age:35,eventId:'decision_209',outcomeTags:['education:deliberate','children:deliberate']}]
+  }));
+  assert.ok((await page.evaluate(() => window.__LIFE_DEBUG__.finalSignals())).includes('deliberateSolo'));
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({
+    age:30,desires:{creation:{fulfillment:70}},cards:['card_10'],decisionHistory:[],outcomeTags:{'card:creativity':1},business:{equity:0},finance:{cash:0,liabilities:[]},mobility:{lastOverseasSystem:'none',platformYears:0},development:{careLoad:0}
+  }));
+  assert.equal((await page.evaluate(() => window.__LIFE_DEBUG__.endingProfile())).id,'creationFulfilled','earlyExit outranked a factual theme');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:50,desires:{creation:{fulfillment:0}},decisionHistory:[],outcomeTags:{}}));
+  assert.ok(!(await page.evaluate(() => window.__LIFE_DEBUG__.endingNearMisses())).includes('centenarian'),'ordinary lifespan was described as nearly centenarian');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:99,desires:{creation:{fulfillment:0}},housing:{region:'tier2',history:[]}}));
+  const nearMissIds=await page.evaluate(() => window.__LIFE_DEBUG__.endingNearMisses());
+  assert.ok(nearMissIds.includes('centenarian'));
+  assert.ok(!nearMissIds.includes('wealthApex'));
+  const lateFriend={id:'codex-friend',relation:'social',bornAt:20,alive:true,status:'living',social:{tie:'friend',turn:'reconnected',support:'showedUp'}};
+  await page.evaluate(friend => window.__LIFE_DEBUG__.patchRun({age:30,phase:'playing',people:[friend],housing:{arrangement:'solo',region:'tier2',history:[]},outcomeTags:{'social:support:showedUp':1}}), lateFriend);
+  assert.ok(!(await page.evaluate(() => window.__LIFE_DEBUG__.unlockCodex())).includes('codex_39'),'young social support unlocked the late-solo codex');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:65}));
+  assert.ok((await page.evaluate(() => window.__LIFE_DEBUG__.unlockCodex())).includes('codex_39'),'late solo friendship did not unlock its factual codex');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:75,phase:'playing',mobility:{lastOverseasSystem:'none'},housing:{region:'tier2',history:[{state:{region:'tier1'}}]},outcomeTags:{}}));
+  assert.ok(!(await page.evaluate(() => window.__LIFE_DEBUG__.unlockCodex(true))).includes('codex_42'),'domestic migration unlocked the stayed-rooted codex');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({housing:{region:'tier2',history:[]},outcomeTags:{}}));
+  assert.ok((await page.evaluate(() => window.__LIFE_DEBUG__.unlockCodex(true))).includes('codex_42'),'a completed same-city life did not unlock its codex');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({
+    age:60,
+    people: [],
+    social: { primaryPersonId: null, secondaryPersonId: null, latestIntent: null },
+    outcomeTags: { 'leisure:deliberate': 1, stayedRooted: 0, 'social:soloLateFriend': 0, 'social:support:showedUp': 0 },
     desires: { freedom: { fulfillment: 70, claimed: true, drive: 70 } },
     employment: { firstJobAge: 20, growthCount: 1, status: 'retired' },
     later: { retirement: 'retired' }
@@ -473,6 +585,17 @@ let browser;
   assert.equal(await page.locator('.portrait-row').count(), 0, 'raw 0-100 ending axes remained visible');
   assert.equal(await page.locator('.ending-fact').count(), 4, 'ending fact portrait did not replace raw axes');
   assert.equal(await page.locator('[data-act="new"]').count(), 1);
+  assert.ok(!(await page.evaluate(() => window.__LIFE_DEBUG__.endingNearMisses())).includes('wealthApex'),'wealthApex must not be offered as a near miss');
+  const collected = await page.evaluate(key => {
+    const saved = JSON.parse(localStorage.getItem(key));
+    return { history: saved.meta.histories[0], seen: saved.meta.seen };
+  }, SAVE_KEY);
+  assert.equal(collected.seen.endings.wealthApex, 1);
+  assert.equal(collected.seen.endings[`title:${ending.title}`], 1);
+  assert.ok(collected.seen.families[run.originHousehold.familyId] >= 1);
+  assert.equal(collected.history.title, ending.title);
+  assert.equal(collected.history.age, ending.age);
+  assert.ok(collected.history.facts.length >= 1);
 
   for (const [width, height] of [[360, 773], [360, 640], [320, 568]]) {
     await page.setViewportSize({ width, height });
@@ -497,10 +620,43 @@ let browser;
   assert.notEqual(afterRestart.seed, beforeRestart.seed);
   assert.deepEqual(afterRestart.meta, beforeRestart.meta);
   await page.locator('[data-act="return-home"]').click();
+  await page.locator('[data-nav="archive"]').click();
+  assert.match(await page.locator('.title').innerText(), /人生档案/);
+  assert.equal(await page.locator('.ending-collection').count(), 1);
+  assert.match(await page.locator('.ending-collection').innerText(), new RegExp(`标题 1/`));
+  await fit(page, 'archive-360x773');
+  const replaySeed = collected.history.seed;
+  await page.locator('[data-seed-start]').first().click();
+  assert.equal((await page.evaluate(() => window.__LIFE_DEBUG__.snapshot())).seed, replaySeed);
+  await page.locator('[data-act="return-home"]').click();
   await page.locator('[data-nav="settings"]').click();
   await page.waitForTimeout(320);
   assert.equal(await page.locator('[data-act="clear-data"]').count(), 1);
   assert.equal(await page.locator('.iconbtn:not([aria-label])').count(), 0, 'symbol button without accessible name');
+  const echoToggle = page.locator('[data-act="toggle-echo"]');
+  assert.equal(await echoToggle.getAttribute('aria-pressed'), 'false');
+  await echoToggle.click();
+  assert.equal(await page.locator('[data-act="toggle-echo"]').getAttribute('aria-pressed'), 'true');
+  await page.locator('[data-seed-input]').fill('fable-seed-contract');
+  await page.locator('[data-act="seed-start"]').click();
+  const seededOnce = await page.evaluate(() => {
+    const value = window.__LIFE_DEBUG__.snapshot();
+    return { seed: value.seed, pity: value.swanPityAge, death: value.naturalDeathAge, target: value.targetDecisions };
+  });
+  assert.equal(seededOnce.seed, 'fable-seed-contract');
+  assert.ok(seededOnce.pity >= 30 && seededOnce.pity <= 59);
+  assert.ok(seededOnce.death >= 52 && seededOnce.death <= 105);
+  assert.ok(seededOnce.target >= 22 && seededOnce.target <= 28);
+  await page.locator('[data-act="return-home"]').click();
+  await page.locator('[data-nav="settings"]').click();
+  await page.locator('[data-seed-input]').fill('fable-seed-contract');
+  await page.locator('[data-act="seed-start"]').click();
+  assert.deepEqual(await page.evaluate(() => {
+    const value = window.__LIFE_DEBUG__.snapshot();
+    return { seed: value.seed, pity: value.swanPityAge, death: value.naturalDeathAge, target: value.targetDecisions };
+  }), seededOnce, 'same seed changed pity, lifespan, or decision target');
+  await page.locator('[data-act="return-home"]').click();
+  await page.locator('[data-nav="settings"]').click();
   const hapticToggle = page.locator('[data-act="toggle-haptic"]');
   const hapticBefore = await hapticToggle.getAttribute('aria-pressed');
   assert.match(await hapticToggle.innerText(), /已开启|已关闭/);

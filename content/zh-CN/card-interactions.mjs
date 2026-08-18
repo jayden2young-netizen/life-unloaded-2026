@@ -1797,7 +1797,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "health::治了这么多年。继续找治愈的办法、带着病过，还是停下消耗？::完成治疗和医疗意愿": {
+  "health::治了这么多年。继续找新的办法、带着病过，还是先停下消耗？::完成治疗和医疗意愿": {
     "primaryMechanic": "boundary",
     "mode": "resultVariant",
     "patch": [

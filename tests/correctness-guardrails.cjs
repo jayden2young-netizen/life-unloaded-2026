@@ -118,17 +118,17 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.6.13', 13, 33]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.7.0', 14, 34]);
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
-    {beat:480,decision:206,consequence:206,blackSwan:20},
+    {beat:517,decision:214,consequence:214,blackSwan:20},
   );
   const generatedDecisions=DATA.events.filter(event=>event.kind==='decision');
   const episodeDecisions=generatedDecisions.filter(event=>event.episode);
   const generatedEpisodeIds=[...new Set(episodeDecisions.map(event=>event.episode.id))].sort();
   assert.deepEqual(
     [DATA.cards.length,generatedEpisodeIds.length,Object.keys(DATA.episodeCatalog).length,episodeDecisions.length,generatedDecisions.length-episodeDecisions.length],
-    [73,63,42,145,61],
+    [83,64,43,148,66],
   );
   assert.deepEqual(
     generatedEpisodeIds.filter(id=>!Object.hasOwn(DATA.episodeCatalog,id)),
@@ -138,6 +138,30 @@ function neutralTrace(multiplier) {
   assert.equal(opportunities.length,14);
   assert.ok(opportunities.every(event=>contract.isOpportunityMetadata(event.opportunity)));
   assert.ok(opportunities.every(event=>!event.episode||event.episode.role==='start'));
+  assert.deepEqual(
+    DATA.events.filter(event=>event.kind==='beat'&&/^beat_(48[1-9]|49\d|50[0-5])$/.test(event.id)).map(event=>event.id),
+    Array.from({length:25},(_,index)=>`beat_${481+index}`),
+  );
+  assert.deepEqual(
+    generatedDecisions.filter(event=>Number(event.id.slice(9))>=209).map(event=>event.id),
+    Array.from({length:8},(_,index)=>`decision_${209+index}`),
+  );
+  assert.deepEqual(
+    DATA.cards.filter(card=>Number(card.id.slice(5))>=74).map(card=>card.id),
+    Array.from({length:10},(_,index)=>`card_${74+index}`),
+  );
+  const attitudeEvents=DATA.events.filter(event=>event.attitudes);
+  assert.equal(attitudeEvents.length,60);
+  assert.ok(attitudeEvents.every(event=>event.attitudes.length===2));
+  assert.deepEqual(
+    DATA.cards.filter(card=>card.ongoingModifiers).map(card=>[card.id,card.ongoingModifiers]),
+    [['card_79',['reliableCarePressure']],['card_81',['guardedPartnerBond']],['card_83',['delayHelpSeeking']]],
+  );
+  assert.deepEqual(DATA.events.filter(event=>event.helpDelay).map(event=>event.id),['beat_299','beat_301','beat_303','decision_114','decision_211']);
+  const parentLossStages=generatedDecisions.filter(event=>event.episode?.id==='parent_loss');
+  assert.deepEqual(parentLossStages.map(event=>[event.id,event.episode.phase,event.episode.role]),[
+    ['decision_214',1,'start'],['decision_215',2,'progress'],['decision_216',3,'resolve'],
+  ]);
   const adultIdentity=generatedDecisions.find(event=>event.id==='decision_162');
   assert.deepEqual(adultIdentity.choices[1].effects.find(effect=>effect.type==='claimDesire').value,['wealth','security']);
   assert.equal(adultIdentity.choices[1].text,'先把家底做厚，再谈下一步');
@@ -166,6 +190,14 @@ function neutralTrace(multiplier) {
   assert.ok(!DATA.events.some(event=>event.text?.includes('房租到账后')));
   assert.ok(!DATA.events.some(event=>event.text?.includes('你和家里人把睡眠')));
   assert.ok(!DATA.events.some(event=>event.text?.includes('复诊或搬家那天')));
+  const longTreatment=generatedDecisions.find(event=>event.id==='decision_121');
+  assert.ok(longTreatment.requirements.all.some(rule=>rule.path==='health.conditionSeverity'&&rule.op==='gte'));
+  assert.ok(longTreatment.requirements.any.some(rule=>rule.path==='health.status'||rule.path==='health.currentCondition'));
+  assert.ok(longTreatment.choices.every(choice=>!choice.resultText.includes('剩下的日子只求别疼')));
+  const leaveRecovery=DATA.events.find(event=>event.id==='beat_309');
+  assert.ok(leaveRecovery.requirements.all.some(rule=>rule.path==='employment.status'&&rule.op==='in'));
+  const decision091=generatedDecisions.find(event=>event.id==='decision_091');
+  assert.ok(decision091.choices.every(choice=>!/(一年多|双方家里|逢年过节)/.test(choice.resultText)));
   const childBoundary=DATA.cards.find(card=>card.id==='card_71'),generalBoundary=DATA.cards.find(card=>card.id==='card_73');
   const portableCard=DATA.cards.find(card=>card.id==='card_65');
   assert.equal(portableCard.displayName,'一种能反复练的本事');
@@ -224,18 +256,19 @@ function neutralTrace(multiplier) {
   const socialBeats=DATA.events.filter(event=>event.kind==='beat'&&event.track==='social');
   const socialDecisions=DATA.events.filter(event=>event.kind==='decision'&&event.track==='social');
   const socialConsequences=DATA.events.filter(event=>event.kind==='consequence'&&event.track==='social');
-  assert.deepEqual([socialBeats.length,socialDecisions.length,socialConsequences.length],[24,8,8]);
+  const legacySocialDecisions=socialDecisions.filter(event=>event.id!=='decision_210');
+  assert.deepEqual([socialBeats.length,socialDecisions.length,socialConsequences.length],[27,9,9]);
   assert.ok([...socialBeats,...socialDecisions].every(event=>!event.episode&&!event.recurrence));
-  assert.deepEqual(socialDecisions.map(event=>event.choices.length).sort(),[2,2,2,3,3,3,4,4]);
-  assert.equal(socialDecisions.filter(event=>event.choices.some(choice=>choice.socialOutcome)).length,4);
-  assert.ok(socialDecisions.every(event=>event.choices.filter(choice=>choice.cardInteraction).length===1));
+  assert.deepEqual(legacySocialDecisions.map(event=>event.choices.length).sort(),[2,2,2,3,3,3,4,4]);
+  assert.equal(legacySocialDecisions.filter(event=>event.choices.some(choice=>choice.socialOutcome)).length,4);
+  assert.ok(legacySocialDecisions.every(event=>event.choices.filter(choice=>choice.cardInteraction).length===1));
   const socialRefusalRoutes=new Set(['leftAlone','keptSpace','changedCircle','declinedClearly','leftOnTime','refusedFavor','declinedHousing','choseSolitude','usedFormalRoute','activeSolitude']);
-  assert.ok(socialDecisions.every(event=>event.choices.some(choice=>socialRefusalRoutes.has(choice.route))));
+  assert.ok(legacySocialDecisions.every(event=>event.choices.some(choice=>socialRefusalRoutes.has(choice.route))));
   assert.ok(socialDecisions.flatMap(event=>event.choices).filter(choice=>choice.socialOutcome).every(choice=>
     choice.socialOutcome.variants.length<=3&&
     choice.socialOutcome.variants.every(variant=>variant.memoryKey&&variant.resultText&&variant.consequenceText)
   ));
-  assert.equal(DATA.codex.length,34);
+  assert.equal(DATA.codex.length,42);
   assert.ok(DATA.codex.some(entry=>entry.id==='codex_33')&&DATA.codex.some(entry=>entry.id==='codex_34'));
   const socialOutcomeTags=new Set(socialDecisions.flatMap(event=>event.choices.flatMap(choice=>[
     ...(choice.outcomeTags||[]),
@@ -256,7 +289,7 @@ function neutralTrace(multiplier) {
   assert.ok(contingentGuarantee,'missing contingent guarantee family secret');
   assert.ok(!contingentGuarantee.effects.some(effect=>effect.target==='originHousehold.debt'),'unclaimed guarantee became settled household debt');
   assert.ok(DATA.events.filter(event=>event.kind==='blackSwan').every(event=>event.requirements&&Array.isArray(event.effects)&&event.effects.length>=2));
-  const wageCorrectionSwan=DATA.events.find(event=>event.kind==='blackSwan'&&event.text.includes('少发款'));
+  const wageCorrectionSwan=DATA.events.find(event=>event.id==='swan_09');
   assert.ok(wageCorrectionSwan.requirements.all.some(rule=>rule.path==='employment.status'&&rule.op==='eq'&&rule.value==='employed'));
   assert.ok(!DATA.events.some(event=>event.kind==='blackSwan'&&event.effects.some(command=>command.type==='addLiability'&&command.kind==='guarantee')));
   const mortgagePressure=DATA.events.find(event=>event.kind==='decision'&&event.prompt.includes('房贷加其他还款'));
@@ -274,6 +307,9 @@ function neutralTrace(multiplier) {
   assert.equal(activeCardChoices.filter(choice=>choice.cardInteraction.explanation).length,8);
   assert.equal(activeCardChoices.filter(choice=>choice.cardInteraction.resultSuffix).length,2);
   assert.ok(activeCardChoices.every(choice=>!choice.cardInteraction.explanation?.includes('准备')&&!choice.cardInteraction.resultSuffix?.includes('你这次走的是')));
+  const fableProfiles=['caregiver','overseasLife','platformYears','lateStudy','deliberateSolo','debtRebuilt','managedYears','creationFulfilled','activeSolitudeLife','closeFriendLife','centenarian','stayedHome'];
+  assert.ok(fableProfiles.every(id=>DATA.endingProfiles.some(profile=>profile.id===id)));
+  assert.equal(DATA.endingProfiles.find(profile=>profile.id==='wealthApex').nearMissHint,undefined);
 
   const predicates = collect(
     DATA,
@@ -423,6 +459,27 @@ function neutralTrace(multiplier) {
   expectContractFailure(
     validator.validateGeneratedData,
     data => {
+      data.events.find(event=>event.attitudes).attitudes[0].key='shrug';
+    },
+    /非法态度 key/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    data => {
+      data.events.find(event=>event.attitudes).attitudes[0].effects[0]={type:'add',target:'finance.cash',value:1};
+    },
+    /态度只允许幅度不超过 2 的软 add/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    data => {
+      data.cards.find(card=>card.ongoingModifiers).ongoingModifiers=['futureModifier'];
+    },
+    /非法持续卡牌效果/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    data => {
       findObject(data,value=>value.type==='confirmPartnership').value='dating';
     },
     /只允许 partnered/,
@@ -548,6 +605,7 @@ function neutralTrace(multiplier) {
   assert.match(gameSource,/aria-pressed/);
   assert.match(gameSource,/role="dialog"/);
   assert.match(gameSource,/aria-modal="true"/);
+  assert.match(gameSource,/event\.helpDelay && ongoingModifiers\(run\)\.has\('delayHelpSeeking'\)/);
   const generatorUrl = pathToFileURL(path.join(ROOT, 'tools', 'generate-v5-data.mjs')).href;
   const trackCopyUrl = pathToFileURL(
     path.join(ROOT, 'content', 'zh-CN', 'tracks', 'index.mjs'),
@@ -581,15 +639,15 @@ function neutralTrace(multiplier) {
       TRACK_COPY.leisure.beats.splice(1, 0, { ...TRACK_COPY.leisure.beats[0], text });
       BEAT_SLOT_REGISTRATIONS.push({
         key: beatAuthorKey('leisure', text),
-        slot: { id: 'beat_481', track: 'leisure', localIndex: 32 },
+        slot: { id: 'beat_506', track: 'leisure', localIndex: 36 },
       });
       await import(${JSON.stringify(generatorUrl)});
     `,
     'author-insert',
   );
-  const insertedBeat = insertedData.events.find(event => event.id === 'beat_481');
+  const insertedBeat = insertedData.events.find(event => event.id === 'beat_506');
   assert.equal(insertedBeat.track, 'leisure');
-  insertedData.events = insertedData.events.filter(event => event.id !== 'beat_481');
+  insertedData.events = insertedData.events.filter(event => event.id !== 'beat_506');
   insertedData.trackCoverage.leisure.beats -= 1;
   assert.deepEqual(
     insertedData,
@@ -612,7 +670,7 @@ function neutralTrace(multiplier) {
   assert.match(unregisteredFailure, /未登记定义/);
 
   assert.ok(
-    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.6.13')") <
+    gameSource.indexOf("import('./runtime-content-contract.mjs?v=0.7.0')") <
       gameSource.indexOf('fetch(`./data.json?v=${VERSION}`'),
     'shared contract import must precede data fetch',
   );
@@ -684,6 +742,57 @@ function neutralTrace(multiplier) {
     false,
     'non-empty array requirements must behave as an all-group',
   );
+
+  const pacingContract = await page.evaluate(() => {
+    const debug = window.__LIFE_DEBUG__, run = debug.snapshot(), budgets = debug.decisionStageBudgets();
+    const lifespans = Array.from({ length: 1000 }, (_, roll) => debug.naturalDeathAgeForRoll(roll)).sort((a,b)=>a-b);
+    return {
+      target: run.targetDecisions,
+      budgets,
+      budgetTotal: Object.values(budgets).reduce((sum,value)=>sum+value,0),
+      lifespan: { minimum: lifespans[0], maximum: lifespans.at(-1), median: (lifespans[499]+lifespans[500])/2 },
+    };
+  });
+  assert.ok(pacingContract.target>=22&&pacingContract.target<=28);
+  assert.equal(pacingContract.budgetTotal,pacingContract.target);
+  assert.ok(pacingContract.budgets.infancy+pacingContract.budgets.childhood>=1&&pacingContract.budgets.infancy+pacingContract.budgets.childhood<=3);
+  assert.ok(pacingContract.budgets.elder>=1);
+  assert.deepEqual(pacingContract.lifespan,{minimum:52,maximum:105,median:87});
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:40,swanCount:0,swanPityAge:40,lastSwanAge:-20}));
+  assert.equal(await page.evaluate(() => window.__LIFE_DEBUG__.blackSwanRate()),0.06);
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({swanCount:1}));
+  assert.equal(await page.evaluate(() => window.__LIFE_DEBUG__.blackSwanRate()),0.008);
+
+  const employmentBeat=DATA.events.find(event=>event.kind==='beat'&&event.track==='employment');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({attrs:{looks:5,ambition:5,intellect:5,social:5,stability:5,physique:5}}));
+  const neutralAttributeWeights=await page.evaluate(id=>({ordinary:window.__LIFE_DEBUG__.continuityWeight(id,false),continuity:window.__LIFE_DEBUG__.continuityWeight(id,true),multiplier:window.__LIFE_DEBUG__.attributeWeightMultiplier(id)}),employmentBeat.id);
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({attrs:{looks:5,ambition:10,intellect:5,social:5,stability:5,physique:5}}));
+  const highAttributeWeights=await page.evaluate(id=>({ordinary:window.__LIFE_DEBUG__.continuityWeight(id,false),continuity:window.__LIFE_DEBUG__.continuityWeight(id,true),multiplier:window.__LIFE_DEBUG__.attributeWeightMultiplier(id)}),employmentBeat.id);
+  assert.equal(highAttributeWeights.ordinary,neutralAttributeWeights.ordinary,'attributes changed a protected/non-continuity event weight');
+  assert.ok(highAttributeWeights.continuity>neutralAttributeWeights.continuity);
+  assert.ok(highAttributeWeights.multiplier>=0.65&&highAttributeWeights.multiplier<=1.5);
+
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({
+    age:60,phase:'playing',timeline:[{id:'attribute-drift-fixture',age:60}],outcomeTags:{},
+    attrs:{looks:6,ambition:6,intellect:6,social:6,stability:6,physique:6},
+    activity:{mode:'seeking',years:5},employment:{status:'unemployed',lastGrowthAge:null},
+    pressures:{money:80,family:10,career:10,body:60,loneliness:80},health:{status:'limited',physical:55,mental:55},finance:{cash:500000,liabilities:[]}
+  }));
+  const firstDrift=await page.evaluate(() => {const run=window.__LIFE_DEBUG__.settleYear();return {attrs:run.attrs,derived:{presence:run.capabilities.presence,drive:run.capabilities.drive,composure:run.capabilities.composure}}});
+  const secondDrift=await page.evaluate(() => window.__LIFE_DEBUG__.settleYear().attrs);
+  assert.deepEqual(secondDrift,firstDrift.attrs,'attribute drift settled twice at the same age');
+  assert.ok(!(await page.evaluate(() => Object.keys(window.__LIFE_DEBUG__.snapshot().outcomeTags).some(key=>key.startsWith('attribute-drift:')))),'attribute idempotency markers leaked into ending signals');
+  assert.ok(Object.values(firstDrift.attrs).every(value=>value>=1&&value<=10));
+  assert.ok(Object.values(firstDrift.derived).every(value=>value>=0&&value<=100));
+
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({
+    age:40,usedEvents:[],outcomeTags:{},employment:{status:'gig',contractType:'platform'},
+    mobility:{platformYears:0,platformDependence:0},finance:{cash:500000,liabilities:[]},
+    pressures:{money:10,family:10,career:10,body:10,loneliness:10},health:{status:'well',physical:80,mental:80}
+  }));
+  assert.equal((await page.evaluate(() => window.__LIFE_DEBUG__.settleYear())).mobility.platformYears,1,'an active platform-work year was not accumulated');
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({employment:{status:'employed',contractType:'openEnded'}}));
+  assert.equal((await page.evaluate(() => window.__LIFE_DEBUG__.settleYear())).mobility.platformYears,1,'a non-platform year was counted as platform history');
 
   await page.evaluate(() =>
     window.__LIFE_DEBUG__.patchRun({

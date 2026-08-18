@@ -4,15 +4,15 @@
   const app = document.getElementById('app');
   let CONTRACT;
   try {
-    CONTRACT = await import('./runtime-content-contract.mjs?v=0.6.13');
+    CONTRACT = await import('./runtime-content-contract.mjs?v=0.7.0');
   } catch (error) {
     throw new Error(`共享内容合同加载失败：${error?.message || error}`);
   }
   const { UI_COPY } = await import('./content/zh-CN/ui.mjs');
   const APP_KEY = 'life-unloaded-2026-v1';
-  const VERSION = '0.6.13',
-    SCHEMA_VERSION = 13,
-    CONTENT_REVISION = 33;
+  const VERSION = '0.7.0',
+    SCHEMA_VERSION = 14,
+    CONTENT_REVISION = 34;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -57,24 +57,54 @@
   const stageForAge = (age) =>
     Object.entries(DATA.stages).find(([, range]) => age >= range[0] && age <= range[1])?.[0] ||
     'elder';
-  const DECISION_STAGE_BASE = Object.freeze({
-    adolescence: 3,
-    youth: 5,
-    establishment: 4,
-    midlife: 3,
-    later: 2,
-    elder: 1,
+  const DECISION_DENSITY = Object.freeze({
+    infancy: 0.12,
+    childhood: 0.3,
+    adolescence: 0.55,
+    youth: 0.42,
+    establishment: 0.28,
+    midlife: 0.22,
+    later: 0.16,
+    elder: 0.1,
+  });
+  const QUIET_YEAR_LINES = Object.freeze({
+    infancy: ['这一年你长高的刻度，画在了门框上。','家里的相册厚了几页，大多是同一个角度。','你学会的新词里，有一个把大人逗笑了。','旧衣服很快就小了，袖口往下放过一截。','睡整觉这件事，这一年总算谈成了。'],
+    childhood: ['这一年的课本用完了，铅笔头攒了一小盒。','暑假过得比想象快，作业赶在最后两天。','你换了一颗牙，班里换了一次座位。','操场那圈跑道，你闭着眼都知道哪里有坑。','书包带断过一次，缝好了接着背。'],
+    adolescence: ['这一年考了很多试，名次上上下下。','校服短了一截，家里说再穿一年。','这一年长得快，饭量把家里吓了一跳。','耳机分你一只的人，换过两个。','有些话你写在本子最后一页，没给人看过。'],
+    youth: ['这一年搬过一次东西，扔了一半旧物。','存了一点钱，又花在说不上来的地方。','这一年认识了些人，留下联系的没几个。','换季时翻出旧衣服，才发现去年也这么想过。','年底才想起年初立过的计划，笑了一下。'],
+    establishment: ['这一年没什么波澜，日历翻得比想象快。','常去的店换了两家，你的作息没换。','这一年添了几样东西，也修了几样旧的。','通讯录长了一截，常联系的还是那几个。','这一年的照片不多，翻起来倒都记得。'],
+    midlife: ['这一年常走的那条路修了两次，你每次都绕同一个路口。','手边的东西越来越多，扔的速度赶不上添的。','这一年写过不少名字，越写越熟。','旧衣服又穿了一年，也没人说什么。','镜子里的变化，比日历慢半拍。'],
+    later: ['这一年走得慢，该到的地方都到了。','日常要做的事排得清楚，日子也有了格子。','这一年种的葱活了，比去年那盆强。','翻出一件旧东西，想了半天它是哪年买的。','这一年没出什么大岔子，算是好年成。'],
+    elder: ['这一年天冷得早，毛衣提前找了出来。','觉少了，早上的时间反而多了。','这一年想起不少旧事，也添了几件新事。','楼下的人换了一茬，见面还是点头。','这一年过得静，钟走的声音都听得见。'],
+    default: ['这一年没有大事。日子还是往前走了。'],
   });
   const decisionStageBudgets = (run) => {
-    const stages = Object.keys(DECISION_STAGE_BASE),
-      extras = clamp((run.targetDecisions || 18) - 18, 0, stages.length),
-      order = [...stages].sort(
+    const budgets = {};
+    let total = 0;
+    for (const [stage, density] of Object.entries(DECISION_DENSITY)) {
+      const [lo, hi] = DATA.stages[stage];
+      budgets[stage] = Math.max(stage === 'infancy' ? 0 : 1, Math.round(density * (hi - lo + 1)));
+      total += budgets[stage];
+    }
+    const adjustable = ['youth', 'establishment', 'midlife', 'later', 'elder', 'adolescence'],
+      order = [...adjustable].sort(
         (a, b) =>
           stable(run.seed, `decision-stage-extra:${a}`, 10000) -
           stable(run.seed, `decision-stage-extra:${b}`, 10000)
-      ),
-      budgets = { ...DECISION_STAGE_BASE };
-    for (const stage of order.slice(0, extras)) budgets[stage]++;
+      );
+    let diff = (run.targetDecisions || 22) - total;
+    while (diff) {
+      let changed = false;
+      for (const stage of order) {
+        if (!diff) break;
+        const step = Math.sign(diff);
+        if (budgets[stage] + step < 1) continue;
+        budgets[stage] += step;
+        diff -= step;
+        changed = true;
+      }
+      if (!changed) break;
+    }
     return budgets;
   };
   const weightedAt = (items, weightFn, rollUnit) => {
@@ -90,6 +120,16 @@
   const weighted = (items, weightFn = (item) => item.weight || 1) =>
     weightedAt(items, weightFn, rng());
   const chance = (value) => rng() < value;
+  const naturalDeathAgeForRoll = (value) => {
+    const roll = clamp(Math.floor(Number(value) || 0), 0, 999);
+    return roll < 60
+      ? 52 + (roll % 23)
+      : roll < 260
+        ? 76 + (roll % 8)
+        : roll < 820
+          ? 84 + (roll % 9)
+          : 93 + (roll % 13);
+  };
   let DATA,
     INDEX,
     state,
@@ -176,7 +216,7 @@
       histories: [],
       legacyHistories: [],
       codex: [],
-      settings: { haptic: true, reducedMotion: false },
+      settings: { haptic: true, reducedMotion: false, echoAcrossRuns: false },
       stats: { runs: 0 },
       seen: { events: {}, cards: {}, families: {}, endings: {} },
       recentSeeds: [],
@@ -648,6 +688,8 @@
       childCount: 0,
       childBond: 0,
       network: clamp(35 + location.mods.network / 3, 30, 75),
+      lastParentLossAge: null,
+      lastParentLossPersonId: null,
     };
     run.social = { primaryPersonId: null, secondaryPersonId: null };
     run.health = {
@@ -680,6 +722,7 @@
       careSkill: 0,
       negotiation: 0,
     };
+    run.capabilitiesBirthBase = copy(run.capabilities);
     run.mobility = {
       mode: 'home',
       platformDependence: 0,
@@ -693,6 +736,7 @@
       discriminationLoad: 0,
       lastOverseasSystem: 'none',
       workAuthorization: 'unknown',
+      platformYears: 0,
     };
     run.business = {
       mode: 'none',
@@ -701,6 +745,7 @@
       equity: 0,
       scale: 'none',
       control: 100,
+      activeYears: 0,
     };
     run.later = { retirement: 'none', inheritance: 'none', care: 'none', will: 'none' };
     run.pressures = { money: 0, family: 0, career: 0, body: 0, loneliness: 0 };
@@ -718,20 +763,29 @@
     run.cards = [];
     run.cardAges = [];
     run.timeline = [];
+    run.pendingAttitude = null;
+    run.attributesCommitted = false;
     run.yearQueue = [];
     run.yearStarted = false;
     run.decisionCount = 0;
-    run.targetDecisions = 18 + stable(seed, 'decision-target', 7);
+    run.targetDecisions = 22 + stable(seed, 'decision-target', 7);
     run.lastDecisionAge = -5;
     run.stageDecisionCounts = {};
     run.lifecycleStageOverrides = {};
     run.secretRevealed = false;
     run.lastSwanAge = -20;
     run.swanCount = 0;
+    run.swanPityAge = 30 + stable(seed, 'swan-pity', 30);
     run.agency = 0;
     run.deathCause = null;
-    run.naturalDeathAge = 58 + stable(seed, 'lifespan', 48);
+    run.naturalDeathAge = naturalDeathAgeForRoll(stable(seed, 'lifespan', 1000));
     run.ending = null;
+    const previousLife = state.meta?.histories?.[0];
+    run.previousLifeHint =
+      state.meta?.settings?.echoAcrossRuns && previousLife
+        ? { familyName: previousLife.familyName || '旧人家' }
+        : null;
+    run.usedPreviousLifeHint = false;
     syncDerived(run);
     return run;
   }
@@ -1097,6 +1151,12 @@
       run.education.fullTimeUndergraduateClosed = true;
     run.world = worldAt(run.age, run.location);
     run.relationships.childCount = childPeople(run).length;
+    run.relationships.partnerHistoryCount = run.people.filter(
+      (item) => item.relation === 'partner'
+    ).length;
+    run.relationships.parentLost = run.people.some(
+      (item) => ['father', 'mother'].includes(item.relation) && item.alive === false
+    );
     const activePartner = run.people.find(
       (item) =>
         item.id === run.relationships.activePartnerId && item.alive && item.relation === 'partner'
@@ -1106,6 +1166,7 @@
       run.relationships.activePartnerId = fallback?.id || null;
     }
     run.finance.totalDebt = totalDebt(run);
+    run.finance.everHadDebt = run.finance.liabilities.length > 0;
     run.finance.hasArrears = run.finance.liabilities.some(
       (item) => item.status === 'delinquent' || (item.arrears || 0) > 0
     );
@@ -1274,6 +1335,31 @@
           (run.education.overseasFundingReady || run.education.scholarshipReady)));
     run.education.overseasEntryReady =
       run.education.overseasDepartureReady && run.education.entryPermitReady;
+    for (const key of Object.keys(run.attrs)) run.attrs[key] = clamp(run.attrs[key], 1, 10);
+    run.capabilities.presence = clamp(
+      30 +
+        (run.attrs.looks - 5) * 6 +
+        (run.attrs.social - 5) * 4 +
+        (run.capabilities.network || 0) * 3,
+      0,
+      100
+    );
+    run.capabilities.drive = clamp(
+      30 +
+        (run.attrs.ambition - 5) * 6 +
+        (run.business.operatingSkill || 0) * 0.2 +
+        (run.employment.growthCount || 0) * 3,
+      0,
+      100
+    );
+    run.capabilities.composure = clamp(
+      30 +
+        (run.attrs.stability - 5) * 6 +
+        run.health.mental * 0.3 -
+        run.pressures.money * 0.2,
+      0,
+      100
+    );
     if (run.employment.status === 'employed' && !run.roles.includes('employee'))
       run.roles.push('employee');
     if (run.relationships.childCount && !run.roles.includes('parent')) run.roles.push('parent');
@@ -1328,8 +1414,46 @@
         : {};
     merged.lifecycleStageOverrides =
       run.lifecycleStageOverrides && typeof run.lifecycleStageOverrides === 'object'
-        ? { ...run.lifecycleStageOverrides }
+        ? Object.fromEntries(
+            Object.entries(run.lifecycleStageOverrides).map(([key, value]) => [
+              key,
+              value === true ? 1 : Math.max(0, Number(value) || 0),
+            ])
+          )
         : {};
+    merged.timeline = (Array.isArray(run.timeline) ? run.timeline : []).map((item) => ({
+      ...item,
+      ...(item.attitude &&
+      typeof item.attitude.key === 'string' &&
+      typeof item.attitude.text === 'string'
+        ? { attitude: { key: item.attitude.key, text: item.attitude.text } }
+        : {}),
+    }));
+    merged.pendingAttitude =
+      typeof run.pendingAttitude === 'string' && INDEX.event.get(run.pendingAttitude)?.attitudes
+        && !merged.outcomeTags?.[`attitude-event:${run.pendingAttitude}`]
+        ? run.pendingAttitude
+        : null;
+    merged.attributesCommitted = Boolean(run.attributesCommitted);
+    merged.relationships.lastParentLossAge = Number.isFinite(
+      run.relationships?.lastParentLossAge
+    )
+      ? clamp(run.relationships.lastParentLossAge, 0, 105)
+      : null;
+    merged.relationships.lastParentLossPersonId =
+      typeof run.relationships?.lastParentLossPersonId === 'string' &&
+      merged.people.some(
+        (item) =>
+          item.id === run.relationships.lastParentLossPersonId &&
+          ['father', 'mother'].includes(item.relation) &&
+          item.alive === false
+      )
+        ? run.relationships.lastParentLossPersonId
+        : null;
+    merged.capabilitiesBirthBase = {
+      ...fresh.capabilitiesBirthBase,
+      ...(run.capabilitiesBirthBase || {}),
+    };
     merged.social = normalizeSocialState(merged, run.social || fresh.social);
     if (!CONTRACT.EMPLOYMENT_REFERRAL_STATUS.includes(merged.employment.referralStatus))
       merged.employment.referralStatus = 'none';
@@ -1495,11 +1619,6 @@
       else {
         base.run = null;
         base.meta.migrationNotice = true;
-        base.meta.seen.events = Object.fromEntries(
-          Object.entries(base.meta.seen.events || {}).filter(
-            ([id]) => !/^(beat|decision|consequence|echo|swan)_\d+$/.test(id)
-          )
-        );
       }
       removeLegacySnapshots();
       if (base.run && base.run.phase !== 'ended') base.view = viewForRunPhase(base.run);
@@ -1959,6 +2078,29 @@
       !event ||
       run.age < event.ageMin ||
       run.age > event.ageMax
+    )
+      return false;
+    if (
+      event.id === 'decision_154' &&
+      (!run.outcomeTags['parentLoss:firstCall'] || run.outcomeTags['parentLoss:inheritance'])
+    )
+      return false;
+    if (
+      event.id === 'decision_214' &&
+      run.age !== run.relationships.lastParentLossAge
+    )
+      return false;
+    const parentLossStartedAt = run.episodes?.parent_loss?.startedAt;
+    if (
+      event.id === 'decision_215' &&
+      (!Number.isFinite(parentLossStartedAt) ||
+        run.age - parentLossStartedAt < 1 ||
+        run.age - parentLossStartedAt > 3)
+    )
+      return false;
+    if (
+      event.id === 'decision_216' &&
+      (!Number.isFinite(parentLossStartedAt) || run.age - parentLossStartedAt < 5)
     )
       return false;
     if (event.recurrence) {
@@ -3265,6 +3407,12 @@
   function rollbackCommands(before, context, error) {
     return { ok: false, before, after: copy(state.run), context, error: String(error || '结算失败') };
   }
+  function ongoingModifiers(run) {
+    return new Set(
+      (run.cards || [])
+        .flatMap((id) => INDEX.cards.get(id)?.ongoingModifiers || [])
+    );
+  }
   function applyCommands(commands = [], context = {}) {
     const target = state.run,
       before = copy(target),
@@ -3279,16 +3427,22 @@
         );
       }
       if (command.type === 'add') {
+        const adjustedValue =
+          command.target === 'relationships.partnerBond' &&
+          Number(command.value) > 0 &&
+          ongoingModifiers(run).has('guardedPartnerBond')
+            ? Math.max(0, Number(command.value) * 0.7)
+            : command.value;
         if (command.target === 'finance.cash' && Number(command.value) < 0 && run.age < 18) {
           const cost = Math.abs(Number(command.value)),
             fromAssets = Math.min(run.originHousehold.assets, cost);
           run.originHousehold.assets -= fromAssets;
           run.originHousehold.debt += cost - fromAssets;
           run.pressures.family = clamp(run.pressures.family + 2, 0, 100);
-        } else addPath(run, command.target, command.value);
+        } else addPath(run, command.target, adjustedValue);
         if (command.target === 'relationships.partnerBond')
           for (const item of partnerPeople(run))
-            item.bond = clamp(item.bond + Number(command.value), 0, 100);
+            item.bond = clamp(item.bond + Number(adjustedValue), 0, 100);
         if (command.target === 'relationships.childBond')
           for (const item of childPeople(run))
             item.bond = clamp(item.bond + Number(command.value), 0, 100);
@@ -3620,6 +3774,10 @@
       record.status = 'active';
       record.phase = episode.phase + 1;
       record.nextPhaseAge = run.age + clamp(episode.delayYears, 0, 5);
+      if (episode.id === 'parent_loss' && episode.phase === 2) {
+        record.nextPhaseAge = Math.max(30, record.startedAt + 5);
+        record.deadlineAge = Math.min(105, record.nextPhaseAge + 6);
+      }
       if (
         episode.id === 'undergraduate_application' &&
         episode.phase === 3 &&
@@ -3905,6 +4063,7 @@
     run.sceneQueue = [];
     run.phase = 'playing';
     openFamilyPlanningIfEligible(run);
+    if (event.id === 'decision_154') addTag(run, 'parentLoss:inheritance');
     const educationEventsThisAge = run.decisionHistory.filter(
         (item) =>
           item.age === run.age &&
@@ -4241,6 +4400,12 @@
   function episodeClosureReason(id, record, run) {
     if (record.status !== 'active') return null;
     if (episodeBindingInvalid(id, record, run)) return 'invalidated';
+    if (
+      id === 'parent_loss' &&
+      record.phase === 2 &&
+      run.age - record.startedAt > 3
+    )
+      return 'deadline';
     if (run.age >= record.deadlineAge) return 'deadline';
     if (run.age < record.nextPhaseAge) return null;
     const candidate = INDEX.kinds.decision.find(
@@ -4688,6 +4853,34 @@
     }
     return flow;
   }
+  function driftAttributes(run) {
+    const marker = `attribute-drift:${run.age}`;
+    if (run.usedEvents.includes(marker)) return;
+    const drift = (key, delta) => {
+      run.attrs[key] = clamp(run.attrs[key] + delta, 1, 10);
+    };
+    if (run.age >= 55 && run.age % 6 === 0) drift('physique', -1);
+    if (run.health.status === 'limited' && run.age % 4 === 0) drift('physique', -1);
+    if (
+      run.age >= 40 &&
+      run.age % 10 === 0 &&
+      !(run.health.physical >= 80 && run.age < 60)
+    )
+      drift('looks', -1);
+    if (
+      run.activity.mode === 'seeking' &&
+      (currentSeekingYears(run) || 0) >= 3 &&
+      run.age % 3 === 0
+    )
+      drift('ambition', -1);
+    if (Number.isFinite(run.employment.lastGrowthAge) && run.employment.lastGrowthAge === run.age)
+      drift('ambition', 1);
+    if (run.pressures.money >= 70 && run.pressures.body >= 50) drift('stability', -1);
+    else if (run.age > 0 && run.age % 8 === 0 && run.pressures.money < 30)
+      drift('stability', 1);
+    if (run.pressures.loneliness >= 70 && run.age % 5 === 0) drift('social', -1);
+    run.usedEvents.push(marker);
+  }
   function settleYear(run) {
     if (run.age === 0 && run.timeline.length < 2) return;
     resumeCareLeaveIfDue(run);
@@ -4720,6 +4913,24 @@
       run.pressures.loneliness = clamp(run.pressures.loneliness + 4, 0, 100);
     if (run.mobility.platformDependence > 60)
       income = Math.round(income * (0.72 + stable(run.seed, `platform-${run.age}`, 55) / 100));
+    if (run.employment.contractType === 'platform') run.mobility.platformYears++;
+    if (run.business.status === 'operating') run.business.activeYears++;
+    const coResidents = new Set(run.housing.coResidentRefs || []),
+      currentCareResponsibility = run.people.some((item) => {
+        if (!item.alive) return false;
+        if (
+          ['child', 'adoptedChild', 'stepChild'].includes(item.relation) &&
+          personAge(item, run) < 18
+        )
+          return true;
+        return (
+          ['father', 'mother'].includes(item.relation) &&
+          personAge(item, run) >= 70 &&
+          coResidents.has(item.id)
+        );
+      });
+    if (ongoingModifiers(run).has('reliableCarePressure') && currentCareResponsibility)
+      run.pressures.family = clamp(run.pressures.family + 2, 0, 100);
     run.finance.lastIncome = income;
     run.finance.lastExpense = expense;
     run.finance.cash += income - expense;
@@ -4766,6 +4977,7 @@
     run.activity.years++;
     run.health.physical = clamp(run.health.physical, 0, 100);
     run.health.mental = clamp(run.health.mental, 0, 100);
+    driftAttributes(run);
     syncDerived(run);
     unlockCodex();
   }
@@ -4821,6 +5033,11 @@
       ) {
         item.alive = false;
         item.status = 'deceased';
+        if (['father', 'mother'].includes(item.relation)) {
+          run.relationships.lastParentLossAge = run.age;
+          run.relationships.lastParentLossPersonId = item.id;
+          item.diedAt = run.age;
+        }
         if (item.id === run.relationships.activePartnerId) {
           run.relationships.lastPartnerId = item.id;
           run.relationships.activePartnerId = null;
@@ -5138,6 +5355,22 @@
     ) multiplier *= 1.12;
     return Math.min(1.35, multiplier);
   }
+  const ATTR_TRACK_AFFINITY = Object.freeze({
+    looks: { up: ['partnership', 'social'], down: [] },
+    ambition: { up: ['business', 'employment', 'public', 'remote'], down: ['leisure'] },
+    intellect: { up: ['education'], down: [] },
+    social: { up: ['social', 'partnership'], down: [] },
+    stability: { up: [], down: ['finance', 'habits'] },
+  });
+  function attributeWeightMultiplier(event, run) {
+    let multiplier = 1;
+    for (const [key, affinity] of Object.entries(ATTR_TRACK_AFFINITY)) {
+      const offset = (run.attrs[key] - 5) * 0.04;
+      if (affinity.up.includes(event.track)) multiplier *= 1 + offset;
+      if (affinity.down.includes(event.track)) multiplier *= 1 - offset;
+    }
+    return clamp(multiplier, 0.65, 1.5);
+  }
   function eventWeight(event, run = state.run, { continuity = false } = {}) {
     let weight = event.weight || 10;
     const conflict = DATA.conflicts.find((item) => item.id === run.mainConflict);
@@ -5176,6 +5409,8 @@
     if (event.track === 'partnership' && run.relationships.partnerStatus !== 'none') weight *= 1.25;
     if (continuity) {
       weight *= factReactionMultiplier(event, run);
+      weight *= attributeWeightMultiplier(event, run);
+      if (event.helpDelay && ongoingModifiers(run).has('delayHelpSeeking')) weight *= 1.25;
       const saturation = recentTextureCount(run, event);
       if (saturation >= 2) weight *= 0.55;
       if (
@@ -5226,7 +5461,10 @@
     return candidates;
   }
   function mandatoryDecision(run) {
-    const pendingPregnancy = INDEX.kinds.decision.find(
+    const parentLossMoment = INDEX.kinds.decision.find(
+        (event) => event.id === 'decision_214' && eligible(event, run)
+      ),
+      pendingPregnancy = INDEX.kinds.decision.find(
         (event) =>
           event.episode?.id === 'pregnancy_decision' &&
           event.episode.role === 'start' &&
@@ -5236,6 +5474,7 @@
       hasClaimedDesire = Object.values(run.desires).some(
         (value) => value && typeof value === 'object' && value.claimed
       );
+    if (parentLossMoment) return parentLossMoment;
     if (pendingPregnancy) return pendingPregnancy;
     if (run.age >= 14 && !hasClaimedDesire) {
       const event = globals.find((item) => item.track === 'identity' && item.ageMin === 14);
@@ -5428,12 +5667,16 @@
   ]);
   function decisionQuotaOpen(run) {
     const stage = stageForAge(run.age);
-    if (!Object.hasOwn(DECISION_STAGE_BASE, stage)) return false;
+    if (!Object.hasOwn(DECISION_DENSITY, stage)) return false;
     return (run.stageDecisionCounts[stage] || 0) < decisionAllowance(run);
   }
   function lifecycleOverrideAvailable(run) {
     const stage = stageForAge(run.age);
-    return Object.hasOwn(DECISION_STAGE_BASE, stage) && !run.lifecycleStageOverrides[stage];
+    const limit = ['later', 'elder'].includes(stage) ? 2 : 1;
+    return (
+      Object.hasOwn(DECISION_DENSITY, stage) &&
+      (run.lifecycleStageOverrides[stage] || 0) < limit
+    );
   }
   function selectedDecisionLayer(run) {
     const layers = decisionCandidateLayers(run),
@@ -5474,14 +5717,14 @@
     const stage = stageForAge(run.age),
       remaining = Math.max(1, (DATA.stages[stage]?.[1] || run.age) - run.age + 1),
       needed = Math.max(0, decisionAllowance(run) - (run.stageDecisionCounts[stage] || 0)),
-      threshold = Math.min(0.72, (needed / remaining) * 1.25),
+      threshold = Math.min(remaining > 20 ? 0.9 : 0.72, (needed / remaining) * 1.25),
       offerRoll = stable(run.seed, `decision-offer:${run.age}`, 10000) / 10000;
     return offerRoll < threshold;
   }
 
   function addTimeline(event, text, variant = 'event') {
     const run = state.run;
-    run.timeline.push({
+    const row = {
       id: event.id,
       age: run.age,
       year: 2026 + run.age,
@@ -5490,9 +5733,11 @@
       icon: event.icon || '·',
       text,
       variant,
-    });
+    };
+    run.timeline.push(row);
     run.timeline = run.timeline.slice(-180);
     state.meta.seen.events[event.id] = (state.meta.seen.events[event.id] || 0) + 1;
+    return row;
   }
   function recordDecisionBudgetUse(run, event) {
     const stage = stageForAge(run.age),
@@ -5501,7 +5746,7 @@
       event.episode?.role === 'start' &&
       event.episode.lifecycle &&
       count >= decisionAllowance(run)
-    ) run.lifecycleStageOverrides[stage] = true;
+    ) run.lifecycleStageOverrides[stage] = (run.lifecycleStageOverrides[stage] || 0) + 1;
     run.stageDecisionCounts[stage] = count + 1;
   }
   function revealEvent(event) {
@@ -5518,6 +5763,13 @@
     }
     for (const tag of event.runtimeTags || []) addTag(run, tag);
     addTimeline(event, event.runtimeText || event.text);
+    if (
+      Array.isArray(event.attitudes) &&
+      event.attitudes.length === 2 &&
+      run.age >= 6 &&
+      !run.outcomeTags[`attitude-event:${event.id}`]
+    )
+      run.pendingAttitude = event.id;
     if (!event.recurrence) run.usedEvents.push(event.id);
     if (event.kind === 'secret') run.secretRevealed = true;
     if (event.scheduleId) {
@@ -5565,10 +5817,10 @@
       planned.push({ ...projectedDecision, annualRole: 'decision', annualPlanToken: planToken });
 
     const openSlots = () => targetSize - existingCount - planned.length;
-    const swanRate = run.age < 18 ? 0.004 : run.age < 65 ? 0.008 : 0.006;
+    const swanRate = blackSwanRate(run);
     if (
       openSlots() > 0 &&
-      run.swanCount < 2 &&
+      run.swanCount < 3 &&
       run.age - run.lastSwanAge >= 10 &&
       planRoll('swan-chance') < swanRate
     ) {
@@ -5593,12 +5845,26 @@
       excludedIds.add(beat.id);
     }
     if (!planned.length && existingCount === 0) {
+      const stage = stageForAge(run.age),
+        lines = [...(QUIET_YEAR_LINES[stage] || QUIET_YEAR_LINES.default)];
+      if (
+        run.previousLifeHint &&
+        !run.usedPreviousLifeHint &&
+        ['establishment', 'later'].includes(stage)
+      ) {
+        lines.push(
+          `闲聊时有人提起${run.previousLifeHint.familyName}，讲到一半说：那都是上一辈子的事了。`
+        );
+      }
+      const quietText = lines[stable(run.seed, `quiet:${run.age}`, lines.length)];
+      if (quietText.includes('上一辈子的事了'))
+        run.usedPreviousLifeHint = true;
       planned.push({
         id: `quiet_${run.age}`,
         kind: 'beat',
         track: 'ordinary',
         icon: '·',
-        text: '这一年没有大事。日子还是往前走了。',
+        text: quietText,
         effects: [],
       });
     }
@@ -5610,6 +5876,11 @@
       projectedDecisionId: projectedDecision?.id || null,
       factIds: facts.map((event) => event.id),
     };
+  }
+
+  function blackSwanRate(run) {
+    const baseRate = run.age < 18 ? 0.004 : run.age < 65 ? 0.008 : 0.006;
+    return run.swanCount === 0 && run.age >= run.swanPityAge ? 0.06 : baseRate;
   }
   function beginYear() {
     const run = state.run;
@@ -5692,6 +5963,11 @@
       return false;
     if (!force) inputLocked = true;
     try {
+      if (run.pendingAttitude) {
+        run.outcomeTags[`attitude-event:${run.pendingAttitude}`] = 1;
+        run.pendingAttitude = null;
+        save();
+      }
       for (let guard = 0; guard < 6; guard++) {
         if (!run.yearStarted && beginYear()) return true;
         if (run.phase !== 'playing') return true;
@@ -5716,6 +5992,30 @@
     } finally {
       if (!force) setTimeout(() => (inputLocked = false), 150);
     }
+  }
+
+  function chooseAttitude(key) {
+    const run = state.run,
+      eventId = run?.pendingAttitude,
+      event = eventId ? INDEX.event.get(eventId) : null,
+      attitude = event?.attitudes?.find((item) => item.key === key);
+    if (!event || !attitude || run.outcomeTags[`attitude-event:${eventId}`]) return false;
+    const result = applyCommands(attitude.effects || [], {
+      eventId,
+      source: 'attitude',
+    });
+    if (!result.ok) {
+      showToast(`这句话没有结算：${result.error}`);
+      return false;
+    }
+    addTag(run, `attitude:${attitude.key}`);
+    run.outcomeTags[`attitude-event:${eventId}`] = 1;
+    const row = [...run.timeline].reverse().find((item) => item.id === eventId && !item.attitude);
+    if (row) row.attitude = { key: attitude.key, text: attitude.text };
+    run.pendingAttitude = null;
+    save();
+    render();
+    return true;
   }
 
   function startCardDraw(age) {
@@ -5761,8 +6061,21 @@
     render();
   }
 
-  function unlockCodex() {
+  function unlockCodex(finalLife = false) {
     const run = state.run;
+    const hasLateSoloFriend =
+      run.age >= 60 &&
+      run.housing.arrangement === 'solo' &&
+      (run.outcomeTags['social:reconnect:close'] ||
+        run.outcomeTags['social:support:showedUp']) &&
+      run.people.some(
+        (item) =>
+          item.alive &&
+          item.social &&
+          ['friend', 'close'].includes(item.social.tie)
+      );
+    if (hasLateSoloFriend) run.outcomeTags['social:soloLateFriend'] = 1;
+    if (finalLife && stayedRooted(run)) run.outcomeTags.stayedRooted = 1;
     for (const entry of DATA.codex) {
       if (state.meta.codex.includes(entry.id)) continue;
       const rule = entry.unlockRules || {},
@@ -5773,8 +6086,53 @@
     }
   }
 
+  function stayedRooted(run) {
+    const migrated = (run.housing.history || []).some(
+      (item) => item.state?.region && item.state.region !== run.location.id
+    );
+    return (
+      run.age >= 70 &&
+      run.mobility.lastOverseasSystem === 'none' &&
+      !migrated &&
+      (run.housing.history || []).every(
+        (item) => !item.state?.region || item.state.region === run.location.id
+      )
+    );
+  }
+
+  function decisionChoice(run, record) {
+    return INDEX.event
+      .get(record.eventId)
+      ?.choices?.find((choice) => choice.id === record.choiceId);
+  }
+
+  function hasChoiceEvidence(run, predicate) {
+    return (run.decisionHistory || []).some((record) => {
+      const choice = decisionChoice(run, record);
+      return Boolean(choice && predicate(choice, record));
+    });
+  }
+
+  function hasCreationEvidence(run) {
+    return (
+      Boolean(run.outcomeTags['card:creativity']) ||
+      (run.cards || []).some((id) =>
+        (INDEX.cards.get(id)?.effects || []).some(
+          (command) =>
+            command.type === 'add' &&
+            command.target === 'desires.creation.fulfillment' &&
+            Number(command.value) > 0
+        )
+      )
+    );
+  }
+
   function finalSignals(run) {
-    const signals = new Set(Object.keys(run.outcomeTags)),
+    const signals = new Set(
+        Object.entries(run.outcomeTags)
+          .filter(([, value]) => Boolean(value))
+          .map(([key]) => key)
+      ),
       has = (tag) => Boolean(run.outcomeTags[tag]);
     signals.add('lifeEnded');
     if (new Set(run.decisionHistory.map((item) => item.eventId)).size >= 2)
@@ -5807,6 +6165,72 @@
       (run.finance.hasArrears || run.finance.totalDebt > Math.max(30000, run.finance.lastIncome))
     )
       signals.add('familyControlCycle');
+    const socialSignal = socialEndingSignal(run),
+      decisionRecords = run.decisionHistory || [],
+      overseasNow = ['us', 'europe'].includes(run.housing.region),
+      repaidDebt = decisionRecords.some((item) =>
+        (item.outcomeTags || []).some((tag) =>
+          ['finance:repaid', 'finance:restructured'].includes(tag)
+        )
+      );
+    if (
+      run.development.careLoad >= 40 ||
+      decisionRecords.some((item) =>
+        (item.outcomeTags || []).some((tag) =>
+          ['caregiver:deliberate', 'care:gave', 'children:care'].includes(tag)
+        )
+      )
+    )
+      signals.add('careGiver');
+    if (run.mobility.lastOverseasSystem !== 'none' && overseasNow) signals.add('overseasSettled');
+    if (run.mobility.platformYears >= 10) signals.add('platformDecade');
+    if (
+      decisionRecords.some(
+        (item) =>
+          item.age >= 30 &&
+          INDEX.event.get(item.eventId)?.episode?.id === 'adult_reeducation' &&
+          (item.outcomeTags || []).some((tag) =>
+            [
+              'education:enrolled',
+              'education:reduced',
+              'education:completed',
+              'education:low_intensity',
+              'education:non_degree',
+            ].includes(tag)
+          )
+      )
+    )
+      signals.add('lateStudy');
+    if (
+      run.relationships.parenthoodIntent === 'childfree' &&
+      run.relationships.childCount === 0 &&
+      decisionRecords.some((item) =>
+        (item.outcomeTags || []).some((tag) =>
+          ['children:deliberate', 'parenthood:childfree'].includes(tag)
+        )
+      )
+    )
+      signals.add('deliberateSolo');
+    if (repaidDebt && run.finance.totalDebt === 0) signals.add('debtCleared');
+    const managedChoice = hasChoiceEvidence(run, (choice) =>
+        (choice.outcomeTags || []).some((tag) =>
+          ['health:managed', 'health:negotiated'].includes(tag)
+        )
+      ),
+      creationChoice = hasCreationEvidence(run);
+    if (
+      run.health.status === 'managed' &&
+      run.health.conditionSeverity > 0 &&
+      run.age >= 70 &&
+      managedChoice
+    )
+      signals.add('chronicCompanion');
+    if (run.desires.creation.fulfillment >= 65 && creationChoice)
+      signals.add('creationFulfilled');
+    if (socialSignal.kind === 'activeSolitude') signals.add('activeSolitude');
+    if (socialSignal.kind === 'closeFriend') signals.add('closeFriend');
+    if (run.age >= 100) signals.add('centenarian');
+    if (stayedRooted(run)) signals.add('stayedRooted');
     return signals;
   }
   function endingProfile(run) {
@@ -5818,7 +6242,9 @@
       exact = DATA.endingProfiles
         .filter(
           (profile) =>
-            profile.id !== fallback.id && profile.signals.every((signal) => signals.has(signal))
+            profile.id !== fallback.id &&
+            profile.id !== 'earlyExit' &&
+            profile.signals.every((signal) => signals.has(signal))
         )
         .sort(
           (a, b) =>
@@ -5826,12 +6252,9 @@
             stable(run.seed, a.id, 100) - stable(run.seed, b.id, 100)
         );
     if (exact.length) return exact[0];
-    return fallback.signals.every((signal) => signals.has(signal))
-      ? fallback
-      : DATA.endingProfiles.find(
-          (profile) =>
-            profile.id === 'earlyExit' && profile.signals.every((signal) => signals.has(signal))
-        ) || fallback;
+    const earlyExit = DATA.endingProfiles.find((profile) => profile.id === 'earlyExit');
+    if (earlyExit?.signals.every((signal) => signals.has(signal))) return earlyExit;
+    return fallback;
   }
   function latestSocialIntent(run) {
     for (let index = (run.decisionHistory || []).length - 1; index >= 0; index--) {
@@ -6202,23 +6625,107 @@
   }
   function compatibleEndingTitles(run, profile, titles) {
     if (profile.id !== 'ordinaryContent') return titles;
-    const seeking = run.activity.mode === 'seeking' || run.employment.firstJobAge === null,
-      preferred = run.finance.totalDebt > 0 || seeking
-        ? '简历和账单之间'
-        : run.relationships.childCount || run.later.care !== 'none'
-          ? '家里一直有人等'
-          : run.health.status !== 'well' || run.health.conditionSeverity > 0
-            ? '按身体能走的路'
-            : ['retired', 'leftSearch'].includes(run.later.retirement)
-              ? '工作停在这一天'
-              : ['semiRetired', 'lightWork', 'working', 'keptSearching'].includes(run.later.retirement)
-                ? '工牌后面的几年'
-              : run.employment.growthCount > 0 ||
-                  ['employed', 'gig', 'selfEmployed'].includes(run.employment.status)
-                ? '工牌后面的几年'
-                : '把日子过到这里',
-      match = titles.find((item) => item.title === preferred);
-    return match ? [match] : titles;
+    const exclusions = {
+        简历和账单之间: () =>
+          run.finance.totalDebt === 0 &&
+          run.activity.mode !== 'seeking' &&
+          run.employment.firstJobAge !== null,
+        家里一直有人等: () =>
+          !run.relationships.childCount &&
+          run.later.care === 'none' &&
+          ['none', 'divorced', 'widowed'].includes(run.relationships.partnerStatus),
+        按身体能走的路: () =>
+          run.health.status === 'well' && run.health.conditionSeverity === 0,
+        工作停在这一天: () => !['retired', 'leftSearch'].includes(run.later.retirement),
+        工牌后面的几年: () =>
+          run.employment.firstJobAge === null && !run.employment.lastJob,
+        把日子过到这里: () => false,
+      },
+      kept = titles.filter((item) => !(exclusions[item.title]?.() || false));
+    return kept.length ? kept : titles;
+  }
+  function endingNearMisses(run, selectedProfile) {
+    const signals = finalSignals(run),
+      rarity = { 常见: 1, 少见: 2, 罕见: 3, 极罕: 4, 传奇: 5 };
+    return DATA.endingProfiles
+      .filter(
+        (profile) =>
+          profile.id !== selectedProfile.id &&
+          !['ordinaryContent', 'earlyExit', 'wealthApex'].includes(profile.id) &&
+          profile.nearMissHint &&
+          profile.signals.filter((signal) => !signals.has(signal)).length === 1 &&
+          nearMissThresholdMet(profile, run)
+      )
+      .sort(
+        (a, b) =>
+          (rarity[b.rarity] || 0) - (rarity[a.rarity] || 0) ||
+          stable(run.seed, `near-miss:${a.id}`, 1000) -
+            stable(run.seed, `near-miss:${b.id}`, 1000)
+      )
+      .slice(0, 2)
+      .map((profile) => profile.id);
+  }
+  function nearMissThresholdMet(profile, run) {
+    const records = run.decisionHistory || [],
+      hasRecordedTag = (tags) =>
+        records.some((record) =>
+          (record.outcomeTags || []).some((tag) => tags.includes(tag))
+        );
+    if (profile.id === 'centenarian') return run.age >= 95;
+    if (profile.id === 'platformYears') return run.mobility.platformYears >= 7;
+    if (profile.id === 'overseasLife')
+      return run.mobility.lastOverseasSystem !== 'none';
+    if (profile.id === 'debtRebuilt')
+      return (
+        hasRecordedTag(['finance:repaid', 'finance:restructured']) &&
+        run.finance.totalDebt > 0 &&
+        run.finance.totalDebt <= Math.max(30000, run.finance.lastIncome * 0.5)
+      );
+    if (profile.id === 'managedYears')
+      return (
+        run.age >= 65 &&
+        run.health.status === 'managed' &&
+        hasRecordedTag(['health:managed', 'health:negotiated'])
+      );
+    if (profile.id === 'creationFulfilled')
+      return run.desires.creation.fulfillment >= 55 && hasCreationEvidence(run);
+    if (profile.id === 'caregiver') return run.development.careLoad >= 30;
+    if (profile.id === 'stayedHome')
+      return (
+        run.age >= 65 &&
+        run.mobility.lastOverseasSystem === 'none' &&
+        (run.housing.history || []).every(
+          (item) => !item.state?.region || item.state.region === run.location.id
+        )
+      );
+    if (profile.id === 'activeSolitudeLife')
+      return run.social.latestIntent === 'solitude' && run.pressures.loneliness < 50;
+    if (profile.id === 'closeFriendLife')
+      return run.people.some(
+        (item) => item.alive && item.social && ['friend', 'close'].includes(item.social.tie)
+      );
+    return false;
+  }
+  function attitudeEndingLine(run) {
+    const counts = Object.fromEntries(
+        ['swallow', 'pushBack', 'deadpan', 'note', 'lean', 'refuse'].map((key) => [
+          key,
+          Number(run.outcomeTags[`attitude:${key}`]) || 0,
+        ])
+      ),
+      total = Object.values(counts).reduce((sum, value) => sum + value, 0);
+    if (total < 5) return '';
+    const ordered = Object.entries(counts).sort((a, b) => b[1] - a[1]),
+      [dominant, dominantCount] = ordered[0],
+      tied = ordered.filter(([, value]) => value === dominantCount).length > 1;
+    if (tied) return '几种回应在你身上差不多，没有一种占了上风。';
+    if (dominant === 'swallow')
+      return `你最常做的是先忍一下；有 ${total - counts.swallow} 次没有。`;
+    if (dominant === 'pushBack') return '小事上你不吃亏。大事来的时候，反而安静。';
+    if (dominant === 'deadpan') return '你最常用玩笑把话接过去，包括不好笑的那些。';
+    if (dominant === 'note') return '许多事你当时没说，后来都记得很清楚。';
+    if (dominant === 'lean') return '能靠近的时候，你很少先退开。';
+    return '不愿意的事，你往往把那声“不”说了出来。';
   }
   function finishLife() {
     const run = state.run;
@@ -6230,7 +6737,7 @@
     run.phase = 'ended';
     run.age = clamp(run.age, 0, 105);
     syncDerived(run);
-    unlockCodex();
+    unlockCodex(true);
     const profile = endingProfile(run),
       titles = compatibleEndingTitles(
         run,
@@ -6253,7 +6760,15 @@
       age: run.age,
       deathCause: run.deathCause || '自然衰老',
       netWorth: run.finance.netWorth,
+      nearMisses: endingNearMisses(run, profile),
+      attitudeLine: attitudeEndingLine(run),
     };
+    state.meta.seen.endings[profile.id] = (state.meta.seen.endings[profile.id] || 0) + 1;
+    state.meta.seen.endings[`title:${run.ending.title}`] = 1;
+    for (const id of run.cards)
+      state.meta.seen.cards[id] = (state.meta.seen.cards[id] || 0) + 1;
+    state.meta.seen.families[run.originHousehold.familyId] =
+      (state.meta.seen.families[run.originHousehold.familyId] || 0) + 1;
     state.meta.stats.runs = (state.meta.stats.runs || 0) + 1;
     state.meta.histories.unshift({
       title: run.ending.title,
@@ -6264,6 +6779,7 @@
       familyId: run.originHousehold.familyId,
       familyName: run.originHousehold.familyName,
       tags: run.ending.tags,
+      facts: facts.map(({ age, title, result }) => ({ age, title, result })),
       axes,
       endedAt: Date.now(),
     });
@@ -6665,8 +7181,11 @@
   }
 
   function homeView() {
-    const active = state.run && state.run.phase !== 'ended';
-    return `<main class="screen center"><span class="version">v${VERSION}</span><div><h1>人生尚未加载</h1><p class="hero-sub">${esc(UI_COPY.homeTagline)}</p></div>${state.meta.migrationNotice ? '<section class="card migration-note"><strong>游戏内容已经更新</strong><p class="tiny">旧版本的活动人生已结束；人生档案、图鉴、设置和跨局记录仍被保留。</p></section>' : ''}${state.recovery ? `<section class="card migration-note"><strong>存档已重置</strong><p class="tiny">${esc(state.recovery.message)}</p></section>` : ''}<div class="mt stack">${active ? `<button class="btn primary" data-act="continue">继续这一生</button><button class="btn restart-life" data-act="restart-life"><span>${esc(UI_COPY.restartActive)}</span><small>${esc(UI_COPY.restartActiveHint)}</small></button>` : '<button class="btn primary" data-act="new">开始新人生</button>'}<div class="menu-list"><button class="menu-item" data-nav="archive"><strong>人生档案</strong><span>›</span></button><button class="menu-item" data-nav="codex"><strong>${esc(UI_COPY.codexTitle)}</strong><span>›</span></button><button class="menu-item" data-nav="settings"><strong>设置</strong><span>›</span></button></div></div><p class="tiny">离线运行 · 自动存档</p></main>`;
+    const active = state.run && state.run.phase !== 'ended',
+      endingCount = Object.keys(state.meta.seen.endings || {}).filter(
+        (key) => !key.startsWith('title:')
+      ).length;
+    return `<main class="screen center"><span class="version">v${VERSION}</span><div><h1>人生尚未加载</h1><p class="hero-sub">${esc(UI_COPY.homeTagline)}</p></div>${state.meta.migrationNotice ? '<section class="card migration-note"><strong>游戏内容已经更新</strong><p class="tiny">旧版本的活动人生已结束；人生档案、图鉴、设置和跨局记录仍被保留。</p></section>' : ''}${state.recovery ? `<section class="card migration-note"><strong>存档已重置</strong><p class="tiny">${esc(state.recovery.message)}</p></section>` : ''}<div class="mt stack">${active ? `<button class="btn primary" data-act="continue">继续这一生</button><button class="btn restart-life" data-act="restart-life"><span>${esc(UI_COPY.restartActive)}</span><small>${esc(UI_COPY.restartActiveHint)}</small></button>` : '<button class="btn primary" data-act="new">开始新人生</button>'}<p class="tiny collection-progress">已走完 ${state.meta.stats.runs || 0} 局 · 结局 ${endingCount}/${DATA.endingProfiles.length} · 图鉴 ${state.meta.codex.length}/${DATA.codex.length}</p><div class="menu-list"><button class="menu-item" data-nav="archive"><strong>人生档案</strong><span>›</span></button><button class="menu-item" data-nav="codex"><strong>${esc(UI_COPY.codexTitle)}</strong><span>›</span></button><button class="menu-item" data-nav="settings"><strong>设置</strong><span>›</span></button></div></div><p class="tiny">离线运行 · 自动存档</p></main>`;
   }
   function birthView() {
     const run = state.run,
@@ -6741,7 +7260,7 @@
     let visible = groups.slice(-6);
     while (visible.flatMap((group) => group.items).length > 18 && visible.length > 1) visible.shift();
     return visible.map((group) => group.items.map((item, index) =>
-      `<div class="stream-row ${timelineImportance(item, run)} ${item.variant === 'chosen' ? 'chosen' : ''}"><span class="stream-age">${index ? '' : `${group.age}岁`}</span><span class="stream-icon">${item.icon || '·'}</span><div><p>${esc(item.text)}</p><div class="stream-hints"><span>${esc(TRACK_LABELS[item.track] || '生活')}</span>${item.kind === 'consequence' ? `<span>${esc(UI_COPY.consequenceLabel)}</span>` : ''}</div></div></div>`
+      `<div class="stream-row ${timelineImportance(item, run)} ${item.variant === 'chosen' ? 'chosen' : ''}"><span class="stream-age">${index ? '' : `${group.age}岁`}</span><span class="stream-icon">${item.icon || '·'}</span><div><p>${esc(item.text)}</p>${item.attitude ? `<p class="attitude-note">——${esc(item.attitude.text)}。</p>` : ''}<div class="stream-hints"><span>${esc(TRACK_LABELS[item.track] || '生活')}</span>${item.kind === 'consequence' ? `<span>${esc(UI_COPY.consequenceLabel)}</span>` : ''}</div></div></div>`
     ).join('')).join('');
   }
   function lifeFactSummary(run) {
@@ -6847,6 +7366,16 @@
     const prompt = UI_COPY.cardPrompts?.[run.cardAge] || '这些年，你留下了什么？';
     return `<div class="modal-wrap locked-modal"><section class="choice-sheet card-sheet card-draw-pulse" role="dialog" aria-modal="true" aria-labelledby="card-dialog-title" tabindex="-1"><div class="handle"></div><h2 id="card-dialog-title">${esc(prompt)}</h2><div class="choices">${run.cardOptions.map((card) => `<button class="choice clear-card" data-card="${card.id}"><span class="omen-icon">◇</span><span><span class="fate-title">${esc(card.displayName)}</span><span class="fate-text">${esc(card.text)}</span></span><span aria-hidden="true">›</span></button>`).join('')}</div></section></div>`;
   }
+  function traitSummary(run) {
+    const labels = { intellect: '理解', physique: '体魄', looks: '外貌', stability: '稳定', social: '社交', ambition: '野心' };
+    return Object.entries(run.attrs)
+      .map(([key, value]) => ({ key, value, distance: Math.abs(value - 5) }))
+      .filter((item) => item.value <= 3 || item.value >= 6)
+      .sort((a, b) => b.distance - a.distance || a.key.localeCompare(b.key))
+      .slice(0, 2)
+      .map(({ key, value }) => `${labels[key]}${value >= 8 ? '强' : value >= 6 ? '尚可' : value === 1 ? '弱' : '偏弱'}`)
+      .join(' · ');
+  }
   function statusDrawer(run) {
     const partner = {
         none: '单身',
@@ -6867,8 +7396,9 @@
         : latestSocialIntent(run) === 'solitude' && (Number(run.pressures.loneliness) || 0) < 40
           ? '主要独来独往'
           : '认识一些人，但没有常联系的朋友',
-      facts = lifeFactSummary(run);
-    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div>${facts.length ? `<div class="section-title">${esc(UI_COPY.lifeFactsTitle)}</div><div class="life-facts">${facts.map((item) => `<p>${esc(item)}</p>`).join('')}</div>` : ''}<div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>学习与支持</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner}</dd></div><div class="spec"><dt>朋友</dt><dd>${friendSummary}</dd></div><div class="spec"><dt>子女</dt><dd>${
+      facts = lifeFactSummary(run),
+      traits = traitSummary(run);
+    return `<div class="drawer-wrap" data-act="close-drawer"><section class="drawer" data-stop role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="handle"></div><div class="row"><div><div class="eyebrow">${run.age}岁 · ${run.world.year}年</div><div class="sheet-title" id="drawer-title">${esc(run.originHousehold.familyName)}</div></div><button class="iconbtn" data-act="close-drawer" aria-label="关闭状态面板">×</button></div>${traits ? `<div class="section-title">特质</div><p>${esc(traits)}</p>` : ""}${facts.length ? `<div class="section-title">${esc(UI_COPY.lifeFactsTitle)}</div><div class="life-facts">${facts.map((item) => `<p>${esc(item)}</p>`).join('')}</div>` : ''}<div class="section-title">成长与教育</div><dl class="spec-list"><div class="spec"><dt>家庭起点</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>学习与支持</dt><dd>${esc(developmentLabel(run))}</dd></div><div class="spec"><dt>学历</dt><dd>${educationLabel(run)}</dd></div><div class="spec"><dt>高等教育</dt><dd>${esc(higherEducationLabel(run))}</dd></div>${run.mobility.lastOverseasSystem !== 'none' ? `<div class="spec"><dt>海外生活</dt><dd>${esc(overseasLifeLabel(run))}</dd></div>` : ''}</dl><div class="section-title">现在的生活</div><dl class="spec-list"><div class="spec"><dt>${esc(UI_COPY.activityField)}</dt><dd>${activityLabel(run)}</dd></div><div class="spec"><dt>工作</dt><dd>${esc(employmentDetailLabel(run))}</dd></div><div class="spec"><dt>婚恋</dt><dd>${partner}</dd></div><div class="spec"><dt>朋友</dt><dd>${friendSummary}</dd></div><div class="spec"><dt>子女</dt><dd>${
       run.relationships.childCount
         ? childPeople(run)
             .map((child) => `${personAge(child, run)}岁`)
@@ -6885,9 +7415,19 @@
         ''
       )}</div><div class="section-title">${esc(UI_COPY.activeArcsTitle)}</div><div class="taglist left">${episodes.map((item) => `<span class="pill">${esc(episodeLabel(item.id))}</span>`).join('') || `<span class="tiny">${esc(UI_COPY.noActiveArcs)}</span>`}</div></section></div>`;
   }
+  function attitudeControls(run) {
+    const event = run.pendingAttitude ? INDEX.event.get(run.pendingAttitude) : null;
+    if (!event?.attitudes?.length || run.phase !== 'playing') return '';
+    return `<div class="attitude-controls" aria-label="这一刻的态度">${event.attitudes
+      .map(
+        (item) =>
+          `<button type="button" data-attitude="${esc(item.key)}">${esc(item.text)}</button>`
+      )
+      .join('')}</div>`;
+  }
   function gameView() {
     const run = state.run;
-    return `<main class="screen stream-screen"><header class="game-header"><div class="row"><div><div class="age">${run.age}岁</div><div class="role">${esc(roleLine(run))}</div></div><button class="iconbtn" data-act="open-drawer" aria-label="打开状态面板">☰</button></div><div class="resource-strip"><div class="res"><span>现金</span><b>${money(run.finance.cash)}</b></div><div class="res"><span>净值</span><b>${money(run.finance.netWorth)}</b></div><div class="res"><span>身体</span><b>${Math.round(run.health.physical)}</b></div><div class="res"><span>精神</span><b>${Math.round(run.health.mental)}</b></div></div></header><div class="conflict-line">${esc(UI_COPY.coreConflictLabel)} · ${esc(DATA.conflicts.find((item) => item.id === run.mainConflict)?.name || '还不清楚')}</div><div class="life-stream" tabindex="0" data-act="advance">${streamRows(run)}<div class="stream-cursor"><i></i>${esc(UI_COPY.advancePrompt)}</div></div>${DEBUG ? `<div class="debug-panel">debug · seed ${esc(run.seed)} · choices ${run.decisionCount}/${run.targetDecisions}</div>` : ''}</main>${run.phase === 'decision' ? choiceSheet(run.currentDecision) : ''}${run.phase === 'episode' ? episodeSheet(run) : ''}${run.phase === 'card' ? cardSheet(run) : ''}${state.drawer ? statusDrawer(run) : ''}`;
+    return `<main class="screen stream-screen"><header class="game-header"><div class="row"><div><div class="age">${run.age}岁</div><div class="role">${esc(roleLine(run))}</div></div><button class="iconbtn" data-act="open-drawer" aria-label="打开状态面板">☰</button></div><div class="resource-strip"><div class="res"><span>现金</span><b>${money(run.finance.cash)}</b></div><div class="res"><span>净值</span><b>${money(run.finance.netWorth)}</b></div><div class="res"><span>身体</span><b>${Math.round(run.health.physical)}</b></div><div class="res"><span>精神</span><b>${Math.round(run.health.mental)}</b></div></div></header><div class="conflict-line">${esc(UI_COPY.coreConflictLabel)} · ${esc(DATA.conflicts.find((item) => item.id === run.mainConflict)?.name || '还不清楚')}</div><div class="life-stream" tabindex="0" data-act="advance">${streamRows(run)}<div class="stream-cursor"><i></i>${esc(UI_COPY.advancePrompt)}</div></div>${attitudeControls(run)}${DEBUG ? `<div class="debug-panel">debug · seed ${esc(run.seed)} · choices ${run.decisionCount}/${run.targetDecisions}</div>` : ''}</main>${run.phase === 'decision' ? choiceSheet(run.currentDecision) : ''}${run.phase === 'episode' ? episodeSheet(run) : ''}${run.phase === 'card' ? cardSheet(run) : ''}${state.drawer ? statusDrawer(run) : ''}`;
   }
 
   function endingPortraitFacts(run) {
@@ -6929,12 +7469,24 @@
 
   function endingView() {
     const run = state.run,
-      e = run.ending;
-    return `<main class="screen ending-screen"><div class="ending-share-card"><div class="eyebrow ending-kicker">人生尚未加载 · 2026</div><div class="lifespan">活到 <b>${e.age}</b> 岁</div><div class="ending-title">《${esc(e.title)}》</div><p class="ending-review sharp-summary">${esc(e.summary)}</p><div class="ending-rarity"><span class="pill rare">人生稀有度 · ${esc(e.rarity)}</span><span class="pill">种子 ${esc(e.seed)}</span></div><div class="section-title">${esc(UI_COPY.endingTurnsTitle)}</div><section class="card timeline">${e.facts.map((item) => `<div class="time-item"><span class="time-age">${item.age}岁</span><div><strong>${esc(item.title)}</strong><p class="tiny">${esc(item.result)}</p></div></div>`).join('')}</section><div class="taglist">${e.tags.map((tag) => `<span class="pill">${esc(tag)}</span>`).join('') || '<span class="pill">未归类人生</span>'}</div></div><div class="section-title">${esc(UI_COPY.endingPortraitTitle)}</div><section class="card ending-portrait">${endingPortraitFacts(run).map((item) => `<div class="ending-fact"><span>${esc(item.label)}</span><b>${esc(item.value)}</b></div>`).join('')}</section><section class="card soft mt"><div class="spec"><dt>最终净值</dt><dd>${money(e.netWorth)}</dd></div><div class="spec"><dt>死亡原因</dt><dd>${esc(e.deathCause)}</dd></div><div class="spec"><dt>亲手选择</dt><dd>${run.decisionCount} 次</dd></div></section><div class="stack mt"><button class="btn primary" data-act="new">${esc(UI_COPY.restart)}</button><button class="btn ghost" data-nav="archive">查看人生档案</button></div></main>`;
+      e = run.ending,
+      previous = state.meta.histories[1],
+      nearMisses = (e.nearMisses || [])
+        .map((id) => DATA.endingProfiles.find((profile) => profile.id === id)?.nearMissHint)
+        .filter(Boolean);
+    return `<main class="screen ending-screen"><div class="ending-share-card"><div class="eyebrow ending-kicker">人生尚未加载 · 2026</div><div class="lifespan">活到 <b>${e.age}</b> 岁</div><div class="ending-title">《${esc(e.title)}》</div><p class="ending-review sharp-summary">${esc(e.summary)}</p>${e.attitudeLine ? `<p class="tiny attitude-ending">${esc(e.attitudeLine)}</p>` : ''}<div class="ending-rarity"><span class="pill rare">人生稀有度 · ${esc(e.rarity)}</span><span class="pill">种子 ${esc(e.seed)}</span></div><div class="section-title">${esc(UI_COPY.endingTurnsTitle)}</div><section class="card timeline">${e.facts.map((item) => `<div class="time-item"><span class="time-age">${item.age}岁</span><div><strong>${esc(item.title)}</strong><p class="tiny">${esc(item.result)}</p></div></div>`).join('')}</section><div class="taglist">${e.tags.map((tag) => `<span class="pill">${esc(tag)}</span>`).join('') || '<span class="pill">未归类人生</span>'}</div></div>${nearMisses.length ? `<div class="section-title">差一点的人生</div><section class="card">${nearMisses.map((hint) => `<p>${esc(hint)}</p>`).join('')}</section>` : ''}${previous ? `<div class="section-title">上一局</div><section class="card"><strong>《${esc(previous.title)}》 · ${previous.age}岁</strong><p class="tiny mt">${esc(previous.facts?.[0]?.result || previous.facts?.[0]?.title || '那一生已经收进档案。')}</p></section>` : ''}<div class="section-title">${esc(UI_COPY.endingPortraitTitle)}</div><section class="card ending-portrait">${endingPortraitFacts(run).map((item) => `<div class="ending-fact"><span>${esc(item.label)}</span><b>${esc(item.value)}</b></div>`).join('')}</section><section class="card soft mt"><div class="spec"><dt>最终净值</dt><dd>${money(e.netWorth)}</dd></div><div class="spec"><dt>死亡原因</dt><dd>${esc(e.deathCause)}</dd></div><div class="spec"><dt>亲手选择</dt><dd>${run.decisionCount} 次</dd></div></section><div class="stack mt"><button class="btn primary" data-act="new">${esc(UI_COPY.restart)}</button><button class="btn ghost" data-nav="archive">查看人生档案</button></div></main>`;
   }
   function archiveView() {
-    const all = [...state.meta.histories, ...state.meta.legacyHistories];
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">人生档案</div><span></span></div><section class="card">${all.length ? all.map((item) => `<div class="archive-item"><div class="archive-title">《${esc(item.title || '旧人生')}》</div><div class="archive-meta">${item.age ?? '?'}岁 · ${esc(item.rarity || '旧版本')} · ${esc(item.familyName || '历史档案')}${item.seed ? ` · ${esc(item.seed)}` : ''}</div></div>`).join('') : '<p>还没有走完过一整局。</p>'}</section></main>`;
+    const all = [...state.meta.histories, ...state.meta.legacyHistories],
+      collection = DATA.endingProfiles
+        .map((profile) => {
+          const unlocked = Boolean(state.meta.seen.endings[profile.id]),
+            titles = DATA.endingTitles.filter((item) => item.profileId === profile.id),
+            titleCount = titles.filter((item) => state.meta.seen.endings[`title:${item.title}`]).length;
+          return `<div class="codex-item ${unlocked ? '' : 'locked'}"><span class="codex-category">${esc(profile.rarity)}</span><h3>${unlocked ? esc(titles.find((item) => state.meta.seen.endings[`title:${item.title}`])?.title || profile.summary) : '还没有人活成这样'}</h3><p>${unlocked ? `标题 ${titleCount}/${titles.length}` : esc(profile.nearMissHint || '继续走不同的路。')}</p></div>`;
+        })
+        .join('');
+    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">人生档案</div><span></span></div><div class="section-title">结局图鉴</div><section class="card ending-collection">${collection}</section><div class="section-title">走过的人生</div><section class="card">${all.length ? all.map((item) => `<div class="archive-item"><div class="archive-title">《${esc(item.title || '旧人生')}》</div><div class="archive-meta">${item.age ?? '?'}岁 · ${esc(item.rarity || '旧版本')} · ${esc(item.familyName || '历史档案')}</div>${item.seed ? `<button class="btn ghost compact" data-seed-start="${esc(item.seed)}">用这个种子重开</button>` : ''}</div>`).join('') : '<p>还没有走完过一整局。</p>'}</section></main>`;
   }
   function codexView() {
     return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">${esc(UI_COPY.codexTitle)} ${state.meta.codex.length}/${DATA.codex.length}</div><span></span></div><section class="card">${DATA.codex
@@ -6945,7 +7497,7 @@
       .join('')}</section></main>`;
   }
   function settingsView() {
-    return `<main class="screen" aria-labelledby="settings-title"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title" id="settings-title">设置</div><span></span></div><section class="card"><button class="menu-item" data-act="toggle-haptic" aria-pressed="${state.meta.settings.haptic}"><strong>轻触反馈</strong><span>${state.meta.settings.haptic ? '已开启' : '已关闭'}</span><span class="switch ${state.meta.settings.haptic ? 'on' : ''}" aria-hidden="true"><i></i></span></button><button class="menu-item" data-act="export"><strong>导出存档</strong><span aria-hidden="true">›</span></button><button class="menu-item" data-act="clear-data"><strong class="danger-text">清除全部数据</strong><span aria-hidden="true">›</span></button></section><p class="tiny mt">版本更新只保留人生档案、图鉴、设置和跨局记录，不延续旧版本的活动人生。</p></main>`;
+    return `<main class="screen" aria-labelledby="settings-title"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title" id="settings-title">设置</div><span></span></div><section class="card"><button class="menu-item" data-act="toggle-haptic" aria-pressed="${state.meta.settings.haptic}"><strong>轻触反馈</strong><span>${state.meta.settings.haptic ? '已开启' : '已关闭'}</span><span class="switch ${state.meta.settings.haptic ? 'on' : ''}" aria-hidden="true"><i></i></span></button><button class="menu-item" data-act="toggle-echo" aria-pressed="${state.meta.settings.echoAcrossRuns}"><strong>隔世回声</strong><span>${state.meta.settings.echoAcrossRuns ? '已开启' : '已关闭'}</span><span class="switch ${state.meta.settings.echoAcrossRuns ? 'on' : ''}" aria-hidden="true"><i></i></span></button><p class="tiny">新的一生里，偶尔会听人提起上一局那户人家。</p><div class="seed-start"><label for="seed-input"><strong>用种子开始新人生</strong></label><input id="seed-input" data-seed-input placeholder="粘贴一颗种子" maxlength="80"><p class="tiny">同一颗种子，同一个出身。</p><button class="btn ghost" data-act="seed-start">开始</button></div><button class="menu-item" data-act="export"><strong>导出存档</strong><span aria-hidden="true">›</span></button><button class="menu-item" data-act="clear-data"><strong class="danger-text">清除全部数据</strong><span aria-hidden="true">›</span></button></section><p class="tiny mt">版本更新只保留人生档案、图鉴、设置和跨局记录，不延续旧版本的活动人生。</p></main>`;
   }
 
   function render() {
@@ -7014,7 +7566,7 @@
       url = URL.createObjectURL(blob),
       link = document.createElement('a');
     link.href = url;
-    link.download = '人生尚未加载-v0.6.13-存档.json';
+    link.download = '人生尚未加载-v0.7.0-存档.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 500);
   }
@@ -7029,8 +7581,8 @@
     state = null;
     location.reload();
   }
-  function newLife() {
-    state.run = createRun();
+  function newLife(seed = null) {
+    state.run = createRun(seed ? String(seed).trim().slice(0, 80) : makeSeed());
     state.view = 'birth';
     state.drawer = false;
     save(true);
@@ -7048,12 +7600,37 @@
     newLife();
   }
   function syncInitialCapabilities(run) {
+    const base = run.capabilitiesBirthBase || {};
     run.capabilities.portableSkill = Math.max(
       run.originHousehold.digitalLiteracy >= 60 ? 1 : 0,
       Math.floor((run.attrs.intellect - 1) / 3)
     );
     run.capabilities.employability = clamp(
       40 + run.attrs.stability * 3 + run.attrs.social * 2,
+      0,
+      100
+    );
+    run.capabilities.network = clamp(
+      (base.network || 0) +
+        Math.floor((run.attrs.looks - 1) / 3) +
+        Math.floor((run.attrs.social - 1) / 3),
+      0,
+      10
+    );
+    run.capabilities.negotiation = clamp(
+      (base.negotiation || 0) + Math.floor((run.attrs.ambition - 1) / 3),
+      0,
+      10
+    );
+    run.capabilities.riskSense = clamp(
+      (base.riskSense || 0) +
+        Math.floor((run.attrs.stability - 5) / 3) -
+        Math.floor((run.attrs.ambition - 5) / 4),
+      0,
+      10
+    );
+    run.business.operatingSkill = clamp(
+      25 + run.originHousehold.riskTolerance / 3 + (run.attrs.ambition - 5) * 2,
       0,
       100
     );
@@ -7108,6 +7685,10 @@
       render();
     } else if (name === 'random-attributes') randomizeAttributes();
     else if (name === 'attributes-done' && !state.run.points) {
+      if (!state.run.attributesCommitted) {
+        syncInitialCapabilities(state.run);
+        state.run.attributesCommitted = true;
+      }
       state.view = 'game';
       startCardDraw(0);
     } else if (name === 'advance') advanceOneBeat();
@@ -7122,6 +7703,14 @@
       state.meta.settings.haptic = !state.meta.settings.haptic;
       save();
       render();
+    } else if (name === 'toggle-echo') {
+      state.meta.settings.echoAcrossRuns = !state.meta.settings.echoAcrossRuns;
+      save();
+      render();
+    } else if (name === 'seed-start') {
+      const seed = app.querySelector('[data-seed-input]')?.value?.trim();
+      if (seed) newLife(seed);
+      else showToast('先粘贴一颗种子');
     } else if (name === 'export') exportSave();
     else if (name === 'clear-data') clearAllData();
   }
@@ -7131,6 +7720,17 @@
       event.target.closest('[data-act="close-drawer"]') === null
     )
       event.stopPropagation();
+    const seedStart = event.target.closest('[data-seed-start]');
+    if (seedStart) {
+      newLife(seedStart.dataset.seedStart);
+      return;
+    }
+    const attitude = event.target.closest('[data-attitude]');
+    if (attitude) {
+      event.stopPropagation();
+      chooseAttitude(attitude.dataset.attitude);
+      return;
+    }
     const choice = event.target.closest('[data-choice]');
     if (choice) {
       chooseDecision(Number(choice.dataset.choice));
@@ -7432,6 +8032,14 @@
           },
           endingAxes: () => endingAxes(state.run),
           endingProfile: () => copy(endingProfile(state.run)),
+          endingNearMisses: () => copy(endingNearMisses(state.run, endingProfile(state.run))),
+          finalSignals: () => [...finalSignals(state.run)],
+          unlockCodex: (finalLife = false) => {
+            unlockCodex(Boolean(finalLife));
+            return copy(state.meta.codex);
+          },
+          ongoingModifiers: () => [...ongoingModifiers(state.run)],
+          chooseAttitude,
           mortalityCause: (source = 'age') => mortalityCause(state.run, source),
           latestSocialIntent: () => latestSocialIntent(state.run),
           socialEndingSignal: () => copy(socialEndingSignal(state.run)),
@@ -7463,6 +8071,12 @@
           decisionAllowance: () => decisionAllowance(state.run),
           decisionQuotaOpen: () => decisionQuotaOpen(state.run),
           decisionStageBudgets: () => copy(decisionStageBudgets(state.run)),
+          naturalDeathAgeForRoll,
+          blackSwanRate: () => blackSwanRate(state.run),
+          attributeWeightMultiplier: (id) => {
+            const event = INDEX.event.get(String(id));
+            return event ? attributeWeightMultiplier(event, state.run) : null;
+          },
           bridgeFirstJobCandidates: () => bridgeFirstJobCandidates(state.run).map((profile) => profile.id),
           firstJobFailureAge: () => firstJobFailureAge(state.run),
           lifecycleCheckpointAge: (id) => {

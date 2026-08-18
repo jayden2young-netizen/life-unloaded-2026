@@ -63,14 +63,14 @@ const tx=[
  daily('手机弹出一串权限，你没有急着点同意，先逐项看了一遍。','later.digital_learning'),
  daily('图书馆的新机器认不出旧借书证，工作人员给了你一张手写号。','later.digital_learning'),
 
- daily('早餐比昨天晚了一个钟头，煎蛋边缘反而刚好脆。','later.daily_pleasure'),
- daily('一件颜色很亮的衣服挂在镜子前，你试了又试，还是买下了。','later.daily_pleasure'),
- daily('数独本做到最后两格，你故意留到明天再填。','later.daily_pleasure'),
- daily('下午忽然下雨，你把原来的安排取消，坐着听完了一整场。','later.daily_pleasure'),
+ daily('炉子上的水开了。你关了火，才想起茶叶昨天已经用完。','later.daily_pleasure'),
+ daily('取款机提示换了版。后面的人没催，你还是把每行小字都读完了。','later.daily_pleasure'),
+ daily('常用功能换了入口。你跟着提示点了几层，最后还是去柜台问。','later.daily_pleasure'),
+ daily('体检报告出来，你先查了两个词的意思，才敢往下读。','later.daily_pleasure'),
 
- daily('一个人吃完饭，你没开电视，也不觉得屋里少了什么。','later.solitude_participation'),
- daily('活动室门开着，你在门口看了一会儿，决定今天只坐半小时。','later.solitude_participation'),
- daily('有人劝你多参加活动，你笑着说今天想自己待着。','later.solitude_participation'),
+ daily('楼下公告说电梯检修。你站着算了一会儿，哪条路能少走几级台阶。','later.solitude_participation'),
+ daily('公交上有人给你让座。你说不用。说完，还是坐下了。','later.solitude_participation'),
+ daily('打电话时对方一直叫你老师。你说直接叫名字吧，对方客气了三句，还是没改。','later.solitude_participation'),
  daily('周围说话声很多，你却找不到一句想接的话。','later.solitude_participation',{requirements:req([p('pressures.loneliness','gte',25)])})
 ];
 
@@ -88,7 +88,7 @@ const decisions=[
    c('不再全职求职','你停掉还在更新的全职岗位提醒，把必要开销和日常重新排好。以后要不要回来，不在今天一次说死。','招聘提醒安静下来，过去的工作记录仍然是过去做过的事。',{requirements:req([p('employment.status','notIn',['employed','gig','selfEmployed','careLeave']),p('employment.firstJobAge','neq',null)])}),
    c('只留少量工作','你只接能说明工时、范围和结算的少量工作，不再按全职岗位安排每天。','收入少了一些，也有了边界；这不等于已经退休。',{requirements:req([p('employment.status','notIn',['employed','gig','selfEmployed','careLeave']),p('employment.firstJobAge','neq',null)])}),
    c('继续找合适的工作','你保留正在进行的全职求职，也给下一次复核写下日期。投递继续，待遇和结果不提前算进生活。','继续找是现在的决定。下一份合同来不来，还要看以后。',{requirements:req([p('employment.status','notIn',['employed','gig','selfEmployed','careLeave']),p('employment.firstJobAge','neq',null)])})),
- e({id:'parental_inheritance',lane:'later',phase:1,role:'start',delayYears:1,deadlineYears:2},
+ e({id:'parental_inheritance',lane:'later',phase:1,role:'start',delayYears:1,deadlineYears:2,age:[35,105]},
    '一位父母去世后，旧钥匙、死亡证明、账户资料和欠款通知一起到了。另一位父母是否仍在、遗产有多少、债有多少、还涉及谁，都要按眼前事实查清。',
    '先碰什么？','那串旧钥匙先和资产、债务清单放在了一起。',
    c('查登记、债务和相关方','你先核对文件和登记，不把口头说法当成已经属于自己的东西。','下一次沟通时，大家至少面对同一份清单。'),

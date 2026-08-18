@@ -89,7 +89,7 @@ async function advanceToPhase(page,id,number){
 }
 
 (async()=>{
-  assert.equal(data.events.filter(event=>event.id.startsWith('origin_context_')).length,24);
+  assert.equal(data.events.filter(event=>event.id.startsWith('origin_context_')).length,36);
   assert.ok(data.familyArchetypes.find(family=>family.name==='医护家庭').parentJobs.every(job=>/护士|医生|医技|医院/.test(job)));
   assert.ok(data.familyArchetypes.find(family=>family.name==='平台劳动家庭').parentJobs.every(job=>/平台|骑手|网约车|电商|直播/.test(job)));
   assert.deepEqual(decisions.filter(event=>event.episode?.id==='undergraduate_application').map(event=>event.episode.role),['start','continue','continue','resolve']);
@@ -170,12 +170,12 @@ assert.match(phase('postgraduate_application',1).situation,/本科走到最后�
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.13',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[14,'0.7.0',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.9完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,9);
     assert.deepEqual(migrated.meta.recentSeeds,['v059-finished']);
-    assert.equal(migrated.meta.seen.events.beat_001,undefined);
+    assert.equal(migrated.meta.seen.events.beat_001,2,'schema migration must preserve seen history');
     await context.close();
 
     context=await browser.newContext({viewport:{width:360,height:773}});

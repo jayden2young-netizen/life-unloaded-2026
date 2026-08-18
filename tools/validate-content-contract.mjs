@@ -1,4 +1,5 @@
 import {
+  ATTITUDE_KEYS,
   COMMAND_TYPES,
   EPISODE_CATALOG_EXCEPTION_IDS,
   EMPLOYMENT_REFERRAL_STATUS,
@@ -9,6 +10,7 @@ import {
   HOUSING_REGIONS,
   HOUSING_STABILITY,
   HOUSING_STATUS,
+  ONGOING_MODIFIERS,
   READ_PATHS,
   RUNTIME_OPERATORS,
   SOCIAL_PROXIMITIES,
@@ -723,6 +725,47 @@ export function validateGeneratedData(data) {
     validateRequirements(card.requirements ?? [], `cards[${index}].requirements`);
     if (!isCardInteractionScope(card.interactionScope || 'general'))
       fail(`cards[${index}].interactionScope`, '非法卡牌 scope');
+    if (card.ongoingModifiers !== undefined) {
+      if (!Array.isArray(card.ongoingModifiers) || !card.ongoingModifiers.length)
+        fail(`cards[${index}].ongoingModifiers`, '持续卡牌效果必须是非空数组');
+      else {
+        const invalid = card.ongoingModifiers.filter((modifier) => !ONGOING_MODIFIERS.includes(modifier));
+        const duplicates = card.ongoingModifiers.filter((modifier, modifierIndex) => card.ongoingModifiers.indexOf(modifier) !== modifierIndex);
+        if (invalid.length) fail(`cards[${index}].ongoingModifiers`, `非法持续卡牌效果：${invalid.join('、')}`);
+        if (duplicates.length) fail(`cards[${index}].ongoingModifiers`, '持续卡牌效果不得重复');
+      }
+    }
+  }
+  for (const [index, event] of data.events.entries()) {
+    if (!Object.hasOwn(event, 'attitudes')) continue;
+    if (!Array.isArray(event.attitudes) || event.attitudes.length !== 2)
+      fail(`events[${index}].attitudes`, 'attitudes 必须恰好两项');
+    const keys = new Set();
+    for (const [attitudeIndex, attitude] of event.attitudes.entries()) {
+      const location = `events[${index}].attitudes[${attitudeIndex}]`;
+      if (!ATTITUDE_KEYS.includes(attitude.key)) fail(`${location}.key`, '非法态度 key');
+      if (keys.has(attitude.key)) fail(`${location}.key`, '同一事件态度 key 不得重复');
+      keys.add(attitude.key);
+      if (typeof attitude.text !== 'string' || !attitude.text.trim() || [...attitude.text].length > 10)
+        fail(`${location}.text`, '态度文字必须为 1—10 字');
+      if (!Array.isArray(attitude.effects)) fail(`${location}.effects`, '态度 effects 必须为数组');
+      for (const [effectIndex, effect] of attitude.effects.entries()) {
+        if (
+          effect.type !== 'add' ||
+          !(
+            effect.target.startsWith('pressures.') ||
+            /^desires\.[^.]+\.fulfillment$/.test(effect.target)
+          ) ||
+          !finite(effect.value) ||
+          Math.abs(effect.value) > 2
+        )
+          fail(`${location}.effects[${effectIndex}]`, '态度只允许幅度不超过 2 的软 add');
+      }
+    }
+  }
+  for (const [index, profile] of data.endingProfiles.entries()) {
+    if (profile.nearMissHint !== undefined && typeof profile.nearMissHint !== 'string')
+      fail(`endingProfiles[${index}].nearMissHint`, 'nearMissHint 必须是字符串');
   }
   assertUnique(
     data.events.flatMap((event) => event.choices || []),

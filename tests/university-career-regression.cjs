@@ -73,7 +73,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     assert.equal(scenario.choices.length,3,`${scenario.id}: choice count`);
     assert.ok(scenario.choices.every(choice=>choice.text&&choice.resultText&&typeof choice.offerIntent==='boolean'),`${scenario.id}: incomplete choice`);
   }
-  const promotionDecision=decisions.find(event=>event.prompt.startsWith('主管岗位空出来了'));
+  const promotionDecision=decisions.find(event=>event.id==='decision_048');
   assert.deepEqual(
     promotionDecision.choices[0].requirements.all.find(rule=>rule.path==='employment.profileId')?.value.sort(),
     Object.keys(data.employmentCatalog.promotionMap).sort()
@@ -147,12 +147,12 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     await page.goto(URL,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
     const migrated=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
-    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[13,'0.6.13',null]);
+    assert.deepEqual([migrated.schemaVersion,migrated.gameVersion,migrated.run],[14,'0.7.0',null]);
     assert.equal(migrated.meta.histories[0].title,'v0.5.11完整人生');
     assert.equal(migrated.meta.settings.haptic,false);
     assert.equal(migrated.meta.stats.runs,11);
     assert.deepEqual(migrated.meta.recentSeeds,['v0511-finished']);
-    assert.equal(migrated.meta.seen.events.beat_001,undefined);
+    assert.equal(migrated.meta.seen.events.beat_001,3,'schema migration must preserve seen history');
     assert.equal(migrated.meta.seen.events.origin_context_2_stable,1);
     await context.close();
 
@@ -428,7 +428,7 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     assert.equal(run.employment.lastGrowthAge,28,'declining growth rewrote the age of an older job growth');
     await page.locator('[data-act="open-drawer"]').click();
     const declinedGrowthDrawer=await page.locator('.drawer').innerText();
-    assert.match(declinedGrowthDrawer,/行政助理已经连续做了 3 年/);
+    assert.match(declinedGrowthDrawer,/行政助理已经连续做了 4 年/);
     assert.doesNotMatch(declinedGrowthDrawer,/行政助理已经有过一次写进职责或收入的成长/);
     await page.locator('.drawer [data-act="close-drawer"]').click();
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({age:30,usedEvents:[],episodes:{},finance:{dishonestStatus:'clear',restrictedConsumption:false},employment:{status:'selfEmployed',profileId:'small_shop_owner',career:'小店经营者',tenure:5,firstJobAge:24},activity:{mode:'work'}}));
