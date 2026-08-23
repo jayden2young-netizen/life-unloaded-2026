@@ -576,8 +576,23 @@ async function prepareFinal(page,id,event){
       }
     }
 
-    const [lossMoment,lossBelongings,lossContact]=parentLossRows;
-    const lostParent={id:'parent_loss_father',relation:'father',bornAt:-40,alive:false,status:'deceased',bond:55};
+	    const [lossMoment,lossBelongings,lossContact]=parentLossRows;
+	    let deathTransaction=null;
+	    for(let candidate=0;candidate<64&&!deathTransaction;candidate++){
+	      const parent={id:`same_year_parent_${candidate}`,relation:'father',bornAt:-60,alive:true,status:'living',bond:55};
+	      await page.evaluate(parentValue=>window.__LIFE_DEBUG__.patchRun({
+	        age:40,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[],usedEvents:[],timeline:[],decisionHistory:[],episodes:{parent_loss:{status:'inactive'},parental_inheritance:{status:'inactive'}},
+	        people:[parentValue],relationships:{parentLost:false,lastParentLossAge:null,lastParentLossPersonId:null}
+	      }),parent);
+	      const updated=await page.evaluate(()=>window.__LIFE_DEBUG__.updatePeople());
+	      if(!updated.people[0].alive)deathTransaction=updated;
+	    }
+	    assert.ok(deathTransaction,'could not obtain a deterministic parent-death transaction fixture');
+	    assert.equal(deathTransaction.relationships.parentLost,true,'parentLost was not synchronized inside the death year');
+	    assert.equal(deathTransaction.relationships.lastParentLossAge,40);
+	    assert.equal(deathTransaction.relationships.lastParentLossPersonId,deathTransaction.people[0].id);
+	    assert.ok(await page.evaluate(id=>window.__LIFE_DEBUG__.eligibleIds('decision').includes(id),lossMoment.id),'parent-loss first phase was not eligible in the death year');
+	    const lostParent={id:'parent_loss_father',relation:'father',bornAt:-40,alive:false,status:'deceased',bond:55};
     const livingParent={id:'parent_loss_mother',relation:'mother',bornAt:-38,alive:true,status:'living',bond:58};
     await page.evaluate(({lostParent,livingParent})=>window.__LIFE_DEBUG__.patchRun({
       age:40,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],usedEvents:[],timeline:[],decisionHistory:[],outcomeTags:{'parentLoss:firstCall':0,'parentLoss:inheritance':0,'parentLoss:belongings':0,'parentLoss:contact':0},episodes:{parent_loss:{status:'inactive'},parental_inheritance:{status:'inactive'}},

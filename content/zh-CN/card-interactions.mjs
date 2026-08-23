@@ -2205,7 +2205,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "leisure::钱从哪来？::用自己的积蓄。写个结束日期": {
+  "leisure::这次要停下来吗？::用自己的积蓄。写个结束日期": {
     "primaryMechanic": "cashBuffer",
     "mode": "costShift",
     "patch": [

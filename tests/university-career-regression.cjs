@@ -11,6 +11,11 @@ const SAVE_KEY='life-unloaded-2026-v1';
 const data=JSON.parse(fs.readFileSync(path.join(ROOT,'data.json'),'utf8'));
 const decisions=data.events.filter(event=>event.kind==='decision');
 const eventFor=(id,phase)=>decisions.find(event=>event.episode?.id===id&&event.episode.phase===phase);
+const scheduleFor=(sourceDecisionId,age,suffix='fixture')=>{
+  const source=decisions.find(event=>event.id===sourceDecisionId),choice=source?.choices?.find(item=>item.consequences?.length),spec=choice?.consequences?.[0];
+  assert.ok(source&&choice&&spec,`${sourceDecisionId}: missing consequence fixture`);
+  return{id:`${spec.eventId}:${choice.memoryKey}:${age}:${suffix}`,eventId:spec.eventId,memoryKey:choice.memoryKey,sourceDecisionId:source.id,sourceChoiceId:choice.id,dueAge:age,expiresAge:Math.min(105,age+6),priority:0,status:'scheduled'};
+};
 const episodeIds=['undergraduate_domestic','undergraduate_overseas_orientation','undergraduate_us','undergraduate_europe','undergraduate_change','overseas_undergraduate_belonging','postgraduate_application','postgraduate_domestic','postgraduate_us','postgraduate_europe','overseas_postgraduate_belonging','professional_entry_qualification','first_job_application','long_term_first_job_reentry'];
 fs.mkdirSync(OUT,{recursive:true});
 
@@ -227,7 +232,26 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     assert.equal(run.employment.applicationStatus,'searching');
     assert.equal(run.employment.pendingOfferId,'none');
 
-    const bachelorBase={education:{status:'enrolled',level:4,path:'college',enrollmentRegion:'domestic',nextStage:'undergraduate',undergraduateSystem:'domestic',highestCompleted:'secondary',courseworkEvidence:18,campusEvidence:8,practiceEvidence:18,researchEvidence:8},employment:{status:'none',entryCredential:'none',applicationStatus:'none'},activity:{mode:'study'}};
+    const staleApplicationSchedule=scheduleFor('decision_006',20,'enrolled-cleanup');
+    await page.evaluate(schedule=>window.__LIFE_DEBUG__.patchRun({
+      age:20,
+      education:{status:'enrolled',level:4,path:'college',nextStage:'undergraduate',highestCompleted:'secondary',fullTimeUndergraduateClosed:false},
+      episodes:{undergraduate_application:{status:'active',phase:4,startedAt:17,nextPhaseAge:20,deadlineAge:22,route:'overseas_family_funded',boundActors:{},commitments:[],closureReason:null}},
+      scheduledConsequences:[schedule],yearQueue:[],sceneQueue:[],currentDecision:null,phase:'playing'
+    }),staleApplicationSchedule);
+    run=await snapshot(page);
+    assert.equal(run.episodes.undergraduate_application.status,'resolved','an enrolled Revision 34 life retained the old application episode');
+    assert.equal(run.episodes.undergraduate_application.closureReason,'undergraduate_enrolled');
+    assert.equal(run.scheduledConsequences[0].status,'invalidated','an enrolled life retained an application-stage consequence');
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).some(id=>['decision_004','decision_005','decision_006','decision_007'].includes(id)),false,'an enrolled life could re-enter application stages');
+
+    const graduationSchedules=[
+      scheduleFor('decision_016',24,'orientation'),
+      scheduleFor('decision_017',24,'us-course-selection'),
+      scheduleFor('decision_020',24,'europe-registration'),
+      scheduleFor('decision_018',24,'post-entry-echo')
+    ];
+    const bachelorBase={education:{status:'enrolled',level:4,path:'college',enrollmentRegion:'domestic',nextStage:'undergraduate',undergraduateSystem:'domestic',highestCompleted:'secondary',courseworkEvidence:18,campusEvidence:8,practiceEvidence:18,researchEvidence:8},employment:{status:'none',entryCredential:'none',applicationStatus:'none'},activity:{mode:'study'},scheduledConsequences:graduationSchedules};
     await preparePhase(page,'undergraduate_domestic',4,bachelorBase);
     const bachelorCompletionAge=(await snapshot(page)).age;
     run=await choose(page,0);
@@ -235,6 +259,8 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     assert.equal(run.education.highestCompleted,'undergraduate');
     assert.equal(run.education.nextStage,'firstJob');
     assert.equal(run.employment.entryCredential,'bachelor');
+    for(const schedule of graduationSchedules.slice(0,3))assert.equal(run.scheduledConsequences.find(item=>item.id===schedule.id)?.status,'invalidated',`${schedule.id}: obsolete undergraduate procedure survived graduation`);
+    assert.equal(run.scheduledConsequences.find(item=>item.id===graduationSchedules[3].id)?.status,'scheduled','a post-entry undergraduate echo was over-invalidated');
 
     const bachelorJob={seed:'professional-9',location:{id:'tier1'},education:{status:'completed',level:4,path:'college',highestCompleted:'undergraduate',nextStage:'firstJob',courseworkEvidence:24,practiceEvidence:24,researchEvidence:8},employment:{status:'none',entryCredential:'bachelor',applicationRegion:'domestic',applicationChannel:'specialist',firstJobEntryPath:'specialist',applicationStatus:'applying'},activity:{mode:'seeking'}};
     await preparePhase(page,'first_job_application',3,bachelorJob);

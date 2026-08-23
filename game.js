@@ -12,7 +12,7 @@
   const APP_KEY = 'life-unloaded-2026-v1';
   const VERSION = '0.7.0',
     SCHEMA_VERSION = 14,
-    CONTENT_REVISION = 34;
+    CONTENT_REVISION = 35;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -134,7 +134,9 @@
     INDEX,
     state,
     inputLocked = false,
-    focusReturnSelector = null;
+    focusReturnSelector = null,
+    streamGesture = null,
+    suppressStreamAdvance = false;
   function rng() {
     let x = state.run?.rngState || hashSeed(makeSeed());
     x ^= x << 13;
@@ -1142,14 +1144,7 @@
       (item) => item.alive && item.relation === 'partner' && (!active || item.id === active)
     );
   }
-  function syncDerived(run) {
-    run.age = clamp(run.age, 0, 105);
-    if (
-      run.age >= 30 &&
-      !(run.education.level >= 4 && ['enrolled', 'completed'].includes(run.education.status))
-    )
-      run.education.fullTimeUndergraduateClosed = true;
-    run.world = worldAt(run.age, run.location);
+  function syncPeopleDerived(run) {
     run.relationships.childCount = childPeople(run).length;
     run.relationships.partnerHistoryCount = run.people.filter(
       (item) => item.relation === 'partner'
@@ -1165,6 +1160,17 @@
       const fallback = run.people.find((item) => item.alive && item.relation === 'partner');
       run.relationships.activePartnerId = fallback?.id || null;
     }
+    return run;
+  }
+  function syncDerived(run) {
+    run.age = clamp(run.age, 0, 105);
+    if (
+      run.age >= 30 &&
+      !(run.education.level >= 4 && ['enrolled', 'completed'].includes(run.education.status))
+    )
+      run.education.fullTimeUndergraduateClosed = true;
+    run.world = worldAt(run.age, run.location);
+    syncPeopleDerived(run);
     run.finance.totalDebt = totalDebt(run);
     run.finance.everHadDebt = run.finance.liabilities.length > 0;
     run.finance.hasArrears = run.finance.liabilities.some(
@@ -1502,6 +1508,10 @@
         }, { sourceEventId: 'normalize' }, { skipBudget: true });
     }
     merged.episodes = { ...fresh.episodes, ...(run.episodes || {}) };
+    merged.scheduledConsequences = Array.isArray(run.scheduledConsequences)
+      ? run.scheduledConsequences.map((item) => ({ ...item }))
+      : [];
+    invalidateUndergraduateProceduralConsequences(merged);
     const firstJobStarted = ['active', 'resolved', 'abandoned'].includes(
         merged.episodes.first_job_application?.status
       ),
@@ -4036,6 +4046,7 @@
     const resultText = scene.text || choice.resultText;
     scheduleConsequence(event, choice);
     updateEpisode(event, choice);
+    invalidateUndergraduateProceduralConsequences(run);
     run.decisionHistory.push({
       age: run.age,
       eventId: event.id,
@@ -4130,8 +4141,11 @@
     ) return true;
     if (
       id === 'undergraduate_application' &&
-      run.education.fullTimeUndergraduateClosed &&
-      run.education.status !== 'enrolled'
+      (
+        run.education.fullTimeUndergraduateClosed ||
+        run.education.highestCompleted === 'undergraduate' ||
+        (run.education.status === 'enrolled' && run.education.nextStage === 'undergraduate')
+      )
     )
       return true;
     if (
@@ -5058,6 +5072,7 @@
         );
       }
     }
+    syncPeopleDerived(run);
   }
   function mortalityCause(run, source = 'age') {
     if (source === 'health') return '长期健康问题带来的风险';
@@ -5102,13 +5117,26 @@
   }
 
   function scheduledConsequenceEvent(run, schedule) {
-    const event = INDEX.event.get(schedule.eventId),
-      outcome = event?.choiceOutcomes?.[schedule.memoryKey];
-    if (!event || !outcome) {
+    const event = INDEX.event.get(schedule?.eventId),
+      sourceEvent = INDEX.event.get(schedule?.sourceDecisionId),
+      sourceChoice = sourceEvent?.choices?.find((choice) => choice.id === schedule?.sourceChoiceId),
+      outcome = event?.choiceOutcomes?.[schedule?.memoryKey],
+      active =
+        schedule?.status === 'scheduled' &&
+        schedule.dueAge <= run.age &&
+        schedule.expiresAge >= run.age;
+    if (
+      !active ||
+      event?.kind !== 'consequence' ||
+      sourceEvent?.kind !== 'decision' ||
+      !sourceChoice ||
+      sourceChoice.memoryKey !== schedule.memoryKey ||
+      !outcome ||
+      undergraduateProceduralScheduleExpired(run, schedule, sourceEvent)
+    ) {
       schedule.status = 'invalidated';
       return null;
     }
-    const sourceEvent = INDEX.event.get(schedule.sourceDecisionId);
     const scheduledSocialActorInvalid = sourceEvent?.track === 'social' && (
       Object.entries(schedule.actorIds || {}).some(([slot, id]) => {
         const item = run.people.find((personItem) => personItem.id === id);
@@ -5132,6 +5160,39 @@
       runtimeTags: outcome.outcomeTags,
       scheduleId: schedule.id,
     };
+  }
+  function undergraduateProceduralScheduleExpired(run, schedule, sourceEvent = null) {
+    const source = sourceEvent || INDEX.event.get(schedule?.sourceDecisionId),
+      episode = source?.episode,
+      enrolled =
+        run.education.status === 'enrolled' && run.education.nextStage === 'undergraduate',
+      completed = run.education.highestCompleted === 'undergraduate';
+    if ((enrolled || completed) && episode?.id === 'undergraduate_application') return true;
+    if (!completed) return false;
+    if (episode?.id === 'undergraduate_overseas_orientation') return true;
+    return (
+      ['undergraduate_domestic', 'undergraduate_us', 'undergraduate_europe'].includes(episode?.id) &&
+      episode.phase === 1
+    );
+  }
+  function invalidateUndergraduateProceduralConsequences(run) {
+    const enrolled =
+        run.education.status === 'enrolled' && run.education.nextStage === 'undergraduate',
+      completed = run.education.highestCompleted === 'undergraduate',
+      application = run.episodes?.undergraduate_application;
+    if ((enrolled || completed) && application?.status === 'active') {
+      application.status = 'resolved';
+      application.nextPhaseAge = run.age;
+      application.closureReason = completed
+        ? 'undergraduate_completed'
+        : 'undergraduate_enrolled';
+    }
+    for (const schedule of run.scheduledConsequences || []) {
+      if (schedule.status !== 'scheduled') continue;
+      const sourceEvent = INDEX.event.get(schedule.sourceDecisionId);
+      if (undergraduateProceduralScheduleExpired(run, schedule, sourceEvent))
+        schedule.status = 'invalidated';
+    }
   }
   function dueConsequences(run) {
     return run.scheduledConsequences
@@ -5735,7 +5796,6 @@
       variant,
     };
     run.timeline.push(row);
-    run.timeline = run.timeline.slice(-180);
     state.meta.seen.events[event.id] = (state.meta.seen.events[event.id] || 0) + 1;
     return row;
   }
@@ -5918,6 +5978,22 @@
     }
     return true;
   }
+  function currentQueuedEvent(run, planned) {
+    if (!planned || typeof planned.id !== 'string') return null;
+    if (planned.scheduleId) {
+      const schedule = run.scheduledConsequences.find((item) => item.id === planned.scheduleId);
+      return schedule ? scheduledConsequenceEvent(run, schedule) : null;
+    }
+    if (planned.id.startsWith('quiet_') && planned.kind === 'beat') return planned;
+    const current = INDEX.event.get(planned.id);
+    if (!current) return null;
+    const refreshed = {
+      ...current,
+      ...(planned.annualRole ? { annualRole: planned.annualRole } : {}),
+      ...(planned.annualPlanToken ? { annualPlanToken: planned.annualPlanToken } : {}),
+    };
+    return eligible(refreshed, run) ? refreshed : null;
+  }
   function queueSameAgeFollowup(run, allowed = {}) {
     const candidates = INDEX.kinds.decision.filter((event) => {
       if (!eligible(event, run)) return false;
@@ -5972,9 +6048,14 @@
         if (!run.yearStarted && beginYear()) return true;
         if (run.phase !== 'playing') return true;
         if (run.yearQueue.length) {
-          const planned = run.yearQueue.shift();
-          if (planned.annualRole === 'episodeClosure') {
-            if (launchPlannedEpisodeClosure(planned)) return true;
+          const queued = run.yearQueue.shift();
+          if (queued.annualRole === 'episodeClosure') {
+            if (launchPlannedEpisodeClosure(queued)) return true;
+            save();
+            continue;
+          }
+          const planned = currentQueuedEvent(run, queued);
+          if (!planned) {
             save();
             continue;
           }
@@ -6062,7 +6143,10 @@
   }
 
   function unlockCodex(finalLife = false) {
-    const run = state.run;
+    const run = state.run,
+      recordedTags = new Set(
+        (run.decisionHistory || []).flatMap((record) => record.outcomeTags || [])
+      );
     const hasLateSoloFriend =
       run.age >= 60 &&
       run.housing.arrangement === 'solo' &&
@@ -6079,7 +6163,7 @@
     for (const entry of DATA.codex) {
       if (state.meta.codex.includes(entry.id)) continue;
       const rule = entry.unlockRules || {},
-        tagOk = rule.outcomeTagsAny?.some((tag) => run.outcomeTags[tag]),
+        tagOk = rule.outcomeTagsAny?.some((tag) => run.outcomeTags[tag] || recordedTags.has(tag)),
         anyOk = rule.stateAny?.some((item) => predicateMatches(item, run)),
         allOk = rule.stateAll?.every((item) => predicateMatches(item, run));
       if (tagOk || anyOk || allOk) state.meta.codex.push(entry.id);
@@ -6206,7 +6290,7 @@
       run.relationships.childCount === 0 &&
       decisionRecords.some((item) =>
         (item.outcomeTags || []).some((tag) =>
-          ['children:deliberate', 'parenthood:childfree'].includes(tag)
+          tag === 'children:childfree'
         )
       )
     )
@@ -7257,9 +7341,7 @@
       if (!group || group.age !== item.age) groups.push({ age: item.age, items: [item] });
       else group.items.push(item);
     }
-    let visible = groups.slice(-6);
-    while (visible.flatMap((group) => group.items).length > 18 && visible.length > 1) visible.shift();
-    return visible.map((group) => group.items.map((item, index) =>
+    return groups.map((group) => group.items.map((item, index) =>
       `<div class="stream-row ${timelineImportance(item, run)} ${item.variant === 'chosen' ? 'chosen' : ''}"><span class="stream-age">${index ? '' : `${group.age}岁`}</span><span class="stream-icon">${item.icon || '·'}</span><div><p>${esc(item.text)}</p>${item.attitude ? `<p class="attitude-note">——${esc(item.attitude.text)}。</p>` : ''}<div class="stream-hints"><span>${esc(TRACK_LABELS[item.track] || '生活')}</span>${item.kind === 'consequence' ? `<span>${esc(UI_COPY.consequenceLabel)}</span>` : ''}</div></div></div>`
     ).join('')).join('');
   }
@@ -7427,7 +7509,7 @@
   }
   function gameView() {
     const run = state.run;
-    return `<main class="screen stream-screen"><header class="game-header"><div class="row"><div><div class="age">${run.age}岁</div><div class="role">${esc(roleLine(run))}</div></div><button class="iconbtn" data-act="open-drawer" aria-label="打开状态面板">☰</button></div><div class="resource-strip"><div class="res"><span>现金</span><b>${money(run.finance.cash)}</b></div><div class="res"><span>净值</span><b>${money(run.finance.netWorth)}</b></div><div class="res"><span>身体</span><b>${Math.round(run.health.physical)}</b></div><div class="res"><span>精神</span><b>${Math.round(run.health.mental)}</b></div></div></header><div class="conflict-line">${esc(UI_COPY.coreConflictLabel)} · ${esc(DATA.conflicts.find((item) => item.id === run.mainConflict)?.name || '还不清楚')}</div><div class="life-stream" tabindex="0" data-act="advance">${streamRows(run)}<div class="stream-cursor"><i></i>${esc(UI_COPY.advancePrompt)}</div></div>${attitudeControls(run)}${DEBUG ? `<div class="debug-panel">debug · seed ${esc(run.seed)} · choices ${run.decisionCount}/${run.targetDecisions}</div>` : ''}</main>${run.phase === 'decision' ? choiceSheet(run.currentDecision) : ''}${run.phase === 'episode' ? episodeSheet(run) : ''}${run.phase === 'card' ? cardSheet(run) : ''}${state.drawer ? statusDrawer(run) : ''}`;
+    return `<main class="screen stream-screen"><header class="game-header"><div class="row"><div><div class="age">${run.age}岁</div><div class="role">${esc(roleLine(run))}</div></div><button class="iconbtn" data-act="open-drawer" aria-label="打开状态面板">☰</button></div><div class="resource-strip"><div class="res"><span>现金</span><b>${money(run.finance.cash)}</b></div><div class="res"><span>净值</span><b>${money(run.finance.netWorth)}</b></div><div class="res"><span>身体</span><b>${Math.round(run.health.physical)}</b></div><div class="res"><span>精神</span><b>${Math.round(run.health.mental)}</b></div></div></header><div class="conflict-line">${esc(UI_COPY.coreConflictLabel)} · ${esc(DATA.conflicts.find((item) => item.id === run.mainConflict)?.name || '还不清楚')}</div><div class="life-stream" tabindex="0" data-act="advance" data-timeline-length="${run.timeline.length}"><div class="stream-content"><div class="stream-rows">${streamRows(run)}</div><div class="stream-cursor"><i></i>${esc(UI_COPY.advancePrompt)}</div></div></div>${attitudeControls(run)}${DEBUG ? `<div class="debug-panel">debug · seed ${esc(run.seed)} · choices ${run.decisionCount}/${run.targetDecisions}</div>` : ''}</main>${run.phase === 'decision' ? choiceSheet(run.currentDecision) : ''}${run.phase === 'episode' ? episodeSheet(run) : ''}${run.phase === 'card' ? cardSheet(run) : ''}${state.drawer ? statusDrawer(run) : ''}`;
   }
 
   function endingPortraitFacts(run) {
@@ -7503,6 +7585,13 @@
   function render() {
     if (!state) return;
     const previousDialog = app.querySelector('[role="dialog"]'),
+      previousStream = app.querySelector('.life-stream'),
+      previousStreamState = previousStream
+        ? {
+            scrollTop: previousStream.scrollTop,
+            timelineLength: Number(previousStream.dataset.timelineLength) || 0,
+          }
+        : null,
       active = document.activeElement;
     if (!previousDialog && active instanceof HTMLElement && app.contains(active)) {
       if (active.dataset.act) focusReturnSelector = `[data-act="${active.dataset.act}"]`;
@@ -7525,7 +7614,19 @@
     app.innerHTML = `${showGlobalHome ? `<button class="global-home" data-act="return-home" aria-label="${esc(UI_COPY.mainMenu)}">‹ ${esc(UI_COPY.mainMenu)}</button>` : ''}${(views[state.view] || homeView)()}`;
     requestAnimationFrame(() => {
       const stream = app.querySelector('.life-stream');
-      if (stream) stream.scrollTop = stream.scrollHeight;
+      if (stream) {
+        const timelineLength = Number(stream.dataset.timelineLength) || 0;
+        stream.scrollTop =
+          previousStreamState && previousStreamState.timelineLength === timelineLength
+            ? previousStreamState.scrollTop
+            : stream.scrollHeight;
+      }
+      const ending = app.querySelector('.ending-screen');
+      if (ending) {
+        ending.tabIndex = 0;
+        ending.scrollTop = 0;
+        ending.focus({ preventScroll: true });
+      }
       const dialog = app.querySelector('[role="dialog"]');
       if (dialog) {
         const first = dialog.querySelector('button:not([disabled]), [href], [tabindex="0"]');
@@ -7714,6 +7815,42 @@
     } else if (name === 'export') exportSave();
     else if (name === 'clear-data') clearAllData();
   }
+  app.addEventListener('pointerdown', (event) => {
+    const stream = event.target.closest('.life-stream');
+    if (!stream) return;
+    streamGesture = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startScrollTop: stream.scrollTop,
+      moved: false,
+    };
+    suppressStreamAdvance = false;
+  });
+  app.addEventListener('pointermove', (event) => {
+    if (!streamGesture || streamGesture.pointerId !== event.pointerId) return;
+    const stream = event.target.closest('.life-stream') || app.querySelector('.life-stream');
+    if (
+      Math.abs(event.clientY - streamGesture.startY) > 10 ||
+      Math.abs((stream?.scrollTop || 0) - streamGesture.startScrollTop) > 4
+    )
+      streamGesture.moved = true;
+  });
+  app.addEventListener(
+    'scroll',
+    (event) => {
+      if (streamGesture && event.target.classList?.contains('life-stream'))
+        streamGesture.moved = true;
+    },
+    true
+  );
+  const finishStreamGesture = (event) => {
+    if (!streamGesture || streamGesture.pointerId !== event.pointerId) return;
+    suppressStreamAdvance = streamGesture.moved;
+    streamGesture = null;
+    setTimeout(() => (suppressStreamAdvance = false), 0);
+  };
+  app.addEventListener('pointerup', finishStreamGesture);
+  app.addEventListener('pointercancel', finishStreamGesture);
   app.addEventListener('click', (event) => {
     if (
       event.target.closest('[data-stop]') &&
@@ -7748,6 +7885,11 @@
     }
     const action = event.target.closest('[data-act]');
     if (action) {
+      if (action.dataset.act === 'advance' && suppressStreamAdvance) {
+        event.preventDefault();
+        suppressStreamAdvance = false;
+        return;
+      }
       handleAction(action.dataset.act);
       return;
     }
@@ -7759,6 +7901,25 @@
     }
   });
   app.addEventListener('keydown', (event) => {
+    const ending = event.target.closest?.('.ending-screen');
+    if (ending && ['Home', 'End', 'PageUp', 'PageDown', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+      const pageStep = Math.max(80, ending.clientHeight * 0.85),
+        delta =
+          event.key === 'PageUp'
+            ? -pageStep
+            : event.key === 'PageDown'
+              ? pageStep
+              : event.key === 'ArrowUp'
+                ? -44
+                : event.key === 'ArrowDown'
+                  ? 44
+                  : 0;
+      event.preventDefault();
+      if (event.key === 'Home') ending.scrollTop = 0;
+      else if (event.key === 'End') ending.scrollTop = ending.scrollHeight;
+      else ending.scrollTop += delta;
+      return;
+    }
     const dialog = app.querySelector('[role="dialog"]');
     if (dialog && event.key === 'Tab') {
       const focusable = [...dialog.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')];
@@ -8004,6 +8165,12 @@
             (INDEX.kinds[kind] || []).filter((event) => eligible(event)).map((event) => event.id),
           settleYear: () => {
             settleYear(state.run);
+            render();
+            return copy(state.run);
+          },
+          updatePeople: () => {
+            updatePeople(state.run);
+            save();
             render();
             return copy(state.run);
           },

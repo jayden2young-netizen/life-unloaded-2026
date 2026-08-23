@@ -7,6 +7,30 @@ const profile=(id,name,tier,sector,employerType,contractType,arrangement,incomeS
   ...extra
 });
 
+export const EMPLOYMENT_CONTEXT_PROFILE_IDS=Object.freeze({
+  officeTeam:Object.freeze([
+    'customer_service','admin_assistant','sales_representative','software_engineer','accountant',
+    'engineering_specialist','designer','legal_assistant','research_specialist','rd_engineer',
+    'algorithm_engineer','investment_analyst','junior_manager','lawyer','public_clerk',
+    'department_executive','firm_partner'
+  ]),
+  projectDelivery:Object.freeze([
+    'software_engineer','engineering_specialist','designer','research_specialist','rd_engineer',
+    'algorithm_engineer','investment_analyst','junior_manager','lawyer','remote_contractor',
+    'department_executive','firm_partner'
+  ]),
+  clientFacing:Object.freeze([
+    'customer_service','sales_representative','accountant','designer','legal_assistant',
+    'investment_analyst','lawyer','remote_contractor','firm_partner'
+  ]),
+  shiftSite:Object.freeze([
+    'station_rider','warehouse_picker','cleaning_worker','store_clerk','food_hourly',
+    'factory_operator','store_supervisor','customer_service','skilled_technician','doctor'
+  ]),
+  retailFood:Object.freeze(['store_clerk','food_hourly','store_supervisor','small_shop_owner']),
+  fieldPlatform:Object.freeze(['crowd_rider','station_rider','loading_gig'])
+});
+
 export const EMPLOYMENT_CATALOG_SOURCE=Object.freeze({
   tiers:{
     T0:{label:'基础与零工',firstJobEligible:true,monthlyBase:4200},

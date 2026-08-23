@@ -118,7 +118,32 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.7.0', 14, 34]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.7.0', 14, 35]);
+  const employmentProfiles = new Set(DATA.employmentCatalog.profiles.map(profile => profile.id));
+  const profileGate = eventId => {
+    const event = DATA.events.find(item => item.id === eventId);
+    assert.ok(event, `${eventId}: missing employment context fixture`);
+    const rule = event.requirements.all.find(item => item.path === 'employment.profileId' && item.op === 'in');
+    assert.ok(rule, `${eventId}: missing finite employment profile gate`);
+    assert.ok(rule.value.every(id => employmentProfiles.has(id)), `${eventId}: context gate references an unknown profile`);
+    return new Set(rule.value);
+  };
+  const officeProfiles = profileGate('beat_033');
+  const projectProfiles = profileGate('beat_059');
+  const shiftProfiles = profileGate('beat_038');
+  for (const id of ['admin_assistant', 'rd_engineer']) assert.ok(officeProfiles.has(id), `${id}: matching office beat was made unreachable`);
+  for (const id of ['station_rider', 'food_hourly']) assert.equal(officeProfiles.has(id), false, `${id}: office badge copy remained reachable`);
+  assert.ok(projectProfiles.has('rd_engineer'),'R&D lost matching project-delivery copy');
+  for (const id of ['station_rider','food_hourly','admin_assistant']) assert.equal(projectProfiles.has(id),false,`${id}: project-owner copy remained reachable`);
+  for (const id of ['station_rider','food_hourly']) assert.ok(shiftProfiles.has(id),`${id}: matching shift copy was made unreachable`);
+  for (const id of ['admin_assistant','rd_engineer']) assert.equal(shiftProfiles.has(id),false,`${id}: shift-site copy remained reachable`);
+  const genericPayBeat=DATA.events.find(event=>event.kind==='beat'&&event.text==='工资到账那天，几笔固定开销也刚好扣走。');
+  assert.ok(genericPayBeat&&!genericPayBeat.requirements.all.some(rule=>rule.path==='employment.profileId'),'a cross-occupation pay fact was over-gated');
+  const recoveryWorkstation=DATA.events.find(event=>event.id==='beat_309');
+  const recoveryOfficeRules=recoveryWorkstation.requirements.any.filter(rule=>['employment.profileId','employment.lastJob.profileId'].includes(rule.path));
+  assert.equal(recoveryOfficeRules.length,2,'beat_309 did not cover both active work and care-leave job identity');
+  assert.ok(recoveryOfficeRules.every(rule=>rule.value.includes('admin_assistant')&&rule.value.includes('rd_engineer')));
+  assert.ok(recoveryOfficeRules.every(rule=>!rule.value.includes('station_rider')&&!rule.value.includes('food_hourly')),'beat_309 office copy remained reachable to shift-site profiles');
   assert.deepEqual(
     DATA.events.reduce((counts,event)=>({...counts,[event.kind]:(counts[event.kind]||0)+1}),{}),
     {beat:517,decision:214,consequence:214,blackSwan:20},
@@ -128,7 +153,7 @@ function neutralTrace(multiplier) {
   const generatedEpisodeIds=[...new Set(episodeDecisions.map(event=>event.episode.id))].sort();
   assert.deepEqual(
     [DATA.cards.length,generatedEpisodeIds.length,Object.keys(DATA.episodeCatalog).length,episodeDecisions.length,generatedDecisions.length-episodeDecisions.length],
-    [83,64,43,148,66],
+    [83,64,44,148,66],
   );
   assert.deepEqual(
     generatedEpisodeIds.filter(id=>!Object.hasOwn(DATA.episodeCatalog,id)),

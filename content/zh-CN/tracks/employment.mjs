@@ -1,7 +1,11 @@
 import {episodeDecision as e,choice as c} from './helpers.mjs';
+import {EMPLOYMENT_CONTEXT_PROFILE_IDS} from '../employment-catalog.mjs';
 
 const q=(path,op,value)=>({path,op,value});
 const rules=(all=[],any=[],none=[])=>({all,any,none});
+const workplace=(...contexts)=>rules([
+  q('employment.profileId','in',Array.from(new Set(contexts.flatMap((name)=>EMPLOYMENT_CONTEXT_PROFILE_IDS[name]||[]))))
+]);
 const fx=(type,target,value,extra={})=>({type,target,value,...extra});
 const seedDecision=(seedId,age,prompt,echoText,...choices)=>({seedId,age,prompt,echoText,choices});
 
@@ -82,37 +86,37 @@ export const EMPLOYMENT_COPY={
   label:'受雇工作',
   beatMix:{ordinary:10,awkward:8,friction:8,pressure:4,major:2},
   beats:[
-    {tone:'ordinary',text:'工牌发下来时，照片还是入职那天拍的。'},
+    {tone:'ordinary',text:'工牌发下来时，照片还是入职那天拍的。',requirements:workplace('officeTeam')},
     {tone:'ordinary',text:'楼下早餐店记住了你几点打卡。'},
     {tone:'ordinary',text:'同事离职后，你们约过两次吃饭。'},
     {tone:'ordinary',text:'今年没换工作，工资也没怎么动。'},
-    {tone:'ordinary',text:'新工位离空调近，下午总得穿外套。'},
-    {tone:'ordinary',text:'排班表改了三次，你的周末落在周二。'},
-    {tone:'ordinary',text:'团建照片发进群，第二天没人再点开。'},
+    {tone:'ordinary',text:'新工位离空调近，下午总得穿外套。',requirements:workplace('officeTeam')},
+    {tone:'ordinary',text:'排班表改了三次，你的周末落在周二。',requirements:workplace('shiftSite')},
+    {tone:'ordinary',text:'团建照片发进群，第二天没人再点开。',requirements:workplace('officeTeam')},
     {tone:'ordinary',text:'工资到账那天，几笔固定开销也刚好扣走。'},
     {tone:'ordinary',text:'主管换了头像，催进度的语气没变。'},
-    {tone:'ordinary',text:'你终于记住了会议室投影仪怎么开。'},
+    {tone:'ordinary',text:'你终于记住了会议室投影仪怎么开。',requirements:workplace('officeTeam')},
     {tone:'awkward',text:'新同事问年假，群里安静了半分钟。'},
     {tone:'awkward',text:'公司送了保温杯，杯身印着奋斗者。'},
     {tone:'awkward',text:'迟到一分钟要说明，加班两小时不用。'},
-    {tone:'awkward',text:'白板上写满了建议。散会时没人拍照，第二天保洁擦得干干净净。'},
-    {tone:'awkward',text:'你在厕所隔间听见领导谈优化名单。'},
+    {tone:'awkward',text:'白板上写满了建议。散会时没人拍照，第二天保洁擦得干干净净。',requirements:workplace('officeTeam')},
+    {tone:'awkward',text:'你在厕所隔间听见领导谈优化名单。',requirements:workplace('officeTeam')},
     {tone:'awkward',text:'调休申请通过时，原定周末已经过去。'},
-    {tone:'awkward',text:'绩效面谈先聊成长，最后只涨了称呼。'},
+    {tone:'awkward',text:'绩效面谈先聊成长，最后只涨了称呼。',requirements:workplace('officeTeam','projectDelivery')},
     {tone:'awkward',text:'离职同事退群后，表情包还留在收藏。'},
-    {tone:'friction',text:'HR说工资保密，部门群却公开排名。'},
+    {tone:'friction',text:'HR说工资保密，部门群却公开排名。',requirements:workplace('officeTeam')},
     {tone:'friction',text:'合同写双休，排班表把周六算机动。'},
-    {tone:'friction',text:'客户晚上十一点发来一句“在吗”。'},
+    {tone:'friction',text:'客户晚上十一点发来一句“在吗”。',requirements:workplace('clientFacing')},
     {tone:'friction',text:'主管让你“自愿报名”周末支援。'},
-    {tone:'friction',text:'报销单退回三次，每次理由都不一样。'},
-    {tone:'friction',text:'组织优化后，两个人接了五个人的活。'},
-    {tone:'friction',text:'招聘时说扁平，出错时层级全回来了。'},
-    {tone:'friction',text:'公司搬去了产业园，内部信说是为了更好的发展。地铁要转三次。'},
-    {tone:'pressure',text:'项目延期，负责人名单上只有你的名字。'},
+    {tone:'friction',text:'报销单退回三次，每次理由都不一样。',requirements:workplace('officeTeam','projectDelivery','clientFacing')},
+    {tone:'friction',text:'组织优化后，两个人接了五个人的活。',requirements:workplace('officeTeam')},
+    {tone:'friction',text:'招聘时说扁平，出错时层级全回来了。',requirements:workplace('officeTeam','projectDelivery')},
+    {tone:'friction',text:'公司搬去了产业园，内部信说是为了更好的发展。地铁要转三次。',requirements:workplace('officeTeam')},
+    {tone:'pressure',text:'项目延期，负责人名单上只有你的名字。',requirements:workplace('projectDelivery')},
     {tone:'pressure',text:'工资晚发半个月，财务让大家再理解一下。'},
-    {tone:'pressure',text:'裁员邮件发出前，门禁先刷不开了。'},
-    {tone:'pressure',text:'体检报告建议休息，排班表已经排到下月。'},
-    {tone:'major',text:'部门撤掉那天，你的工牌还能刷到下午。'},
+    {tone:'pressure',text:'裁员邮件发出前，门禁先刷不开了。',requirements:workplace('officeTeam')},
+    {tone:'pressure',text:'体检报告建议休息，排班表已经排到下月。',requirements:workplace('shiftSite')},
+    {tone:'major',text:'部门撤掉那天，你的工牌还能刷到下午。',requirements:workplace('officeTeam')},
     {tone:'major',text:'社保记录少了一段，人事让你在截止日前补齐材料。'}
   ],
   decisions:[
@@ -128,6 +132,7 @@ export const EMPLOYMENT_COPY={
     {
       prompt:'主管说可以涨薪，但从下个月起，周末也要随时回消息。',
       echoText:'那次涨薪谈话后来有了下文。',
+      requirements:workplace('officeTeam','projectDelivery','clientFacing'),
       choices:[
         {text:'接下涨薪和职责',resultText:'新工资写进了系统，周六上午也多了一个固定会议。',consequenceText:'一年后，工资确实高了，家里也不再默认周末能找到你。'},
         {text:'先把加班写清楚',resultText:'主管删掉了“随时响应”，改成每月最多两个周末值班。',consequenceText:'后来部门换了负责人，你拿着旧邮件把排班争议挡了回去。'},
@@ -150,6 +155,7 @@ export const EMPLOYMENT_COPY={
     {
       prompt:'项目出了错，上级让你先在责任说明上签字，说之后再内部处理。',
       echoText:'那份责任说明进了后来的一次审计。',
+      requirements:workplace('projectDelivery'),
       choices:[
         {text:'保存记录如实说明',resultText:'你把版本记录、邮件和会议时间一起交了上去。',consequenceText:'客户追责时，调查组按时间线找到了真正改过文件的人。'},
         {text:'先补救再说明',resultText:'你和同事熬了一晚把交付补上，责任说明暂时没发。',consequenceText:'项目保住了，复盘会上却只写了“团队主动整改”。'},
@@ -159,6 +165,7 @@ export const EMPLOYMENT_COPY={
     {
       prompt:'主管岗位空出来了。接下它，你要开始给以前一起吃午饭的同事打绩效。',
       echoText:'那次晋升后来落到了具体的人身上。',
+      requirements:workplace('officeTeam','projectDelivery'),
       choices:[
         {text:'接下管理岗',resultText:'人事给你换了职级，原来的同事开始叫你领导。',consequenceText:'第一次末位沟通时，坐你对面的是带你入职的人。',debtGate:'midHighJob'},
         {text:'只走专业线',resultText:'你保留了项目和涨薪，不再参加排班审批会。',consequenceText:'几年后公司另设专家岗，你的技术记录终于能直接算业绩。'},

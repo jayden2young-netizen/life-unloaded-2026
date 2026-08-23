@@ -174,6 +174,7 @@ export const READ_PATHS = Object.freeze([
   'employment.lastJob',
   'employment.pendingOfferId',
   'employment.profileId',
+  'employment.lastJob.profileId',
   'employment.referralPersonId',
   'employment.referralStatus',
   'employment.sector',
@@ -539,7 +540,6 @@ export const EPISODE_CATALOG_EXCEPTIONS = Object.freeze({
   habits: Object.freeze([...habitEpisodeCatalogExceptions].sort()),
   standalone: Object.freeze([
     'acute_illness',
-    'career_break',
     'guarantee_recourse',
     'layoff_reemployment',
     'public_exam',

@@ -1237,6 +1237,8 @@ export const DECISION_SLOT_REGISTRATIONS = [
   {key:'@author/decision/6c8c7525ff1d12abfbe3a44d',slot:{id:'decision_196',track:'housing',localIndex:3},replaces:'@author/decision/aecd4235076e3aa6d387fde6'},
   {key:'@author/decision/b76b5caf13bc05869cf72870',slot:{id:'decision_197',track:'housing',localIndex:4},replaces:'@author/decision/5acea622020ad904464fe520'},
   {key:'@author/decision/7b735f7997cd1b4014464923',slot:{id:'decision_198',track:'housing',localIndex:5},replaces:'@author/decision/e40232cdf5a4be30f518517e'},
+  {key:'@author/decision/83fdec7f59f744fac8622a68',slot:{id:'decision_078',track:'leisure',localIndex:0},replaces:'@author/decision/8c689d5544c914cc0f60e09e'},
+  {key:'@author/decision/6f46e4d178f5be5e900eab18',slot:{id:'decision_080',track:'leisure',localIndex:2},replaces:'@author/decision/927b2c21eb8b67867dad9026'},
 ];
 export const CARD_SLOT_REGISTRATIONS = [
   {key:'@author/card/ed8a1e4158c896c0201ede79',slot:{id:'card_65',globalIndex:64},replaces:'@author/card/2bd61b8762cbb06688238d60'},
