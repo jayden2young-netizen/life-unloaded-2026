@@ -6122,8 +6122,10 @@
     delete planned.annualPlanToken;
     if (!eligible(planned, run)) return false;
     deferEpisodesForEducationGateway(run, planned);
-    if (planned.episode) return startEpisodePhase(planned);
-    else {
+    if (planned.episode) {
+      startEpisodePhase(planned);
+      return true;
+    } else {
       run.currentDecision = prepareDecisionPresentation(planned, run);
       run.phase = 'decision';
       save();
