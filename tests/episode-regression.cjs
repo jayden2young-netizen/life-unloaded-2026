@@ -993,14 +993,18 @@ async function prepareFinal(page,id,event){
       debug.patchRun({age:40,people:[],social:{primaryPersonId:null,secondaryPersonId:null},usedEvents:[],decisionHistory:[],scheduledConsequences:[],sceneQueue:[],currentDecision:null,yearStarted:true,finance:{liabilities:[{id:'social-crisis-debt',kind:'consumer',principal:120000,rate:.08,status:'current',arrears:0,enforcementEligible:true,housingSecured:false}]}});
       debug.applyCommands([{type:'createSocialPerson',target:'people',value:{slot:'primary',displayName:'小禾',source:'interest',tie:'friend',proximity:'local',turn:'met',support:'unseen'}}],{sourceEventId:'social-echo-person',choiceId:'social-echo-person'});
       debug.forceDecision('decision_205');
+      const current=debug.snapshot().currentDecision,
+        decision={prompt:current.prompt,situation:current.situation};
       document.querySelector('[data-choice="0"]').click();
       return new Promise(resolve=>setTimeout(()=>{
         const settled=debug.snapshot(),schedule=settled.scheduledConsequences.find(item=>item.sourceDecisionId==='decision_205');
         debug.patchRun({people:settled.people.map(item=>item.id==='social_primary'?{...item,alive:false}:item),age:schedule.dueAge});
         const due=debug.dueConsequence(),after=debug.snapshot();
-        resolve({schedule,due,status:after.scheduledConsequences.find(item=>item.id===schedule.id)?.status});
+        resolve({decision,schedule,due,status:after.scheduledConsequences.find(item=>item.id===schedule.id)?.status});
       },250));
     });
+    assert.equal(invalidatedSocialEcho.decision.prompt,'要不要向朋友开口求助？');
+    assert.match(invalidatedSocialEcho.decision.situation,/小禾也许能搭把手.*向小禾求助.*公共渠道/);
     assert.ok(invalidatedSocialEcho.schedule.actorIds.socialPerson==='social_primary');
     assert.equal(invalidatedSocialEcho.due,null,'dead social actor still spoke through a delayed echo');
     assert.equal(invalidatedSocialEcho.status,'invalidated');

@@ -118,7 +118,7 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.7.0', 14, 35]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.7.0', 14, 36]);
   const employmentProfiles = new Set(DATA.employmentCatalog.profiles.map(profile => profile.id));
   const profileGate = eventId => {
     const event = DATA.events.find(item => item.id === eventId);

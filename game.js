@@ -12,7 +12,7 @@
   const APP_KEY = 'life-unloaded-2026-v1';
   const VERSION = '0.7.0',
     SCHEMA_VERSION = 14,
-    CONTENT_REVISION = 35;
+    CONTENT_REVISION = 36;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -1547,6 +1547,36 @@
         : merged.currentDecision;
       merged.sceneQueue = merged.sceneQueue.slice(1);
     }
+    const staleChoiceEventId = merged.sceneQueue[0]?.kind === 'choice'
+        ? merged.sceneQueue[0].eventId
+        : null,
+      shouldReplayRevision36Choice =
+        Number(run.contentRevision || 0) < 36 &&
+        merged.phase === 'episode' &&
+        ((staleChoiceEventId === 'decision_005' &&
+          merged.education.applicationIntent === 'domestic') ||
+          (staleChoiceEventId === 'decision_054' &&
+            !(
+              merged.employment.applicationStatus === 'offered' &&
+              merged.employment.pendingOfferId !== 'none'
+            )));
+    if (shouldReplayRevision36Choice) {
+      merged.phase = 'playing';
+      merged.currentDecision = null;
+      merged.sceneQueue = [];
+      merged.yearStarted = true;
+      merged.yearQueue = [
+        {
+          id: staleChoiceEventId,
+          kind: 'decision',
+          annualRole: 'decision',
+          annualPlanToken: `revision36:${staleChoiceEventId}`,
+        },
+        ...(Array.isArray(merged.yearQueue)
+          ? merged.yearQueue.filter((item) => item.id !== staleChoiceEventId)
+          : []),
+      ];
+    }
     for (const key of Object.keys(fresh.desires))
       if (key !== 'reclaimed')
         merged.desires[key] = { ...fresh.desires[key], ...(run.desires?.[key] || {}) };
@@ -2504,7 +2534,11 @@
     if (overseasSubmitted) run.education.overseasUndergradAttemptCount++;
     run.education.domesticOffer = domesticOffer;
     run.education.overseasOffer = overseasOffer;
-    run.education.domesticOfferType = domesticOffer ? 'admitted' : 'none';
+    run.education.domesticOfferType = domesticOffer
+      ? domesticTier >= 2
+        ? 'firstChoice'
+        : 'admitted'
+      : 'none';
     run.education.overseasOfferType = overseasOffer
       ? overseasTier >= 2
         ? 'direct'
@@ -2532,14 +2566,40 @@
   }
   function undergraduateApplicationResult(run) {
     const results = [];
-    if (run.education.domesticOffer) results.push('国内有一份正式录取');
+    if (['domestic', 'dual'].includes(run.education.applicationRoute)) {
+      if (run.education.domesticOfferType === 'firstChoice')
+        results.push('国内院校的录取结果出来了：你被第一志愿录取了');
+      else if (run.education.domesticOffer)
+        results.push('国内院校的录取结果出来了。挺幸运，你没有落榜');
+      else results.push('国内院校的录取结果出来了。很不幸，你落榜了');
+    }
     if (run.education.overseasOffer)
       results.push(
-        run.education.overseasOfferType === 'direct' ? '海外直接录取' : '海外录取，需补条件'
+        run.education.overseasOfferType === 'direct'
+          ? '海外院校发来了直接录取通知'
+          : '海外院校发来了条件录取通知，还要补齐要求'
       );
-    return results.length
-      ? ` ${results.join('；')}。`
-      : ' 这轮没有拿到可用录取；现有成绩和材料还留着，接下来可以补申或转向别的路。';
+    if (!results.length && ['overseas', 'dual'].includes(run.education.applicationRoute))
+      results.push('海外院校没有发来录取通知');
+    return results.length ? ` ${results.join('；')}。` : ' 录取通知没有来。成绩和材料还留着。';
+  }
+  function domesticFundingResult(run, usedCashBufferCard = false) {
+    const household = run.originHousehold,
+      educationBudget = Number(household?.context?.educationBudget) || 0,
+      householdNetAssets = (Number(household?.assets) || 0) - (Number(household?.debt) || 0),
+      hasStudentAid = run.development.routeExposure.includes('studentAid'),
+      householdCanHelp = educationBudget >= 35 || householdNetAssets >= 30000;
+    if (educationBudget >= 68 || householdNetAssets >= 220000)
+      return '家里很高兴，给你备下了充足的学费和生活费。';
+    if (householdCanHelp)
+      return '你找家里要了学费和生活费。金额和交费日一项项对清，第一年的钱总算落实了。';
+    if (run.finance.cash >= 8000)
+      return '你用自己的积蓄落实了第一年的学费和生活费。交完费用以后，手里能留下多少也重新算过。';
+    if (usedCashBufferCard)
+      return '你动用了之前留下的备用钱，先把第一年的学费和生活费落实了。接下来的日常开销还得继续算。';
+    if (hasStudentAid)
+      return '助学贷款和资助材料交得很顺利。学校确认第一年的费用可以先按资助流程处理。';
+    return '第一年的学费和生活费落实了，交费日也记清了。';
   }
   function resolveGraduateApplication(run, route) {
     const intent =
@@ -3913,6 +3973,82 @@
       situation: `你做${current?.name || '这份工作'}已经满三年。最近有人问你愿不愿意带班、培训新人，或接一份更稳定的安排。新增的活、工时和收入得一起说清。`,
     };
   }
+  function automaticEpisodeChoice(event, run) {
+    if (
+      event.episode?.id === 'undergraduate_application' &&
+      event.episode.phase === 2 &&
+      run.education.applicationIntent === 'domestic'
+    )
+      return { index: 0, showResult: true };
+    if (
+      event.episode?.id === 'first_job_application' &&
+      event.episode.phase === 4 &&
+      !(
+        run.employment.applicationStatus === 'offered' &&
+        run.employment.pendingOfferId !== 'none'
+      )
+    )
+      return { index: 2, showResult: false };
+    return null;
+  }
+  function prepareDecisionPresentation(event, run) {
+    if (event.id !== 'decision_205') return event;
+    const person = run.people.find(
+        (item) => item.id === run.social.primaryPersonId && item.alive && item.social
+      ),
+      name = person?.social?.displayName || '那位朋友';
+    return {
+      ...event,
+      situation: `你有件急事需要帮忙。${name}也许能搭把手；你可以向${name}求助，也可以先走专业或公共渠道。`,
+    };
+  }
+  function applyAutomaticEpisodeChoice(event, automatic) {
+    const run = state.run,
+      choice = event.choices?.[automatic.index];
+    if (!choice) return false;
+    const before = copy(run),
+      result = applyCommands(choice.effects, {
+        ...event,
+        sourceEventId: event.id,
+        choiceId: choice.id,
+      });
+    if (!result.ok) return false;
+    for (const tag of choice.outcomeTags || []) addTag(run, tag);
+    const resultText = `${choice.resultText}${
+      event.episode.id === 'undergraduate_application' && event.episode.phase === 2
+        ? undergraduateApplicationResult(run)
+        : ''
+    }`;
+    if (automatic.showResult) {
+      run.currentDecision = event;
+      run.phase = 'episode';
+      run.sceneQueue = [
+        {
+          kind: 'result',
+          eventId: event.id,
+          choiceIndex: automatic.index,
+          text: resultText,
+          automatic: true,
+          stateBefore: episodeState(before),
+          impact: impactScore(result.before, result.after, choice),
+        },
+      ];
+      save();
+      render();
+      return true;
+    }
+    scheduleConsequence(event, choice);
+    updateEpisode(event, choice);
+    invalidateUndergraduateProceduralConsequences(run);
+    run.usedEvents.push(event.id);
+    addTimeline(event, resultText, 'event');
+    run.currentDecision = null;
+    run.sceneQueue = [];
+    run.phase = 'playing';
+    run.yearStarted = true;
+    save();
+    return true;
+  }
   function startEpisodePhase(event) {
     const run = state.run;
     if (
@@ -3935,7 +4071,10 @@
         run.education.fundingStatus = 'overseasFamily';
       syncDerived(run);
     }
-      event = prepareCareerGrowthDecision(prepareRecruitmentDecision(event, run), run);
+    event = prepareDecisionPresentation(
+      prepareCareerGrowthDecision(prepareRecruitmentDecision(event, run), run),
+      run
+    );
     const workTransitionSituation = event.episode?.id === 'retirement_transition'
         ? event.routeSituations?.[
             run.employment.status === 'careLeave'
@@ -3956,7 +4095,10 @@
             : '一位父母去世后，另一位仍在世。旧钥匙、死亡证明、账户资料和欠款通知一起到了；哪些属于遗产、哪些仍属于在世父母，必须分别查清。';
         })()
       : workTransitionSituation || routeSituation || event.situation;
-    run.currentDecision = { ...event, situation: situationText };
+    event = { ...event, situation: situationText };
+    const automatic = automaticEpisodeChoice(event, run);
+    if (automatic && applyAutomaticEpisodeChoice(event, automatic)) return automatic.showResult;
+    run.currentDecision = event;
     run.phase = 'episode';
     run.sceneQueue = [{ kind: 'choice', eventId: event.id }];
     save();
@@ -3967,7 +4109,8 @@
       event = run.currentDecision,
       scene = run.sceneQueue[0],
       originalChoice = event?.choices?.[index],
-      choice = resolveCardChoice(originalChoice, run).choice;
+      resolvedCardChoice = resolveCardChoice(originalChoice, run),
+      choice = resolvedCardChoice.choice;
     if (
       !event?.episode ||
       scene?.kind !== 'choice' ||
@@ -4020,7 +4163,13 @@
                   ? ' 成交款先抵了按揭和执行款，剩下的余额才是以后要继续对的数字。'
                   : ' 成交款按执行余额扣划，房本从你的账本里消失了。'
             : '',
-      resultText = `${choice.resultText}${suffix}`;
+      baseResultText =
+        event.episode.id === 'undergraduate_application' &&
+        event.episode.phase === 3 &&
+        index === 0
+          ? domesticFundingResult(before, Boolean(resolvedCardChoice.card))
+          : choice.resultText,
+      resultText = `${baseResultText}${suffix}`;
     run.sceneQueue = [
       {
         kind: 'result',
@@ -4047,7 +4196,7 @@
     scheduleConsequence(event, choice);
     updateEpisode(event, choice);
     invalidateUndergraduateProceduralConsequences(run);
-    run.decisionHistory.push({
+    if (!scene.automatic) run.decisionHistory.push({
       age: run.age,
       eventId: event.id,
       choiceId: choice.id,
@@ -4062,13 +4211,17 @@
       impact: scene.impact,
     });
     run.usedEvents.push(event.id);
-    run.decisionCount++;
-    run.lastDecisionAge = run.age;
-    recordDecisionBudgetUse(run, event);
+    if (!scene.automatic) {
+      run.decisionCount++;
+      run.lastDecisionAge = run.age;
+      recordDecisionBudgetUse(run, event);
+    }
     addTimeline(
       event,
-      `${choice.text}${/[。！？!?]$/.test(choice.text) ? '' : '。'}${resultText}`,
-      'chosen'
+      scene.automatic
+        ? resultText
+        : `${choice.text}${/[。！？!?]$/.test(choice.text) ? '' : '。'}${resultText}`,
+      scene.automatic ? 'event' : 'chosen'
     );
     run.currentDecision = null;
     run.sceneQueue = [];
@@ -4080,7 +4233,7 @@
           item.age === run.age &&
           INDEX.event.get(item.eventId)?.track === 'education' &&
           INDEX.event.get(item.eventId)?.episode
-      ).length,
+      ).length + (scene.automatic && event.track === 'education' ? 1 : 0),
       pregnancyEventsThisAge = run.decisionHistory.filter(
         (item) =>
           item.age === run.age &&
@@ -5969,9 +6122,9 @@
     delete planned.annualPlanToken;
     if (!eligible(planned, run)) return false;
     deferEpisodesForEducationGateway(run, planned);
-    if (planned.episode) startEpisodePhase(planned);
+    if (planned.episode) return startEpisodePhase(planned);
     else {
-      run.currentDecision = planned;
+      run.currentDecision = prepareDecisionPresentation(planned, run);
       run.phase = 'decision';
       save();
       render();
@@ -8035,7 +8188,7 @@
         run.business.status = event.episode.phase > 1 ? 'operating' : 'none';
       startEpisodePhase(event);
     } else {
-      run.currentDecision = event;
+      run.currentDecision = prepareDecisionPresentation(event, run);
       run.phase = 'decision';
       render();
     }

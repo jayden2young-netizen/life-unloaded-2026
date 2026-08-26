@@ -57,7 +57,7 @@ const registrationGroups=[
 for(const [domain,registrations] of registrationGroups)
   for(const registration of registrations)
     registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
-const VERSION='0.7.0',SCHEMA_VERSION=14,CONTENT_REVISION=35;
+const VERSION='0.7.0',SCHEMA_VERSION=14,CONTENT_REVISION=36;
 const employmentProfileIds=new Set(EMPLOYMENT_CATALOG_SOURCE.profiles.map(profile=>profile.id));
 for(const contextName of['officeTeam','projectDelivery','clientFacing','shiftSite','retailFood','fieldPlatform']){
   const profileIds=EMPLOYMENT_CONTEXT_PROFILE_IDS[contextName];

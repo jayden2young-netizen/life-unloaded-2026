@@ -132,8 +132,8 @@ const decisions=[
 
   // 7／8：严重压力中的有限支持（2 选；有界稳定随机之一）。
   sd([22,85],req([], [p('finance.totalDebt','gte',100000),p('housing.stability','in',['conditional','temporary']),p('employment.status','eq','unemployed'),p('health.status','in',['treating','limited']),p('development.careLoad','gte',20)]),
-    '眼前至少有一件事已经压到日常。那位朋友还在联系人里；你可以只说一个具体缺口，也可以先走专业和公共渠道。',
-    '这次，要不要开口？','那次危机没被友情一笔勾销。对方能帮到哪一步，后来也看清了。',[
+    '你有件急事需要帮忙。那位朋友也许能搭把手；你可以向对方求助，也可以先走专业或公共渠道。',
+    '要不要向朋友开口求助？','那次危机没被友情一笔勾销。对方能帮到哪一步，后来也看清了。',[
       c('把一个具体缺口说出来','你没有让对方“想办法救我”，只说清眼下最急的那一件事。','开口以后，帮助、限制或拒绝都变成了可以面对的事实。',{route:'askedFriend',effects:[],outcomeTags:['social:intent:connect','social:crisis:asked'],socialOutcome:{variants:[
         variant('support_showed_up',45,'对方腾出半天，只接下你点名的那件事，也说清不能替你承担什么。','那半天让你喘过一口气，债、病、工作或照护责任仍要按原来的规则继续。',[updateSocial({personId:'$actor',turn:'deepened',support:'showedUp'}),add('pressures.loneliness',-5),add('capabilities.resilience',2)],{outcomeTags:['social:support:showedUp']}),
         variant('support_limited',30,'对方到不了现场，帮你核了一个公开入口，又约好晚些时候通话。','对方能帮的只有这一段，眼前那件事还得接着处理。',[updateSocial({personId:'$actor',support:'limited'}),add('pressures.loneliness',-2),add('capabilities.evidence',1)],{outcomeTags:['social:support:limited']}),

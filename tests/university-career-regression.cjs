@@ -302,9 +302,15 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     const noOfferIndex=data.employmentCatalog.recruitmentScenarios.find(item=>item.id===naturalScenario).choices.findIndex(choice=>!choice.offerIntent);
     assert.ok(noOfferIndex>=0,`${naturalScenario}: natural fixture had no no-offer choice`);
     run=await choose(page,noOfferIndex);
+    const naturalNoOfferBefore=await snapshot(page);
     assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),eventFor('first_job_application',4).id),eventFor('first_job_application',4).id);
-    run=await choose(page,2);
-    assert.equal(run.age,20);
+    run=await snapshot(page);
+    assert.equal(run.phase,'playing');
+    assert.equal(run.sceneQueue.length,0);
+    assert.equal(run.age,naturalNoOfferBefore.age);
+    assert.equal(run.decisionCount,naturalNoOfferBefore.decisionCount);
+    assert.equal(run.timeline.length,naturalNoOfferBefore.timeline.length+1);
+    assert.match(run.timeline.at(-1).text,/没有工牌.*招聘网站照旧要点开/);
     assert.equal(run.episodes.first_job_application.phase,5);
     assert.ok(run.episodes.first_job_application.deadlineAge>run.age,'phase five expired at the start of its own year');
     await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:false,yearQueue:[]}));
@@ -317,11 +323,13 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     assert.equal(run.currentDecision?.episode?.phase,5,'natural year planning closed the new first-job phase before showing it');
     assert.equal(await optionEnabled(page,0),true,'legal bridge job was unavailable on the natural fifth phase');
 
-    await preparePhase(page,'first_job_application',4,noOfferJob);
-    assert.equal(await optionEnabled(page,0),false);
-    assert.equal(await optionEnabled(page,1),false);
-    assert.equal(await optionEnabled(page,2),true);
-    run=await choose(page,2);
+    await page.evaluate(({patch,age})=>window.__LIFE_DEBUG__.patchRun({age,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,episodes:{first_job_application:{status:'active',phase:4,startedAt:16,nextPhaseAge:age,deadlineAge:age+2,route:'prepared',boundActors:{},commitments:[],closureReason:null}},...patch}),{patch:noOfferJob,age:20});
+    const directNoOfferBefore=await snapshot(page);
+    assert.equal(await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),eventFor('first_job_application',4).id),eventFor('first_job_application',4).id);
+    run=await snapshot(page);
+    assert.equal(run.currentDecision,null);
+    assert.equal(run.sceneQueue.length,0);
+    assert.equal(run.decisionCount,directNoOfferBefore.decisionCount);
     assert.equal(run.episodes.first_job_application.status,'active');
     assert.equal(run.episodes.first_job_application.phase,5);
     assert.equal(run.employment.firstJobAge,null);
@@ -591,6 +599,59 @@ async function optionEnabled(page,index){return page.locator(`[data-choice="${in
     assert.match(drawerText,/华人联系很少/);
     assert.match(drawerText,/本地联系很少/);
     assert.doesNotMatch(drawerText,/归属20|生活适应35|华人联系26|本地联系22/);
+
+    await page.locator('.drawer [data-act="close-drawer"]').click();
+    await page.evaluate(({key,event})=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({age:20,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],usedEvents:[],education:{status:'completed',level:3,path:'vocational',nextStage:'career'},employment:{status:'unemployed',applicationStatus:'searching',pendingOfferId:'none',firstJobAge:null},activity:{mode:'seeking'},episodes:{first_job_application:{status:'active',phase:4,startedAt:16,nextPhaseAge:20,deadlineAge:22,route:'long_search',boundActors:{},commitments:[],closureReason:null}}});
+      const saved=JSON.parse(localStorage.getItem(key));
+      saved.run.contentRevision=35;
+      saved.run.phase='episode';
+      saved.run.currentDecision=event;
+      saved.run.sceneQueue=[{kind:'choice',eventId:event.id}];
+      localStorage.setItem(key,JSON.stringify(saved));
+      const setItem=Storage.prototype.setItem;
+      Storage.prototype.setItem=function(storageKey,value){
+        if(storageKey===key)return;
+        return setItem.call(this,storageKey,value);
+      };
+    },{key:SAVE_KEY,event:eventFor('first_job_application',4)});
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    run=await snapshot(page);
+    assert.equal(run.phase,'playing');
+    assert.equal(run.currentDecision,null);
+    assert.equal(run.yearQueue[0].id,eventFor('first_job_application',4).id);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.sceneQueue.length,0);
+    assert.equal(run.episodes.first_job_application.phase,5);
+
+    await page.evaluate(({key,event})=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({seed:'revision35-domestic',age:18,phase:'playing',sceneQueue:[],currentDecision:null,yearStarted:true,yearQueue:[],usedEvents:[],attrs:{intellect:10},education:{status:'completed',level:3,path:'highSchool',highestCompleted:'secondary',nextStage:'undergraduateApplication',undergraduateSystem:'none',enrollmentRegion:'none',applicationIntent:'domestic',applicationRoute:'none',applicationStatus:'planning',applicationAttemptCount:0,domesticOffer:false,domesticOfferType:'none',fullTimeUndergraduateClosed:false},development:{learningHabit:90,attendance:96,teacherSupport:85,peerSupport:75,selfAdvocacy:80,careLoad:5,traumaLoad:4,routeKnowledge:88,languagePreparation:0,routeExposure:[]},episodes:{undergraduate_application:{status:'active',phase:2,startedAt:17,nextPhaseAge:18,deadlineAge:22,route:'domestic_plan',boundActors:{},commitments:[],closureReason:null}}});
+      const saved=JSON.parse(localStorage.getItem(key));
+      saved.run.contentRevision=35;
+      saved.run.phase='episode';
+      saved.run.currentDecision=event;
+      saved.run.sceneQueue=[{kind:'choice',eventId:event.id}];
+      localStorage.setItem(key,JSON.stringify(saved));
+      const setItem=Storage.prototype.setItem;
+      Storage.prototype.setItem=function(storageKey,value){
+        if(storageKey===key)return;
+        return setItem.call(this,storageKey,value);
+      };
+    },{key:SAVE_KEY,event:eventFor('undergraduate_application',2)});
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    run=await snapshot(page);
+    assert.equal(run.phase,'playing');
+    assert.equal(run.yearQueue[0].id,eventFor('undergraduate_application',2).id);
+    await page.evaluate(()=>window.__LIFE_DEBUG__.advance());
+    run=await snapshot(page);
+    assert.equal(run.sceneQueue[0].kind,'result');
+    assert.equal(run.sceneQueue[0].automatic,true);
+    assert.match(run.sceneQueue[0].text,/提交了志愿.*录取结果/);
 
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({ok:true,migration:'old-run-cleared-meta-preserved',episodes:episodeIds.length,unifiedEmploymentCatalog:true,professionalCredentials:true,longTermReentry:true,researchSeeds:40,overseasOffersDisabled:true,domesticReturn:true,leaveAndResume:true,transfer:true,continuedJobSearch:true,coNationalAndLocalTies:true,graduateFailure:true,fundingGap:true,viewports:['360x773','360x640','320x568'],screenshots:fs.readdirSync(OUT).sort(),errors},null,2));

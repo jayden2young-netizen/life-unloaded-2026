@@ -2609,7 +2609,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     "resultSuffix": "见面合不合拍还不知道，回程还在自己手里。",
     "source": "eventAuthored"
   },
-  "social::这次，要不要开口？::把一个具体缺口说出来": {
+  "social::要不要向朋友开口求助？::把一个具体缺口说出来": {
     "primaryMechanic": "network",
     "mode": "resultVariant",
     "explanation": "你先把最急的一件事说具体，也允许对方只回答能不能做这一件。",
