@@ -295,6 +295,22 @@ async function prepareFinal(page,id,event){
     assert.equal(await jointHousingChoice.locator('small').textContent(),'这处住处要靠两份收入；对方进账一少，日子就会吃紧。');
     await fitSheet(page,'partner-unstable-housing-hint-360x773');
 
+    await page.evaluate(()=>{
+      const debug=window.__LIFE_DEBUG__;
+      debug.patchRun({
+        age:35,phase:'playing',currentDecision:null,sceneQueue:[],yearStarted:true,yearQueue:[],usedEvents:[],episodes:{},
+        location:{id:'tier2',name:'二线城市',weight:24,mods:{cost:112,education:108,medical:108,network:106,mobility:108}},
+        finance:{cash:500000,liabilities:[]},
+        employment:{status:'employed',incomeAnnualGross:200000,incomeStability:'project'},
+        relationships:{activePartnerId:null,partnerStatus:'none'},
+        housing:{status:'family',value:0,arrangement:'originFamily',region:'tier2',stability:'stable',accessibility:'standard',costShare:'supported',coResidentRefs:[],history:[]}
+      });
+      debug.forceDecision('decision_197');
+    });
+    const unstablePurchaseChoice=page.locator('[data-choice="0"]');
+    assert.equal(await unstablePurchaseChoice.isDisabled(),false,'player-unstable purchase choice became unavailable');
+    assert.equal(await unstablePurchaseChoice.locator('small').textContent(),'你的收入会起伏，按揭紧的时候会更难扛。');
+
     const previousReleaseSave=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
     previousReleaseSave.schemaVersion=12;
     previousReleaseSave.meta.schemaVersion=12;

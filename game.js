@@ -1991,12 +1991,15 @@
   function housingChoiceHint(choice, run = state.run) {
     const gate = housingChoiceGate(choice, run);
     if (!gate.allowed || gate.affordability?.level !== 'strained') return null;
+    const housingCost = gate.affordability.purchasePrincipal > 0 || run.housing.status === 'mortgaged'
+      ? '按揭'
+      : '房租';
     if (gate.affordability.strainKind === 'unstable-income')
       return gate.affordability.unstableIncomeOwner === 'partner'
         ? '这处住处要靠两份收入；对方进账一少，日子就会吃紧。'
-        : '你的收入会起伏，房租紧的时候会更难扛。';
+        : `你的收入会起伏，${housingCost}紧的时候会更难扛。`;
     if (gate.affordability.strainKind === 'high-fixed-load')
-      return '房租和债务会吃掉四成以上的收入。';
+      return `${housingCost}和债务会吃掉四成以上的收入。`;
     return '付完住处和必要开支，手里剩不下多少。';
   }
   function personAge(item, run = state.run) {
