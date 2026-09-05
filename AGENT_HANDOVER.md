@@ -1,26 +1,26 @@
 # 《人生尚未加载 · 2026》当前交接
 
-更新时间：2026-09-03。这里只记录换窗口或换电脑后立即需要的当前事实，不保存版本历史和通用开发规则。
+更新时间：2026-09-05。这里只记录换窗口或换电脑后立即需要的当前事实，不保存版本历史和通用开发规则。
 
 ## 当前快照
 
 | 项目 | 当前事实 |
 |---|---|
 | Git | `main` 为 v0.7.0 发布线；功能整合来自临时分支 `codex/fable-v070-integration`，分支暂保留，不自动删除 |
-| 版本 | 本地 v0.7.0／Schema 14／Content Revision 37；公开版本仍为 Revision 36 |
+| 版本 | v0.7.0／Schema 14／Content Revision 37 |
 | 内容 | 965 个事件：517 beat、214 decision、214 consequence、20 blackSwan；83 张卡牌、30 种家庭、44 个秘密、90 个结局标题、42 个图鉴条目 |
-| 数据 | 本地 `data.json` SHA-256：`3d50310fca4552cebfa0a17cb0da5e1dbda4dde8f67d32fb74d6925f99b9a37a`；公开 Revision 36 为 `b4dbfff5dbaf81fe4e2316b1deffffc0fe6e4445edcaee04fa007155e31eb5da` |
+| 数据 | `data.json` SHA-256：`3d50310fca4552cebfa0a17cb0da5e1dbda4dde8f67d32fb74d6925f99b9a37a` |
 | 旧版 | `legacy/0.6.13` 在本地与 origin 均固定到 `9bc9dc7` |
-| 发布 | v0.7.0 已合并到 `main`、推送并由 GitHub Pages 发布；本轮已核对远端 ref、Pages 目标提交和四个线上产物 |
-| 验证 | 本地 Revision 37 正式生成器双跑 byte-stable，`node smoke.js --profile episodes,debt` 全部通过；Review Center 的 0、3、4、23、33、38、52 岁保存现场完成回放，360×773 未见横向溢出。公开 Revision 36 发布前的 `node smoke.js --full` 八组仍为全部通过 |
+| 发布 | Revision 37 已随 `main` 推送并由 GitHub Pages 发布；远端 ref、Pages 目标提交和四个线上产物均已核对 |
+| 验证 | Revision 37 正式生成器双跑 byte-stable；`node smoke.js --full` 八组全部通过，320×568、360×640、360×773 与 1280×800 代表路径控制台错误为 0；Review Center 的 0、3、4、23、33、38、52 岁保存现场已回放 |
 
-## 本地 Revision 37（已提交、未推送、未发布）
+## Revision 37 已发布
 
 - 急性疾病四阶段增加受合同约束的儿童展示覆盖；成人前两阶段改为批准稿，Revision 36 若停在该 episode 的选择页，只刷新当前年龄文案，不重放事件或结算。
 - `decision_108` 只在上一轮确有年度缺口且现金不足以再覆盖同等缺口时进入；住房吃紧提示改为按收入波动、高固定负担或薄余量显示事实化短句。
 - 65 岁前仅 `source='age'` 的通用死亡风险按 seed 与年龄稳定选择具体死因；健康、习惯来源及 65 岁后逻辑不变。
 - 出生压力、准备费用和年假态度按本轮批注修正；事件 ID、episode 阶段、route、effects、选项数量和 Schema 均未改变。
-- README 继续表示公开 Revision 36。Revision 37 已提交到本地 `main`，尚未推送或发布。
+- README、运行时、生成数据与测试断言均为 Revision 37；发布后四个关键线上文件与本地逐字节一致。
 
 ## v0.7.0 已完成
 
