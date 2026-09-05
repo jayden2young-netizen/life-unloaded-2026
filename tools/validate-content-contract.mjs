@@ -456,6 +456,48 @@ function assertNoAuthorKeys(value, location = 'data') {
   }
 }
 
+function validatePresentationVariants(event, location) {
+  if (event.presentationVariants === undefined) return;
+  if (event.kind !== 'decision' || !Array.isArray(event.choices) || !event.choices.length)
+    fail(location, 'presentationVariants 只允许有选择的 decision 使用');
+  if (!Array.isArray(event.presentationVariants) || !event.presentationVariants.length)
+    fail(location, '必须是非空数组');
+  const allowedVariantFields = new Set(['id', 'ageMin', 'ageMax', 'situation', 'prompt', 'choices']),
+    allowedChoiceFields = new Set(['text', 'resultText']),
+    ids = new Set(),
+    ranges = [];
+  for (const [variantIndex, variant] of event.presentationVariants.entries()) {
+    const variantLocation = `${location}[${variantIndex}]`;
+    if (!isObject(variant)) fail(variantLocation, '覆盖项必须是对象');
+    for (const key of Object.keys(variant))
+      if (!allowedVariantFields.has(key)) fail(`${variantLocation}.${key}`, '展示覆盖不得携带机制字段');
+    if (typeof variant.id !== 'string' || !variant.id.trim()) fail(`${variantLocation}.id`, '必须是非空字符串');
+    if (ids.has(variant.id)) fail(`${variantLocation}.id`, `重复覆盖 ID：${variant.id}`);
+    ids.add(variant.id);
+    if (!Number.isInteger(variant.ageMin) || !Number.isInteger(variant.ageMax) || variant.ageMin > variant.ageMax)
+      fail(variantLocation, '年龄范围必须是有效整数区间');
+    if (variant.ageMin < event.ageMin || variant.ageMax > event.ageMax)
+      fail(variantLocation, '年龄范围不得越过事件范围');
+    if (ranges.some(([ageMin, ageMax]) => variant.ageMin <= ageMax && variant.ageMax >= ageMin))
+      fail(variantLocation, '年龄范围不得重叠');
+    ranges.push([variant.ageMin, variant.ageMax]);
+    for (const key of ['situation', 'prompt'])
+      if (typeof variant[key] !== 'string' || !variant[key].trim())
+        fail(`${variantLocation}.${key}`, '必须是非空字符串');
+    if (!Array.isArray(variant.choices) || variant.choices.length !== event.choices.length)
+      fail(`${variantLocation}.choices`, '选择覆盖数量必须与原选择一致');
+    for (const [choiceIndex, choice] of (variant.choices || []).entries()) {
+      const choiceLocation = `${variantLocation}.choices[${choiceIndex}]`;
+      if (!isObject(choice)) fail(choiceLocation, '选择覆盖必须是对象');
+      for (const key of Object.keys(choice))
+        if (!allowedChoiceFields.has(key)) fail(`${choiceLocation}.${key}`, '选择覆盖不得携带机制字段');
+      for (const key of ['text', 'resultText'])
+        if (typeof choice[key] !== 'string' || !choice[key].trim())
+          fail(`${choiceLocation}.${key}`, '必须是非空字符串');
+    }
+  }
+}
+
 function validateReferences(data) {
   const events = new Map(data.events.map((event) => [event.id, event]));
   const profiles = new Set(data.endingProfiles.map((profile) => profile.id));
@@ -497,6 +539,7 @@ function validateReferences(data) {
   }
 
   for (const event of data.events) {
+    validatePresentationVariants(event, `events.${event.id}.presentationVariants`);
     if (event.opportunity !== undefined) {
       if (event.kind !== 'decision' || !isOpportunityMetadata(event.opportunity))
         fail(`events.${event.id}.opportunity`, '非法 opportunity metadata');

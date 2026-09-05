@@ -57,7 +57,7 @@ const registrationGroups=[
 for(const [domain,registrations] of registrationGroups)
   for(const registration of registrations)
     registerAuthorSlot(authorSlots,domain,registration.key,registration.slot,`${domain.toUpperCase()}_SLOT_REGISTRATIONS`,registration.replaces);
-const VERSION='0.7.0',SCHEMA_VERSION=14,CONTENT_REVISION=36;
+const VERSION='0.7.0',SCHEMA_VERSION=14,CONTENT_REVISION=37;
 const employmentProfileIds=new Set(EMPLOYMENT_CATALOG_SOURCE.profiles.map(profile=>profile.id));
 for(const contextName of['officeTeam','projectDelivery','clientFacing','shiftSite','retailFood','fieldPlatform']){
   const profileIds=EMPLOYMENT_CONTEXT_PROFILE_IDS[contextName];
@@ -1208,7 +1208,7 @@ for(const id of trackOrder){
       const choiceId=`${eventId}_choice_${option+1}`;
       return{id:choiceId,text,resultText:RESULT_TEXT_OVERRIDES[choiceId]||copyItem.resultText,hints:copyItem.hints||[],requirements:choiceRules,...(copyItem.visibility?{visibility:copyItem.visibility}:{}),...(copyItem.showWhen?{showWhen:copyItem.showWhen}:{}),...(copyItem.reason?{reason:copyItem.reason}:{}),...(copyItem.debtGate?{debtGate:copyItem.debtGate}:{}),...(housingChoiceKind?{housingChoiceKind}:{}),...(socialOutcome?{socialOutcome}:{}),mechanicTags:cardInteraction?[cardInteraction.primaryMechanic]:[],cardInteraction,effects:result.effects,commitments:authoredDecision.episode?[{type:'episode',id:authoredDecision.episode.id,phase:authoredDecision.episode.phase,route:result.route}]:index%3===0?[{type:'review',track:id,dueIn:2+option}]:[],consequences,outcomeTags:result.outcomeTags,memoryKey,route:result.route};
     });
-    decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',...(authoredDecision.situation?{situation:authoredDecision.situation}:{}),...(authoredDecision.routeSituations?{routeSituations:authoredDecision.routeSituations}:{}),prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.episode?{episode:{...authoredDecision.episode,...(lifecycle?{lifecycle}:{})}}:{}),...(authoredDecision.opportunity?{opportunity:authoredDecision.opportunity}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:authoredDecision.weight??16+index%3,contentRevision:CONTENT_REVISION});
+    decisions.push({id:eventId,kind:'decision',track:id,stage:stageFor(...ageRange),ageMin:ageRange[0],ageMax:ageRange[1],icon:annualBeats.find(event=>event.track===id)?.icon||'·',...(authoredDecision.situation?{situation:authoredDecision.situation}:{}),...(authoredDecision.routeSituations?{routeSituations:authoredDecision.routeSituations}:{}),prompt:authoredDecision.prompt,requirements,actors,choices,...(authoredDecision.presentationVariants?{presentationVariants:authoredDecision.presentationVariants.map(variant=>({...variant,choices:variant.choices.map(choice=>({...choice}))}))}:{}),...(authoredDecision.episode?{episode:{...authoredDecision.episode,...(lifecycle?{lifecycle}:{})}}:{}),...(authoredDecision.opportunity?{opportunity:authoredDecision.opportunity}:{}),assertions:actors.map(actor=>({actor:actor.slot,mustExist:!actor.optional})),weight:authoredDecision.weight??16+index%3,contentRevision:CONTENT_REVISION});
     authoredDecisionById.set(eventId,authoredDecision);
   }
 }

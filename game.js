@@ -12,7 +12,7 @@
   const APP_KEY = 'life-unloaded-2026-v1';
   const VERSION = '0.7.0',
     SCHEMA_VERSION = 14,
-    CONTENT_REVISION = 36;
+    CONTENT_REVISION = 37;
   const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
   const copy = (value) => JSON.parse(JSON.stringify(value));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -1577,6 +1577,15 @@
           : []),
       ];
     }
+    if (
+      Number(run.contentRevision || 0) < 37 &&
+      merged.phase === 'episode' &&
+      ['decision_114', 'decision_115', 'decision_116', 'decision_117'].includes(staleChoiceEventId)
+    ) {
+      const refreshedDecision = INDEX.event.get(staleChoiceEventId);
+      if (refreshedDecision)
+        merged.currentDecision = prepareDecisionPresentation(refreshedDecision, merged);
+    }
     for (const key of Object.keys(fresh.desires))
       if (key !== 'reclaimed')
         merged.desires[key] = { ...fresh.desires[key], ...(run.desires?.[key] || {}) };
@@ -1982,7 +1991,13 @@
   function housingChoiceHint(choice, run = state.run) {
     const gate = housingChoiceGate(choice, run);
     if (!gate.allowed || gate.affordability?.level !== 'strained') return null;
-    return `可承受但吃紧：${gate.affordability.reason}${gate.affordability.partnerContribution > 0 ? '；伴侣贡献中断时需重新核对' : ''}`;
+    if (gate.affordability.strainKind === 'unstable-income')
+      return gate.affordability.unstableIncomeOwner === 'partner'
+        ? '这处住处要靠两份收入；对方进账一少，日子就会吃紧。'
+        : '你的收入会起伏，房租紧的时候会更难扛。';
+    if (gate.affordability.strainKind === 'high-fixed-load')
+      return '房租和债务会吃掉四成以上的收入。';
+    return '付完住处和必要开支，手里剩不下多少。';
   }
   function personAge(item, run = state.run) {
     return run.age - item.bornAt;
@@ -2143,6 +2158,12 @@
       (!Number.isFinite(parentLossStartedAt) || run.age - parentLossStartedAt < 5)
     )
       return false;
+    if (event.id === 'decision_108') {
+      const annualShortfall =
+        (Number(run.finance.lastExpense) || 0) - (Number(run.finance.lastIncome) || 0);
+      if (!(annualShortfall > 0 && (Number(run.finance.cash) || 0) < annualShortfall))
+        return false;
+    }
     if (event.recurrence) {
       if (event.kind !== 'beat') return false;
       const sameEventAge = Math.max(
@@ -3992,6 +4013,20 @@
     return null;
   }
   function prepareDecisionPresentation(event, run) {
+    const variant = event.presentationVariants?.find(
+      (candidate) => run.age >= candidate.ageMin && run.age <= candidate.ageMax
+    );
+    if (variant)
+      event = {
+        ...event,
+        situation: variant.situation,
+        prompt: variant.prompt,
+        choices: event.choices.map((choice, index) => ({
+          ...choice,
+          text: variant.choices[index].text,
+          resultText: variant.choices[index].resultText,
+        })),
+      };
     if (event.id !== 'decision_205') return event;
     const person = run.people.find(
         (item) => item.id === run.social.primaryPersonId && item.alive && item.social
@@ -4907,7 +4942,7 @@
       secondHome = purchase && ['owned', 'mortgaged'].includes(run.housing.status),
       overseasPurchase = purchase && !anchor?.purchase,
       cashShort = run.finance.cash < cashRequired;
-    let level = 'feasible', reason = null;
+    let level = 'feasible', reason = null, strainKind = null, unstableIncomeOwner = null;
     if (restricted) [level, reason] = ['infeasible', '执行或消费限制仍在，不能新增购房安排'];
     else if (secondHome) [level, reason] = ['infeasible', '原有自有或按揭住房尚未处置'];
     else if (overseasPurchase) [level, reason] = ['infeasible', '本版不开放海外购房'];
@@ -4915,12 +4950,23 @@
     else if (!supportedHousing && remaining < 0)
       [level, reason] = ['infeasible', '可靠收入扣除必要开支和债务后不足'];
     else if (!supportedHousing) {
-      const unstable = ['piecework', 'project', 'business'].includes(playerIncome.stability) ||
-          (payment.partnerContribution > 0 &&
-            ['piecework', 'project', 'business'].includes(partnerIncome.stability)),
+      const playerIncomeUnstable = ['piecework', 'project', 'business'].includes(playerIncome.stability),
+        partnerIncomeUnstable = payment.partnerContribution > 0 &&
+          ['piecework', 'project', 'business'].includes(partnerIncome.stability),
+        unstable = playerIncomeUnstable || partnerIncomeUnstable,
         ratio = availableIncome > 0 ? (existingDebts + payment.gross) / availableIncome : Infinity;
       if (remaining < Math.max(12000, availableIncome * 0.15) || ratio > 0.4 || unstable) {
         level = 'strained';
+        strainKind = unstable
+          ? 'unstable-income'
+          : ratio > 0.4
+            ? 'high-fixed-load'
+            : 'thin-buffer';
+        unstableIncomeOwner = unstable
+          ? playerIncomeUnstable
+            ? 'player'
+            : 'partner'
+          : null;
         reason = unstable
           ? '主要住房收入会随计件、项目或经营结果波动'
           : ratio > 0.4
@@ -4931,6 +4977,8 @@
     return {
       level,
       reason,
+      strainKind,
+      unstableIncomeOwner,
       cashRequired,
       reliableIncome: Math.round(reliableIncome),
       availableIncome: Math.round(availableIncome),
@@ -5230,7 +5278,17 @@
   function mortalityCause(run, source = 'age') {
     if (source === 'health') return '长期健康问题带来的风险';
     if (source === 'habit') return '长期失控带来的健康风险';
-    return run.age >= 65 ? '自然衰老' : '一次未记录具体原因的突发状况';
+    if (run.age >= 65) return '自然衰老';
+    const causes = run.age < 5
+      ? ['严重感染', '严重感染', '意外伤害']
+      : run.age < 18
+        ? ['交通事故', '交通事故', '溺水', '意外伤害']
+        : run.age < 30
+          ? ['交通事故', '交通事故', '交通事故', '严重感染', '意外伤害']
+          : run.age < 45
+            ? ['交通事故', '交通事故', '急性心肌梗死', '脑卒中', '严重感染']
+            : ['急性心肌梗死', '急性心肌梗死', '脑卒中', '脑卒中', '严重感染', '交通事故'];
+    return causes[stable(run.seed, `mortality-cause:${run.age}`, causes.length)];
   }
   function mortality(run) {
     if (run.deathCause) return true;
@@ -7434,7 +7492,7 @@
         较早接触升学信息: '升学信息较多',
         住处相对稳定: '住处相对稳定',
         遇到变动时更快找到新过法: '适应变化更快',
-        额外费用会压缩选择: '额外开支挤压选择',
+        额外费用会压缩选择: '家里一多出开支，有些选择就得放下',
         照顾者经常不在场: '照顾者经常不在场',
         家里说话和做决定都有压力: '家里做决定压力较大',
         照护会抢走很多时间: '照护占用很多时间',
@@ -7446,7 +7504,7 @@
       originRisk = compactOriginSummary[riskSource] || riskSource,
       parents = origin.people.filter((item) => ['father', 'mother'].includes(item.relation)),
       siblings = origin.people.filter((item) => item.relation === 'sibling' && item.bornAt <= 0);
-    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">${esc(UI_COPY.birthTitle)}</div><span></span></div><section class="card hero"><div class="muted">${run.gender === 'female' ? '女性' : '男性'} · ${run.location.name}</div><div class="birth-place">${esc(origin.familyName)}</div><p>${esc(UI_COPY.birthHouseholdNote)}</p>${originAdvantage || originRisk ? `<div class="origin-summary">${originAdvantage ? `<div><span>优势</span><p>${esc(originAdvantage)}</p></div>` : ''}${originRisk ? `<div><span>压力</span><p>${esc(originRisk)}</p></div>` : ''}</div>` : ''}</section><dl class="spec-list"><div class="spec"><dt>家庭环境</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>父母</dt><dd>${parents.map((item) => `${item.relation === 'father' ? '父亲' : '母亲'}：${item.occupation} · ${item.timeAvailability >= 60 ? '时间较稳定' : '常常抽不开身'}`).join('；') || '由其他照护者抚养'}</dd></div><div class="spec"><dt>兄弟姐妹</dt><dd>${siblings.length ? `${siblings.length}人` : '目前没有'}</dd></div><div class="spec"><dt>家庭住房</dt><dd>${esc(origin.housing)} · ${origin.context.housingStability >= 60 ? '居住较稳定' : '住处可能变化'}</dd></div><div class="spec"><dt>家庭账面</dt><dd>资产约 ${money(origin.assets)} · 债务约 ${money(origin.debt)}</dd></div><div class="spec"><dt>升学信息</dt><dd>${origin.context.educationCapital >= 65 ? '家里熟悉流程' : origin.context.educationCapital >= 42 ? '主要靠学校通知' : '需要自己另外寻找'}</dd></div><div class="spec"><dt>准备费用</dt><dd>${origin.context.educationBudget >= 68 ? '能承担较多' : origin.context.educationBudget >= 42 ? '需要取舍' : '很难长期承担'}</dd></div></dl><div class="bottom-actions"><button class="btn primary" data-act="birth-next">${esc(UI_COPY.birthNext)}</button></div></main>`;
+    return `<main class="screen"><div class="topbar"><button class="iconbtn" data-nav="home" aria-label="返回主菜单">‹</button><div class="title">${esc(UI_COPY.birthTitle)}</div><span></span></div><section class="card hero"><div class="muted">${run.gender === 'female' ? '女性' : '男性'} · ${run.location.name}</div><div class="birth-place">${esc(origin.familyName)}</div><p>${esc(UI_COPY.birthHouseholdNote)}</p>${originAdvantage || originRisk ? `<div class="origin-summary">${originAdvantage ? `<div><span>优势</span><p>${esc(originAdvantage)}</p></div>` : ''}${originRisk ? `<div><span>压力</span><p>${esc(originRisk)}</p></div>` : ''}</div>` : ''}</section><dl class="spec-list"><div class="spec"><dt>家庭环境</dt><dd>${esc(familyContextLabel(run))}</dd></div><div class="spec"><dt>父母</dt><dd>${parents.map((item) => `${item.relation === 'father' ? '父亲' : '母亲'}：${item.occupation} · ${item.timeAvailability >= 60 ? '时间较稳定' : '常常抽不开身'}`).join('；') || '由其他照护者抚养'}</dd></div><div class="spec"><dt>兄弟姐妹</dt><dd>${siblings.length ? `${siblings.length}人` : '目前没有'}</dd></div><div class="spec"><dt>家庭住房</dt><dd>${esc(origin.housing)} · ${origin.context.housingStability >= 60 ? '居住较稳定' : '住处可能变化'}</dd></div><div class="spec"><dt>家庭账面</dt><dd>资产约 ${money(origin.assets)} · 债务约 ${money(origin.debt)}</dd></div><div class="spec"><dt>升学信息</dt><dd>${origin.context.educationCapital >= 65 ? '家里熟悉流程' : origin.context.educationCapital >= 42 ? '主要靠学校通知' : '需要自己另外寻找'}</dd></div><div class="spec"><dt>准备费用</dt><dd>${origin.context.educationBudget >= 68 ? '能承担较多' : origin.context.educationBudget >= 42 ? '需要取舍' : '只能承担一部分'}</dd></div></dl><div class="bottom-actions"><button class="btn primary" data-act="birth-next">${esc(UI_COPY.birthNext)}</button></div></main>`;
   }
   const attrMeta = {
     intellect: ['理解', '学习、证据与复杂判断'],

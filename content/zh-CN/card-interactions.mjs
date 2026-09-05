@@ -1857,7 +1857,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "health::这些检查，你打算怎么处理？::按要求完成检查和复核": {
+  "health::接下来怎么查？::按医生安排查清楚": {
     "primaryMechanic": "healthLiteracy",
     "mode": "riskShift",
     "patch": [
@@ -1869,7 +1869,7 @@ const EXPLICIT_CARD_INTERACTIONS = Object.freeze({
     ],
     "source": "eventAuthored"
   },
-  "health::治疗和生活，怎么同时顾？::把能停的先停了，先治": {
+  "health::治疗怎么排进生活？::先治，把能停的停下": {
     "primaryMechanic": "boundary",
     "mode": "resultVariant",
     "patch": [

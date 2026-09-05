@@ -1240,6 +1240,9 @@ export const DECISION_SLOT_REGISTRATIONS = [
   {key:'@author/decision/83fdec7f59f744fac8622a68',slot:{id:'decision_078',track:'leisure',localIndex:0},replaces:'@author/decision/8c689d5544c914cc0f60e09e'},
   {key:'@author/decision/6f46e4d178f5be5e900eab18',slot:{id:'decision_080',track:'leisure',localIndex:2},replaces:'@author/decision/927b2c21eb8b67867dad9026'},
   {key:'@author/decision/c5191dd2c020b226909d93b5',slot:{id:'decision_205',track:'social',localIndex:6},replaces:'@author/decision/4404327179131c510695e3c4'},
+  {key:'@author/decision/d785638b80302be563d529db',slot:{id:'decision_108',track:'finance',localIndex:2},replaces:'@author/decision/55001ff677a372d32e2fb161'},
+  {key:'@author/decision/3f0d566f1dc42f3299099e8a',slot:{id:'decision_114',track:'health',localIndex:0},replaces:'@author/decision/089ec578921387645525079d'},
+  {key:'@author/decision/da8bc1f03646c01a24afb2ae',slot:{id:'decision_115',track:'health',localIndex:1},replaces:'@author/decision/9f051acb52b711aa95d7b03e'},
 ];
 export const CARD_SLOT_REGISTRATIONS = [
   {key:'@author/card/ed8a1e4158c896c0201ede79',slot:{id:'card_65',globalIndex:64},replaces:'@author/card/2bd61b8762cbb06688238d60'},

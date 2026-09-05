@@ -213,6 +213,87 @@ async function prepareFinal(page,id,event){
     page.on('pageerror',error=>errors.push(`pageerror: ${error.message}`));
     page.on('console',message=>{if(message.type()==='error')errors.push(`console: ${message.text()}`)});
     await openPlayable(page);
+    const acuteDecisionIds=['decision_114','decision_115','decision_116','decision_117'];
+    const presentationFor=async(id,age)=>{
+      await page.evaluate(({age})=>window.__LIFE_DEBUG__.patchRun({
+        age,phase:'playing',currentDecision:null,sceneQueue:[],yearStarted:true,yearQueue:[],
+        usedEvents:[],episodes:{},health:{status:'monitoring',currentCondition:'acute-test'}
+      }),{age});
+      await page.evaluate(id=>window.__LIFE_DEBUG__.forceDecision(id),id);
+      return page.evaluate(()=>window.__LIFE_DEBUG__.snapshot().currentDecision);
+    };
+    const childStart=await presentationFor('decision_114',3);
+    assert.equal(childStart.situation,'一次急诊后，医生说还有个问题没弄清。旧报告和检查单被家里装进同一个文件袋，下一次复查也约好了。');
+    for(const id of acuteDecisionIds){
+      const source=decisions.find(event=>event.id===id),variant=source.presentationVariants[0],child=await presentationFor(id,17),adult=await presentationFor(id,18);
+      assert.equal(child.situation,variant.situation,`${id}: age 17 did not use minor situation`);
+      assert.equal(child.prompt,variant.prompt,`${id}: age 17 did not use minor prompt`);
+      assert.deepEqual(child.choices.map(choice=>choice.text),variant.choices.map(choice=>choice.text),`${id}: age 17 did not use minor choices`);
+      assert.equal(adult.situation,source.situation,`${id}: age 18 did not use adult situation`);
+      assert.equal(adult.prompt,source.prompt,`${id}: age 18 did not use adult prompt`);
+      assert.deepEqual(
+        child.choices.map(choice=>({id:choice.id,route:choice.route,effects:choice.effects})),
+        source.choices.map(choice=>({id:choice.id,route:choice.route,effects:choice.effects})),
+        `${id}: presentation variant changed mechanics`,
+      );
+    }
+
+    const revision36Decision=structuredClone(decisions.find(event=>event.id==='decision_114'));
+    delete revision36Decision.presentationVariants;
+    const revision36Save=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
+    revision36Save.run.contentRevision=36;
+    revision36Save.run.age=17;
+    revision36Save.run.phase='episode';
+    revision36Save.run.currentDecision=revision36Decision;
+    revision36Save.run.sceneQueue=[{kind:'choice',eventId:revision36Decision.id}];
+    revision36Save.run.yearStarted=true;
+    revision36Save.run.yearQueue=[];
+    revision36Save.run.usedEvents=['revision37-migration-sentinel'];
+    revision36Save.run.timeline=[{id:'revision37-migration-sentinel',age:16,icon:'·',kind:'beat',track:'health',text:'迁移前已经发生。'}];
+    revision36Save.run.decisionCount=4;
+    revision36Save.run.episodes={acute_illness:{status:'active',phase:1,startedAt:17,nextPhaseAge:18,deadlineAge:21,route:null,boundActors:{},commitments:[],closureReason:null}};
+    await page.addInitScript(({key,value})=>{
+      if(sessionStorage.getItem('revision37-choice-refresh-loaded'))return;
+      localStorage.setItem(key,JSON.stringify(value));
+      sessionStorage.setItem('revision37-choice-refresh-loaded','1');
+    },{key:SAVE_KEY,value:revision36Save});
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>window.__LIFE_BOOTED__===true);
+    let revision37Migrated=await page.evaluate(()=>window.__LIFE_DEBUG__.snapshot());
+    assert.equal(revision37Migrated.contentRevision,37);
+    assert.equal(revision37Migrated.currentDecision.situation,'一次急诊后，医生说还有个问题没弄清。旧报告和检查单被家里装进同一个文件袋，下一次复查也约好了。');
+    assert.deepEqual(revision37Migrated.usedEvents,['revision37-migration-sentinel']);
+    assert.equal(revision37Migrated.timeline.length,1);
+    assert.equal(revision37Migrated.decisionCount,4);
+    assert.deepEqual(revision37Migrated.sceneQueue,[{kind:'choice',eventId:'decision_114'}]);
+    assert.equal(revision37Migrated.episodes.acute_illness.phase,1);
+
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({
+      age:33,phase:'playing',currentDecision:null,sceneQueue:[],yearStarted:true,yearQueue:[],usedEvents:[],episodes:{},
+      finance:{cash:711234,lastIncome:88468,lastExpense:17920,liabilities:[],hasArrears:false}
+    }));
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes('decision_108'),false,'comfortable cash state still qualified for decision_108');
+    await page.evaluate(()=>window.__LIFE_DEBUG__.patchRun({finance:{cash:1000,lastIncome:30000,lastExpense:50000,liabilities:[],hasArrears:false}}));
+    assert.equal((await page.evaluate(()=>window.__LIFE_DEBUG__.eligibleIds('decision'))).includes('decision_108'),true,'real uncovered annual shortfall did not qualify for decision_108');
+
+    const unstablePartner={id:'unstable_housing_partner',relation:'partner',alive:true,status:'living',bornAt:5,bond:70,housingIncomeAnnualGross:120000,housingIncomeStability:'business'};
+    await page.evaluate(partner=>{
+      const debug=window.__LIFE_DEBUG__,run=debug.snapshot();
+      debug.patchRun({
+        age:38,phase:'playing',currentDecision:null,sceneQueue:[],yearStarted:true,yearQueue:[],usedEvents:[],
+        location:{id:'tier1',name:'一线城市',weight:18,mods:{cost:135,education:120,medical:122,network:118,mobility:116}},
+        finance:{cash:100000,liabilities:[]},
+        employment:{status:'employed',incomeAnnualGross:150000,incomeStability:'fixed'},
+        relationships:{activePartnerId:partner.id,partnerStatus:'partnered'},
+        people:[...run.people.filter(item=>item.id!==partner.id),partner],
+        housing:{status:'family',value:0,arrangement:'originFamily',region:'tier1',stability:'stable',accessibility:'standard',costShare:'supported',coResidentRefs:[],history:[]}
+      });
+      debug.forceDecision('decision_196');
+    },unstablePartner);
+    const jointHousingChoice=page.locator('[data-choice="0"]');
+    assert.equal(await jointHousingChoice.isDisabled(),false,'partner-unstable housing choice became unavailable');
+    assert.equal(await jointHousingChoice.locator('small').textContent(),'这处住处要靠两份收入；对方进账一少，日子就会吃紧。');
+    await fitSheet(page,'partner-unstable-housing-hint-360x773');
 
     const previousReleaseSave=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
     previousReleaseSave.schemaVersion=12;

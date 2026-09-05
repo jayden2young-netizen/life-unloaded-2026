@@ -118,7 +118,41 @@ function neutralTrace(multiplier) {
   const authorSlots = await import(pathToFileURL(path.join(ROOT, 'tools', 'author-slots.mjs')));
 
   const summary = validator.validateGeneratedData(DATA);
-  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.7.0', 14, 36]);
+  assert.deepEqual([DATA.version, DATA.schemaVersion, DATA.contentRevision], ['0.7.0', 14, 37]);
+  const acuteStart = DATA.events.find(event => event.id === 'decision_114');
+  assert.deepEqual(
+    acuteStart.presentationVariants.map(variant => [variant.id, variant.ageMin, variant.ageMax]),
+    [['minor', 3, 17]],
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    fixture => {
+      const event = fixture.events.find(item => item.id === 'decision_114');
+      event.presentationVariants.push({ ...clone(event.presentationVariants[0]), id: 'overlap' });
+    },
+    /年龄范围不得重叠/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    fixture => {
+      fixture.events.find(item => item.id === 'decision_114').presentationVariants[0].ageMin = 2;
+    },
+    /年龄范围不得越过事件范围/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    fixture => {
+      fixture.events.find(item => item.id === 'decision_114').presentationVariants[0].choices.pop();
+    },
+    /选择覆盖数量必须与原选择一致/,
+  );
+  expectContractFailure(
+    validator.validateGeneratedData,
+    fixture => {
+      fixture.events.find(item => item.id === 'decision_114').presentationVariants[0].choices[0].route = 'confirmed';
+    },
+    /选择覆盖不得携带机制字段/,
+  );
   const employmentProfiles = new Set(DATA.employmentCatalog.profiles.map(profile => profile.id));
   const profileGate = eventId => {
     const event = DATA.events.find(item => item.id === eventId);

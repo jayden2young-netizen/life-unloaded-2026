@@ -78,7 +78,7 @@ export const DECISION_PRESENTATION = Object.freeze({
   decision_083:{situation:'朋友先问你最近怎么样，聊到一半才把事情说出来。预算、周期、能担保的部分都讲了——担保不了的那部分，也讲了。'},
   decision_084:{situation:'简历上那一段空白，自己看着都长。前两次面试寒暄完的第一个问题都落在同一个位置，对方笔尖停在那儿等你说完。'},
   decision_085:{situation:'这样的日子过下来，什么时候踏实、什么时候心慌，你大致有数了。手里的钱还能撑一阵，但撑不到不用再想这件事。'},
-  decision_108:{situation:'这个月的固定支出没变，进账少了一截。手机上分期和额度的入口比缴费入口更好找，点两下就能把这个月填平。'},
+  decision_108:{situation:'这一年的进账没盖住固定开支，账户里的钱也撑不过同样的缺口。手机上的分期和额度，点两下就能把眼前填平。',prompt:'这道缺口怎么补？'},
   decision_109:{situation:'调整后的第一期扣款已经出来了，数字比原来那张表上的大。银行的短信写得很客气，只通报，不商量。'},
   decision_112:{situation:'介绍人是熟面孔，讲的时候只讲赚过的那几个人，名字都说得出来。资料发来是一沓截图，收款账户那一栏写的是个人名字。'},
   decision_113:{situation:'起因是一件小事：一张对账单寄到旧地址，被邻居转了过来。你才发现自己记不全名下到底有几个账户、替谁签过什么。'},
@@ -123,6 +123,7 @@ export const DECISION_PRESENTATION = Object.freeze({
 });
 
 export const RESULT_TEXT_OVERRIDES = Object.freeze({
+  decision_108_choice_1:'你付了几笔退订和违约的钱，把能停的消费先停了。',
   decision_043_choice_1:'入职第二个月，主管说转正要等部门名额。你把那句「视表现而定」翻出来又看了一遍，没发出去。',
   decision_043_choice_2:'HR补了一封邮件，条件写进去了，语气比电话里冷一截。入职那天，带你的人说：你就是那个要邮件的。',
   decision_043_choice_3:'对方回了个「好的」，两个字。招聘软件当晚重新开始推岗位，第一条是同一家。',
@@ -142,9 +143,9 @@ export const RESULT_TEXT_OVERRIDES = Object.freeze({
   decision_188_choice_2:'扣款按实际进账走，必要生活费单列。那张表你背下来了——一个月能自己花的数字，精确到十块。',
   decision_188_choice_3:'住处、照护和最低开销的材料交上去了，等核定。等的这段时间，你没敢换手机号。',
   decision_188_choice_4:'你没签。查封和扣划照旧。下次再谈，起点是现在这个数——比上次大。',
-  decision_115_choice_1:'能停的都停了，最急的事交给了能接手的人。第一次治疗完，回去的路走得很慢，谁都没怎么说话。',
-  decision_115_choice_2:'治疗拆进了每周的空档，被占用的时段提前圈了出来。恢复慢一些，但没断。问起来，就说家里有点事。',
-  decision_115_choice_3:'你两次取消门诊，疼得受不了才临时吃药。进急诊那天是别人叫的车，你还在说没那么严重。',
+  decision_115_choice_1:'你停下能交出去的事，找人接住最急的部分，按疗程开始治疗。',
+  decision_115_choice_2:'你把治疗拆进每周安排，提前空出被占用的时间。进度慢一些，没有中断。',
+  decision_115_choice_3:'你两次取消门诊，只在难受时临时用药。再进急诊时，原来的日常也停了。',
   decision_117_choice_1:'最后一次复诊。医生说这个不用再治了，以后常规检查就行。出门你在走廊上站了一会儿，没急着走。',
   decision_117_choice_3:'有些东西确实恢复不了了。你开始重新安排日常。把「已经不行的」那一栏写下来的时候，笔停了一会儿。',
   decision_117_choice_4:'你跟医生说眼下真的追不动了。医生没劝，把复诊方式和要留意的信号写给你，纸折了两折。',
@@ -220,7 +221,7 @@ export const ATTITUDES_BY_BEAT = Object.freeze({
   beat_009:[['swallow','也回了收到'],['refuse','没回']], beat_010:[['swallow','签了'],['pushBack','问了句真自愿吗']],
   beat_012:[['swallow','又压了一天'],['lean','递给了大人']], beat_013:[['swallow','接了'],['deadpan','就当专业对口']],
   beat_014:[['note','盯着自己那栏'],['deadpan','先笑了一下']], beat_015:[['swallow','硬着头皮递'],['lean','先把话说软']],
-  beat_043:[['deadpan','你也没吭声'],['pushBack','把制度甩了链接']], beat_045:[['swallow','写了说明'],['note','把加班也记了']],
+  beat_043:[['deadpan','你也没吭声'],['pushBack','把年假规定发进了群里']], beat_045:[['swallow','写了说明'],['note','把加班也记了']],
   beat_048:[['deadpan','收藏了这条'],['swallow','说了声谢谢']], beat_051:[['note','截了图'],['deadpan','恭喜第一名']],
   beat_053:[['refuse','明早再回',[c('add','desires.freedom.fulfillment',1)]],['swallow','回了「在」']], beat_054:[['swallow','报了名',[c('add','pressures.career',1)]],['refuse','装没看见']],
   beat_058:[['note','查了下末班车'],['deadpan','把通勤算进发展']],

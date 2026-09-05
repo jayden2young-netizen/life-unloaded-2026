@@ -694,7 +694,7 @@ let browser;
   assert.ok(!(await page.evaluate(() => window.__LIFE_DEBUG__.unlockCodex())).includes('codex_39'),'young social support unlocked the late-solo codex');
   await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:65}));
   assert.ok((await page.evaluate(() => window.__LIFE_DEBUG__.unlockCodex())).includes('codex_39'),'late solo friendship did not unlock its factual codex');
-  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:75,phase:'playing',mobility:{lastOverseasSystem:'none'},housing:{region:'tier2',history:[{state:{region:'tier1'}}]},outcomeTags:{}}));
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:75,phase:'playing',location:{id:'tier2',name:'二线城市',weight:24,mods:{cost:112,education:108,medical:108,network:106,mobility:108}},mobility:{lastOverseasSystem:'none'},housing:{region:'tier2',history:[{state:{region:'tier1'}}]},outcomeTags:{}}));
   assert.ok(!(await page.evaluate(() => window.__LIFE_DEBUG__.unlockCodex(true))).includes('codex_42'),'domestic migration unlocked the stayed-rooted codex');
   await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({housing:{region:'tier2',history:[]},outcomeTags:{}}));
   assert.ok((await page.evaluate(() => window.__LIFE_DEBUG__.unlockCodex(true))).includes('codex_42'),'a completed same-city life did not unlock its codex');
@@ -712,14 +712,27 @@ let browser;
   assert.doesNotMatch(freeLifeEnding.summary, /没有工牌/, 'free-life ending erased a real employment history');
   assert.ok(!DATA.endingTitles.some(ending => ending.title === '无工牌生活实验'), 'unsupported no-badge title remained in the generated ending set');
   await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:20,health:{physical:90,status:'well'},habits:{stage:'none'}}));
-  assert.equal(await page.evaluate(() => window.__LIFE_DEBUG__.mortalityCause()), '一次未记录具体原因的突发状况');
+  const mortalityPools = [
+    [0, new Set(['严重感染', '意外伤害'])],
+    [5, new Set(['交通事故', '溺水', '意外伤害'])],
+    [18, new Set(['交通事故', '严重感染', '意外伤害'])],
+    [30, new Set(['交通事故', '急性心肌梗死', '脑卒中', '严重感染'])],
+    [45, new Set(['急性心肌梗死', '脑卒中', '严重感染', '交通事故'])],
+  ];
+  for (const [age, pool] of mortalityPools) {
+    await page.evaluate(value => window.__LIFE_DEBUG__.patchRun({age: value}), age);
+    const first = await page.evaluate(() => window.__LIFE_DEBUG__.mortalityCause());
+    const second = await page.evaluate(() => window.__LIFE_DEBUG__.mortalityCause());
+    assert.ok(pool.has(first), `${age}: mortality cause escaped its age pool`);
+    assert.equal(second, first, `${age}: mortality cause was not seed-stable`);
+  }
   assert.equal(await page.evaluate(() => window.__LIFE_DEBUG__.mortalityCause('health')), '长期健康问题带来的风险');
   assert.equal(await page.evaluate(() => window.__LIFE_DEBUG__.mortalityCause('habit')), '长期失控带来的健康风险');
   await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:60}));
-  assert.equal(await page.evaluate(() => window.__LIFE_DEBUG__.mortalityCause()), '一次未记录具体原因的突发状况');
+  assert.ok(mortalityPools.at(-1)[1].has(await page.evaluate(() => window.__LIFE_DEBUG__.mortalityCause())));
   await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:70}));
   assert.equal(await page.evaluate(() => window.__LIFE_DEBUG__.mortalityCause()), '自然衰老');
-  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:20,deathCause:'一次未记录具体原因的突发状况',timeline:[],decisionHistory:[]}));
+  await page.evaluate(() => window.__LIFE_DEBUG__.patchRun({age:20,deathCause:'交通事故',timeline:[],decisionHistory:[]}));
   const earlyFacts = await page.evaluate(() => window.__LIFE_DEBUG__.pivotalFacts());
   assert.equal(earlyFacts.length, 3, 'an early death could not fill all three factual pivots');
   assert.ok(earlyFacts.some(item => item.source === 'origin'));
